@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emporos"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "emporos.domain.*"
+disallow_any_explicit = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: requires network/Atlas access via MONGO_URL",
+    "contract: broker adapter contract suite",
+    "regression: golden-file backtest regression",
+    "failure: fault-injection / chaos suite",
+]
+
+[tool.coverage.run]
+source = ["src/emporos"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
+
+[tool.importlinter]
+root_package = "emporos"
+
+[[tool.importlinter.contracts]]
+name = "domain is pure"
+type = "forbidden"
+source_modules = ["emporos.domain"]
+forbidden_modules = [
+    "emporos.core", "emporos.broker", "emporos.persistence", "emporos.api",
+    "emporos.marketdata", "emporos.execution", "emporos.risk", "emporos.strategies",
+]
+
+[[tool.importlinter.contracts]]
+name = "strategies never import angelone directly"
+type = "forbidden"
+source_modules = ["emporos.strategies"]
+forbidden_modules = ["emporos.broker.angelone"]
+
+[[tool.importlinter.contracts]]
+name = "api and dashboard-facing control layer never import broker code"
+type = "forbidden"
+source_modules = ["emporos.api"]
+forbidden_modules = ["emporos.broker"]
