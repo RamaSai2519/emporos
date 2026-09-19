@@ -39,6 +39,7 @@ class RecordFactory:
             name="Test Co",
             lot_size=1,
             tick_size=Money.of("0.05"),
+            valid_from=NOW,
         )
 
     def instrument_version(self) -> r.InstrumentVersionRecord:
@@ -52,6 +53,7 @@ class RecordFactory:
             lot_size=1,
             tick_size=Money.of("0.05"),
             valid_from=NOW,
+            valid_to=NOW,
         )
 
     def strategy(self) -> r.StrategyRecord:

@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     mongo_url: str | None = Field(default=None, alias="MONGO_URL")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
+    # Overrides the upstream instrument-master URL (tests / mirrors); unset uses Angel One's.
+    instrument_master_url: str | None = Field(default=None, alias="INSTRUMENT_MASTER_URL")
+
     # Cold storage (candle Parquet archive, backups). `S3_ENDPOINT_URL` points at a local
     # S3-compatible target (MinIO/moto) in development; unset means real AWS S3.
     s3_bucket: str | None = Field(default=None, alias="S3_BUCKET")

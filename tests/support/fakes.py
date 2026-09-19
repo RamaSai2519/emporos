@@ -7,6 +7,9 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 
 from emporos.domain.candles import Candle, Timeframe
+from emporos.domain.instruments import Instrument
+from emporos.instruments.differ import InstrumentDiff
+from emporos.instruments.downloader import DownloadedMaster
 from emporos.persistence.migrations import IndexInfo
 from emporos.persistence.object_store import ObjectInfo, ObjectNotFoundError
 from emporos.persistence.schema import CollectionSpec, IndexSpec
@@ -97,3 +100,45 @@ class InMemoryCandleStore:
             ),
             key=lambda bar: bar.ts,
         )
+
+
+class InMemoryInstrumentMasterStore:
+    """`InstrumentMasterStore` double that applies diffs to a dict and counts writes."""
+
+    def __init__(self, initial: Sequence[Instrument] = ()) -> None:
+        self._current = {i.instrument_id: i for i in initial}
+        self.apply_calls = 0
+
+    async def load_current(self) -> list[Instrument]:
+        return list(self._current.values())
+
+    async def apply(self, diff: InstrumentDiff, at: datetime) -> None:
+        self.apply_calls += 1
+        for instrument in diff.removed:
+            del self._current[instrument.instrument_id]
+        for change in diff.changed:
+            self._current[change.after.instrument_id] = change.after
+        for instrument in diff.added:
+            self._current[instrument.instrument_id] = instrument
+
+
+class StubMasterSource:
+    """`MasterSource` double returning a fixed master, or raising a fixed error."""
+
+    def __init__(self, master: DownloadedMaster | None = None, error: Exception | None = None):
+        self._master = master
+        self._error = error
+
+    async def download(self) -> DownloadedMaster:
+        if self._error is not None:
+            raise self._error
+        assert self._master is not None
+        return self._master
+
+
+class RecordingAlertSink:
+    def __init__(self) -> None:
+        self.alerts: list[tuple[str, str]] = []
+
+    def raise_alert(self, name: str, message: str) -> None:
+        self.alerts.append((name, message))

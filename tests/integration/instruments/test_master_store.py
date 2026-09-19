@@ -1,4 +1,4 @@
-"""The instrument versioning + atomic swap against real Atlas transactions (EM-27).
+"""Instrument history and atomic replacement against real Atlas (EM-27).
 
 Uses throwaway collections (never the real `instruments`), dropped afterwards.
 """
@@ -14,14 +14,17 @@ import pytest
 from pymongo.asynchronous.database import AsyncDatabase
 
 from emporos.core.ids import IdGenerator
-from emporos.instruments.differ import InstrumentDiffer
+from emporos.domain.instruments import Instrument
+from emporos.instruments.differ import InstrumentDiff, InstrumentDiffer
 from emporos.instruments.store import MongoInstrumentMasterStore
 from emporos.persistence.collections import Collection
 from emporos.persistence.errors import DuplicateRecordError
 from emporos.persistence.migrations import MigrationRunner, MongoSchemaStore
 from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.records import InstrumentRecord
 from emporos.persistence.repositories import InstrumentRepository, InstrumentVersionRepository
 from emporos.persistence.schema import PLATFORM_SCHEMA, CollectionSpec, Schema
+from emporos.persistence.staged_load import StagedCollectionLoader
 from emporos.persistence.transactions import TransactionRunner
 from tests.support.instrument_rows import instrument
 
@@ -33,9 +36,16 @@ T1 = T0 + timedelta(days=1)
 
 @dataclass
 class Rig:
+    database: AsyncDatabase[Mapping[str, Any]]
     store: MongoInstrumentMasterStore
     instruments: InstrumentRepository
     versions: InstrumentVersionRepository
+    schema: Schema
+    instruments_name: str
+
+    @property
+    def staging_name(self) -> str:
+        return f"{self.instruments_name}__staging"
 
 
 @pytest.fixture
@@ -44,11 +54,12 @@ async def rig(dev_settings: Any) -> AsyncIterator[Rig]:
     database: AsyncDatabase[Mapping[str, Any]] = mongo.database()
     suffix = IdGenerator().new_ulid().lower()
     instruments_name, versions_name = f"zz_instruments_{suffix}", f"zz_versions_{suffix}"
+    instruments_spec = CollectionSpec(
+        instruments_name, PLATFORM_SCHEMA.spec_for(Collection.INSTRUMENTS).indexes
+    )
     schema = Schema(
         (
-            CollectionSpec(
-                instruments_name, PLATFORM_SCHEMA.spec_for(Collection.INSTRUMENTS).indexes
-            ),
+            instruments_spec,
             CollectionSpec(
                 versions_name, PLATFORM_SCHEMA.spec_for(Collection.INSTRUMENT_VERSIONS).indexes
             ),
@@ -57,41 +68,53 @@ async def rig(dev_settings: Any) -> AsyncIterator[Rig]:
     await MigrationRunner(MongoSchemaStore(database), schema).apply()
     instruments = InstrumentRepository(database, instruments_name)
     versions = InstrumentVersionRepository(database, versions_name)
+    store = MongoInstrumentMasterStore(
+        TransactionRunner(mongo.client),
+        instruments,
+        versions,
+        StagedCollectionLoader(database, instruments_spec, InstrumentRecord),
+    )
     try:
-        yield Rig(
-            MongoInstrumentMasterStore(TransactionRunner(mongo.client), instruments, versions),
-            instruments,
-            versions,
-        )
+        yield Rig(database, store, instruments, versions, schema, instruments_name)
     finally:
-        await database[instruments_name].drop()
-        await database[versions_name].drop()
+        for name in (instruments_name, versions_name, f"{instruments_name}__staging"):
+            await database[name].drop()
         await mongo.close()
 
 
-async def _sync(rig: Rig, new: list[Any], at: datetime) -> None:
+async def _sync(rig: Rig, new: list[Instrument], at: datetime) -> None:
     diff = InstrumentDiffer().diff(await rig.store.load_current(), new)
     await rig.store.apply(diff, at)
 
 
-async def test_a_first_sync_loads_every_instrument_with_an_open_version(rig: Rig) -> None:
+async def _collections(rig: Rig) -> set[str]:
+    return set(await rig.database.list_collection_names())
+
+
+async def test_the_first_sync_bulk_loads_the_master_without_any_history(rig: Rig) -> None:
     master = [instrument(str(n)) for n in range(1, 6)]
 
     await _sync(rig, master, T0)
 
     assert sorted(await rig.store.load_current(), key=lambda i: i.token) == master
-    versions = await rig.versions.find({})
-    assert len(versions) == 5
-    assert {v.valid_from for v in versions} == {T0} and {v.valid_to for v in versions} == {None}
+    assert {r.valid_from for r in await rig.instruments.all()} == {T0}
+    assert await rig.versions.count() == 0
+    assert rig.staging_name not in await _collections(rig)
 
 
-async def test_a_sync_larger_than_one_batch_is_applied_completely(rig: Rig) -> None:
-    master = [instrument(str(n)) for n in range(2500)]
-
-    await _sync(rig, master, T0)
+async def test_the_bulk_load_is_complete_for_a_realistic_size(rig: Rig) -> None:
+    await _sync(rig, [instrument(str(n)) for n in range(2500)], T0)
 
     assert await rig.instruments.count() == 2500
-    assert await rig.versions.count() == 2500
+
+
+async def test_the_bulk_load_leaves_the_same_indexes_a_migration_declares(rig: Rig) -> None:
+    await _sync(rig, [instrument("1")], T0)
+
+    runner = MigrationRunner(MongoSchemaStore(rig.database), rig.schema)
+
+    assert await runner.missing_indexes() == ()
+    assert not (await runner.apply()).changed  # no drift: unique flag and keys identical
 
 
 async def test_a_second_identical_sync_writes_nothing(rig: Rig) -> None:
@@ -100,44 +123,65 @@ async def test_a_second_identical_sync_writes_nothing(rig: Rig) -> None:
 
     await _sync(rig, master, T1)
 
-    assert await rig.versions.count() == 2
-    assert {v.valid_from for v in await rig.versions.find({})} == {T0}
+    assert {r.valid_from for r in await rig.instruments.all()} == {T0}
+    assert await rig.versions.count() == 0
 
 
-async def test_a_changed_field_closes_the_old_version_and_opens_a_new_one(rig: Rig) -> None:
+async def test_a_changed_field_appends_the_old_definition_as_a_closed_version(rig: Rig) -> None:
     await _sync(rig, [instrument("1"), instrument("2")], T0)
 
     await _sync(rig, [instrument("1", tradingsymbol="RENAMED-EQ"), instrument("2")], T1)
 
+    (old,) = await rig.versions.for_instrument("NSE:1")
+    assert (old.tradingsymbol, old.valid_from, old.valid_to) == ("SYM1-EQ", T0, T1)
+    current = {r.token: r for r in await rig.instruments.all()}
+    assert (current["1"].tradingsymbol, current["1"].valid_from) == ("RENAMED-EQ", T1)
+    assert current["2"].valid_from == T0  # untouched
+    assert await rig.versions.for_instrument("NSE:2") == []
+
+
+async def test_repeated_changes_build_a_contiguous_history(rig: Rig) -> None:
+    await _sync(rig, [instrument("1", lot_size=1)], T0)
+    await _sync(rig, [instrument("1", lot_size=2)], T1)
+    await _sync(rig, [instrument("1", lot_size=3)], T1 + timedelta(days=1))
+
     history = await rig.versions.for_instrument("NSE:1")
-    assert [(v.tradingsymbol, v.valid_from, v.valid_to) for v in history] == [
-        ("SYM1-EQ", T0, T1),
-        ("RENAMED-EQ", T1, None),
+
+    assert [(v.lot_size, v.valid_from, v.valid_to) for v in history] == [
+        (1, T0, T1),
+        (2, T1, T1 + timedelta(days=1)),
     ]
-    current = {i.token: i for i in await rig.store.load_current()}
-    assert current["1"].tradingsymbol == "RENAMED-EQ"
-    assert len(await rig.versions.for_instrument("NSE:2")) == 1  # untouched
 
 
-async def test_a_removed_instrument_leaves_the_master_but_keeps_its_closed_history(
-    rig: Rig,
-) -> None:
+async def test_a_removed_instrument_leaves_the_master_and_keeps_its_history(rig: Rig) -> None:
     await _sync(rig, [instrument("1"), instrument("2")], T0)
 
     await _sync(rig, [instrument("1")], T1)
 
     assert [i.token for i in await rig.store.load_current()] == ["1"]
     (history,) = await rig.versions.for_instrument("NSE:2")
-    assert history.valid_to == T1
+    assert (history.valid_from, history.valid_to) == (T0, T1)
 
 
-async def test_a_failure_part_way_through_the_swap_leaves_nothing_half_applied(rig: Rig) -> None:
+async def test_an_incremental_diff_larger_than_one_batch_is_applied_in_one_transaction(
+    rig: Rig,
+) -> None:
+    await _sync(rig, [instrument("0")], T0)
+
+    await _sync(rig, [instrument(str(n)) for n in range(1500)], T1)
+
+    assert await rig.instruments.count() == 1500
+
+
+async def test_a_failure_part_way_through_an_incremental_swap_leaves_nothing_half_applied(
+    rig: Rig,
+) -> None:
     await _sync(rig, [instrument("1"), instrument("2")], T0)
     before = sorted(await rig.store.load_current(), key=lambda i: i.token)
-    # Change #1 and drop #2 succeed, then adding a *duplicate* of #1 collides on the unique
-    # (exchange, token) index — the crash lands after several writes already happened.
+    # Instrument 1 changes and 2 is removed (both succeed), then adding a *duplicate* of 1
+    # collides on the unique (exchange, token) index — the crash lands after several writes.
     diff = InstrumentDiffer().diff(before, [instrument("1", name="Changed")])
-    poisoned = type(diff)(
+    poisoned = InstrumentDiff(
         added=(instrument("1", name="Collides"),), changed=diff.changed, removed=diff.removed
     )
 
@@ -145,9 +189,29 @@ async def test_a_failure_part_way_through_the_swap_leaves_nothing_half_applied(r
         await rig.store.apply(poisoned, T1)
 
     assert sorted(await rig.store.load_current(), key=lambda i: i.token) == before
-    versions = await rig.versions.find({})
-    assert len(versions) == 2
-    assert {v.valid_to for v in versions} == {None}
+    assert await rig.versions.count() == 0
+    assert {r.valid_from for r in await rig.instruments.all()} == {T0}
+
+
+async def test_a_failure_during_the_bulk_load_leaves_the_master_untouched_and_cleans_up(
+    rig: Rig,
+) -> None:
+    duplicated = InstrumentDiff(added=(instrument("1"), instrument("2"), instrument("1")))
+
+    with pytest.raises(DuplicateRecordError):
+        await rig.store.apply(duplicated, T0)
+
+    assert await rig.instruments.count() == 0
+    assert rig.staging_name not in await _collections(rig)
+
+
+async def test_a_staging_collection_left_by_a_crashed_run_is_discarded(rig: Rig) -> None:
+    await rig.database[rig.staging_name].insert_one({"_id": "junk", "stale": True})
+
+    await _sync(rig, [instrument("1")], T0)
+
+    assert [i.token for i in await rig.store.load_current()] == ["1"]
+    assert rig.staging_name not in await _collections(rig)
 
 
 async def test_applying_an_empty_diff_is_a_no_op(rig: Rig) -> None:

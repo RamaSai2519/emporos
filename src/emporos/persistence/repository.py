@@ -72,8 +72,10 @@ class Repository(Generic[R]):
     async def get(self, record_id: str) -> R | None:
         return await self.find_one({"_id": record_id})
 
-    async def find_one(self, query: Mapping[str, Any]) -> R | None:
-        document = await self._collection.find_one(query)
+    async def find_one(
+        self, query: Mapping[str, Any], *, session: AsyncClientSession | None = None
+    ) -> R | None:
+        document = await self._collection.find_one(query, session=session)
         return None if document is None else self._record_type.model_validate(document)
 
     async def find(
@@ -82,8 +84,9 @@ class Repository(Generic[R]):
         *,
         sort: list[tuple[str, int]] | None = None,
         limit: int = 0,
+        session: AsyncClientSession | None = None,
     ) -> list[R]:
-        cursor = self._collection.find(query, sort=sort, limit=limit)
+        cursor = self._collection.find(query, sort=sort, limit=limit, session=session)
         return [self._record_type.model_validate(document) async for document in cursor]
 
     async def count(self, query: Mapping[str, Any] | None = None) -> int:

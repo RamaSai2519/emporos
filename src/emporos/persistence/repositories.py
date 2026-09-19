@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from collections.abc import Collection as Sized
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import Any
 
 from pymongo import ASCENDING
@@ -65,6 +64,11 @@ class InstrumentRepository(Repository[InstrumentRecord]):
     async def all(self) -> list[InstrumentRecord]:
         return await self.find({})
 
+    async def get_many(
+        self, instrument_ids: Sequence[str], *, session: AsyncClientSession | None = None
+    ) -> list[InstrumentRecord]:
+        return await self.find({"_id": {"$in": list(instrument_ids)}}, session=session)
+
     async def get_by_token(self, exchange: str, token: str) -> InstrumentRecord | None:
         return await self.find_one({"exchange": exchange, "token": token})
 
@@ -77,21 +81,6 @@ class InstrumentVersionRepository(Repository[InstrumentVersionRecord]):
         self, database: Database, collection: str = Collection.INSTRUMENT_VERSIONS
     ) -> None:
         super().__init__(database, collection, InstrumentVersionRecord)
-
-    async def close_open_versions(
-        self,
-        instrument_ids: Sequence[str],
-        at: datetime,
-        *,
-        session: AsyncClientSession | None = None,
-    ) -> None:
-        """End the currently-open version of each instrument at `at`."""
-        if instrument_ids:
-            await self._collection.update_many(
-                {"instrument_id": {"$in": list(instrument_ids)}, "valid_to": None},
-                {"$set": {"valid_to": at}},
-                session=session,
-            )
 
     async def for_instrument(self, instrument_id: str) -> list[InstrumentVersionRecord]:
         return await self.find({"instrument_id": instrument_id}, sort=[("valid_from", ASCENDING)])

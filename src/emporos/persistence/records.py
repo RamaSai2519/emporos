@@ -36,16 +36,19 @@ class AccountRecord(Record):
 
 
 class InstrumentRecord(Record):
+    """The current definition of an instrument, in force since `valid_from`."""
+
     exchange: str
     token: str
     tradingsymbol: str
     name: str
     lot_size: int
     tick_size: MoneyField
+    valid_from: datetime
 
 
 class InstrumentVersionRecord(Record):
-    """Instrument metadata over `[valid_from, valid_to)`; `valid_to` is None while current."""
+    """A superseded definition, in force over `[valid_from, valid_to)`. Append-only."""
 
     instrument_id: str
     exchange: str
@@ -55,7 +58,7 @@ class InstrumentVersionRecord(Record):
     lot_size: int
     tick_size: MoneyField
     valid_from: datetime
-    valid_to: datetime | None = None
+    valid_to: datetime
 
 
 class StrategyRecord(Record):

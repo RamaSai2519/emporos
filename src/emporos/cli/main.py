@@ -10,13 +10,29 @@ from __future__ import annotations
 
 import asyncio
 
+import httpx
 import typer
 
+from emporos.core.alerts import LogAlertSink
+from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.instruments.cache import InstrumentCache
+from emporos.instruments.differ import InstrumentDiffer
+from emporos.instruments.downloader import MASTER_URL, InstrumentMasterDownloader
+from emporos.instruments.store import MongoInstrumentMasterStore
+from emporos.instruments.sync import InstrumentSyncService, SyncOutcome, SyncResult
+from emporos.instruments.validator import InstrumentMasterValidator
+from emporos.persistence.collections import Collection
 from emporos.persistence.migrations import MigrationReport, MigrationRunner, MongoSchemaStore
 from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.records import InstrumentRecord
+from emporos.persistence.repositories import InstrumentRepository, InstrumentVersionRepository
 from emporos.persistence.schema import PLATFORM_SCHEMA
+from emporos.persistence.staged_load import StagedCollectionLoader
+from emporos.persistence.transactions import TransactionRunner
+
+_DOWNLOAD_TIMEOUT_SECONDS = 120.0  # the upstream file is ~35 MB
 
 app = typer.Typer(
     name="emporos",
@@ -82,10 +98,59 @@ def db_migrate() -> None:
     typer.echo(report.summary())
 
 
+_SYNC_EXIT_CODES = {
+    SyncOutcome.APPLIED: 0,
+    SyncOutcome.NO_CHANGE: 0,
+    SyncOutcome.REJECTED: 1,
+    SyncOutcome.UNAVAILABLE: 2,
+}
+
+
+async def _sync_instruments() -> SyncResult:
+    settings = Settings.default()
+    factory = MongoClientFactory(settings)
+    try:
+        database = factory.database()
+        store = MongoInstrumentMasterStore(
+            TransactionRunner(factory.client),
+            InstrumentRepository(database),
+            InstrumentVersionRepository(database),
+            StagedCollectionLoader(
+                database, PLATFORM_SCHEMA.spec_for(Collection.INSTRUMENTS), InstrumentRecord
+            ),
+        )
+        async with httpx.AsyncClient(timeout=_DOWNLOAD_TIMEOUT_SECONDS) as client:
+            service = InstrumentSyncService(
+                source=InstrumentMasterDownloader(
+                    client, settings.instrument_master_url or MASTER_URL
+                ),
+                validator=InstrumentMasterValidator(),
+                differ=InstrumentDiffer(),
+                store=store,
+                cache=InstrumentCache(),
+                alerts=LogAlertSink(),
+                clock=SystemClock(),
+            )
+            return await service.run()
+    finally:
+        await factory.close()
+
+
 @instruments_app.command("sync")
 def instruments_sync() -> None:
-    """Download and apply the latest Angel One instrument master."""
-    _not_implemented("instruments sync", "EM-29")
+    """Download and apply the latest instrument master.
+
+    Exit code 0: applied or nothing to do. 1: rejected by validation (yesterday's data kept).
+    2: upstream unavailable (yesterday's data kept).
+    """
+    try:
+        result = asyncio.run(_sync_instruments())
+    except EmporosError as error:
+        typer.secho(f"instrument sync failed: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    colour = typer.colors.GREEN if result.succeeded else typer.colors.RED
+    typer.secho(f"instruments sync {result.outcome.value}: {result.message}", fg=colour)
+    raise typer.Exit(code=_SYNC_EXIT_CODES[result.outcome])
 
 
 def main() -> None:
