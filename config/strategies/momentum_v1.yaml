@@ -1,0 +1,39 @@
+# momentum_v1 — the reference strategy (plan.md §9): fast EMA crossing above the slow EMA with an
+# RSI confirmation, long-only, on closed 5m bars. See src/emporos/strategies/builtin/momentum_v1.py.
+#
+# Instruments are written EXCHANGE:TRADINGSYMBOL and resolved through the instrument master to the
+# id that runs (NSE:RELIANCE-EQ -> NSE:<token>); no token is ever written here.
+#
+# Rates, percentages and money amounts are integers or QUOTED strings, never YAML floats: a float
+# has already lost exactness, and the loader refuses it. Times of day are quoted "HH:MM" (IST):
+# unquoted 15:00 is a base-60 integer in YAML 1.1. No secrets belong in this file; the loader
+# rejects any credential-shaped key.
+name: momentum_v1
+enabled: true
+timeframe: 5m
+
+universe:
+  type: static
+  instruments: ["NSE:RELIANCE-EQ", "NSE:TCS-EQ"]
+
+parameters:
+  fast_ema: 20
+  slow_ema: 50
+  rsi_period: 14
+  rsi_entry_min: 50      # enter only with RSI at or above this (momentum)...
+  rsi_entry_max: 70      # ...and at or below this (not already stretched)
+
+risk:                    # limits the risk engine enforces; the strategy sizes within them
+  max_position_value: 50000   # rupees
+  max_open_positions: 3
+  stop_loss_pct: "1.0"
+  target_pct: "2.0"
+
+execution:               # how the execution engine works this strategy's orders
+  limit_buffer_bps: 5    # marketable-limit offset (Decision 8)
+  reprice_after_seconds: 30
+  max_reprices: 3
+
+session:                 # IST
+  no_new_entries_after: "15:00"
+  square_off_at: "15:15"

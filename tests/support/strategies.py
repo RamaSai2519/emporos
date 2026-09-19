@@ -6,22 +6,27 @@ from __future__ import annotations
 import copy
 import logging
 import random
-from collections.abc import AsyncIterator, Callable, Iterable
+from collections.abc import AsyncIterator, Callable, Iterable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
+from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
 from emporos.domain.order_updates import OrderUpdate
 from emporos.domain.orders import OrderSide, OrderType
+from emporos.domain.positions import Position
 from emporos.domain.signals import Signal, SignalKind
 from emporos.domain.ticks import Tick
 from emporos.instruments.cache import InstrumentCache
+from emporos.persistence.candles import CandleReader
 from emporos.persistence.errors import DuplicateRecordError
 from emporos.persistence.records import SignalRecord, StrategyRecord, StrategyRunRecord
+from emporos.session.strategy_runs import RunEnvironment, StartedRun, StrategyRunnerBuilder
 from emporos.strategies.base import Strategy
 from emporos.strategies.config import (
     ExactDecimal,
@@ -37,7 +42,9 @@ from emporos.strategies.context import StrategyContext
 from emporos.strategies.history import ClosedBarHistory
 from emporos.strategies.positions import FlatPositions, PositionView
 from emporos.strategies.registry import StrategyRegistry
-from emporos.strategies.runner import MarketEvent, ReplayClockSync, StrategyRunner
+from emporos.strategies.resolution import StrategyConfigResolver
+from emporos.strategies.runner import MarketEvent, ReplayClockSync, RunReport, StrategyRunner
+from emporos.strategies.snapshot import ConfigSnapshotter
 from tests.support.fakes import RecordingAlertSink
 
 INSTRUMENT = "NSE:1001"
@@ -380,3 +387,185 @@ class InMemorySignalStore:
 
     async def insert(self, record: SignalRecord) -> None:
         self.records.append(record)
+
+
+# --- momentum_v1 and replay helpers -----------------------------------------------------------
+
+
+def closes_to_bars(
+    closes: Iterable[str],
+    instrument_id: str = INSTRUMENT,
+    start: datetime = T0,
+    timeframe: Timeframe = Timeframe.M5,
+) -> list[Candle]:
+    """One bar per close, back to back from `start`; each opens at the previous close."""
+    bars: list[Candle] = []
+    previous: Money | None = None
+    for index, close in enumerate(closes):
+        price = Money.of(close)
+        opened = previous or price
+        bars.append(
+            Candle(
+                instrument_id=instrument_id,
+                timeframe=timeframe,
+                ts=start + timeframe.duration * index,
+                open=opened,
+                high=max(opened, price),
+                low=min(opened, price),
+                close=price,
+                volume=1000,
+            )
+        )
+        previous = price
+    return bars
+
+
+def wave_closes(count: int, period: int = 60, amplitude: int = 40, base: int = 1000) -> list[str]:
+    """A deterministic price path: a triangle wave with integer noise from a fixed-seed LCG, so
+    fast and slow averages cross repeatedly. Same arguments, same series, on any machine."""
+    state = 7
+    closes: list[str] = []
+    for index in range(count):
+        state = (state * 1103515245 + 12345) % 2**31
+        noise = (state >> 16) % 7 - 3
+        phase = index % period
+        triangle = phase if phase <= period // 2 else period - phase
+        closes.append(str(base + (triangle * amplitude * 2) // period + noise))
+    return closes
+
+
+def momentum_raw(**parameters: Any) -> dict[str, Any]:
+    """`momentum_v1` on the two test instruments, with small periods a person can check by hand."""
+    raw = raw_config(name="momentum_v1")
+    raw["parameters"] = {
+        "fast_ema": 2,
+        "slow_ema": 3,
+        "rsi_period": 2,
+        "rsi_entry_min": 50,
+        "rsi_entry_max": 100,
+    } | parameters
+    return raw
+
+
+class BookPositions:
+    """A `PositionView` a test can set. Implements the same Protocol as the portfolio's view."""
+
+    def __init__(self) -> None:
+        self._held: dict[str, Position] = {}
+
+    def set(self, instrument_id: str, quantity: int, price: str = "100") -> None:
+        self._held[instrument_id] = Position(instrument_id, quantity, Money.of(price))
+
+    def position(self, instrument_id: str) -> Position:
+        return self._held.get(instrument_id) or Position.flat(instrument_id)
+
+    def open_positions(self) -> tuple[Position, ...]:
+        return tuple(p for p in self._held.values() if not p.is_flat)
+
+
+class FillingSink:
+    """A `SignalSink` that pretends every signal fills instantly at its limit price, so a replay
+    can see a strategy exit what it entered. A test device, not a fill model."""
+
+    def __init__(self, book: BookPositions, inner: ListSignalSink) -> None:
+        self._book = book
+        self._inner = inner
+
+    async def submit(self, signal: Signal) -> None:
+        held = self._book.position(signal.instrument_id).net_quantity
+        change = signal.quantity if signal.side is OrderSide.BUY else -signal.quantity
+        self._book.set(signal.instrument_id, held + change, str(signal.limit_price.amount))
+        await self._inner.submit(signal)
+
+
+@dataclass(frozen=True)
+class ReplayResult:
+    signals: list[Signal]
+    report: RunReport
+    alerts: list[tuple[str, str]]
+
+
+async def replay(
+    config: ResolvedStrategyConfig,
+    bars: Iterable[Candle],
+    *,
+    fills: bool = False,
+    positions: BookPositions | None = None,
+    warmup: Iterable[Candle] = (),
+    warmup_clock: datetime | None = None,
+    run_id: str = RUN_ID,
+) -> ReplayResult:
+    """Run one strategy over `bars` on a replay clock. `warmup` bars are recorded into history
+    before the runner starts, as a mid-day start would; the clock moves past the last of them
+    unless `warmup_clock` says where it stands (bars beyond it are held but not yet readable)."""
+    registry = build_registry()
+    started = StartedRun(run_id, config, ConfigSnapshotter().take(config), "2026-01-05")
+    book = positions or BookPositions()
+    clock = FixedClock(T0)
+    collected = ListSignalSink()
+    sink: ListSignalSink | FillingSink = FillingSink(book, collected) if fills else collected
+    alerts = RecordingAlertSink()
+    prepared = StrategyRunnerBuilder(registry).build(
+        started, RunEnvironment(clock, ReplayClockSync(clock), sink, book, alerts)
+    )
+    warmed = list(warmup)
+    for bar in warmed:
+        prepared.history.record(bar)
+    if warmup_clock is not None:
+        clock.set(warmup_clock)
+    elif warmed:
+        clock.set(max(bar.closes_at for bar in warmed))
+    report = await prepared.runner.run(ListFeed(bars))
+    return ReplayResult(collected.signals, report, alerts.alerts)
+
+
+def resolved(raw: dict[str, Any]) -> ResolvedStrategyConfig:
+    return StrategyConfigResolver(build_registry(), INSTRUMENT_MASTER).resolve(raw)
+
+
+class RepositoryBarFeed:
+    """A market feed that reads closed bars through `CandleReader` (the `CandleRepository`
+    Protocol) and yields them in time order, instruments interleaved. It can only hand out what
+    the repository holds for the requested, already-finished range: an iterator over closed bars,
+    not a random-access frame (plan.md §10). Phase 10's DataFeed will grow from this."""
+
+    def __init__(
+        self,
+        reader: CandleReader,
+        instrument_ids: Sequence[str],
+        timeframe: Timeframe,
+        start: datetime,
+        end: datetime,
+    ) -> None:
+        self._reader = reader
+        self._instrument_ids = tuple(instrument_ids)
+        self._timeframe = timeframe
+        self._start = start
+        self._end = end
+
+    def __aiter__(self) -> AsyncIterator[MarketEvent]:
+        return self._iterate()
+
+    async def _iterate(self) -> AsyncIterator[MarketEvent]:
+        bars = [
+            bar
+            for instrument_id in self._instrument_ids
+            for bar in await self._reader.get_range(
+                instrument_id, self._timeframe, self._start, self._end
+            )
+        ]
+        rank = {instrument_id: index for index, instrument_id in enumerate(self._instrument_ids)}
+        for bar in sorted(bars, key=lambda b: (b.ts, rank[b.instrument_id])):
+            yield bar
+
+
+def session_bars(
+    closes: Sequence[str], instrument_id: str, first_day: datetime = T0, per_day: int = 75
+) -> list[Candle]:
+    """`closes` laid out as consecutive 5m sessions: `per_day` bars from 09:15 IST, then the
+    next weekday-agnostic day (calendar days; the strategy does not care about weekends)."""
+    bars: list[Candle] = []
+    for day, offset in enumerate(range(0, len(closes), per_day)):
+        chunk = closes[offset : offset + per_day]
+        bars += closes_to_bars(chunk, instrument_id, first_day + timedelta(days=day))
+    return bars

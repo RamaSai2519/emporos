@@ -25,3 +25,12 @@ def test_the_registry_is_built_from_whatever_the_package_holds() -> None:
 
 def test_each_call_builds_a_fresh_registry() -> None:
     assert build_registry(pack) is not build_registry(pack)
+
+
+def test_the_builtin_registry_discovers_the_reference_strategy_unprompted() -> None:
+    from emporos.strategies.builtin.momentum_v1 import MomentumV1
+
+    registry = build_registry()
+
+    assert "momentum_v1" in registry.names()
+    assert registry.get("momentum_v1") is MomentumV1
