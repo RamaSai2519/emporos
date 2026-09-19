@@ -18,6 +18,7 @@ from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
+from emporos.domain.ticks import RawTick
 from emporos.instruments.differ import InstrumentDiff
 from emporos.instruments.downloader import DownloadedMaster
 from emporos.persistence.migrations import IndexInfo
@@ -319,3 +320,16 @@ class RecordingSubscriptionTransport:
         self.calls.append((kind, tuple(i.instrument_id for i in instruments)))
         if self.fail_with is not None:
             raise self.fail_with
+
+
+def raw_tick(
+    token: str = "3045",
+    *,
+    at: datetime,
+    ltp: str = "996.20",
+    sequence: int = 1,
+    volume: int | None = None,
+    exchange: Exchange = Exchange.NSE,
+) -> RawTick:
+    """A `RawTick` stamped at `at` (must be UTC)."""
+    return RawTick(exchange, token, at, Money.of(ltp), sequence, volume)
