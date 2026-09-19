@@ -171,6 +171,10 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("ts", expire_after=30 * _DAY),
         ),
         _spec(Collection.MARKET_CALENDAR, IndexSpec.on("date", unique=True)),
+        _spec(
+            Collection.HISTORY_COVERAGE,
+            IndexSpec.on("instrument_id", "timeframe", "day", unique=True),
+        ),
         _spec(Collection.KILL_SWITCH),
         _spec(
             Collection.COMMANDS,

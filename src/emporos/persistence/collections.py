@@ -26,6 +26,7 @@ class Collection(StrEnum):
     BACKTEST_TRADES = "backtest_trades"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"
+    HISTORY_COVERAGE = "history_coverage"
     KILL_SWITCH = "kill_switch"
     COMMANDS = "commands"
     COMMAND_RESULTS = "command_results"

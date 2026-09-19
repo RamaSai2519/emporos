@@ -8,7 +8,7 @@ import json
 import math
 from collections import deque
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 
@@ -16,6 +16,7 @@ from emporos.broker.angelone.session import Session
 from emporos.broker.angelone.transport import RestRequest
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
+from emporos.domain.coverage import DayCoverage
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
 from emporos.domain.ticks import RawTick, Tick
@@ -363,3 +364,25 @@ class CandleCollector:
             for c in self.candles
             if c.timeframe is timeframe and instrument_id in (None, c.instrument_id)
         ]
+
+
+class InMemoryCoverageStore:
+    """`CoverageStore` double keyed by (instrument, timeframe, day)."""
+
+    def __init__(self) -> None:
+        self._days: dict[tuple[str, Timeframe, date], DayCoverage] = {}
+        self.saves = 0
+
+    async def get_days(
+        self, instrument_id: str, timeframe: Timeframe, first: date, last: date
+    ) -> dict[date, DayCoverage]:
+        return {
+            d: c
+            for (inst, tf, d), c in self._days.items()
+            if inst == instrument_id and tf == timeframe and first <= d <= last
+        }
+
+    async def save(self, coverages: list[DayCoverage]) -> None:
+        self.saves += 1
+        for c in coverages:
+            self._days[(c.instrument_id, c.timeframe, c.day)] = c

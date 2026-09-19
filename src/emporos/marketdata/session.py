@@ -9,7 +9,7 @@ real one (from `market_calendar`), the default treats every weekday as a trading
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Protocol
 
 from emporos.core.clock import IST
@@ -47,10 +47,11 @@ class SessionWindow:
         )
 
     def open_at(self, day: date) -> datetime:
-        return datetime.combine(day, self.open_time, tzinfo=IST)
+        """The session open on the IST date `day`, as UTC (all timestamps in emporos are UTC)."""
+        return datetime.combine(day, self.open_time, tzinfo=IST).astimezone(UTC)
 
     def close_at(self, day: date) -> datetime:
-        return datetime.combine(day, self.close_time, tzinfo=IST)
+        return datetime.combine(day, self.close_time, tzinfo=IST).astimezone(UTC)
 
     def next_day(self, day: date) -> date:
         following = day + timedelta(days=1)

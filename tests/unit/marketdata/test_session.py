@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -57,5 +57,6 @@ def test_holidays_come_from_the_injected_calendar() -> None:
 def test_open_close_and_next_trading_day_helpers() -> None:
     window = SessionWindow()
     assert window.open_at(FRIDAY) == ist(FRIDAY, 9, 15)
+    assert window.open_at(FRIDAY).utcoffset() == timedelta(0)  # UTC, never IST-zoned
     assert window.close_at(FRIDAY) == ist(FRIDAY, 15, 30)
     assert window.next_day(FRIDAY) == date(2026, 9, 21)  # skips the weekend

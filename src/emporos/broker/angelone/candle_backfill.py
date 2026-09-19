@@ -16,22 +16,37 @@ from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Instrument
 from emporos.domain.money import Money
 
+_INTERVAL = {
+    Timeframe.M1: CandleInterval.ONE_MINUTE,
+    Timeframe.M5: CandleInterval.FIVE_MINUTE,
+    Timeframe.M15: CandleInterval.FIFTEEN_MINUTE,
+    Timeframe.H1: CandleInterval.ONE_HOUR,
+    Timeframe.D1: CandleInterval.ONE_DAY,
+}
+
 
 class AngelOneCandleBackfill:
+    """Serves both reconnect recovery (`fetch_minutes`) and historical backfill (`fetch`)."""
+
     def __init__(self, api: AngelOneApi) -> None:
         self._api = api
 
     async def fetch_minutes(
         self, instrument: Instrument, start: datetime, end: datetime
     ) -> list[Candle]:
+        return await self.fetch(instrument, Timeframe.M1, start, end)
+
+    async def fetch(
+        self, instrument: Instrument, timeframe: Timeframe, start: datetime, end: datetime
+    ) -> list[Candle]:
         bars = await self._api.candles(
-            instrument.exchange.value, instrument.token, CandleInterval.ONE_MINUTE, start, end
+            instrument.exchange.value, instrument.token, _INTERVAL[timeframe], start, end
         )
         try:
             return [
                 Candle(
                     instrument_id=instrument.instrument_id,
-                    timeframe=Timeframe.M1,
+                    timeframe=timeframe,
                     ts=bar.ts,
                     open=Money(bar.open),
                     high=Money(bar.high),
