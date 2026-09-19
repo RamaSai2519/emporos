@@ -51,3 +51,18 @@ def test_low_above_high_is_rejected() -> None:
 def test_open_and_close_must_lie_within_the_range(field: str) -> None:
     with pytest.raises(ValueError, match="within"):
         _candle(**{field: Money.of("150")})
+
+
+def test_a_bar_closes_one_timeframe_after_it_opens() -> None:
+    assert _candle(timeframe=Timeframe.M5).closes_at == TS + timedelta(minutes=5)
+    assert _candle(timeframe=Timeframe.H1).closes_at == TS + timedelta(hours=1)
+
+
+def test_every_timeframe_has_a_duration() -> None:
+    assert [tf.duration for tf in Timeframe] == [
+        timedelta(minutes=1),
+        timedelta(minutes=5),
+        timedelta(minutes=15),
+        timedelta(hours=1),
+        timedelta(days=1),
+    ]

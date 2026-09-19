@@ -129,6 +129,27 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "a strategy cannot reach a broker, storage, or any engine that acts on its behalf"
+type = "forbidden"
+source_modules = ["emporos.strategies"]
+# `broker` as a whole, not just the concrete adapters: even the neutral `Broker` ABC and its
+# request DTOs are out of reach, so "a strategy cannot place an order" is a fact about imports.
+forbidden_modules = [
+    "emporos.broker", "emporos.persistence", "emporos.marketdata", "emporos.history",
+    "emporos.instruments", "emporos.execution", "emporos.risk", "emporos.portfolio",
+    "emporos.signals", "emporos.session", "emporos.backtest", "emporos.control",
+    "emporos.observability", "emporos.api", "emporos.cli",
+]
+
+[[tool.importlinter.contracts]]
+name = "strategies do no I/O: no file, network, database or cloud libraries"
+type = "forbidden"
+source_modules = ["emporos.strategies"]
+forbidden_modules = [
+    "yaml", "pymongo", "httpx", "boto3", "websockets", "pyarrow", "fastapi", "uvicorn", "typer",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]
