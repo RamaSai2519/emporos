@@ -1,0 +1,29 @@
+{
+  "name": "profile_invalid_token",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": null,
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/user/v1/getProfile"
+  },
+  "response": {
+    "body": {
+      "data": "",
+      "errorCode": "AG8001",
+      "message": "Invalid Token",
+      "success": false
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

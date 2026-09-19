@@ -1,0 +1,17 @@
+{
+  "name": "http_502_html",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": null,
+    "body_text": "<html><body>502 Bad Gateway</body></html>",
+    "status": 502
+  },
+  "why_synthetic": "a gateway outage cannot be induced on demand"
+}

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a131ea473d3909d7930a34664eb566ce34f8e0e2cfea00bb042fd53f7601c2ca"
+            "sha256": "caeda3bba2067e80168e357f66be52ed32db105d63d4c1bc11ca1affcc51161a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1965,6 +1965,14 @@
             "markers": "python_version >= '3.9'",
             "version": "==30.4.4"
         },
+        "logzero": {
+            "hashes": [
+                "sha256:23eb1f717a2736f9ab91ca0d43160fd2c996ad49ae6bad34652d47aba908769d",
+                "sha256:7f73ddd3ae393457236f081ffebd044a3aa2e423a47ae6ddb5179ab90d0ad082"
+            ],
+            "index": "pypi",
+            "version": "==1.7.0"
+        },
         "markdown-it-py": {
             "hashes": [
                 "sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49",
@@ -2939,6 +2947,14 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==1.17.0"
         },
+        "smartapi-python": {
+            "hashes": [
+                "sha256:32991f413134f773d29a09762660d8a93026c4820bb8881a68ca48be9e45ff7d",
+                "sha256:7d03f35c0036149a358bd52bee11f7e17e5c0ae3fa3686bab35849761347a801"
+            ],
+            "index": "pypi",
+            "version": "==1.5.5"
+        },
         "sniffio": {
             "hashes": [
                 "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2",
@@ -3018,6 +3034,15 @@
             ],
             "markers": "python_version >= '3.10'",
             "version": "==0.6.1"
+        },
+        "websocket-client": {
+            "hashes": [
+                "sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526",
+                "sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.8'",
+            "version": "==1.8.0"
         },
         "werkzeug": {
             "hashes": [

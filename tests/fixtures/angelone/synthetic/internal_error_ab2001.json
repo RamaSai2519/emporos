@@ -1,0 +1,22 @@
+{
+  "name": "internal_error_ab2001",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": {
+      "data": null,
+      "errorcode": "AB2001",
+      "message": "Internal error, please try after sometime",
+      "status": false
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "documented (not yet observed) transient broker-side fault"
+}

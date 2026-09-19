@@ -80,7 +80,7 @@ class EnvelopeRule:
 
 
 DEFAULT_ENVELOPE_RULES: tuple[EnvelopeRule, ...] = (
-    # observed: text only, no code
+    # observed live: HTTP 403 + plain text (login burst); the defect reported for getCandleData
     EnvelopeRule(_rate_limited, fragments=("exceeding access rate",)),
     # observed "Token missing" / "Invalid Token" (no code); documented AG8001-3, AB8050/1
     EnvelopeRule(
@@ -166,7 +166,11 @@ class ErrorClassifier:
         if status_code == 401:
             return BrokerSessionExpiredError(f"{endpoint.name}: HTTP 401", http_status=status_code)
         if 400 <= status_code < 500:
-            detail = f" ({envelope.message})" if envelope and envelope.message else ""
+            detail = (
+                f" ({envelope.message})"
+                if envelope and envelope.message and not envelope.from_text
+                else ""
+            )
             return endpoint.rejection_error(
                 f"{endpoint.name}: HTTP {status_code}{detail}",
                 code=envelope.error_code or None if envelope else None,
@@ -189,8 +193,9 @@ class ErrorClassifier:
                 code=envelope.error_code or None,
                 http_status=status_code,
             )
+        detail = "" if envelope.from_text else f" ({envelope.message})"
         return BrokerProtocolError(
-            f"{endpoint.name}: envelope has no status ({envelope.message})",
+            f"{endpoint.name}: envelope has no status{detail}",
             code=envelope.error_code or None,
             http_status=status_code,
         )

@@ -1,0 +1,42 @@
+{
+  "name": "ltp",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "exchange": "NSE",
+      "symboltoken": "3045",
+      "tradingsymbol": "SBIN-EQ"
+    },
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/order/v1/getLtpData"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "close": 988.7,
+        "exchange": "NSE",
+        "high": 996.2,
+        "low": 985.1,
+        "ltp": 996.2,
+        "open": 992.0,
+        "symboltoken": "3045",
+        "tradingsymbol": "SBIN-EQ"
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

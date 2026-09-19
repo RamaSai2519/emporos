@@ -100,6 +100,45 @@ def test_transport_failures(
             BrokerSessionExpiredError,
             C.RETRYABLE,
         ),
+        # recorded live (gateway dialect): success:false + camelCase errorCode
+        (
+            200,
+            b'{"success":false,"errorCode":"AG8001","message":"Invalid Token","data":""}',
+            Endpoints.PROFILE,
+            BrokerSessionExpiredError,
+            C.RETRYABLE,
+        ),
+        (
+            200,
+            b'{"success":false,"errorCode":"AG8003","message":"","data":""}',  # code alone suffices
+            Endpoints.PROFILE,
+            BrokerSessionExpiredError,
+            C.RETRYABLE,
+        ),
+        # recorded live: the rate-limit denial is HTTP 403 + plain text (not 429, not JSON)
+        (
+            403,
+            b"Access denied because of exceeding access rate",
+            Endpoints.CANDLES,
+            BrokerRateLimitedError,
+            C.RETRYABLE,
+        ),
+        (
+            403,
+            b"Access denied because of exceeding access rate",
+            Endpoints.LOGIN,
+            BrokerRateLimitedError,
+            C.AMBIGUOUS,
+        ),
+        (
+            200,
+            b"Access denied because of exceeding access rate",
+            Endpoints.LTP,
+            BrokerRateLimitedError,
+            C.RETRYABLE,
+        ),
+        (403, b"Forbidden", Endpoints.PROFILE, BrokerRejectedError, C.DEFINITIVE),
+        (403, b"Forbidden", Endpoints.LOGIN, BrokerAuthError, C.DEFINITIVE),
         # the rate-limit defect: retryable on reads, ambiguous on anything that mutates
         (
             200,
@@ -176,6 +215,15 @@ def test_error_messages_never_echo_the_response_body() -> None:
     failure = CLASSIFIER.for_response(500, DECODER.decode(body), Endpoints.PROFILE)
     assert failure is not None
     assert "secret-body-content-xyz" not in str(failure)
+
+
+def test_plain_text_bodies_are_never_quoted_unless_a_rule_recognised_them() -> None:
+    for status in (200, 403):
+        failure = CLASSIFIER.for_response(
+            status, DECODER.decode(b"secret-text-body-xyz"), Endpoints.PROFILE
+        )
+        assert failure is not None
+        assert "secret-text-body-xyz" not in str(failure)
 
 
 def test_every_endpoint_is_classified_the_same_shape() -> None:

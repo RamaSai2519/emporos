@@ -1,0 +1,28 @@
+{
+  "name": "profile_missing_token",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": null,
+    "header_names": [
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/user/v1/getProfile"
+  },
+  "response": {
+    "body": {
+      "data": "",
+      "errorCode": "AG8003",
+      "message": "Token missing",
+      "success": false
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

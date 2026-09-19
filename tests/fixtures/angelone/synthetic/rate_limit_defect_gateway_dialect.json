@@ -1,0 +1,22 @@
+{
+  "name": "rate_limit_defect_gateway_dialect",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": {
+      "data": "",
+      "errorCode": "",
+      "message": "Access denied because of exceeding access rate",
+      "success": false
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "same defect, in the gateway envelope dialect seen on other gateway rejections"
+}

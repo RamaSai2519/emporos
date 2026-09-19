@@ -1,0 +1,25 @@
+{
+  "name": "login_success_missing_tokens",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "jwtToken": "scrubbed-jwt-token",
+        "state": null
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "a successful login without tokens has never been observed; guards the parser"
+}

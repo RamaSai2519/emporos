@@ -1,0 +1,53 @@
+{
+  "name": "profile",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": null,
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/user/v1/getProfile"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "broker": "",
+        "clientcode": "A0000000",
+        "email": "test@example.invalid",
+        "exchanges": [
+          "nse_fo",
+          "nse_cm",
+          "cde_fo",
+          "ncx_fo",
+          "bse_fo",
+          "bse_cm",
+          "mcx_fo"
+        ],
+        "lastlogintime": "2026-01-01 00:00:00",
+        "mobileno": "0000000000",
+        "name": "Test User",
+        "products": [
+          "MARGIN",
+          "MIS",
+          "NRML",
+          "CNC",
+          "CO",
+          "BO"
+        ]
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

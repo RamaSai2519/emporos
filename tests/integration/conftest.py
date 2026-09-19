@@ -8,6 +8,7 @@ the production database.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 from collections.abc import AsyncIterator, Iterator, Mapping
 from typing import Any
@@ -16,6 +17,10 @@ import pytest
 from moto.server import ThreadedMotoServer
 from pymongo.asynchronous.database import AsyncDatabase
 
+from emporos.broker.angelone.factory import AngelOneStack, AngelOneStackFactory
+from emporos.broker.backoff import RandomJitter
+from emporos.broker.errors import BrokerError
+from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.persistence.mongo import MongoClientFactory
 from emporos.persistence.object_store import S3ClientFactory, S3ObjectStore
@@ -48,6 +53,25 @@ def angelone_settings() -> Settings:
     if not all(getattr(settings, name) for name in ANGELONE_SETTINGS):
         pytest.skip("ANGELONE_* credentials not set")
     return settings
+
+
+LOGIN_COOLDOWN_SECONDS = 1.5  # Angel One allows one login per second across the whole account
+
+
+@pytest.fixture
+async def angelone_stack(angelone_settings: Settings) -> AsyncIterator[AngelOneStack]:
+    """A live, wired Angel One stack. Each test builds its own rate limiter, so the teardown
+    pauses to keep consecutive tests' logins outside the API's 1-per-second login window."""
+    stack = AngelOneStackFactory(
+        angelone_settings, SystemClock(), AsyncioSleeper(), RandomJitter()
+    ).build()
+    try:
+        yield stack
+    finally:
+        with contextlib.suppress(BrokerError):
+            await stack.sessions.logout()
+        await stack.aclose()
+        await asyncio.sleep(LOGIN_COOLDOWN_SECONDS)
 
 
 @pytest.fixture

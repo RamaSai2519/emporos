@@ -1,0 +1,76 @@
+{
+  "name": "candles_1m",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "exchange": "NSE",
+      "fromdate": "2026-09-18 09:15",
+      "interval": "ONE_MINUTE",
+      "symboltoken": "3045",
+      "todate": "2026-09-18 09:19"
+    },
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": {
+      "data": [
+        [
+          "2026-09-18T09:15:00+05:30",
+          992.0,
+          992.0,
+          989.0,
+          989.6,
+          35003
+        ],
+        [
+          "2026-09-18T09:16:00+05:30",
+          989.6,
+          990.1,
+          988.2,
+          989.3,
+          28898
+        ],
+        [
+          "2026-09-18T09:17:00+05:30",
+          989.1,
+          989.7,
+          988.8,
+          989.4,
+          26753
+        ],
+        [
+          "2026-09-18T09:18:00+05:30",
+          989.0,
+          989.4,
+          988.2,
+          988.4,
+          24683
+        ],
+        [
+          "2026-09-18T09:19:00+05:30",
+          988.3,
+          988.5,
+          987.3,
+          987.5,
+          30912
+        ]
+      ],
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

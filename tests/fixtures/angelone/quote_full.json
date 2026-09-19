@@ -1,0 +1,121 @@
+{
+  "name": "quote_full",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "exchangeTokens": {
+        "NSE": [
+          "3045"
+        ]
+      },
+      "mode": "FULL"
+    },
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/market/v1/quote/"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "fetched": [
+          {
+            "52WeekHigh": 1234.7,
+            "52WeekLow": 831.0,
+            "avgPrice": 991.89,
+            "close": 988.7,
+            "depth": {
+              "buy": [
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                }
+              ],
+              "sell": [
+                {
+                  "orders": 1,
+                  "price": 996.2,
+                  "quantity": 408
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                },
+                {
+                  "orders": 0,
+                  "price": 0.0,
+                  "quantity": 0
+                }
+              ]
+            },
+            "exchFeedTime": "19-Sep-2026 06:55:07",
+            "exchTradeTime": "18-Sep-2026 15:59:57",
+            "exchange": "NSE",
+            "high": 996.2,
+            "lastTradeQty": 1,
+            "low": 985.1,
+            "lowerCircuit": 896.6,
+            "ltp": 996.2,
+            "netChange": 7.5,
+            "open": 992.0,
+            "opnInterest": 225074250,
+            "percentChange": 0.76,
+            "referenceLimitPrice": 992.6,
+            "symbolToken": "3045",
+            "totBuyQuan": 0,
+            "totSellQuan": 408,
+            "tradeVolume": 5699456,
+            "tradingSymbol": "SBIN-EQ",
+            "upperCircuit": 1095.8
+          }
+        ],
+        "unfetched": []
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "rate_limit_defect",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": {
+      "data": null,
+      "errorcode": "",
+      "message": "Access denied because of exceeding access rate",
+      "status": false
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "the upstream defect (plan.md \u00a71.4) cannot be induced on demand; text as reported on the SmartAPI forum"
+}

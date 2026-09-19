@@ -40,6 +40,11 @@ pip-audit = "==2.7.3"
 types-pyyaml = "==6.0.12.20240917"
 boto3-stubs = {extras = ["s3"], version = "==1.35.36"}
 moto = {extras = ["s3", "server"], version = "==5.0.16"}
+# Dev-only contract-test ORACLE (Decision 4): never imported by production code (import-linter).
+smartapi-python = "==1.5.5"
+# The SDK imports these at runtime but does not declare them.
+logzero = "==1.7.0"
+websocket-client = "==1.8.0"
 
 [scripts]
 lint = "ruff check src tests scripts"

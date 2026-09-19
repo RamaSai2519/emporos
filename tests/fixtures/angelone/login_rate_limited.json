@@ -1,0 +1,27 @@
+{
+  "name": "login_rate_limited",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "clientcode": "A0000000",
+      "password": "0000",
+      "totp": "000000"
+    },
+    "header_names": [
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/auth/angelbroking/user/v1/loginByPassword"
+  },
+  "response": {
+    "body": null,
+    "body_text": "Access denied because of exceeding access rate",
+    "status": 403
+  }
+}

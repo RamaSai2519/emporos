@@ -1,0 +1,44 @@
+{
+  "name": "funds",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": null,
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/user/v1/getRMS"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "availablecash": "100000.00",
+        "availableintradaypayin": "0.00",
+        "availablelimitmargin": "0.00",
+        "collateral": "0.00",
+        "m2mrealized": "0.00",
+        "m2munrealized": "0.00",
+        "net": "100000.00",
+        "utiliseddebits": "0.00",
+        "utilisedexposure": null,
+        "utilisedholdingsales": null,
+        "utilisedoptionpremium": null,
+        "utilisedpayout": "0.00",
+        "utilisedspan": null,
+        "utilisedturnover": null
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

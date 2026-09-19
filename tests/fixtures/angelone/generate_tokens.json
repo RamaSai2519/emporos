@@ -1,0 +1,36 @@
+{
+  "name": "generate_tokens",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "refreshToken": "scrubbed-refresh-token"
+    },
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/auth/angelbroking/jwt/v1/generateTokens"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "feedToken": "scrubbed-feed-token",
+        "jwtToken": "scrubbed-jwt-token",
+        "refreshToken": "scrubbed-refresh-token",
+        "state": null
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "login_bad_totp",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "clientcode": "A0000000",
+      "password": "0000",
+      "totp": "000000"
+    },
+    "header_names": [
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/auth/angelbroking/user/v1/loginByPassword"
+  },
+  "response": {
+    "body": {
+      "data": null,
+      "errorcode": "AB1050",
+      "message": "Invalid totp and client combination",
+      "status": false
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

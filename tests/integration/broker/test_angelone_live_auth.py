@@ -9,32 +9,17 @@ is logged in as the same client would invalidate the worker's session.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-
 import pytest
 
 from emporos.broker.angelone.endpoints import Endpoints
-from emporos.broker.angelone.factory import AngelOneStack, AngelOneStackFactory
+from emporos.broker.angelone.factory import AngelOneStack
 from emporos.broker.angelone.transport import RestRequest
-from emporos.broker.backoff import RandomJitter
-from emporos.core.clock import AsyncioSleeper, SystemClock
-from emporos.core.config import Settings
 
 pytestmark = pytest.mark.integration
 
 
-@pytest.fixture
-async def stack(angelone_settings: Settings) -> AsyncIterator[AngelOneStack]:
-    built = AngelOneStackFactory(
-        angelone_settings, SystemClock(), AsyncioSleeper(), RandomJitter()
-    ).build()
-    try:
-        yield built
-    finally:
-        await built.aclose()
-
-
-async def test_totp_login_renewal_and_authenticated_calls(stack: AngelOneStack) -> None:
+async def test_totp_login_renewal_and_authenticated_calls(angelone_stack: AngelOneStack) -> None:
+    stack = angelone_stack
     first = await stack.sessions.session()
     has_all_tokens = bool(first.jwt and first.refresh_token and first.feed_token)
     assert has_all_tokens

@@ -1,0 +1,30 @@
+{
+  "name": "candles_bad_interval",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": {
+      "exchange": "NSE",
+      "fromdate": "2026-01-05 09:15",
+      "interval": "BOGUS",
+      "symboltoken": "3045",
+      "todate": "2026-01-05 09:19"
+    },
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/historical/v1/getCandleData"
+  },
+  "response": {
+    "body": null,
+    "body_text": "",
+    "status": 400
+  }
+}
