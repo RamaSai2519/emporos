@@ -221,6 +221,11 @@ class LiveScenario:
 
         await self._call("profile", RestRequest(Endpoints.PROFILE, bearer=jwt))
         await self._call("funds", RestRequest(Endpoints.FUNDS, bearer=jwt))
+        # read-only account books (no orders are placed): recorded as the EMPTY-account shapes
+        await self._call("order_book_empty", RestRequest(Endpoints.ORDER_BOOK, bearer=jwt))
+        await self._call("trade_book_empty", RestRequest(Endpoints.TRADE_BOOK, bearer=jwt))
+        await self._call("positions_empty", RestRequest(Endpoints.POSITIONS, bearer=jwt))
+        await self._call("holdings_empty", RestRequest(Endpoints.HOLDINGS, bearer=jwt))
         await self._call("ltp", RestRequest(Endpoints.LTP, bearer=jwt, body=self._ltp_body()))
         await self._call(
             "quote_full", RestRequest(Endpoints.QUOTE, bearer=jwt, body=self._quote_body())

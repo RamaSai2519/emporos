@@ -92,6 +92,14 @@ REFUSALS: dict[str, type[BrokerError]] = {
 }
 AUTH_RECORDINGS = ("login_success", "generate_tokens", "logout")
 
+# The account books of the (empty) dev account, recorded live: `null` means "nothing", not "broken".
+EMPTY_CALLS: dict[str, Callable[[AngelOneApi], Awaitable[object]]] = {
+    "order_book_empty": lambda api: api.order_book(),
+    "trade_book_empty": lambda api: api.trade_book(),
+    "positions_empty": lambda api: api.positions(),
+    "holdings_empty": lambda api: api.holdings(),
+}
+
 
 def endpoint_for(recording: Recording) -> Endpoint:
     catalog = [v for v in vars(Endpoints).values() if isinstance(v, Endpoint)]
@@ -108,7 +116,7 @@ def sent_headers(request: httpx.Request) -> set[str]:
 
 
 def test_every_recorded_fixture_is_covered_by_a_contract_case() -> None:
-    covered = set(TYPED_CALLS) | set(REFUSALS) | set(AUTH_RECORDINGS)
+    covered = set(TYPED_CALLS) | set(REFUSALS) | set(AUTH_RECORDINGS) | set(EMPTY_CALLS)
     assert covered == set(RECORDED), "add a contract case for every new fixture"
 
 
@@ -131,6 +139,18 @@ async def test_the_transport_parses_every_recorded_success(name: str) -> None:
     assert (request.method, request.url.path) == (recording.method, recording.path)
     body = json.loads(request.content) if request.content else None
     assert body == recording.request_body  # we send exactly what the live API was sent
+    assert sent_headers(request) == set(recording.header_names)
+
+
+@pytest.mark.parametrize("name", sorted(EMPTY_CALLS))
+async def test_the_recorded_empty_account_books_parse_to_empty_lists(name: str) -> None:
+    recording = RECORDED[name]
+    server, api = api_for(recording)
+
+    assert await EMPTY_CALLS[name](api) == []
+
+    (request,) = server.requests
+    assert (request.method, request.url.path) == (recording.method, recording.path)
     assert sent_headers(request) == set(recording.header_names)
 
 

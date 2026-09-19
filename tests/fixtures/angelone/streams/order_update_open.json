@@ -1,0 +1,29 @@
+{
+  "message": {
+    "error-message": "",
+    "order-status": "AB05",
+    "orderData": {
+      "exchange": "NSE",
+      "filledshares": "0",
+      "orderid": "201020000000080",
+      "orderstatus": "open",
+      "ordertag": "ABC123",
+      "ordertype": "LIMIT",
+      "price": "996.2",
+      "producttype": "INTRADAY",
+      "quantity": "10",
+      "status": "open",
+      "symboltoken": "3045",
+      "tradingsymbol": "SBIN-EQ",
+      "transactiontype": "BUY",
+      "triggerprice": "0",
+      "updatetime": "18-Sep-2026 10:00:05",
+      "variety": "NORMAL"
+    },
+    "status-code": "200",
+    "user-id": "A0000000"
+  },
+  "name": "order_update_open",
+  "provenance": "synthetic",
+  "why_synthetic": "no real order update has been observed; payload per plan.md \u00a71.6"
+}

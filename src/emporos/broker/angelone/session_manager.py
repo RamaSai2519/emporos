@@ -53,6 +53,11 @@ class SessionManager:
                 _LOG.info("session expired at midnight; logging in again")
             return await self._login()
 
+    async def authenticate(self) -> Session:
+        """Log in afresh, replacing any current session (single-flight under the same lock)."""
+        async with self._lock:
+            return await self._login()
+
     async def renew(self, rejected: Session) -> Session:
         async with self._lock:
             current = self._store.load()

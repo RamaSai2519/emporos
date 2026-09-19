@@ -99,3 +99,73 @@ class CandleBar(_Response):
     low: Decimal
     close: Decimal
     volume: int
+
+
+# --- orders and account ---------------------------------------------------------------------
+# Empty-account shapes were recorded LIVE (order book / trade book / positions answer
+# `data: null`, holdings `[]`). The POPULATED shapes below follow SmartAPI's documentation and
+# have not been observed (the dev key has no orders): every field except the identifying ones is
+# optional, so an unexpected omission degrades a value instead of failing the whole listing.
+
+
+def _blank_str_to_none(value: Any) -> Any:
+    return None if isinstance(value, str) and not value.strip() else value
+
+
+OptionalText = Annotated[str | None, BeforeValidator(_blank_str_to_none)]
+OptionalInt = Annotated[int | None, BeforeValidator(_blank_str_to_none)]
+DecimalOrNone = Annotated[Decimal | None, BeforeValidator(_blank_str_to_none)]
+
+
+class PlaceOrderResponse(_Response):
+    order_id: str = Field(alias="orderid")
+    unique_order_id: OptionalText = Field(default=None, alias="uniqueorderid")
+    script: OptionalText = None
+
+
+class OrderBookEntry(_Response):
+    order_id: str = Field(alias="orderid")
+    exchange: str
+    symbol_token: str = Field(alias="symboltoken")
+    transaction_type: str = Field(alias="transactiontype")
+    order_type: OptionalText = Field(default=None, alias="ordertype")
+    quantity: int
+    filled_shares: OptionalInt = Field(default=None, alias="filledshares")
+    price: DecimalOrNone = None
+    trigger_price: DecimalOrNone = Field(default=None, alias="triggerprice")
+    average_price: DecimalOrNone = Field(default=None, alias="averageprice")
+    order_tag: OptionalText = Field(default=None, alias="ordertag")
+    order_status: OptionalText = Field(default=None, alias="orderstatus")
+    status: OptionalText = None
+    text: OptionalText = None
+    update_time: OptionalText = Field(default=None, alias="updatetime")
+
+
+class TradeBookEntry(_Response):
+    order_id: str = Field(alias="orderid")
+    fill_id: str = Field(alias="fillid")
+    exchange: str
+    symbol_token: str = Field(alias="symboltoken")
+    transaction_type: str = Field(alias="transactiontype")
+    fill_price: Decimal = Field(alias="fillprice")
+    fill_size: int = Field(alias="fillsize")
+    fill_time: OptionalText = Field(default=None, alias="filltime")
+
+
+class PositionEntry(_Response):
+    exchange: str
+    symbol_token: str = Field(alias="symboltoken")
+    net_quantity: int = Field(alias="netqty")
+    average_net_price: DecimalOrNone = Field(default=None, alias="avgnetprice")
+    net_price: DecimalOrNone = Field(default=None, alias="netprice")
+    ltp: DecimalOrNone = None
+    realised: DecimalOrNone = None
+    unrealised: DecimalOrNone = None
+
+
+class HoldingEntry(_Response):
+    exchange: str
+    symbol_token: str = Field(alias="symboltoken")
+    quantity: int
+    average_price: Decimal = Field(alias="averageprice")
+    ltp: DecimalOrNone = None

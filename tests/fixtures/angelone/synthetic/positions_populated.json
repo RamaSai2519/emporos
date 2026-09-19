@@ -1,0 +1,35 @@
+{
+  "name": "positions_populated",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/order/v1/getPosition"
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "avgnetprice": "996.20",
+          "exchange": "NSE",
+          "ltp": "997.10",
+          "netprice": "996.20",
+          "netqty": "5",
+          "producttype": "INTRADAY",
+          "realised": "12.50",
+          "symboltoken": "3045",
+          "tradingsymbol": "SBIN-EQ",
+          "unrealised": "4.50"
+        }
+      ],
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "the dev key has no static IP and no order is ever attempted from it; populated books follow SmartAPI's documentation"
+}

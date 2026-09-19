@@ -93,6 +93,12 @@ class FrameHandler(Protocol):
     def on_frame(self, frame: bytes) -> None: ...
 
 
+class TextHandler(Protocol):
+    """Receives text messages other than the heartbeat reply (the order stream's updates)."""
+
+    def on_text(self, text: str) -> None: ...
+
+
 class ConnectionListener(Protocol):
     async def on_connected(self) -> None:
         """Called after every successful (re)connect, with the socket ready for subscriptions."""
@@ -125,7 +131,9 @@ class MarketFeedClient:
         heartbeat_interval: float = HEARTBEAT_INTERVAL_SECONDS,
         pong_timeout: float = 2.5 * HEARTBEAT_INTERVAL_SECONDS,
         reconnect_policy: BackoffPolicy = RECONNECT_POLICY,
+        text_handler: TextHandler | None = None,
     ) -> None:
+        self._text_handler = text_handler
         self._auth = auth
         self._handler = handler
         self._listeners: list[ConnectionListener] = [listener]
@@ -254,6 +262,8 @@ class MarketFeedClient:
             elif message == HEARTBEAT_REPLY:
                 self._counters["pongs"] += 1
                 self._last_pong = self._clock.now()
+            elif self._text_handler is not None:
+                self._deliver_text(message)
             else:  # e.g. a JSON error reply to a bad subscription — noted, never fatal
                 self._counters["text"] += 1
                 _LOG.warning("unexpected text message from market feed (%d chars)", len(message))
@@ -264,6 +274,14 @@ class MarketFeedClient:
         except Exception:  # the reader must survive any handler fault
             self._counters["handler_errors"] += 1
             _LOG.exception("frame handler failed; frame dropped")
+
+    def _deliver_text(self, text: str) -> None:
+        assert self._text_handler is not None
+        try:
+            self._text_handler.on_text(text)
+        except Exception:  # the reader must survive any handler fault
+            self._counters["handler_errors"] += 1
+            _LOG.exception("text handler failed; message dropped")
 
     async def _heartbeat(self, socket: ClientConnection) -> None:
         while True:

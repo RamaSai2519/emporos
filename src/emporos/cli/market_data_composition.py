@@ -31,6 +31,7 @@ from emporos.core.alerts import AlertSink
 from emporos.core.clock import Clock, Sleeper
 from emporos.domain.instruments import InstrumentResolver
 from emporos.marketdata.aggregator import DEFAULT_GRACE, MinuteCandleAggregator
+from emporos.marketdata.broadcast import TickBroadcaster
 from emporos.marketdata.candle_writer import CandlePersister
 from emporos.marketdata.normalizer import TickNormalizer
 from emporos.marketdata.pipeline import TickPipeline
@@ -60,6 +61,7 @@ class MarketDataStack:
     subscriptions: SubscriptionManager
     recovery: ReconnectRecovery
     service: MarketDataService
+    ticks: TickBroadcaster
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -117,7 +119,8 @@ class MarketDataComposer:
         for listener in (subscriptions, aggregator, watchdog, recovery):
             client.add_listener(listener)
         normalizer = TickNormalizer(self.resolver, self.window)
-        pipeline = TickPipeline(queue, normalizer, (aggregator, watchdog), self.alerts)
+        ticks = TickBroadcaster()  # `Broker.on_tick` registers here
+        pipeline = TickPipeline(queue, normalizer, (aggregator, watchdog, ticks), self.alerts)
         scheduler = MinuteScheduler(aggregator, persister, self.clock, self.sleeper, self.grace)
         service = MarketDataService(pipeline, scheduler, watchdog, self.sleeper)
         return MarketDataStack(
@@ -132,6 +135,7 @@ class MarketDataComposer:
             subscriptions=subscriptions,
             recovery=recovery,
             service=service,
+            ticks=ticks,
         )
 
 

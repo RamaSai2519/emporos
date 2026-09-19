@@ -28,8 +28,14 @@ class FeedAuth:
         }
 
 
+class Handshake(Protocol):
+    """Anything that can supply the socket handshake headers (market feed and order stream)."""
+
+    def headers(self) -> dict[str, str]: ...
+
+
 class FeedAuthProvider(Protocol):
-    async def feed_auth(self, *, refresh: bool) -> FeedAuth:
+    async def feed_auth(self, *, refresh: bool) -> Handshake:
         """Current credentials; `refresh=True` obtains a fresh feed token first (token refresh,
         and only if that is refused, a full re-login)."""
         ...

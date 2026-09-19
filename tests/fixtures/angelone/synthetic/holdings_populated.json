@@ -1,0 +1,32 @@
+{
+  "name": "holdings_populated",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/portfolio/v1/getHolding"
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "averageprice": 950.5,
+          "exchange": "NSE",
+          "isin": "INE062A01020",
+          "ltp": 997.1,
+          "quantity": 10,
+          "symboltoken": "3045",
+          "tradingsymbol": "SBIN-EQ"
+        }
+      ],
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "the dev key has no static IP and no order is ever attempted from it; populated books follow SmartAPI's documentation"
+}

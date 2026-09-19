@@ -1,0 +1,90 @@
+{
+  "name": "order_book_populated",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/order/v1/getOrderBook"
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "averageprice": "0",
+          "disclosedquantity": "0",
+          "duration": "DAY",
+          "exchange": "NSE",
+          "exchtime": "18-Sep-2026 10:00:05",
+          "filledshares": "0",
+          "orderid": "201020000000080",
+          "orderstatus": "open",
+          "ordertag": "ABC123",
+          "ordertype": "LIMIT",
+          "price": "996.2",
+          "producttype": "INTRADAY",
+          "quantity": "10",
+          "status": "open",
+          "symboltoken": "3045",
+          "text": "",
+          "tradingsymbol": "SBIN-EQ",
+          "transactiontype": "BUY",
+          "triggerprice": "0",
+          "unfilledshares": "10",
+          "uniqueorderid": "34reqfachdfih",
+          "updatetime": "18-Sep-2026 10:00:05",
+          "variety": "NORMAL"
+        },
+        {
+          "averageprice": "995",
+          "duration": "DAY",
+          "exchange": "NSE",
+          "filledshares": "5",
+          "orderid": "201020000000081",
+          "orderstatus": "complete",
+          "ordertag": "XYZ789",
+          "ordertype": "LIMIT",
+          "price": "995",
+          "producttype": "INTRADAY",
+          "quantity": "5",
+          "status": "complete",
+          "symboltoken": "3045",
+          "text": "",
+          "tradingsymbol": "SBIN-EQ",
+          "transactiontype": "SELL",
+          "triggerprice": "0",
+          "unfilledshares": "0",
+          "updatetime": "18-Sep-2026 10:05:00",
+          "variety": "NORMAL"
+        },
+        {
+          "averageprice": "1400",
+          "duration": "DAY",
+          "exchange": "NSE",
+          "filledshares": "1",
+          "orderid": "201020000000082",
+          "orderstatus": "complete",
+          "ordertag": "",
+          "ordertype": "MARKET",
+          "price": "0",
+          "producttype": "INTRADAY",
+          "quantity": "1",
+          "status": "complete",
+          "symboltoken": "2885",
+          "text": "",
+          "tradingsymbol": "RELIANCE-EQ",
+          "transactiontype": "BUY",
+          "updatetime": "18-Sep-2026 10:06:00",
+          "variety": "NORMAL"
+        }
+      ],
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "the dev key has no static IP and no order is ever attempted from it; populated books follow SmartAPI's documentation"
+}

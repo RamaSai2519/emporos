@@ -15,7 +15,11 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
+from emporos.broker.angelone.api import AngelOneApi
+from emporos.broker.angelone.ws_orders import OrderUpdateHub
 from emporos.broker.backoff import BackoffPolicy
+from emporos.broker.models import MarketDataMode
+from emporos.cli.broker_composition import BrokerComposer
 from emporos.cli.market_data_composition import MarketDataComposer, MarketDataStack
 from emporos.core.clock import IST, FixedClock
 from emporos.domain.candles import Candle, Timeframe
@@ -26,6 +30,7 @@ from tests.support.fakes import (
     AdvancingSleeper,
     InMemoryCandleStore,
     RecordingAlertSink,
+    ScriptedRestTransport,
     make_instrument,
 )
 from tests.support.frames import FrameBuilder, epoch_ms
@@ -182,3 +187,32 @@ async def test_the_first_connection_triggers_no_backfill(rig: Rig) -> None:
     await rig.server.wait_for(lambda: rig.stack.client.is_connected)
     await rig.stack.recovery.wait()
     assert rig.history.requests == [] and rig.stack.recovery.reports == []
+
+
+async def test_the_broker_facade_receives_normalized_ticks_through_the_pipeline_broadcaster(
+    rig: Rig,
+) -> None:
+    """`Broker.on_tick` handlers are fed by the same pipeline that feeds the aggregator."""
+    from tests.support.angelone_broker import StubCatalog, StubSessions
+
+    broker = BrokerComposer(
+        api=AngelOneApi(ScriptedRestTransport()),
+        sessions=StubSessions(),
+        client_code="A1",
+        resolver=InstrumentCache([SBIN, RELIANCE]),
+        catalog=StubCatalog([SBIN]),
+        candles=rig.history,  # type: ignore[arg-type]
+        market_data=rig.stack.subscriptions,
+        ticks=rig.stack.ticks,
+        order_updates=OrderUpdateHub(),
+    ).build()
+    seen: list[str] = []
+    broker.on_tick(lambda tick: seen.append(f"{tick.instrument_id}@{tick.ltp.amount}"))
+
+    await rig.server.wait_for(lambda: rig.stack.client.is_connected)
+    await broker.subscribe_market_data(["NSE:3045"], MarketDataMode.QUOTE)
+    await rig.server.send_frame(quote("3045", ist(10, 0, 5), 99620, 1000, 1))
+    await rig.frames_processed(1)
+
+    assert seen == ["NSE:3045@996.20"]
+    assert rig.server.control_messages and rig.server.control_messages[0]["action"] == 1

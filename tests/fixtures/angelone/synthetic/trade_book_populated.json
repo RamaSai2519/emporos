@@ -1,0 +1,35 @@
+{
+  "name": "trade_book_populated",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": null,
+    "header_names": [],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/order/v1/getTradeBook"
+  },
+  "response": {
+    "body": {
+      "data": [
+        {
+          "exchange": "NSE",
+          "fillid": "7001",
+          "fillprice": "995",
+          "fillsize": "5",
+          "filltime": "10:05:00",
+          "orderid": "201020000000081",
+          "producttype": "INTRADAY",
+          "symboltoken": "3045",
+          "tradingsymbol": "SBIN-EQ",
+          "transactiontype": "SELL"
+        }
+      ],
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "the dev key has no static IP and no order is ever attempted from it; populated books follow SmartAPI's documentation"
+}

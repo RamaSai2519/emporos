@@ -87,6 +87,51 @@ class Endpoints:
         "/rest/secure/angelbroking/user/v1/getRMS",
         EndpointGroup.ACCOUNT,
     )
+    PLACE_ORDER = Endpoint(
+        "placeOrder",
+        HttpMethod.POST,
+        "/rest/secure/angelbroking/order/v1/placeOrder",
+        EndpointGroup.PLACE_ORDER,
+        mutates=True,
+    )
+    MODIFY_ORDER = Endpoint(
+        "modifyOrder",
+        HttpMethod.POST,
+        "/rest/secure/angelbroking/order/v1/modifyOrder",
+        EndpointGroup.PLACE_ORDER,
+        mutates=True,
+    )
+    CANCEL_ORDER = Endpoint(
+        "cancelOrder",
+        HttpMethod.POST,
+        "/rest/secure/angelbroking/order/v1/cancelOrder",
+        EndpointGroup.PLACE_ORDER,
+        mutates=True,
+    )
+    ORDER_BOOK = Endpoint(
+        "getOrderBook",
+        HttpMethod.GET,
+        "/rest/secure/angelbroking/order/v1/getOrderBook",
+        EndpointGroup.ORDER_BOOK,
+    )
+    TRADE_BOOK = Endpoint(
+        "getTradeBook",
+        HttpMethod.GET,
+        "/rest/secure/angelbroking/order/v1/getTradeBook",
+        EndpointGroup.ORDER_BOOK,
+    )
+    POSITIONS = Endpoint(
+        "getPosition",
+        HttpMethod.GET,
+        "/rest/secure/angelbroking/order/v1/getPosition",
+        EndpointGroup.POSITION,
+    )
+    HOLDINGS = Endpoint(
+        "getHolding",
+        HttpMethod.GET,
+        "/rest/secure/angelbroking/portfolio/v1/getHolding",
+        EndpointGroup.HOLDING,
+    )
     LTP = Endpoint(
         "getLtpData",
         HttpMethod.POST,

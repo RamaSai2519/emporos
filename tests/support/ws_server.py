@@ -64,6 +64,9 @@ class FakeFeedServer:
     async def send_frame(self, frame: bytes) -> None:
         await asyncio.gather(*(c.send(frame) for c in list(self._connections)))
 
+    async def send_text(self, text: str) -> None:
+        await asyncio.gather(*(c.send(text) for c in list(self._connections)))
+
     async def drop_all(self) -> None:
         await asyncio.gather(
             *(c.close(code=1011, reason="test drop") for c in list(self._connections)),

@@ -34,6 +34,13 @@ REPLIES = {
     "api.ltp.data": RECORDED["ltp"].body,
     "api.market.data": RECORDED["quote_full"].body,
     "api.candle.data": RECORDED["candles_1m"].body,
+    "api.order.place": {"status": True, "data": {"orderid": "1"}},
+    "api.order.modify": {"status": True, "data": {"orderid": "1"}},
+    "api.order.cancel": {"status": True, "data": {"orderid": "1"}},
+    "api.order.book": RECORDED["order_book_empty"].body,
+    "api.trade.book": RECORDED["trade_book_empty"].body,
+    "api.position": RECORDED["positions_empty"].body,
+    "api.holding": RECORDED["holdings_empty"].body,
 }
 
 
@@ -151,3 +158,34 @@ def test_the_sdk_parses_the_recorded_login_the_same_way_we_do(oracle: SdkRequest
 def test_loading_the_sdk_leaves_no_files_in_the_repository() -> None:
     repo = Path(__file__).resolve().parents[2]
     assert not (repo / "logs").exists()
+
+
+@pytest.mark.parametrize(
+    ("endpoint", "call"),
+    [
+        (Endpoints.PLACE_ORDER, lambda s: s.placeOrder({"variety": "NORMAL"})),
+        (Endpoints.MODIFY_ORDER, lambda s: s.modifyOrder({"variety": "NORMAL"})),
+        (Endpoints.CANCEL_ORDER, lambda s: s.cancelOrder("1", "NORMAL")),
+        (Endpoints.ORDER_BOOK, lambda s: s.orderBook()),
+        (Endpoints.TRADE_BOOK, lambda s: s.tradeBook()),
+        (Endpoints.POSITIONS, lambda s: s.position()),
+        (Endpoints.HOLDINGS, lambda s: s.holding()),
+    ],
+    ids=lambda v: getattr(v, "name", None),
+)
+def test_every_order_and_account_endpoint_matches_the_sdks_route_and_method(
+    oracle: SdkRequestRecorder, endpoint: Any, call: Any
+) -> None:
+    """The order paths have never been called live, so the SDK is the oracle for the routes."""
+    sdk = oracle.capture(call)
+    assert (sdk.method, sdk.path) == (endpoint.method.value, endpoint.path)
+
+
+def test_the_cancel_body_matches_the_sdks_parameters(oracle: SdkRequestRecorder) -> None:
+    from emporos.broker.angelone.mapping import OrderRequestMapper
+    from emporos.broker.models import CancelOrderRequest
+    from emporos.domain.orders import OrderType
+
+    sdk = oracle.capture(lambda s: s.cancelOrder("201", "NORMAL"))
+    ours = OrderRequestMapper.cancel(CancelOrderRequest("201", OrderType.LIMIT))
+    assert dict(sdk.params) == ours  # variety + orderid: identical keys and values

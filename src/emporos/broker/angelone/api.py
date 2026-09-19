@@ -18,9 +18,14 @@ from emporos.broker.angelone.endpoints import Endpoint, Endpoints
 from emporos.broker.angelone.models import (
     CandleBar,
     FundsResponse,
+    HoldingEntry,
     LtpResponse,
+    OrderBookEntry,
+    PlaceOrderResponse,
+    PositionEntry,
     ProfileResponse,
     QuoteResponse,
+    TradeBookEntry,
 )
 from emporos.broker.angelone.transport import RestRequest, RestTransport
 from emporos.broker.errors import BrokerProtocolError
@@ -60,6 +65,15 @@ class ResponseParser:
             raise BrokerProtocolError(
                 f"{endpoint.name}: reply does not match the expected shape ({_fields(error)})"
             ) from None
+
+    def models(self, endpoint: Endpoint, model: type[M], data: Any) -> list[M]:
+        """A list of `model`. The API answers `null` for an empty book or position list (recorded
+        live), which is an empty list, not an error."""
+        if data is None:
+            return []
+        if not isinstance(data, list):
+            raise BrokerProtocolError(f"{endpoint.name}: reply is not a list")
+        return [self.model(endpoint, model, row) for row in data]
 
     def candles(self, endpoint: Endpoint, data: Any) -> list[CandleBar]:
         if not isinstance(data, list):
@@ -143,3 +157,33 @@ class AngelOneApi:
         }
         data = await self._transport.send(RestRequest(Endpoints.CANDLES, body=body))
         return self._parser.candles(Endpoints.CANDLES, data)
+
+    # --- orders (the request bodies are built by `mapping.py`; this layer only sends) -----------
+
+    async def place_order(self, body: Mapping[str, Any]) -> PlaceOrderResponse:
+        data = await self._transport.send(RestRequest(Endpoints.PLACE_ORDER, body=body))
+        return self._parser.model(Endpoints.PLACE_ORDER, PlaceOrderResponse, data)
+
+    async def modify_order(self, body: Mapping[str, Any]) -> PlaceOrderResponse:
+        data = await self._transport.send(RestRequest(Endpoints.MODIFY_ORDER, body=body))
+        return self._parser.model(Endpoints.MODIFY_ORDER, PlaceOrderResponse, data)
+
+    async def cancel_order(self, body: Mapping[str, Any]) -> PlaceOrderResponse:
+        data = await self._transport.send(RestRequest(Endpoints.CANCEL_ORDER, body=body))
+        return self._parser.model(Endpoints.CANCEL_ORDER, PlaceOrderResponse, data)
+
+    async def order_book(self) -> list[OrderBookEntry]:
+        data = await self._transport.send(RestRequest(Endpoints.ORDER_BOOK))
+        return self._parser.models(Endpoints.ORDER_BOOK, OrderBookEntry, data)
+
+    async def trade_book(self) -> list[TradeBookEntry]:
+        data = await self._transport.send(RestRequest(Endpoints.TRADE_BOOK))
+        return self._parser.models(Endpoints.TRADE_BOOK, TradeBookEntry, data)
+
+    async def positions(self) -> list[PositionEntry]:
+        data = await self._transport.send(RestRequest(Endpoints.POSITIONS))
+        return self._parser.models(Endpoints.POSITIONS, PositionEntry, data)
+
+    async def holdings(self) -> list[HoldingEntry]:
+        data = await self._transport.send(RestRequest(Endpoints.HOLDINGS))
+        return self._parser.models(Endpoints.HOLDINGS, HoldingEntry, data)

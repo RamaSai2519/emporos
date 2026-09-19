@@ -1,0 +1,29 @@
+{
+  "name": "trade_book_empty",
+  "provenance": "recorded",
+  "recorded_on": "2026-09-19",
+  "request": {
+    "body": null,
+    "header_names": [
+      "authorization",
+      "x-clientlocalip",
+      "x-clientpublicip",
+      "x-macaddress",
+      "x-privatekey",
+      "x-sourceid",
+      "x-usertype"
+    ],
+    "method": "GET",
+    "path": "/rest/secure/angelbroking/order/v1/getTradeBook"
+  },
+  "response": {
+    "body": {
+      "data": null,
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "place_order_ack",
+  "provenance": "synthetic",
+  "recorded_on": null,
+  "request": {
+    "body": {
+      "ordertag": "ABC123",
+      "variety": "NORMAL"
+    },
+    "header_names": [],
+    "method": "POST",
+    "path": "/rest/secure/angelbroking/order/v1/placeOrder"
+  },
+  "response": {
+    "body": {
+      "data": {
+        "orderid": "201020000000080",
+        "script": "SBIN-EQ",
+        "uniqueorderid": "34reqfachdfih"
+      },
+      "errorcode": "",
+      "message": "SUCCESS",
+      "status": true
+    },
+    "body_text": null,
+    "status": 200
+  },
+  "why_synthetic": "order placement has never been exercised live"
+}
