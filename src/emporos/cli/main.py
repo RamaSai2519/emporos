@@ -8,7 +8,15 @@ Phase 1 (EM-9); each is implemented by the phase noted in its docstring.
 
 from __future__ import annotations
 
+import asyncio
+
 import typer
+
+from emporos.core.config import Settings
+from emporos.core.errors import EmporosError
+from emporos.persistence.migrations import MigrationReport, MigrationRunner, MongoSchemaStore
+from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.schema import PLATFORM_SCHEMA
 
 app = typer.Typer(
     name="emporos",
@@ -54,10 +62,24 @@ def halt() -> None:
     _not_implemented("halt", "EM-74")
 
 
+async def _migrate() -> MigrationReport:
+    factory = MongoClientFactory(Settings.default())
+    try:
+        runner = MigrationRunner(MongoSchemaStore(factory.database()), PLATFORM_SCHEMA)
+        return await runner.apply()
+    finally:
+        await factory.close()
+
+
 @db_app.command("migrate")
 def db_migrate() -> None:
-    """Run pending Mongo migrations."""
-    _not_implemented("db migrate", "EM-20")
+    """Create every collection and index (idempotent — safe to re-run)."""
+    try:
+        report = asyncio.run(_migrate())
+    except EmporosError as error:
+        typer.secho(f"migration failed: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(report.summary())
 
 
 @instruments_app.command("sync")
