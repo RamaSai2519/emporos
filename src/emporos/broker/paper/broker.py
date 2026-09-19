@@ -257,7 +257,8 @@ class PaperBroker(Broker):
                         event.trade,
                         fees,
                         position,
-                    )  # fmt: skip
+                        len(self._account.trades()),
+                    )
                 )
                 self._journal.append(self._snapshot())
             self._updates.publish(BrokerOrderUpdate(event.order, self._clock.now()))
@@ -279,6 +280,7 @@ class PaperBroker(Broker):
             self._account.realised,
             self._funds.unrealised(),
             self._account.fees,
+            len(self._account.trades()),
             tuple(self._account.positions()),
         )
 

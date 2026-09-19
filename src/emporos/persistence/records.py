@@ -94,6 +94,10 @@ class OrderRecord(Record):
     filled_quantity: int = 0
     created_at: datetime
     updated_at: datetime
+    # Optional so the record fits every writer; the paper broker sets all of these.
+    account_id: str | None = None
+    average_price: MoneyField | None = None
+    status_message: str = ""
 
 
 class OrderEventRecord(Record):
@@ -101,6 +105,8 @@ class OrderEventRecord(Record):
     seq: int
     ts: datetime
     state: str
+    filled_quantity: int | None = None
+    reason: str = ""
 
 
 class ExecutionRecord(Record):
@@ -111,6 +117,11 @@ class ExecutionRecord(Record):
     quantity: int
     price: MoneyField
     ts: datetime
+    account_id: str | None = None
+    session_date: str | None = None
+    fees: MoneyField | None = None
+    # 1-based position of this fill among the account's fills that session: the replay order.
+    session_trade_no: int | None = None
 
 
 class PositionRecord(Record):
@@ -118,13 +129,35 @@ class PositionRecord(Record):
     instrument_id: str
     net_quantity: int
     average_price: MoneyField
-    realised_pnl: MoneyField
+    realised_pnl: MoneyField  # net of charges
     updated_at: datetime
+    gross_realised_pnl: MoneyField | None = None
+    fees: MoneyField | None = None
+    session_date: str | None = None
+
+
+class PositionSnapshot(BaseModel):
+    """One position inside a portfolio snapshot."""
+
+    model_config = ConfigDict(frozen=True)
+
+    instrument_id: str
+    net_quantity: int
+    average_price: MoneyField
+    realised_pnl: MoneyField
+    fees: MoneyField
 
 
 class PortfolioSnapshotRecord(Record):
     account_id: str
     ts: datetime
+    session_date: str | None = None
+    cash: MoneyField | None = None
+    realised_pnl: MoneyField | None = None
+    unrealised_pnl: MoneyField | None = None
+    fees: MoneyField | None = None
+    trades: int | None = None
+    positions: list[PositionSnapshot] = Field(default_factory=list)
 
 
 class RiskEventRecord(Record):

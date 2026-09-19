@@ -48,6 +48,7 @@ class FillRecorded:
     trade: BrokerTrade
     fees: Money
     position: PositionState
+    number: int  # 1-based position among the account's fills: the order to replay them in
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class SnapshotRecorded:
     realised: Money
     unrealised: Money
     fees: Money
+    trades: int  # fills booked so far: with `at`, identifies the snapshot
     positions: tuple[PositionState, ...]
 
 

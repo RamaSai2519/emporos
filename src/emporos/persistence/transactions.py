@@ -78,7 +78,20 @@ class FillApplier:
         try:
             await self._transactions.run(write)
         except DuplicateRecordError as error:
-            if error.key_fields == ("broker_trade_id",):
+            if await self._is_redelivery(error, fill):
                 return FillOutcome.DUPLICATE
             raise
         return FillOutcome.APPLIED
+
+    async def _is_redelivery(self, error: DuplicateRecordError, fill: FillApplication) -> bool:
+        """The unique `broker_trade_id` index says so directly. A caller that derives the record
+        `_id` from the trade id collides on `_id` first, which proves nothing by itself — so it
+        only counts if an execution with this trade id really is stored."""
+        if error.key_fields == ("broker_trade_id",):
+            return True
+        if error.key_fields == ("_id",):
+            return (
+                await self._executions.get_by_broker_trade_id(fill.execution.broker_trade_id)
+                is not None
+            )
+        return False

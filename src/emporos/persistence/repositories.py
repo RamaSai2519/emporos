@@ -120,6 +120,12 @@ class OrderRepository(Repository[OrderRecord]):
     async def in_states(self, session_date: str, states: Sized[str]) -> list[OrderRecord]:
         return await self.find({"session_date": session_date, "state": {"$in": list(states)}})
 
+    async def for_account_session(self, account_id: str, session_date: str) -> list[OrderRecord]:
+        return await self.find(
+            {"account_id": account_id, "session_date": session_date},
+            sort=[("created_at", ASCENDING), ("_id", ASCENDING)],
+        )
+
 
 class OrderEventRepository(Repository[OrderEventRecord]):
     def __init__(self, database: Database) -> None:
@@ -127,6 +133,11 @@ class OrderEventRepository(Repository[OrderEventRecord]):
 
     async def for_order(self, order_id: str) -> list[OrderEventRecord]:
         return await self.find({"order_id": order_id}, sort=[("seq", ASCENDING)])
+
+    async def last_seq(self, order_id: str) -> int:
+        """The order's highest event sequence number, 0 if it has no events."""
+        latest = await self.find({"order_id": order_id}, sort=[("seq", -1)], limit=1)
+        return latest[0].seq if latest else 0
 
 
 class ExecutionRepository(Repository[ExecutionRecord]):
@@ -138,6 +149,15 @@ class ExecutionRepository(Repository[ExecutionRecord]):
 
     async def for_order(self, order_id: str) -> list[ExecutionRecord]:
         return await self.find({"order_id": order_id}, sort=[("ts", ASCENDING)])
+
+    async def for_account_session(
+        self, account_id: str, session_date: str
+    ) -> list[ExecutionRecord]:
+        """An account's fills for one session, in the order they were booked."""
+        return await self.find(
+            {"account_id": account_id, "session_date": session_date},
+            sort=[("session_trade_no", ASCENDING), ("ts", ASCENDING)],
+        )
 
 
 class PositionRepository(Repository[PositionRecord]):

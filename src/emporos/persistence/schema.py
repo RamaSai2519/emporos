@@ -139,12 +139,14 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("ordertag", unique=True),
             IndexSpec.on("broker_order_id"),
             IndexSpec.on("state", "session_date"),
+            IndexSpec.on("account_id", "session_date"),
         ),
         _spec(Collection.ORDER_EVENTS, IndexSpec.on("order_id", "seq", unique=True)),
         _spec(
             Collection.EXECUTIONS,
             IndexSpec.on("broker_trade_id", unique=True),
             IndexSpec.on("order_id"),
+            IndexSpec.on("account_id", "session_date"),
         ),
         _spec(Collection.POSITIONS, IndexSpec.on("account_id", "instrument_id", unique=True)),
         _spec(

@@ -1,0 +1,22 @@
+# Angel One cash-equity INTRADAY charges (plan.md §10). Rates are quoted STRINGS on purpose: a YAML
+# float would be an inexact number, and money never touches a float.
+#
+# [VOLATILE] Read from https://www.angelone.in/exchange-transaction-charges on 2026-09-20. That page
+# states no effective date, so `effective_from` is the date it was read, not a published date.
+# `verified: false` = NOT reconciled against a real contract note. Fine for paper P&L; do not use
+# it to predict a bill. Not modelled: IPFT levy (part of the GST base), BSE scrip groups (BSE uses
+# the group A/B rate), DP charges (delivery only) — costs are slightly understated.
+name: angelone-equity-intraday
+effective_from: "2026-09-20"
+verified: false
+brokerage:
+  flat: "20"            # lower of this per executed order...
+  percent: "0.1"        # ...or this share of turnover,
+  minimum: "5"          # but never below this
+stt_sell_percent: "0.025"
+exchange_transaction_percent:
+  NSE: "0.0030699"
+  BSE: "0.00375"
+sebi_per_crore: "10"
+stamp_duty_buy_percent: "0.003"
+gst_percent: "18"

@@ -132,3 +132,32 @@ async def test_a_failure_part_way_through_rolls_everything_back(rig: Rig) -> Non
     finally:
         await rig.orders.delete(order.id)
         await rig.positions.delete(held.id)
+
+
+async def test_a_redelivery_that_collides_on_the_record_id_first_is_still_recognised(
+    rig: Rig,
+) -> None:
+    """A caller that derives the execution `_id` from the trade id trips `_id` before the
+    `broker_trade_id` index: that is a redelivery only because that trade really is stored."""
+    order = rig.factory.order(state="OPEN")
+    await rig.orders.insert(order)
+    execution = rig.factory.execution(order_id=order.id)
+    position = rig.factory.position()
+    fill = FillApplication(execution, order.model_copy(update={"state": "FILLED"}), position)
+    try:
+        assert await rig.applier.apply(fill) is FillOutcome.APPLIED
+        assert await rig.applier.apply(fill) is FillOutcome.DUPLICATE  # identical _id and trade id
+
+        # The same _id under a DIFFERENT trade id is a different fill: never swallowed.
+        clash = FillApplication(
+            rig.factory.execution(order_id=order.id).model_copy(update={"id": execution.id}),
+            fill.order,
+            position,
+        )
+        with pytest.raises(DuplicateRecordError):
+            await rig.applier.apply(clash)
+        assert await rig.executions.count({"order_id": order.id}) == 1
+    finally:
+        await rig.orders.delete(order.id)
+        await rig.executions.delete(execution.id)
+        await rig.positions.delete(position.id)
