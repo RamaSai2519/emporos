@@ -37,7 +37,6 @@ class RecordFactory:
             token=self._next("tok"),
             tradingsymbol=self._next("SYM"),
             name="Test Co",
-            instrument_type="EQ",
             lot_size=1,
             tick_size=Money.of("0.05"),
         )
@@ -45,9 +44,13 @@ class RecordFactory:
     def instrument_version(self) -> r.InstrumentVersionRecord:
         return r.InstrumentVersionRecord(
             _id=self._next("iv"),
+            instrument_id=self._next("NSE:tok"),
             exchange="NSE",
             token=self._next("tok"),
             tradingsymbol="SYM",
+            name="Test Co",
+            lot_size=1,
+            tick_size=Money.of("0.05"),
             valid_from=NOW,
         )
 

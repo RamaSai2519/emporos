@@ -8,7 +8,8 @@ Storage details — collection names, indexes, `Decimal128` — stay in here.
 from __future__ import annotations
 
 from collections.abc import Collection as Sized
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any
 
 from pymongo import ASCENDING
@@ -58,8 +59,11 @@ class AccountRepository(Repository[AccountRecord]):
 
 
 class InstrumentRepository(Repository[InstrumentRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.INSTRUMENTS, InstrumentRecord)
+    def __init__(self, database: Database, collection: str = Collection.INSTRUMENTS) -> None:
+        super().__init__(database, collection, InstrumentRecord)
+
+    async def all(self) -> list[InstrumentRecord]:
+        return await self.find({})
 
     async def get_by_token(self, exchange: str, token: str) -> InstrumentRecord | None:
         return await self.find_one({"exchange": exchange, "token": token})
@@ -69,8 +73,28 @@ class InstrumentRepository(Repository[InstrumentRecord]):
 
 
 class InstrumentVersionRepository(Repository[InstrumentVersionRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.INSTRUMENT_VERSIONS, InstrumentVersionRecord)
+    def __init__(
+        self, database: Database, collection: str = Collection.INSTRUMENT_VERSIONS
+    ) -> None:
+        super().__init__(database, collection, InstrumentVersionRecord)
+
+    async def close_open_versions(
+        self,
+        instrument_ids: Sequence[str],
+        at: datetime,
+        *,
+        session: AsyncClientSession | None = None,
+    ) -> None:
+        """End the currently-open version of each instrument at `at`."""
+        if instrument_ids:
+            await self._collection.update_many(
+                {"instrument_id": {"$in": list(instrument_ids)}, "valid_to": None},
+                {"$set": {"valid_to": at}},
+                session=session,
+            )
+
+    async def for_instrument(self, instrument_id: str) -> list[InstrumentVersionRecord]:
+        return await self.find({"instrument_id": instrument_id}, sort=[("valid_from", ASCENDING)])
 
 
 class StrategyRepository(Repository[StrategyRecord]):

@@ -63,7 +63,7 @@ class TimeSeriesSpec:
 
 @dataclass(frozen=True)
 class CollectionSpec:
-    name: Collection
+    name: str
     indexes: tuple[IndexSpec, ...] = ()
     timeseries: TimeSeriesSpec | None = None
 
@@ -82,7 +82,7 @@ class Schema:
         if len(names) != len(set(names)):
             raise ValueError("a collection is declared twice")
 
-    def spec_for(self, name: Collection) -> CollectionSpec:
+    def spec_for(self, name: str) -> CollectionSpec:
         for spec in self.collections:
             if spec.name == name:
                 return spec

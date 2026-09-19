@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from emporos.domain.instruments import Exchange, Instrument
+from emporos.domain.money import Money
 from emporos.instruments.downloader import DownloadedMaster
 
 SAMPLE = Path(__file__).resolve().parents[1] / "fixtures" / "instrument_master_sample.json"
@@ -37,3 +39,16 @@ def cash_rows(
 
 def as_master(rows: list[dict[str, Any]]) -> DownloadedMaster:
     return DownloadedMaster(rows=tuple(rows), upstream_row_count=len(rows))
+
+
+def instrument(token: str = "1000", **overrides: object) -> Instrument:
+    """A valid domain `Instrument` (NSE cash, ₹0.05 tick) for differ/store/cache tests."""
+    fields: dict[str, object] = {
+        "exchange": Exchange.NSE,
+        "token": token,
+        "tradingsymbol": f"SYM{token}-EQ",
+        "name": f"SYM{token}",
+        "lot_size": 1,
+        "tick_size": Money.of("0.05"),
+    }
+    return Instrument(**{**fields, **overrides})  # type: ignore[arg-type]

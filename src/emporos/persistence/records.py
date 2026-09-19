@@ -40,15 +40,20 @@ class InstrumentRecord(Record):
     token: str
     tradingsymbol: str
     name: str
-    instrument_type: str
-    lot_size: int = 1
+    lot_size: int
     tick_size: MoneyField
 
 
 class InstrumentVersionRecord(Record):
+    """Instrument metadata over `[valid_from, valid_to)`; `valid_to` is None while current."""
+
+    instrument_id: str
     exchange: str
     token: str
     tradingsymbol: str
+    name: str
+    lot_size: int
+    tick_size: MoneyField
     valid_from: datetime
     valid_to: datetime | None = None
 

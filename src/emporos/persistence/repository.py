@@ -7,19 +7,20 @@ violations surface as the typed `DuplicateRecordError`.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any, Generic, TypeVar
 
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import BulkWriteError, DuplicateKeyError
 
-from emporos.persistence.collections import Collection
 from emporos.persistence.errors import DuplicateKeyTranslator
 from emporos.persistence.records import Record
 
 R = TypeVar("R", bound=Record)
+
+_DUPLICATE_KEY_CODE = 11000
 
 
 class Repository(Generic[R]):
@@ -28,7 +29,7 @@ class Repository(Generic[R]):
     def __init__(
         self,
         database: AsyncDatabase[Mapping[str, Any]],
-        collection: Collection,
+        collection: str,
         record_type: type[R],
         translator: DuplicateKeyTranslator | None = None,
     ) -> None:
@@ -42,6 +43,21 @@ class Repository(Generic[R]):
             await self._collection.insert_one(record.to_document(), session=session)
         except DuplicateKeyError as error:
             raise self._translator.translate(self._name, error) from error
+
+    async def insert_many(
+        self, records: Sequence[R], *, session: AsyncClientSession | None = None
+    ) -> None:
+        if not records:
+            return
+        try:
+            await self._collection.insert_many(
+                [record.to_document() for record in records], session=session
+            )
+        except BulkWriteError as error:
+            duplicate = self._first_duplicate(error)
+            if duplicate is None:
+                raise
+            raise self._translator.translate(self._name, duplicate) from error
 
     async def replace(
         self, record: R, *, upsert: bool = False, session: AsyncClientSession | None = None
@@ -73,6 +89,21 @@ class Repository(Generic[R]):
     async def count(self, query: Mapping[str, Any] | None = None) -> int:
         return await self._collection.count_documents(query or {})
 
-    async def delete(self, record_id: str) -> bool:
-        result = await self._collection.delete_one({"_id": record_id})
+    async def delete(self, record_id: str, *, session: AsyncClientSession | None = None) -> bool:
+        result = await self._collection.delete_one({"_id": record_id}, session=session)
         return result.deleted_count == 1
+
+    async def delete_many(
+        self, record_ids: Sequence[str], *, session: AsyncClientSession | None = None
+    ) -> None:
+        if record_ids:
+            await self._collection.delete_many({"_id": {"$in": list(record_ids)}}, session=session)
+
+    @staticmethod
+    def _first_duplicate(error: BulkWriteError) -> DuplicateKeyError | None:
+        for write_error in error.details.get("writeErrors", []):
+            if write_error.get("code") == _DUPLICATE_KEY_CODE:
+                return DuplicateKeyError(
+                    write_error.get("errmsg", ""), _DUPLICATE_KEY_CODE, write_error
+                )
+        return None
