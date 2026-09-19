@@ -16,7 +16,8 @@ from emporos.broker.angelone.session import Session
 from emporos.broker.angelone.transport import RestRequest
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
-from emporos.domain.instruments import Instrument
+from emporos.domain.instruments import Exchange, Instrument
+from emporos.domain.money import Money
 from emporos.instruments.differ import InstrumentDiff
 from emporos.instruments.downloader import DownloadedMaster
 from emporos.persistence.migrations import IndexInfo
@@ -290,3 +291,31 @@ def token_payload(tag: str = "1") -> dict[str, object]:
         "feedToken": f"feed-{tag}",
         "state": None,
     }
+
+
+def make_instrument(
+    token: str = "3045", exchange: Exchange = Exchange.NSE, symbol: str | None = None
+) -> Instrument:
+    """A valid cash instrument for tests."""
+    return Instrument(
+        exchange, token, symbol or f"SYM{token}-EQ", f"Name {token}", 1, Money.of("0.05")
+    )
+
+
+class RecordingSubscriptionTransport:
+    """`SubscriptionTransport` double: records every call, and can be made to fail."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple[str, ...]]] = []
+        self.fail_with: Exception | None = None
+
+    async def subscribe(self, instruments: Sequence[Instrument]) -> None:
+        self._record("subscribe", instruments)
+
+    async def unsubscribe(self, instruments: Sequence[Instrument]) -> None:
+        self._record("unsubscribe", instruments)
+
+    def _record(self, kind: str, instruments: Sequence[Instrument]) -> None:
+        self.calls.append((kind, tuple(i.instrument_id for i in instruments)))
+        if self.fail_with is not None:
+            raise self.fail_with

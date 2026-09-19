@@ -128,7 +128,7 @@ class MarketFeedClient:
     ) -> None:
         self._auth = auth
         self._handler = handler
-        self._listener = listener
+        self._listeners: list[ConnectionListener] = [listener]
         self._clock = clock
         self._sleeper = sleeper
         self._jitter = jitter
@@ -147,6 +147,11 @@ class MarketFeedClient:
             "hb": 0,
             "pongs": 0,
         }
+
+    def add_listener(self, listener: ConnectionListener) -> None:
+        """Also notify `listener` of connects/disconnects (in registration order). Needed because
+        a listener such as the subscription manager itself depends on this client."""
+        self._listeners.append(listener)
 
     @property
     def is_connected(self) -> bool:
@@ -173,7 +178,7 @@ class MarketFeedClient:
                 attempt, refresh_auth = 0, False
                 reason = "connection closed"
             except BrokerTlsError:
-                await self._listener.on_disconnected("tls verification failed")
+                await self._notify_disconnected("tls verification failed")
                 raise
             except InvalidStatus as error:
                 reason = f"handshake rejected (HTTP {error.response.status_code})"
@@ -182,7 +187,7 @@ class MarketFeedClient:
                 reason = f"{type(error).__name__}"
             if self._stopping.is_set():
                 return
-            await self._listener.on_disconnected(reason)
+            await self._notify_disconnected(reason)
             delay = self._policy.delay(min(attempt, 30), self._jitter)
             attempt += 1
             _LOG.warning("market feed down (%s); reconnecting in %.1fs", reason, delay)
@@ -226,7 +231,8 @@ class MarketFeedClient:
         self._counters["connects"] += 1
         heartbeat = asyncio.create_task(self._heartbeat(socket))
         try:
-            await self._listener.on_connected()
+            for listener in self._listeners:
+                await listener.on_connected()
             await self._read(socket)
         except ConnectionClosed:
             pass
@@ -235,6 +241,10 @@ class MarketFeedClient:
             heartbeat.cancel()
             with contextlib.suppress(asyncio.CancelledError, ConnectionClosed):
                 await heartbeat
+
+    async def _notify_disconnected(self, reason: str) -> None:
+        for listener in self._listeners:
+            await listener.on_disconnected(reason)
 
     async def _read(self, socket: ClientConnection) -> None:
         async for message in socket:
