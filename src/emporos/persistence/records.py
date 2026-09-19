@@ -77,6 +77,10 @@ class SignalRecord(Record):
     strategy_run_id: str
     instrument_id: str
     ts: datetime
+    kind: str | None = None
+    price: MoneyField | None = None
+    quantity: int | None = None
+    ordertag: str | None = None  # links the signal to the order it produced
 
 
 class OrderRecord(Record):
