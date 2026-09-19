@@ -14,3 +14,4 @@ node_modules/
 dist/
 build/
 .import_linter_cache/
+.hypothesis/

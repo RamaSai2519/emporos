@@ -54,6 +54,7 @@ exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
 
 [tool.importlinter]
 root_package = "emporos"
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "domain is pure"
@@ -101,3 +102,21 @@ type = "forbidden"
 source_modules = ["emporos.backtest"]
 forbidden_modules = ["emporos.persistence.candle_hot", "emporos.persistence.candle_cold"]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "only the composition root reaches the Angel One adapter"
+type = "forbidden"
+source_modules = [
+    "emporos.core", "emporos.domain", "emporos.persistence", "emporos.instruments",
+    "emporos.marketdata", "emporos.history", "emporos.strategies", "emporos.signals",
+    "emporos.risk", "emporos.execution", "emporos.portfolio", "emporos.backtest",
+    "emporos.session", "emporos.observability", "emporos.control", "emporos.api",
+    "emporos.broker.errors", "emporos.broker.paper",
+]
+forbidden_modules = ["emporos.broker.angelone"]
+
+[[tool.importlinter.contracts]]
+name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
+type = "forbidden"
+source_modules = ["emporos"]
+forbidden_modules = ["SmartApi", "smartapi"]

@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
+from collections import deque
 from collections.abc import Mapping, Sequence
 from datetime import datetime
+
+import httpx
 
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Instrument
@@ -142,3 +146,45 @@ class RecordingAlertSink:
 
     def raise_alert(self, name: str, message: str) -> None:
         self.alerts.append((name, message))
+
+
+class ScriptedHttpServer:
+    """An `httpx` transport double that replays queued replies (or raises queued errors).
+
+    Records every request so tests can assert on paths, headers and bodies. Running out of
+    script is a test bug, so it fails loudly instead of inventing a reply."""
+
+    def __init__(self, base_url: str = "https://apiconnect.angelone.in") -> None:
+        self._base_url = base_url
+        self._script: deque[httpx.Response | Exception] = deque()
+        self.requests: list[httpx.Request] = []
+
+    def queue(self, *replies: httpx.Response | Exception) -> ScriptedHttpServer:
+        self._script.extend(replies)
+        return self
+
+    def client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(base_url=self._base_url, transport=httpx.MockTransport(self))
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        if not self._script:
+            raise AssertionError(f"unscripted request: {request.method} {request.url.path}")
+        reply = self._script.popleft()
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+
+def ok_reply(data: object = None) -> httpx.Response:
+    """A SmartAPI success envelope. Floats in `data` are serialized as JSON numbers."""
+    return httpx.Response(
+        200,
+        content=json.dumps({"status": True, "message": "SUCCESS", "errorcode": "", "data": data}),
+    )
+
+
+def failed_reply(message: str, code: str = "", http_status: int = 200) -> httpx.Response:
+    """A SmartAPI `status: false` envelope (HTTP 200 unless told otherwise)."""
+    body = {"status": False, "message": message, "errorcode": code, "data": None}
+    return httpx.Response(http_status, content=json.dumps(body))
