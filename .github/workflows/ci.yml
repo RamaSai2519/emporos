@@ -40,6 +40,9 @@ jobs:
       - name: import-linter
         run: pipenv run lint-imports
 
+      - name: no hardcoded instrument tokens in strategies (plan.md §8)
+        run: pipenv run check-tokens
+
       - name: pytest with coverage (unit + integration)
         run: pipenv run pytest -q --cov=emporos --cov-branch
 
