@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      # Unset ENV -> emporos_dev (plan.md §6.0). Integration tests that need a
+      # real Atlas cluster are gated behind the `integration` marker and the
+      # MONGO_URL secret, and are wired into this job once EM-19/EM-24 land.
+      PIPENV_VENV_IN_PROJECT: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies (locked, deterministic)
+        run: pipenv install --deploy --dev
+
+      - name: ruff check
+        run: pipenv run ruff check src tests
+
+      - name: ruff format --check
+        run: pipenv run ruff format --check src tests
+
+      - name: mypy --strict (domain, broker, risk, execution)
+        run: pipenv run mypy --strict src/emporos/domain src/emporos/broker src/emporos/risk src/emporos/execution
+
+      - name: import-linter
+        run: pipenv run lint-imports
+
+      - name: pytest (unit)
+        run: pipenv run pytest tests/unit -q
