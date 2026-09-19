@@ -74,3 +74,24 @@ class SdkRequestRecorder:
         self.requests.clear()
         call(self.sdk)
         return self.only()
+
+
+def load_websocket_v2() -> type:
+    """The SDK's `SmartWebSocketV2` (its binary parser is the frame-layout oracle)."""
+    with mock.patch("requests.get", _refuse_network):
+        from SmartApi.smartWebSocketV2 import SmartWebSocketV2
+
+    return SmartWebSocketV2
+
+
+def sdk_parse_frame(frame: bytes, workdir: Path) -> dict[str, Any]:
+    """What the SDK's own parser makes of `frame` (its constructor performs no I/O)."""
+    socket_class = load_websocket_v2()
+    previous = Path.cwd()
+    os.chdir(workdir)
+    try:
+        sdk = socket_class("jwt", "key", "client", "feed")
+        parsed: dict[str, Any] = sdk._parse_binary_data(frame)
+    finally:
+        os.chdir(previous)
+    return parsed
