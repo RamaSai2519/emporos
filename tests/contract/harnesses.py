@@ -6,8 +6,10 @@ here — the suite itself does not change, which is exactly what makes it a cont
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Callable
 from dataclasses import dataclass
+from decimal import Decimal
 
 from emporos.broker.angelone.adapter import AngelOneBroker
 from emporos.broker.angelone.api import AngelOneApi
@@ -16,6 +18,17 @@ from emporos.broker.angelone.models import OrderBookEntry
 from emporos.broker.angelone.ws_orders import OrderUpdateHub
 from emporos.broker.base import Broker
 from emporos.broker.models import BrokerOrderUpdate
+from emporos.broker.paper.costs import NoCosts
+from emporos.broker.paper.factory import PaperBrokerConfig, PaperBrokerFactory
+from emporos.broker.paper.faults import ScriptedReplyLoss
+from emporos.broker.paper.fills import (
+    AtTradePrice,
+    LimitFillPolicy,
+    ParticipationLiquidity,
+    TouchCrossing,
+)
+from emporos.core.clock import FixedClock
+from emporos.core.ids import IdGenerator
 from emporos.domain.candles import Candle
 from emporos.domain.instruments import Instrument
 from emporos.domain.money import Money
@@ -30,8 +43,11 @@ from tests.support.angelone_broker import (
     StubSessions,
 )
 from tests.support.fake_smartapi import FakeSmartApi
-from tests.support.fakes import make_instrument
+from tests.support.fakes import make_instrument, make_tick
 from tests.support.in_memory_broker import InMemoryBroker
+from tests.support.paper_journal import RecordingJournal
+from tests.support.paper_market import NOW as PAPER_NOW
+from tests.support.paper_market import FakeMarketData
 
 SBIN = make_instrument("3045", symbol="SBIN-EQ")
 RELIANCE = make_instrument("2885", symbol="RELIANCE-EQ")
@@ -96,7 +112,48 @@ def angelone() -> BrokerHarness:
     return BrokerHarness("angelone", broker, SBIN, history, ticks.on_tick, fill, lose)
 
 
+def paper() -> BrokerHarness:
+    """`PaperBroker` over a hand-driven market: an order fills when a tick that trades enough
+    volume crosses its limit, exactly as it would on live data. The exchange-fill hook plays the
+    tape: a tick at the fill price whose traded volume equals the fill quantity, so a 100%
+    participation model turns it into exactly that fill."""
+    history: list[Candle] = []
+    clock = FixedClock(PAPER_NOW)
+    market = FakeMarketData([SBIN, RELIANCE], history)
+    replies = ScriptedReplyLoss()
+    factory = PaperBrokerFactory(
+        PaperBrokerConfig("PAPER01", Money.of("1000000")),
+        NoCosts(),
+        fill_policy=LimitFillPolicy(TouchCrossing(), AtTradePrice()),
+        liquidity=ParticipationLiquidity(Decimal(1)),
+        replies=replies,
+    )
+    broker = factory.build(market, RecordingJournal(), clock, IdGenerator())
+    sequence = itertools.count(1)
+    traded = [1_000_000]
+
+    def emit(tick: Tick) -> None:
+        market.emit(tick)
+
+    def tape(price: str, shares: int) -> None:
+        traded[0] += shares
+        market.emit(
+            make_tick(
+                clock.now(), price, volume=traded[0], instrument_id=SBIN.instrument_id,
+                sequence=next(sequence) + 1000,
+            )
+        )  # fmt: skip
+
+    tape("1000.00", 0)  # the baseline tick: a volume counter needs a first reading
+
+    def fill(order_id: str, quantity: int, price: Money) -> None:
+        tape(str(price.amount), quantity)
+
+    return BrokerHarness("paper", broker, SBIN, history, emit, fill, replies.lose_next)
+
+
 HARNESS_FACTORIES: dict[str, Callable[[], BrokerHarness]] = {
     "in_memory": in_memory,
     "angelone": angelone,
+    "paper": paper,
 }

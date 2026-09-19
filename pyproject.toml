@@ -118,6 +118,17 @@ source_modules = [
 forbidden_modules = ["emporos.broker.angelone"]
 
 [[tool.importlinter.contracts]]
+name = "the paper broker core is storage-agnostic and knows no other consumer or concrete broker"
+type = "forbidden"
+source_modules = ["emporos.broker.paper"]
+forbidden_modules = [
+    "emporos.persistence", "emporos.marketdata", "emporos.history", "emporos.instruments",
+    "emporos.strategies", "emporos.signals", "emporos.risk", "emporos.execution",
+    "emporos.portfolio", "emporos.backtest", "emporos.session", "emporos.control",
+    "emporos.api", "emporos.cli", "emporos.broker.angelone",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]
