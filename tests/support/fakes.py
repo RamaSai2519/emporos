@@ -101,6 +101,16 @@ class InMemoryCandleStore:
         for candle in candles:
             self._bars[(candle.instrument_id, candle.timeframe, candle.ts)] = candle
 
+    def remove(
+        self, instrument_id: str, timeframe: Timeframe, timestamps: Sequence[datetime]
+    ) -> None:
+        """Simulate lost data: delete stored bars."""
+        for ts in timestamps:
+            self._bars.pop((instrument_id, timeframe, ts), None)
+
+    def bars(self) -> dict[tuple[str, Timeframe, datetime], Candle]:
+        return dict(self._bars)
+
     async def read(
         self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]:
