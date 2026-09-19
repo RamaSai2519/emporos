@@ -9,14 +9,19 @@ Phase 1 (EM-9); each is implemented by the phase noted in its docstring.
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 
 import httpx
 import typer
 
+from emporos.cli.history_composition import resolve_symbols
+from emporos.cli.history_runtime import open_history_runtime
 from emporos.core.alerts import LogAlertSink
-from emporos.core.clock import SystemClock
+from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.domain.instruments import Exchange
 from emporos.instruments.cache import InstrumentCache
 from emporos.instruments.differ import InstrumentDiffer
 from emporos.instruments.downloader import MASTER_URL, InstrumentMasterDownloader
@@ -43,7 +48,11 @@ app = typer.Typer(
 db_app = typer.Typer(help="Database migrations and maintenance.", no_args_is_help=True)
 instruments_app = typer.Typer(help="Instrument master sync.", no_args_is_help=True)
 app.add_typer(db_app, name="db")
+history_app = typer.Typer(
+    help="Historical candles: backfill, gap repair, calendar.", no_args_is_help=True
+)
 app.add_typer(instruments_app, name="instruments")
+app.add_typer(history_app, name="history")
 
 
 def _not_implemented(feature: str, jira_ref: str) -> None:
@@ -151,6 +160,87 @@ def instruments_sync() -> None:
     colour = typer.colors.GREEN if result.succeeded else typer.colors.RED
     typer.secho(f"instruments sync {result.outcome.value}: {result.message}", fg=colour)
     raise typer.Exit(code=_SYNC_EXIT_CODES[result.outcome])
+
+
+_SYMBOLS = typer.Option(..., "--symbol", "-s", help="Trading symbol, e.g. SBIN-EQ (repeatable).")
+_DAYS = typer.Option(30, "--days", "-d", min=1, help="How many calendar days back to cover.")
+
+
+def _window(days: int) -> tuple[date, date]:
+    today = datetime.now(IST).date()
+    return today - timedelta(days=days), today
+
+
+@dataclass(frozen=True)
+class HistoryOutcome:
+    summary: str
+    complete: bool
+
+
+async def _backfill(symbols: list[str], days: int, reconcile: bool) -> HistoryOutcome:
+    async with open_history_runtime(Settings.default()) as runtime:
+        instruments = resolve_symbols(runtime.instruments, Exchange.NSE, symbols)
+        first, last = _window(days)
+        if reconcile:
+            fixed = await runtime.stack.reconciler.reconcile(instruments, first, last)
+            failed = sum(len(r.failed_days) for r in fixed.values())
+            written = sum(r.candles_written for r in fixed.values())
+            return HistoryOutcome(
+                f"reconcile: {written} candle(s) written, {failed} failed day(s)", failed == 0
+            )
+        report = await runtime.stack.backfill.run(instruments, first, last)
+        return HistoryOutcome(
+            f"backfill: {report.chunks_fetched} chunk(s) fetched, "
+            f"{report.candles_written} candle(s) written, "
+            f"{report.days_already_covered} day(s) already covered, "
+            f"{len(report.failed_chunks)} chunk(s) failed, {len(report.empty_days)} empty day(s)",
+            report.ok,
+        )
+
+
+def _run_history(symbols: list[str], days: int, reconcile: bool) -> None:
+    try:
+        outcome = asyncio.run(_backfill(symbols, days, reconcile))
+    except EmporosError as error:
+        typer.secho(f"history failed: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(outcome.summary)
+    if not outcome.complete:
+        raise typer.Exit(code=2)  # incomplete: run again to resume
+
+
+@history_app.command("backfill")
+def history_backfill(symbols: list[str] = _SYMBOLS, days: int = _DAYS) -> None:
+    """Backfill 1m history for the symbols. Resumable: re-run to continue after an interruption."""
+    _run_history(symbols, days, reconcile=False)
+
+
+@history_app.command("reconcile")
+def history_reconcile(symbols: list[str] = _SYMBOLS, days: int = _DAYS) -> None:
+    """Find gaps in stored history and re-fetch only those."""
+    _run_history(symbols, days, reconcile=True)
+
+
+@history_app.command("seed-calendar")
+def history_seed_calendar(
+    symbol: str = typer.Option("SBIN-EQ", help="A liquid reference symbol."),
+    days: int = typer.Option(400, min=30, help="How many calendar days back to derive."),
+) -> None:
+    """Derive trading days from the broker's daily bars and store them in `market_calendar`."""
+
+    async def _seed() -> int:
+        async with open_history_runtime(Settings.default()) as runtime:
+            (reference,) = resolve_symbols(runtime.instruments, Exchange.NSE, [symbol])
+            first, last = _window(days)
+            derived = await runtime.stack.seeder.seed(reference, first, last)
+            return sum(1 for traded in derived.values() if not traded)
+
+    try:
+        holidays = asyncio.run(_seed())
+    except EmporosError as error:
+        typer.secho(f"calendar seed failed: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"calendar seeded; {holidays} weekday holiday(s) found")
 
 
 def main() -> None:

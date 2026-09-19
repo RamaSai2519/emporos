@@ -15,6 +15,7 @@ from typing import Protocol
 
 from emporos.domain.candles import Candle, Timeframe
 from emporos.persistence.candle_cold import ColdCandleArchive
+from emporos.persistence.placement import PlacementPolicy
 
 
 class HotCandleStore(Protocol):
@@ -40,12 +41,35 @@ class CandleWriter(Protocol):
 
 
 class CandleRepository:
-    def __init__(self, hot: HotCandleStore, cold: ColdCandleArchive) -> None:
+    def __init__(
+        self,
+        hot: HotCandleStore,
+        cold: ColdCandleArchive,
+        placement: PlacementPolicy | None = None,
+    ) -> None:
         self._hot = hot
         self._cold = cold
+        self._placement = placement
 
     async def upsert(self, candles: Sequence[Candle]) -> None:
-        await self._hot.upsert(candles)
+        """Idempotent write. With a placement policy, bars older than their timeframe's hot
+        retention go straight to the cold archive; without one, everything is hot."""
+        recent, old = self._split(candles)
+        if recent:
+            await self._hot.upsert(recent)
+        if old:
+            await self._cold.archive(old)
+
+    def _split(self, candles: Sequence[Candle]) -> tuple[list[Candle], list[Candle]]:
+        if self._placement is None:
+            return list(candles), []
+        cutoffs = {tf: self._placement.hot_cutoff(tf) for tf in {c.timeframe for c in candles}}
+        recent: list[Candle] = []
+        old: list[Candle] = []
+        for candle in candles:
+            cutoff = cutoffs[candle.timeframe]
+            (old if cutoff is not None and candle.ts < cutoff else recent).append(candle)
+        return recent, old
 
     async def get_range(
         self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime

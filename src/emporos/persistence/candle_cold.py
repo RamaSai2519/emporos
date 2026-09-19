@@ -42,6 +42,8 @@ class ColdCandleArchive(Protocol):
         self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]: ...
 
+    async def archive(self, candles: Iterable[Candle]) -> None: ...
+
 
 class ParquetCandleCodec:
     def encode(self, candles: Sequence[Candle]) -> bytes:
