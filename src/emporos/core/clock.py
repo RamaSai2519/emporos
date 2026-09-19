@@ -8,8 +8,11 @@ Everything that needs "now" takes a `Clock` and calls `.now()`.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Protocol
+
+# India has no daylight saving, so a fixed offset is exact and needs no tz database.
+IST = timezone(timedelta(hours=5, minutes=30), name="IST")
 
 
 class Clock(Protocol):

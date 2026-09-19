@@ -52,6 +52,10 @@ class RestTransport(Protocol):
     async def send(self, request: RestRequest) -> Any: ...
 
 
+class HttpClientFactory(Protocol):
+    def create(self) -> httpx.AsyncClient: ...
+
+
 class AngelOneHttpClientFactory:
     """Builds the `httpx.AsyncClient`. Verification is not a parameter — it cannot be disabled."""
 

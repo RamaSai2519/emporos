@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 
 import httpx
 
+from emporos.broker.angelone.session import Session
+from emporos.broker.angelone.transport import RestRequest
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Instrument
@@ -219,3 +221,72 @@ class FixedJitter:
         value = self._fractions[self._calls % len(self._fractions)]
         self._calls += 1
         return value
+
+
+class ScriptedRestTransport:
+    """`RestTransport` double routed by endpoint name: each endpoint has its own reply queue.
+
+    Replies are returned as the envelope `data`; exceptions are raised. Every request is kept."""
+
+    def __init__(self, **script: Sequence[object]) -> None:
+        self._script: dict[str, deque[object]] = {
+            name: deque(items) for name, items in script.items()
+        }
+        self.requests: list[RestRequest] = []
+
+    def queue(self, endpoint_name: str, *replies: object) -> ScriptedRestTransport:
+        self._script.setdefault(endpoint_name, deque()).extend(replies)
+        return self
+
+    def sent_to(self, endpoint_name: str) -> list[RestRequest]:
+        return [r for r in self.requests if r.endpoint.name == endpoint_name]
+
+    async def send(self, request: RestRequest) -> object:
+        self.requests.append(request)
+        queue = self._script.get(request.endpoint.name)
+        if not queue:
+            raise AssertionError(f"unscripted call to {request.endpoint.name}")
+        reply = queue.popleft()
+        if isinstance(reply, BaseException):
+            raise reply
+        return reply
+
+
+class FixedTotp:
+    """`TotpSource` double."""
+
+    def __init__(self, code: str = "123456") -> None:
+        self._code = code
+
+    def code(self) -> str:
+        return self._code
+
+
+class RecordingSessionStore:
+    """`SessionStore` double that also counts saves and clears."""
+
+    def __init__(self) -> None:
+        self._session: Session | None = None
+        self.saves = 0
+        self.clears = 0
+
+    def load(self) -> Session | None:
+        return self._session
+
+    def save(self, session: Session) -> None:
+        self._session = session
+        self.saves += 1
+
+    def clear(self) -> None:
+        self._session = None
+        self.clears += 1
+
+
+def token_payload(tag: str = "1") -> dict[str, object]:
+    """A login/generateTokens `data` payload (fake tokens, real shape)."""
+    return {
+        "jwtToken": f"jwt-{tag}",
+        "refreshToken": f"refresh-{tag}",
+        "feedToken": f"feed-{tag}",
+        "state": None,
+    }

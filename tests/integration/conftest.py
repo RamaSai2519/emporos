@@ -33,6 +33,23 @@ def dev_settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
     return settings
 
 
+ANGELONE_SETTINGS = (
+    "angelone_api_key",
+    "angelone_client_code",
+    "angelone_password",
+    "angelone_totp_secret",
+)
+
+
+@pytest.fixture
+def angelone_settings() -> Settings:
+    """Real Angel One credentials from `.env`; the live checks skip cleanly when they are absent."""
+    settings = Settings()
+    if not all(getattr(settings, name) for name in ANGELONE_SETTINGS):
+        pytest.skip("ANGELONE_* credentials not set")
+    return settings
+
+
 @pytest.fixture
 async def database(dev_settings: Settings) -> AsyncIterator[AsyncDatabase[Mapping[str, Any]]]:
     factory = MongoClientFactory(dev_settings)
