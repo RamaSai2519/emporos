@@ -90,6 +90,14 @@ class Settings(BaseSettings):
     mongo_url: str | None = Field(default=None, alias="MONGO_URL")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
+    # Cold storage (candle Parquet archive, backups). `S3_ENDPOINT_URL` points at a local
+    # S3-compatible target (MinIO/moto) in development; unset means real AWS S3.
+    s3_bucket: str | None = Field(default=None, alias="S3_BUCKET")
+    s3_endpoint_url: str | None = Field(default=None, alias="S3_ENDPOINT_URL")
+    s3_access_key_id: str | None = Field(default=None, alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str | None = Field(default=None, alias="S3_SECRET_ACCESS_KEY")
+    aws_region: str = Field(default="ap-south-1", alias="AWS_REGION")
+
     angelone_client_code: str | None = Field(default=None, alias="ANGELONE_CLIENT_CODE")
     angelone_password: str | None = Field(default=None, alias="ANGELONE_PASSWORD")
     angelone_totp_secret: str | None = Field(default=None, alias="ANGELONE_TOTP_SECRET")

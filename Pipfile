@@ -23,6 +23,7 @@ websockets = "==13.1"
 fastapi = "==0.115.0"
 uvicorn = {extras = ["standard"], version = "==0.30.6"}
 boto3 = "==1.35.36"
+pyarrow = "==17.0.0"
 
 [dev-packages]
 pytest = "==8.3.3"
@@ -38,6 +39,7 @@ bandit = "==1.7.10"
 pip-audit = "==2.7.3"
 types-pyyaml = "==6.0.12.20240917"
 boto3-stubs = {extras = ["s3"], version = "==1.35.36"}
+moto = {extras = ["s3", "server"], version = "==5.0.16"}
 
 [scripts]
 lint = "ruff check src tests scripts"
