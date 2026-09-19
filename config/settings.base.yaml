@@ -1,0 +1,5 @@
+# Non-secret defaults shared by every environment. Overridden per-environment
+# by settings.<profile>.yaml (plan.md §4). Secrets never live here — they come
+# from environment variables / SSM Parameter Store (Decision 10) via core.config.Settings.
+log_level: INFO
+timezone: Asia/Kolkata

@@ -33,6 +33,7 @@ disallow_any_explicit = true
 minversion = "8.0"
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: requires network/Atlas access via MONGO_URL",
     "contract: broker adapter contract suite",
