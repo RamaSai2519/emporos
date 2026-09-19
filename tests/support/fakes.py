@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from datetime import datetime
 
+from emporos.domain.candles import Candle, Timeframe
 from emporos.persistence.migrations import IndexInfo
 from emporos.persistence.object_store import ObjectInfo, ObjectNotFoundError
 from emporos.persistence.schema import CollectionSpec, IndexSpec
@@ -72,3 +74,26 @@ class InMemoryObjectStore:
     @staticmethod
     def _info(key: str, data: bytes) -> ObjectInfo:
         return ObjectInfo(key, len(data), hashlib.md5(data, usedforsecurity=False).hexdigest())
+
+
+class InMemoryCandleStore:
+    """`HotCandleStore` double keyed by (instrument, timeframe, ts)."""
+
+    def __init__(self) -> None:
+        self._bars: dict[tuple[str, Timeframe, datetime], Candle] = {}
+
+    async def upsert(self, candles: Sequence[Candle]) -> None:
+        for candle in candles:
+            self._bars[(candle.instrument_id, candle.timeframe, candle.ts)] = candle
+
+    async def read(
+        self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
+    ) -> list[Candle]:
+        return sorted(
+            (
+                bar
+                for (inst, tf, ts), bar in self._bars.items()
+                if inst == instrument_id and tf == timeframe and start <= ts < end
+            ),
+            key=lambda bar: bar.ts,
+        )

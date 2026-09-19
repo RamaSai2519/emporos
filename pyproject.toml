@@ -29,6 +29,10 @@ explicit_package_bases = true
 module = "emporos.domain.*"
 disallow_any_explicit = true
 
+[[tool.mypy.overrides]]
+module = ["pyarrow.*", "moto.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
@@ -71,3 +75,29 @@ name = "api and dashboard-facing control layer never import broker code"
 type = "forbidden"
 source_modules = ["emporos.api"]
 forbidden_modules = ["emporos.broker"]
+
+[[tool.importlinter.contracts]]
+name = "the candles collection is private to the persistence package"
+type = "forbidden"
+source_modules = [
+    "emporos.domain", "emporos.core", "emporos.broker", "emporos.instruments",
+    "emporos.marketdata", "emporos.history", "emporos.strategies", "emporos.signals",
+    "emporos.risk", "emporos.execution", "emporos.portfolio", "emporos.backtest",
+    "emporos.session", "emporos.observability", "emporos.control", "emporos.api",
+]
+forbidden_modules = ["emporos.persistence.candle_hot"]
+# Reaching CandleRepository (which owns the hot store) is the point; only a direct import is a leak.
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "strategies never touch the persistence layer"
+type = "forbidden"
+source_modules = ["emporos.strategies"]
+forbidden_modules = ["emporos.persistence"]
+
+[[tool.importlinter.contracts]]
+name = "backtests read candles only through CandleRepository"
+type = "forbidden"
+source_modules = ["emporos.backtest"]
+forbidden_modules = ["emporos.persistence.candle_hot", "emporos.persistence.candle_cold"]
+allow_indirect_imports = true
