@@ -70,17 +70,26 @@ class StrategyRunRecord(Record):
     strategy_id: str
     session_date: str
     created_at: datetime
+    # The fully-resolved config the run used, and its content hash: the run is reproducible from
+    # these alone, even after the YAML changes (plan.md §9).
     config_snapshot: dict[str, Any] = Field(default_factory=dict)
+    config_hash: str | None = None
+    strategy_name: str | None = None
 
 
 class SignalRecord(Record):
     strategy_run_id: str
     instrument_id: str
     ts: datetime
-    kind: str | None = None
-    price: MoneyField | None = None
-    quantity: int | None = None
+    kind: str | None = None  # a strategy signal: ENTRY or EXIT
+    price: MoneyField | None = None  # the limit price the strategy had in mind
+    quantity: int | None = None  # a sizing hint; risk may reduce or reject it
     ordertag: str | None = None  # links the signal to the order it produced
+    side: OrderSide | None = None
+    order_type: OrderType | None = None
+    trigger_price: MoneyField | None = None
+    reason: str = ""
+    sequence: int | None = None  # 1-based position within the run: orders same-timestamp signals
 
 
 class OrderRecord(Record):

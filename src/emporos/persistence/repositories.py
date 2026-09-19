@@ -104,7 +104,10 @@ class SignalRepository(Repository[SignalRecord]):
         super().__init__(database, Collection.SIGNALS, SignalRecord)
 
     async def for_run(self, strategy_run_id: str) -> list[SignalRecord]:
-        return await self.find({"strategy_run_id": strategy_run_id}, sort=[("ts", ASCENDING)])
+        return await self.find(
+            {"strategy_run_id": strategy_run_id},
+            sort=[("ts", ASCENDING), ("sequence", ASCENDING)],
+        )
 
 
 class OrderRepository(Repository[OrderRecord]):

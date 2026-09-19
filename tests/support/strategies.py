@@ -3,22 +3,30 @@ Every one implements the same Protocol as the production collaborator it stands 
 
 from __future__ import annotations
 
+import copy
 import logging
 import random
 from collections.abc import AsyncIterator, Callable, Iterable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import Any
 
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
+from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
 from emporos.domain.order_updates import OrderUpdate
 from emporos.domain.orders import OrderSide, OrderType
 from emporos.domain.signals import Signal, SignalKind
 from emporos.domain.ticks import Tick
+from emporos.instruments.cache import InstrumentCache
+from emporos.persistence.errors import DuplicateRecordError
+from emporos.persistence.records import SignalRecord, StrategyRecord, StrategyRunRecord
 from emporos.strategies.base import Strategy
 from emporos.strategies.config import (
+    ExactDecimal,
     ExecutionSettings,
+    PositiveInt,
     ResolvedStrategyConfig,
     RiskSettings,
     SessionSettings,
@@ -28,6 +36,7 @@ from emporos.strategies.config import (
 from emporos.strategies.context import StrategyContext
 from emporos.strategies.history import ClosedBarHistory
 from emporos.strategies.positions import FlatPositions, PositionView
+from emporos.strategies.registry import StrategyRegistry
 from emporos.strategies.runner import MarketEvent, ReplayClockSync, StrategyRunner
 from tests.support.fakes import RecordingAlertSink
 
@@ -236,3 +245,138 @@ class RunnerRig:
             self.strategy, self.context, self.history, self.sink, ReplayClockSync(self.clock),
             self.alerts,
         )  # fmt: skip
+
+
+class ThresholdParameters(StrategyParameters):
+    threshold: ExactDecimal
+    quantity: PositiveInt = 1
+
+
+class ThresholdStrategy(Strategy):
+    """Buys whenever a closed bar's close is above a configured threshold. Its signals depend on
+    its parameters, so a run only reproduces if the SAME parameters come back."""
+
+    name = "threshold"
+    parameters_model = ThresholdParameters
+
+    def __init__(self, config: ResolvedStrategyConfig) -> None:
+        super().__init__(config)
+        assert isinstance(config.parameters, ThresholdParameters)
+        self._params = config.parameters
+        self._outbox: list[Signal] = []
+        self._ctx: StrategyContext | None = None
+
+    def initialize(self, ctx: StrategyContext) -> None:
+        self._ctx = ctx
+
+    def on_market_data(self, event: MarketEvent) -> None:
+        assert self._ctx is not None
+        if isinstance(event, Candle) and event.close.amount > self._params.threshold:
+            self._outbox.append(
+                Signal(
+                    strategy_run_id=self._ctx.run_id,
+                    instrument_id=event.instrument_id,
+                    kind=SignalKind.ENTRY,
+                    side=OrderSide.BUY,
+                    order_type=OrderType.LIMIT,
+                    quantity=self._params.quantity,
+                    limit_price=event.close,
+                    ts=event.closes_at,
+                    reason=f"close above {self._params.threshold}",
+                )
+            )
+
+    def generate_signal(self) -> Signal | None:
+        return self._outbox.pop(0) if self._outbox else None
+
+
+INSTRUMENT_MASTER = InstrumentCache(
+    [
+        Instrument(Exchange.NSE, "1001", "ALPHA-EQ", "Alpha Ltd", 1, Money.of("0.05")),
+        Instrument(Exchange.NSE, "1002", "BETA-EQ", "Beta Ltd", 1, Money.of("0.05")),
+    ]
+)
+
+
+def raw_config(name: str = "threshold") -> dict[str, Any]:
+    """A valid strategy file as a parsed YAML mapping (what `yaml.safe_load` would return)."""
+    return {
+        "name": name,
+        "enabled": True,
+        "timeframe": "5m",
+        "universe": {"type": "static", "instruments": ["NSE:ALPHA-EQ", "NSE:BETA-EQ"]},
+        "parameters": {"threshold": "100", "quantity": 10},
+        "risk": {
+            "max_position_value": 50000,
+            "max_open_positions": 3,
+            "stop_loss_pct": "1.0",
+            "target_pct": "2.0",
+        },
+        "execution": {"limit_buffer_bps": 5, "reprice_after_seconds": 30, "max_reprices": 3},
+        "session": {"no_new_entries_after": "15:00", "square_off_at": "15:15"},
+    }
+
+
+def changed(raw: dict[str, Any], path: str, value: object) -> dict[str, Any]:
+    """A deep copy of `raw` with the dotted `path` set to `value` (`None` removes the key)."""
+    result = copy.deepcopy(raw)
+    *parents, leaf = path.split(".")
+    node = result
+    for part in parents:
+        node = node[part]
+    if value is _REMOVE:
+        del node[leaf]
+    else:
+        node[leaf] = value
+    return result
+
+
+_REMOVE = object()
+REMOVE = _REMOVE
+
+
+def threshold_registry() -> StrategyRegistry:
+    registry = StrategyRegistry()
+    registry.register(ThresholdStrategy)
+    return registry
+
+
+class InMemoryStrategyStore:
+    """`StrategyStore` double; enforces the unique name index like the real collection."""
+
+    def __init__(self, race_winner: StrategyRecord | None = None) -> None:
+        self.records: dict[str, StrategyRecord] = {}
+        self._race_winner = race_winner
+
+    async def get_by_name(self, name: str) -> StrategyRecord | None:
+        return next((r for r in self.records.values() if r.name == name), None)
+
+    async def insert(self, record: StrategyRecord) -> None:
+        if self._race_winner is not None:  # someone else registered the name a moment ago
+            self.records[self._race_winner.id] = self._race_winner
+            self._race_winner = None
+        if any(r.name == record.name for r in self.records.values()):
+            raise DuplicateRecordError("strategies", "name_1", ("name",))
+        self.records[record.id] = record
+
+    async def replace(self, record: StrategyRecord) -> None:
+        self.records[record.id] = record
+
+
+class InMemoryRunStore:
+    def __init__(self) -> None:
+        self.records: dict[str, StrategyRunRecord] = {}
+
+    async def insert(self, record: StrategyRunRecord) -> None:
+        self.records[record.id] = record
+
+    async def get(self, record_id: str) -> StrategyRunRecord | None:
+        return self.records.get(record_id)
+
+
+class InMemorySignalStore:
+    def __init__(self) -> None:
+        self.records: list[SignalRecord] = []
+
+    async def insert(self, record: SignalRecord) -> None:
+        self.records.append(record)

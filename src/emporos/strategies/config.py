@@ -34,7 +34,10 @@ def _exact_decimal(value: object) -> Decimal:
 
 def _clock_time(value: object) -> time:
     """`"15:00"` only. Unquoted `15:00` is a base-60 integer in YAML 1.1 (900), which pydantic
-    would read as 00:15 — so anything but a quoted HH:MM string is refused."""
+    would read as 00:15 — so anything but a quoted HH:MM string (or an already-built `time`, as in
+    a dumped-and-revalidated config) is refused."""
+    if isinstance(value, time):
+        return value
     if not isinstance(value, str) or len(value) != 5 or value[2] != ":":
         raise ValueError(f'must be a quoted "HH:MM" string, not {value!r}')
     try:
