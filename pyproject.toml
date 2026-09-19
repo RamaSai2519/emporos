@@ -111,7 +111,7 @@ source_modules = [
     "emporos.marketdata", "emporos.history", "emporos.strategies", "emporos.signals",
     "emporos.risk", "emporos.execution", "emporos.portfolio", "emporos.backtest",
     "emporos.session", "emporos.observability", "emporos.control", "emporos.api",
-    "emporos.broker.errors", "emporos.broker.paper",
+    "emporos.broker.errors", "emporos.broker.ratelimit", "emporos.broker.paper",
 ]
 forbidden_modules = ["emporos.broker.angelone"]
 

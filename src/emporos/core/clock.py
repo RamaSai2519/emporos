@@ -7,6 +7,7 @@ Everything that needs "now" takes a `Clock` and calls `.now()`.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
@@ -42,3 +43,16 @@ class FixedClock:
         if when.tzinfo is None:
             raise ValueError("FixedClock requires a timezone-aware datetime")
         self._now = when
+
+
+class Sleeper(Protocol):
+    """Pauses the current task. Injected so throttling and backoff run in virtual time in tests."""
+
+    async def sleep(self, seconds: float) -> None: ...
+
+
+class AsyncioSleeper:
+    """The real sleeper."""
+
+    async def sleep(self, seconds: float) -> None:
+        await asyncio.sleep(seconds)

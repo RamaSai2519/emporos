@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
+import math
 from collections import deque
 from collections.abc import Mapping, Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import httpx
 
+from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Instrument
 from emporos.instruments.differ import InstrumentDiff
@@ -188,3 +191,18 @@ def failed_reply(message: str, code: str = "", http_status: int = 200) -> httpx.
     """A SmartAPI `status: false` envelope (HTTP 200 unless told otherwise)."""
     body = {"status": False, "message": message, "errorcode": code, "data": None}
     return httpx.Response(http_status, content=json.dumps(body))
+
+
+class AdvancingSleeper:
+    """`Sleeper` double that advances a `FixedClock` instead of waiting: virtual time.
+
+    Rounds up to whole microseconds (the clock's resolution) so a wait is never shortened."""
+
+    def __init__(self, clock: FixedClock) -> None:
+        self._clock = clock
+        self.sleeps: list[float] = []
+
+    async def sleep(self, seconds: float) -> None:
+        self.sleeps.append(seconds)
+        self._clock.advance(timedelta(microseconds=math.ceil(seconds * 1_000_000)))
+        await asyncio.sleep(0)  # let other tasks run, as a real sleep would
