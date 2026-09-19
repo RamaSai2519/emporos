@@ -18,7 +18,7 @@ from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
-from emporos.domain.ticks import RawTick
+from emporos.domain.ticks import RawTick, Tick
 from emporos.instruments.differ import InstrumentDiff
 from emporos.instruments.downloader import DownloadedMaster
 from emporos.persistence.migrations import IndexInfo
@@ -333,3 +333,33 @@ def raw_tick(
 ) -> RawTick:
     """A `RawTick` stamped at `at` (must be UTC)."""
     return RawTick(exchange, token, at, Money.of(ltp), sequence, volume)
+
+
+def make_tick(
+    at: datetime,
+    ltp: str = "100.00",
+    *,
+    volume: int | None = None,
+    instrument_id: str = "NSE:3045",
+    sequence: int = 1,
+    out_of_order: bool = False,
+) -> Tick:
+    """A normalized `Tick` whose exchange and receive times are both `at`."""
+    return Tick(instrument_id, at, at, Money.of(ltp), sequence, volume, out_of_order)
+
+
+class CandleCollector:
+    """`CandleSubscriber` double that keeps every candle it is given."""
+
+    def __init__(self) -> None:
+        self.candles: list[Candle] = []
+
+    def on_candle(self, candle: Candle) -> None:
+        self.candles.append(candle)
+
+    def of(self, timeframe: Timeframe, instrument_id: str | None = None) -> list[Candle]:
+        return [
+            c
+            for c in self.candles
+            if c.timeframe is timeframe and instrument_id in (None, c.instrument_id)
+        ]
