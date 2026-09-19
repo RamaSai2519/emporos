@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC
 from typing import Any
 
 from pymongo import AsyncMongoClient
@@ -57,6 +58,9 @@ class MongoClientFactory:
             retryWrites=connection_settings.retry_writes,
             w=connection_settings.write_concern,
             serverSelectionTimeoutMS=connection_settings.server_selection_timeout_ms,
+            # All timestamps are stored UTC and read back timezone-aware (plan.md §6).
+            tz_aware=True,
+            tzinfo=UTC,
         )
 
     @property
