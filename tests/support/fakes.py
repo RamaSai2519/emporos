@@ -206,3 +206,16 @@ class AdvancingSleeper:
         self.sleeps.append(seconds)
         self._clock.advance(timedelta(microseconds=math.ceil(seconds * 1_000_000)))
         await asyncio.sleep(0)  # let other tasks run, as a real sleep would
+
+
+class FixedJitter:
+    """`JitterSource` double: always returns the same fraction, or cycles through a fixed list."""
+
+    def __init__(self, *fractions: float) -> None:
+        self._fractions = fractions or (0.0,)
+        self._calls = 0
+
+    def fraction(self) -> float:
+        value = self._fractions[self._calls % len(self._fractions)]
+        self._calls += 1
+        return value
