@@ -9,10 +9,12 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     env:
-      # Unset ENV -> emporos_dev (plan.md §6.0). Integration tests that need a
-      # real Atlas cluster are gated behind the `integration` marker and the
-      # MONGO_URL secret, and are wired into this job once EM-19/EM-24 land.
+      # ENV intentionally left unset at the job level -> emporos_dev by default
+      # (plan.md §6.0). The ENV=main case in the integration suite is exercised
+      # by the test itself (a read-only ping, never a write) to prove the
+      # resolution end to end — CI never sets ENV=main globally.
       PIPENV_VENV_IN_PROJECT: 1
+      MONGO_URL: ${{ secrets.MONGO_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,3 +42,7 @@ jobs:
 
       - name: pytest (unit)
         run: pipenv run pytest tests/unit -q
+
+      - name: pytest (integration — real Atlas emporos_dev)
+        if: ${{ env.MONGO_URL != '' }}
+        run: pipenv run pytest tests/integration -q -m integration
