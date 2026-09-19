@@ -101,6 +101,16 @@ class InMemoryCandleStore:
         for candle in candles:
             self._bars[(candle.instrument_id, candle.timeframe, candle.ts)] = candle
 
+    async def instruments_before(self, timeframe: Timeframe, cutoff: datetime) -> list[str]:
+        return sorted({i for (i, tf, ts) in self._bars if tf == timeframe and ts < cutoff})
+
+    async def delete(
+        self, instrument_id: str, timeframe: Timeframe, timestamps: Sequence[datetime]
+    ) -> int:
+        before = len(self._bars)
+        self.remove(instrument_id, timeframe, timestamps)
+        return before - len(self._bars)
+
     def remove(
         self, instrument_id: str, timeframe: Timeframe, timestamps: Sequence[datetime]
     ) -> None:

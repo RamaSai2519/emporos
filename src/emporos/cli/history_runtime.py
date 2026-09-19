@@ -24,6 +24,7 @@ from emporos.instruments.store import MongoInstrumentMasterStore
 from emporos.persistence.calendar_store import MongoCalendarStore
 from emporos.persistence.candle_cold import ParquetCandleArchive
 from emporos.persistence.candle_hot import MongoCandleStore
+from emporos.persistence.candle_rollup import CandleRollup
 from emporos.persistence.candles import CandleRepository
 from emporos.persistence.collections import Collection
 from emporos.persistence.coverage import MongoCoverageStore
@@ -62,11 +63,12 @@ async def open_history_runtime(settings: Settings) -> AsyncIterator[HistoryRunti
         await instruments.load_from(master)
         calendar_store = MongoCalendarStore(database)
         cold = ParquetCandleArchive(S3ClientFactory(settings).create_store())
+        hot = MongoCandleStore(database)
+        placement = RetentionPlacement(clock)
         stack = HistoryComposer(
             source=AngelOneCandleBackfill(AngelOneApi(broker.transport)),
-            repository=CandleRepository(
-                MongoCandleStore(database), cold, RetentionPlacement(clock)
-            ),
+            repository=CandleRepository(hot, cold, placement),
+            rollup=CandleRollup(hot, cold, placement, LogAlertSink()),
             coverage=MongoCoverageStore(database),
             calendar_store=calendar_store,
             calendar=await StoredTradingCalendar.from_store(calendar_store),

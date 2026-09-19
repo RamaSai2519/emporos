@@ -3,7 +3,8 @@ history commands report outcomes and exit codes honestly (through their runtime 
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+import asyncio
+from collections.abc import AsyncIterator, Iterable
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime
 
@@ -15,12 +16,15 @@ from emporos.cli.history_composition import HistoryComposer, resolve_symbols
 from emporos.cli.history_runtime import HistoryRuntime
 from emporos.core.clock import FixedClock
 from emporos.core.errors import ConfigurationError
-from emporos.domain.candles import Timeframe
+from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Exchange
+from emporos.domain.money import Money
 from emporos.history.calendar import StoredTradingCalendar
 from emporos.instruments.cache import InstrumentCache
 from emporos.persistence.candle_cold import ParquetCandleArchive
+from emporos.persistence.candle_rollup import CandleRollup
 from emporos.persistence.candles import CandleRepository
+from emporos.persistence.placement import RetentionPlacement
 from tests.support.fakes import (
     InMemoryCandleStore,
     InMemoryCoverageStore,
@@ -45,13 +49,17 @@ class MemoryCalendarStore:
         self.days.update(days)
 
 
-def composer(history: BrokerHistory | None = None) -> tuple[HistoryComposer, InMemoryCandleStore]:
+def composer(
+    history: BrokerHistory | None = None, rollup_cold: ParquetCandleArchive | None = None
+) -> tuple[HistoryComposer, InMemoryCandleStore]:
     store = InMemoryCandleStore()
-    repository = CandleRepository(store, ParquetCandleArchive(InMemoryObjectStore()))
+    cold = ParquetCandleArchive(InMemoryObjectStore())
+    repository = CandleRepository(store, cold)
     return (
         HistoryComposer(
             source=history or BrokerHistory(),
             repository=repository,
+            rollup=CandleRollup(store, rollup_cold or cold, RetentionPlacement(FixedClock(NOW))),
             coverage=InMemoryCoverageStore(),
             calendar_store=MemoryCalendarStore(),
             calendar=StoredTradingCalendar(),
@@ -157,3 +165,38 @@ def test_history_help_lists_the_commands() -> None:
     result = runner.invoke(cli_main.app, ["history", "--help"])
     for command in ("backfill", "reconcile", "seed-calendar"):
         assert command in result.output
+
+
+def test_the_rollup_command_reports_and_scopes_to_symbols(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli_main, "open_history_runtime", fake_runtime())
+
+    everything = runner.invoke(cli_main.app, ["history", "rollup"])
+    scoped = runner.invoke(cli_main.app, ["history", "rollup", "-s", "SBIN-EQ"])
+    unknown = runner.invoke(cli_main.app, ["history", "rollup", "-s", "NOPE-EQ"])
+
+    assert everything.exit_code == scoped.exit_code == 0
+    assert "rollup: 0 candle(s) archived" in everything.output
+    assert unknown.exit_code == 1 and "NOPE-EQ" in unknown.output
+
+
+def test_a_failed_rollup_exits_two(monkeypatch: pytest.MonkeyPatch) -> None:
+    class BrokenCold(ParquetCandleArchive):
+        async def archive(self, candles: Iterable[Candle]) -> None:
+            raise ConnectionError("s3 down")
+
+    built, store = composer(rollup_cold=BrokenCold(InMemoryObjectStore()))
+    p = Money.of("100")
+    old = Candle(
+        SBIN.instrument_id, Timeframe.M1, datetime(2026, 1, 5, 4, 0, tzinfo=UTC), p, p, p, p, 1
+    )
+    asyncio.run(store.upsert([old]))
+
+    @asynccontextmanager
+    async def opened(settings: object) -> AsyncIterator[HistoryRuntime]:
+        yield HistoryRuntime(built.build(), InstrumentCache([SBIN]))
+
+    monkeypatch.setattr(cli_main, "open_history_runtime", opened)
+
+    result = runner.invoke(cli_main.app, ["history", "rollup"])
+
+    assert result.exit_code == 2 and "1 failure(s)" in result.output

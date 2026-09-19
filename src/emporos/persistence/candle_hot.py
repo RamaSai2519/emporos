@@ -76,6 +76,28 @@ class MongoCandleStore:
         ]
         await self._collection.bulk_write(operations, ordered=False)
 
+    async def instruments_before(self, timeframe: Timeframe, cutoff: datetime) -> list[str]:
+        """Instruments holding at least one `timeframe` bar older than `cutoff` (for the rollup)."""
+        found = await self._collection.distinct(
+            "instrument_id", {"timeframe": timeframe, "ts": {"$lt": cutoff}}
+        )
+        return sorted(str(i) for i in found)
+
+    async def delete(
+        self, instrument_id: str, timeframe: Timeframe, timestamps: Sequence[datetime]
+    ) -> int:
+        """Remove exactly these bars (by timestamp); returns how many were deleted."""
+        if not timestamps:
+            return 0
+        result = await self._collection.delete_many(
+            {
+                "instrument_id": instrument_id,
+                "timeframe": timeframe,
+                "ts": {"$in": list(timestamps)},
+            }
+        )
+        return int(result.deleted_count)
+
     async def read(
         self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
     ) -> list[Candle]:

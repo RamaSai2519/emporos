@@ -23,6 +23,7 @@ from emporos.history.calendar import CalendarSeeder, CalendarStore, StoredTradin
 from emporos.history.gaps import GapDetector, GapFiller, HistoryReconciler
 from emporos.history.grid import SessionGrid
 from emporos.history.source import CoverageStore, HistoricalCandleSource
+from emporos.persistence.candle_rollup import CandleRollup
 from emporos.persistence.candles import CandleRepository
 
 
@@ -34,12 +35,14 @@ class HistoryStack:
     reconciler: HistoryReconciler
     seeder: CalendarSeeder
     grid: SessionGrid
+    rollup: CandleRollup
 
 
 @dataclass(frozen=True, kw_only=True)
 class HistoryComposer:
     source: HistoricalCandleSource
     repository: CandleRepository
+    rollup: CandleRollup
     coverage: CoverageStore
     calendar_store: CalendarStore
     calendar: StoredTradingCalendar
@@ -68,6 +71,7 @@ class HistoryComposer:
             reconciler=HistoryReconciler(detector, filler),
             seeder=CalendarSeeder(self.source, self.calendar_store, grid.window),
             grid=grid,
+            rollup=self.rollup,
         )
 
 

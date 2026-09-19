@@ -164,6 +164,7 @@ def instruments_sync() -> None:
 
 _SYMBOLS = typer.Option(..., "--symbol", "-s", help="Trading symbol, e.g. SBIN-EQ (repeatable).")
 _DAYS = typer.Option(30, "--days", "-d", min=1, help="How many calendar days back to cover.")
+_OPTIONAL_SYMBOLS = typer.Option([], "--symbol", "-s", help="Limit to these symbols.")
 
 
 def _window(days: int) -> tuple[date, date]:
@@ -219,6 +220,34 @@ def history_backfill(symbols: list[str] = _SYMBOLS, days: int = _DAYS) -> None:
 def history_reconcile(symbols: list[str] = _SYMBOLS, days: int = _DAYS) -> None:
     """Find gaps in stored history and re-fetch only those."""
     _run_history(symbols, days, reconcile=True)
+
+
+@history_app.command("rollup")
+def history_rollup(symbols: list[str] = _OPTIONAL_SYMBOLS) -> None:
+    """Move candles older than each timeframe's hot retention from Mongo to S3 (run nightly)."""
+
+    async def _rollup() -> HistoryOutcome:
+        async with open_history_runtime(Settings.default()) as runtime:
+            ids = None
+            if symbols:
+                found = resolve_symbols(runtime.instruments, Exchange.NSE, symbols)
+                ids = [i.instrument_id for i in found]
+            report = await runtime.stack.rollup.run(instrument_ids=ids)
+            return HistoryOutcome(
+                f"rollup: {report.archived} candle(s) archived, {report.deleted} removed from "
+                f"the hot tier across {report.instruments} instrument(s), "
+                f"{len(report.failures)} failure(s)",
+                report.ok,
+            )
+
+    try:
+        outcome = asyncio.run(_rollup())
+    except EmporosError as error:
+        typer.secho(f"rollup failed: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(outcome.summary)
+    if not outcome.complete:
+        raise typer.Exit(code=2)
 
 
 @history_app.command("seed-calendar")
