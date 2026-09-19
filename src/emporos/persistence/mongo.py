@@ -3,7 +3,7 @@
 There is no local Mongo container — every environment, including local dev
 and CI, connects directly to the real Atlas cluster via `MONGO_URL`; the only
 thing that varies is the resolved database name (`emporos` vs `emporos_dev`,
-see `emporos.core.config.resolve_db_name`).
+see `emporos.core.config.Environment`).
 
 Pool size, write concern, etc. are configuration here rather than literals
 scattered at call sites, because Decision 5 may later move production to a
@@ -35,28 +35,36 @@ class ConnectionSettings:
 DEFAULT_CONNECTION_SETTINGS = ConnectionSettings()
 
 
-def create_mongo_client(
-    settings: Settings,
-    connection_settings: ConnectionSettings = DEFAULT_CONNECTION_SETTINGS,
-) -> AsyncMongoClient[Mapping[str, Any]]:
-    """A new client. Callers own its lifecycle — close it when done (e.g. worker
-    shutdown, or a test's `finally` block). Process code should get its client
-    from a single place wired up at startup, not call this per-request.
+class MongoClientFactory:
+    """Builds the process Mongo client and resolves the ENV-selected database.
+
+    Composes `Settings` with `ConnectionSettings` so that turning the database
+    hosting decision into a config change never touches call sites. One instance
+    is created at the composition root and closed during shutdown.
     """
-    if not settings.mongo_url:
-        raise ConfigurationError("MONGO_URL is not set")
-    return AsyncMongoClient(
-        settings.mongo_url,
-        maxPoolSize=connection_settings.max_pool_size,
-        retryWrites=connection_settings.retry_writes,
-        w=connection_settings.write_concern,
-        serverSelectionTimeoutMS=connection_settings.server_selection_timeout_ms,
-    )
 
+    def __init__(
+        self,
+        settings: Settings,
+        connection_settings: ConnectionSettings = DEFAULT_CONNECTION_SETTINGS,
+    ) -> None:
+        if not settings.mongo_url:
+            raise ConfigurationError("MONGO_URL is not set")
+        self._database_name = settings.db_name
+        self._client: AsyncMongoClient[Mapping[str, Any]] = AsyncMongoClient(
+            settings.mongo_url,
+            maxPoolSize=connection_settings.max_pool_size,
+            retryWrites=connection_settings.retry_writes,
+            w=connection_settings.write_concern,
+            serverSelectionTimeoutMS=connection_settings.server_selection_timeout_ms,
+        )
 
-def get_database(
-    client: AsyncMongoClient[Mapping[str, Any]], settings: Settings
-) -> AsyncDatabase[Mapping[str, Any]]:
-    """The database resolved by `ENV` (plan.md §6.0) — `emporos` iff `ENV=main`,
-    `emporos_dev` otherwise."""
-    return client[settings.db_name]
+    @property
+    def client(self) -> AsyncMongoClient[Mapping[str, Any]]:
+        return self._client
+
+    def database(self) -> AsyncDatabase[Mapping[str, Any]]:
+        return self._client[self._database_name]
+
+    async def close(self) -> None:
+        await self._client.close()

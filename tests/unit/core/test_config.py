@@ -2,12 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from emporos.core.config import (
-    Settings,
-    load_yaml_config,
-    resolve_db_name,
-    resolve_profile,
-)
+from emporos.core.config import Environment, Settings, YamlConfigLoader
 
 
 @pytest.mark.parametrize(
@@ -22,8 +17,8 @@ from emporos.core.config import (
         ("main", "emporos"),
     ],
 )
-def test_resolve_db_name_only_main_is_production(env: str | None, expected_db: str) -> None:
-    assert resolve_db_name(env) == expected_db
+def test_environment_db_name_only_main_is_production(env: str | None, expected_db: str) -> None:
+    assert Environment(env).db_name == expected_db
 
 
 @pytest.mark.parametrize(
@@ -36,19 +31,19 @@ def test_resolve_db_name_only_main_is_production(env: str | None, expected_db: s
         ("main", "production"),
     ],
 )
-def test_resolve_profile(env: str | None, expected_profile: str) -> None:
-    assert resolve_profile(env) == expected_profile
+def test_environment_profile(env: str | None, expected_profile: str) -> None:
+    assert Environment(env).profile == expected_profile
 
 
-def test_load_yaml_config_merges_base_and_profile_overlay() -> None:
-    config = load_yaml_config("production")
+def test_yaml_config_loader_merges_base_and_profile_overlay() -> None:
+    config = YamlConfigLoader().load("production")
     assert config["log_level"] == "WARNING"
     assert config["timezone"] == "Asia/Kolkata"  # from base, not overridden
 
 
-def test_load_yaml_config_missing_overlay_falls_back_to_base(tmp_path: Path) -> None:
+def test_yaml_config_loader_missing_overlay_falls_back_to_base(tmp_path: Path) -> None:
     (tmp_path / "settings.base.yaml").write_text("log_level: INFO\n")
-    config = load_yaml_config("nonexistent-profile", config_dir=tmp_path)
+    config = YamlConfigLoader(config_dir=tmp_path).load("nonexistent-profile")
     assert config == {"log_level": "INFO"}
 
 
@@ -71,3 +66,11 @@ def test_settings_reads_mongo_url_from_environment(monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("MONGO_URL", "mongodb+srv://example/")
     settings = Settings(_env_file=None)
     assert settings.mongo_url == "mongodb+srv://example/"
+
+
+def test_settings_default_is_cached_and_loads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ENV", "staging")
+    first = Settings.default()
+    second = Settings.default()
+    assert first is second
+    assert first.profile == "staging"

@@ -13,3 +13,4 @@ node_modules/
 .next/
 dist/
 build/
+.import_linter_cache/

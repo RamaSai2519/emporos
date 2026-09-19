@@ -5,7 +5,7 @@
 import pytest
 
 from emporos.core.config import Settings
-from emporos.persistence.mongo import create_mongo_client
+from emporos.persistence.mongo import MongoClientFactory
 
 pytestmark = pytest.mark.integration
 
@@ -19,7 +19,7 @@ pytestmark = pytest.mark.integration
         ("main", "emporos"),
     ],
 )
-async def test_client_connects_to_the_env_resolved_database(
+async def test_factory_connects_to_the_env_resolved_database(
     env: str | None, expected_db: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     if env is None:
@@ -31,11 +31,11 @@ async def test_client_connects_to_the_env_resolved_database(
         pytest.skip("MONGO_URL not set")
     assert settings.db_name == expected_db
 
-    client = create_mongo_client(settings)
+    factory = MongoClientFactory(settings)
     try:
-        db = client[settings.db_name]
+        db = factory.database()
         assert db.name == expected_db
         result = await db.command("ping")
         assert result["ok"] == 1.0
     finally:
-        await client.close()
+        await factory.close()

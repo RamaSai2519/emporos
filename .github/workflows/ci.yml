@@ -29,20 +29,20 @@ jobs:
         run: pipenv install --deploy --dev
 
       - name: ruff check
-        run: pipenv run ruff check src tests
+        run: pipenv run ruff check src tests scripts
 
       - name: ruff format --check
-        run: pipenv run ruff format --check src tests
+        run: pipenv run ruff format --check src tests scripts
 
-      - name: mypy --strict (domain, broker, risk, execution)
-        run: pipenv run mypy --strict src/emporos/domain src/emporos/broker src/emporos/risk src/emporos/execution
+      - name: mypy --strict (whole package)
+        run: pipenv run mypy --strict src/emporos
 
       - name: import-linter
         run: pipenv run lint-imports
 
-      - name: pytest (unit)
-        run: pipenv run pytest tests/unit -q
+      - name: pytest with coverage (unit + integration)
+        run: pipenv run pytest -q --cov=emporos --cov-branch
 
-      - name: pytest (integration — real Atlas emporos_dev)
+      - name: coverage gates (plan.md §18)
         if: ${{ env.MONGO_URL != '' }}
-        run: pipenv run pytest tests/integration -q -m integration
+        run: pipenv run coverage-gate

@@ -13,47 +13,56 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import cast
 
 import structlog
 
-from emporos.core.ids import new_correlation_id
+from emporos.core.ids import IdGenerator
 
 
-def configure_logging(level: str = "INFO") -> None:
-    """Call once at process startup."""
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=getattr(logging, level.upper(), logging.INFO),
-    )
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso", utc=True),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-        ],
-        wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
-        cache_logger_on_first_use=True,
-    )
+class Logging:
+    """Process-wide structured logger: JSON to stdout with correlation context.
 
-
-def get_logger(*args: object, **kwargs: object) -> structlog.stdlib.BoundLogger:
-    return structlog.get_logger(*args, **kwargs)  # type: ignore[no-any-return]
-
-
-def bind_context(*, correlation_id: str | None = None, **fields: str) -> str:
-    """Bind correlation/session/order/etc IDs for every log call on this
-    (async) call chain until `clear_context()`. Returns the correlation_id
-    used (a fresh one is minted if none is given).
+    One instance is created at the composition root with the process
+    `IdGenerator`. It owns logging configuration, logger acquisition, and the
+    `contextvars` correlation-id binding that async child tasks inherit.
     """
-    cid = correlation_id or new_correlation_id()
-    structlog.contextvars.bind_contextvars(correlation_id=cid, **fields)
-    return cid
 
+    def __init__(self, id_generator: IdGenerator) -> None:
+        self._id_generator = id_generator
 
-def clear_context() -> None:
-    structlog.contextvars.clear_contextvars()
+    def configure(self, level: str = "INFO") -> None:
+        """Configure the stdout JSON pipeline. Call once at process startup."""
+        logging.basicConfig(
+            format="%(message)s",
+            stream=sys.stdout,
+            level=getattr(logging, level.upper(), logging.INFO),
+        )
+        structlog.configure(
+            processors=[
+                structlog.contextvars.merge_contextvars,
+                structlog.processors.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso", utc=True),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.processors.JSONRenderer(),
+            ],
+            wrapper_class=structlog.make_filtering_bound_logger(logging.NOTSET),
+            logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
+            cache_logger_on_first_use=True,
+        )
+
+    def get_logger(self) -> structlog.stdlib.BoundLogger:
+        return cast(structlog.stdlib.BoundLogger, structlog.get_logger())
+
+    def bind_context(self, *, correlation_id: str | None = None, **fields: str) -> str:
+        """Bind correlation/session/order/etc IDs for every log call on this
+        (async) call chain until `clear_context()`. Returns the correlation_id
+        used (a fresh one is minted if none is given).
+        """
+        cid = correlation_id or self._id_generator.new_correlation_id()
+        structlog.contextvars.bind_contextvars(correlation_id=cid, **fields)
+        return cid
+
+    def clear_context(self) -> None:
+        structlog.contextvars.clear_contextvars()
