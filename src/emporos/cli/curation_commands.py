@@ -65,7 +65,9 @@ _BASELINE = "hold_baseline_v1"
 _REPORT = typer.Option(Path("docs/strategies/curation.md"), help="The human-readable report.")
 _FEES = typer.Option(False, help="Price days before the oldest fee schedule with it.")
 _ONLY = typer.Option(None, "--only", help="Run just this strategy from the plan (repeatable).")
-_JSON = typer.Option(Path("docs/strategies/curation.json"), help="The machine-readable record.")
+_JSON = typer.Option(
+    Path("docs/strategies/curation.json"), "--json", help="The machine-readable record."
+)
 _RECORD = typer.Option(
     True, "--record/--no-record", help="Append every backtest tried to the trial ledger."
 )

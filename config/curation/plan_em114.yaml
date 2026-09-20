@@ -1,0 +1,58 @@
+# The curation plan for the remaining EM-114 strategies — fixed BEFORE any result was seen.
+#
+# Same rules as config/curation/plan.yaml (and the same windows and objective): each strategy is
+# tuned ONLY on the training window of each walk-forward step, from this small pre-declared grid,
+# and the chosen parameters are then run once on the following, unseen test window. Nothing in this
+# file may be changed after looking at a result: add a strategy or a grid, and every run is repeated.
+# Hypotheses are in docs/strategies/em114-hypotheses.md. Judged under config/robustness/benchmark.yaml.
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: vwap_trend_v1
+    file: config/strategies/vwap_trend_v1.yaml
+    candidates:
+      - {name: cont_s10_t15, overrides: {pullback: false, stop_atr_mult: "1.0", target_r: "1.5"}}
+      - {name: cont_s15_t20, overrides: {pullback: false, stop_atr_mult: "1.5", target_r: "2.0"}}
+      - {name: cont_s15_t30, overrides: {pullback: false, stop_atr_mult: "1.5", target_r: "3.0"}}
+      - {name: pull_s10_t15, overrides: {pullback: true, stop_atr_mult: "1.0", target_r: "1.5"}}
+      - {name: pull_s15_t20, overrides: {pullback: true, stop_atr_mult: "1.5", target_r: "2.0"}}
+      - {name: pull_s15_t30, overrides: {pullback: true, stop_atr_mult: "1.5", target_r: "3.0"}}
+  - name: donchian_v1
+    file: config/strategies/donchian_v1.yaml
+    candidates:
+      - {name: l20_tr2, overrides: {lookback: 20, trail_atr_mult: "2.0"}}
+      - {name: l20_tr3, overrides: {lookback: 20, trail_atr_mult: "3.0"}}
+      - {name: l30_tr2, overrides: {lookback: 30, trail_atr_mult: "2.0"}}
+      - {name: l30_tr3, overrides: {lookback: 30, trail_atr_mult: "3.0"}}
+      - {name: l40_tr2, overrides: {lookback: 40, trail_atr_mult: "2.0"}}
+      - {name: l40_tr3, overrides: {lookback: 40, trail_atr_mult: "3.0"}}
+  - name: ema_pullback_v1
+    file: config/strategies/ema_pullback_v1.yaml
+    candidates:
+      - {name: nov_s10_t15, overrides: {use_vwap: false, stop_atr_mult: "1.0", target_r: "1.5"}}
+      - {name: nov_s15_t20, overrides: {use_vwap: false, stop_atr_mult: "1.5", target_r: "2.0"}}
+      - {name: nov_s15_t30, overrides: {use_vwap: false, stop_atr_mult: "1.5", target_r: "3.0"}}
+      - {name: vwap_s10_t15, overrides: {use_vwap: true, stop_atr_mult: "1.0", target_r: "1.5"}}
+      - {name: vwap_s15_t20, overrides: {use_vwap: true, stop_atr_mult: "1.5", target_r: "2.0"}}
+      - {name: vwap_s15_t30, overrides: {use_vwap: true, stop_atr_mult: "1.5", target_r: "3.0"}}
+  - name: gap_go_v1
+    file: config/strategies/gap_go_v1.yaml
+    candidates:
+      - {name: g50_t15, overrides: {min_gap_bps: 50, target_r: "1.5"}}
+      - {name: g50_t25, overrides: {min_gap_bps: 50, target_r: "2.5"}}
+      - {name: g100_t15, overrides: {min_gap_bps: 100, target_r: "1.5"}}
+      - {name: g100_t25, overrides: {min_gap_bps: 100, target_r: "2.5"}}
+      - {name: g150_t15, overrides: {min_gap_bps: 150, target_r: "1.5"}}
+      - {name: g150_t25, overrides: {min_gap_bps: 150, target_r: "2.5"}}
+  - name: gap_fade_v1
+    file: config/strategies/gap_fade_v1.yaml
+    candidates:
+      - {name: g50_f5, overrides: {min_gap_bps: 50, fill_fraction: "0.5"}}
+      - {name: g50_f10, overrides: {min_gap_bps: 50, fill_fraction: "1.0"}}
+      - {name: g100_f5, overrides: {min_gap_bps: 100, fill_fraction: "0.5"}}
+      - {name: g100_f10, overrides: {min_gap_bps: 100, fill_fraction: "1.0"}}
+      - {name: g150_f5, overrides: {min_gap_bps: 150, fill_fraction: "0.5"}}
+      - {name: g150_f10, overrides: {min_gap_bps: 150, fill_fraction: "1.0"}}

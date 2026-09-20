@@ -1,0 +1,37 @@
+# donchian_v1 — CANDIDATE, not enabled. It becomes enabled only if it passes strategy curation
+# (docs/strategies/): walk-forward out-of-sample, net of charges, under the platform's risk rules.
+# Donchian breakout (5m): a close beyond the session's previous-N-bar channel, ridden with an ATR trailing stop.
+# See src/emporos/strategies/builtin/donchian_v1.py for what it does.
+#
+# Rates and money are integers or QUOTED strings; times are quoted "HH:MM" (IST). No secrets here.
+name: donchian_v1
+enabled: false
+timeframe: 5m
+
+universe:
+  type: static
+  instruments: ["NSE:ADANIENT-EQ", "NSE:ASIANPAINT-EQ", "NSE:AXISBANK-EQ", "NSE:BAJAJFINSV-EQ", "NSE:BAJFINANCE-EQ", "NSE:BHARTIARTL-EQ", "NSE:COALINDIA-EQ", "NSE:HCLTECH-EQ", "NSE:HDFCBANK-EQ", "NSE:HINDUNILVR-EQ", "NSE:ICICIBANK-EQ", "NSE:INFY-EQ", "NSE:ITC-EQ", "NSE:JSWSTEEL-EQ", "NSE:KOTAKBANK-EQ", "NSE:LT-EQ", "NSE:M&M-EQ", "NSE:MARUTI-EQ", "NSE:NESTLEIND-EQ", "NSE:NTPC-EQ", "NSE:ONGC-EQ", "NSE:POWERGRID-EQ", "NSE:SBIN-EQ", "NSE:SUNPHARMA-EQ", "NSE:TATASTEEL-EQ", "NSE:TECHM-EQ", "NSE:TITAN-EQ", "NSE:ULTRACEMCO-EQ", "NSE:WIPRO-EQ"]
+
+parameters:
+  lookback: 20
+  atr_period: 14
+  breakout_buffer_bps: 5
+  stop_atr_mult: "1.5"
+  trail_atr_mult: "2.0"
+  max_entries: 2
+  allow_short: true
+
+risk:                    # sized to fit config/risk.yaml (max_position_value 25000 per instrument)
+  max_position_value: 25000
+  max_open_positions: 3
+  stop_loss_pct: "1.0"
+  target_pct: "2.0"
+
+execution:
+  limit_buffer_bps: 5
+  reprice_after_seconds: 30
+  max_reprices: 3
+
+session:
+  no_new_entries_after: "14:45"
+  square_off_at: "15:15"

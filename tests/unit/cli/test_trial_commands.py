@@ -28,10 +28,21 @@ def test_the_backtest_group_offers_the_ledger() -> None:
     assert result.exit_code == 0 and "list" in result.output and "backfill" in result.output
 
 
-def test_curate_can_be_told_not_to_record() -> None:
+def test_curate_can_be_told_not_to_record_and_still_writes_a_json_record_to_a_path() -> None:
     result = runner.invoke(app, ["backtest", "curate", "--help"])
 
     assert "--no-record" in result.output and "--experiment" in result.output
+    assert "--json" in result.output and "--benchmark" in result.output
+
+
+def test_every_curate_option_name_is_distinct() -> None:
+    import typer.main
+
+    command = typer.main.get_command(app).commands["backtest"].commands["curate"]  # type: ignore[attr-defined]
+    names = [name for param in command.params for name in param.opts]
+
+    assert len(names) == len(set(names))
+    assert "--record" in names and "--json" in names  # the ledger switch and the file path
 
 
 async def test_backfill_adds_what_is_missing_and_skips_what_is_there() -> None:
