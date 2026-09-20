@@ -25,6 +25,7 @@ from emporos.broker.angelone.models import (
     OrderBookEntry,
     PositionEntry,
     ProfileResponse,
+    QuoteEntry,
     TradeBookEntry,
 )
 from emporos.broker.errors import BrokerRejectedError
@@ -296,3 +297,35 @@ def test_no_optional_field_can_make_an_order_book_row_unmappable(
     )
     order = ACCOUNT.order(entry)
     assert order.broker_order_id == "201"
+
+
+class TestQuoteDepth:
+    """Best bid/ask come from the top non-empty level; SmartAPI pads empty levels with zeros."""
+
+    def _entry(self, buy: list[dict], sell: list[dict] | None) -> QuoteEntry:  # type: ignore[type-arg]
+        body = {
+            "exchange": "NSE", "tradingSymbol": "SBIN-EQ", "symbolToken": "3045",
+            "ltp": "996.2", "open": "990", "high": "1000", "low": "985", "close": "988.7",
+            "tradeVolume": 1000, "lowerCircuit": "890", "upperCircuit": "1087",
+            "exchTradeTime": "18-Sep-2026 15:30:00",
+        }  # fmt: skip
+        if sell is not None:
+            body["depth"] = {"buy": buy, "sell": sell}
+        return QuoteEntry.model_validate(body)
+
+    def test_the_best_bid_and_ask_are_the_first_non_empty_levels(self) -> None:
+        empty = {"price": "0", "quantity": 0}
+        quote = AccountMapper.quote(
+            self._entry(
+                [empty, {"price": "996.1", "quantity": 50}, {"price": "996.0", "quantity": 9}],
+                [{"price": "996.2", "quantity": 408}, empty],
+            )
+        )
+        assert (quote.bid, quote.ask) == (Money.of("996.1"), Money.of("996.2"))
+
+    def test_an_empty_side_or_missing_depth_is_none_not_zero(self) -> None:
+        empty = {"price": "0", "quantity": 0}
+        one_sided = AccountMapper.quote(self._entry([empty], [{"price": "996.2", "quantity": 1}]))
+        assert one_sided.bid is None and one_sided.ask == Money.of("996.2")
+        no_depth = AccountMapper.quote(self._entry([], None))
+        assert (no_depth.bid, no_depth.ask) == (None, None)

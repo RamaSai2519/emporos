@@ -120,6 +120,7 @@ class ExecutionEngine:
                 updated_at=now,
                 strategy_run_id=signal.strategy_run_id,
                 signal_id=approval.signal_id,
+                signal_kind=signal.kind.value,
                 parent_order_id=parent_order_id,
                 reprice_count=0 if parent is None else parent.reprice_count + 1,
                 original_limit_price=(

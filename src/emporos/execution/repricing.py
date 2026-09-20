@@ -7,7 +7,7 @@ from typing import Protocol
 
 from emporos.core.clock import Clock
 from emporos.domain.money import Money
-from emporos.domain.orders import OrderType
+from emporos.domain.orders import OrderSide, OrderType
 from emporos.execution.fills import SyncResult
 from emporos.execution.state import OrderState
 from emporos.persistence.records import OrderRecord
@@ -16,9 +16,17 @@ from emporos.risk.approval import RiskApprovedSignal, RiskDecision, RiskRejectio
 
 @dataclass(frozen=True)
 class Replacement:
-    """A request to trade what is left of an approved signal, at a new price, under a new key."""
+    """A request to trade what is left of an order, at a new price, under a new key.
 
-    basis: RiskApprovedSignal
+    Everything here is read from the persisted order, never from anything held in memory: repricing
+    must work identically after a restart.
+    """
+
+    strategy_run_id: str
+    instrument_id: str
+    kind: str  # ENTRY or EXIT
+    side: OrderSide
+    order_type: OrderType
     quantity: int
     limit_price: Money
     reason: str
@@ -91,27 +99,17 @@ class RepriceCoordinator:
         self._clock = clock
         self._fills = fills
 
-    async def reprice(
-        self,
-        order: OrderRecord,
-        original: RiskApprovedSignal,
-        candidate: Money,
-        count: int,
-        original_price: Money,
-    ) -> OrderRecord | RiskRejection:
-        if count != order.reprice_count or original_price != (
-            order.original_limit_price or order.limit_price
-        ):
-            raise ValueError("repricing bounds must match the persisted chain")
-        basis = original.signal
-        if (basis.instrument_id, basis.side, basis.order_type) != (
-            order.instrument_id,
-            order.side,
-            order.order_type,
-        ):
-            raise ValueError("replacement signal must belong to the original order")
+    async def reprice(self, order: OrderRecord, candidate: Money) -> OrderRecord | RiskRejection:
+        """Cancel `order`, confirm it is really gone, and replace what is left at `candidate`."""
+        if not order.strategy_run_id or not order.signal_kind:
+            raise ValueError("only an order that came from a signal can be repriced")
+        original_price = order.original_limit_price or order.limit_price
         self._policy.validate(
-            order, count, original_price, candidate, self._clock.now() - order.created_at
+            order,
+            order.reprice_count,
+            original_price,
+            candidate,
+            self._clock.now() - order.created_at,
         )
         cancelled = await self._execution.cancel(order.id)
         if cancelled.state != OrderState.CANCELLED:
@@ -123,13 +121,18 @@ class RepriceCoordinator:
         remaining = cancelled.quantity - cancelled.filled_quantity
         if remaining <= 0:
             return cancelled
+        attempt = order.reprice_count + 1
         decision = await self._risk.review(
             Replacement(
-                basis=original,
+                strategy_run_id=order.strategy_run_id,
+                instrument_id=order.instrument_id,
+                kind=order.signal_kind,
+                side=order.side,
+                order_type=order.order_type,
                 quantity=remaining,
                 limit_price=candidate,
-                reason=f"reprice {order.id}: {basis.reason}",
-                key=f"{order.id}:reprice:{count + 1}",
+                reason=f"reprice {attempt} of {order.id}",
+                key=f"{order.id}:reprice:{attempt}",
             )
         )
         if isinstance(decision, RiskRejection):

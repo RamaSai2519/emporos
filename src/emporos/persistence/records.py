@@ -95,6 +95,7 @@ class SignalRecord(Record):
 class OrderRecord(Record):
     strategy_run_id: str | None = None
     signal_id: str | None = None
+    signal_kind: str | None = None  # ENTRY or EXIT: what a replacement order must be judged as
     parent_order_id: str | None = None
     reprice_count: int = 0
     absence_checks: int = 0  # consecutive broker look-ups that found no such order

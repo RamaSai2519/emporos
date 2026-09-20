@@ -20,6 +20,7 @@ from decimal import Decimal
 from typing import Any
 
 from emporos.broker.angelone.models import (
+    DepthLevel,
     FundsResponse,
     HoldingEntry,
     OrderBookEntry,
@@ -89,6 +90,14 @@ def _money_or_none_if_zero(value: Decimal | None) -> Money | None:
     price before a fill). The neutral DTO says "not applicable" as None, so a tag-resolved order
     compares equal to the intent it was placed from."""
     return None if not value else Money(value)
+
+
+def _best(levels: tuple[DepthLevel, ...]) -> Money | None:
+    """The top of one side of the book. SmartAPI pads an empty level with price 0, quantity 0."""
+    for level in levels:
+        if level.price > 0 and level.quantity > 0:
+            return Money(level.price)
+    return None
 
 
 def _price_text(value: Money) -> str:
@@ -280,6 +289,8 @@ class AccountMapper:
             exchange_ts=entry.exch_trade_time,
             lower_circuit=Money(entry.lower_circuit),
             upper_circuit=Money(entry.upper_circuit),
+            bid=_best(entry.depth.buy if entry.depth else ()),
+            ask=_best(entry.depth.sell if entry.depth else ()),
         )
 
 

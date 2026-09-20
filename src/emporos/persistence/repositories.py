@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Collection as Sized
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any
 
 from pymongo import ASCENDING
@@ -122,6 +123,12 @@ class OrderRepository(Repository[OrderRecord]):
 
     async def in_states(self, session_date: str, states: Sized[str]) -> list[OrderRecord]:
         return await self.find({"session_date": session_date, "state": {"$in": list(states)}})
+
+    async def created_since(self, account_id: str, since: datetime) -> list[OrderRecord]:
+        return await self.find(
+            {"account_id": account_id, "created_at": {"$gte": since}},
+            sort=[("created_at", ASCENDING)],
+        )
 
     async def for_account_session(self, account_id: str, session_date: str) -> list[OrderRecord]:
         return await self.find(

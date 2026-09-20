@@ -39,6 +39,9 @@ class PlatformLedger:
     async def executions_this_session(self) -> list[ExecutionRecord]:
         return await self._executions.for_account_session(self._account_id, self._session())
 
+    async def orders_created_since(self, since: datetime) -> list[OrderRecord]:
+        return await self._orders.created_since(self._account_id, since)
+
     async def all_executions(self) -> list[ExecutionRecord]:
         return await self._executions.for_account(self._account_id)
 

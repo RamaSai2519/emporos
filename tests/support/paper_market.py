@@ -35,7 +35,20 @@ class FakeMarketData:
         self._require(instrument_ids)
         p = Money.of("100.00")
         return [
-            Quote(i, p, p, p, p, p, 10, NOW, Money.of("90"), Money.of("110"))
+            Quote(
+                i,
+                p,
+                p,
+                p,
+                p,
+                p,
+                10,
+                NOW,
+                Money.of("90"),
+                Money.of("110"),
+                bid=Money.of("99.95"),
+                ask=Money.of("100.05"),
+            )  # fmt: skip
             for i in instrument_ids
         ]
 

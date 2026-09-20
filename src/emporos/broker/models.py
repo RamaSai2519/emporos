@@ -97,6 +97,9 @@ class Quote:
     exchange_ts: datetime | None = None
     lower_circuit: Money | None = None
     upper_circuit: Money | None = None
+    # Best bid and ask: None when that side of the book is empty or the broker did not send depth.
+    bid: Money | None = None
+    ask: Money | None = None
 
     def __post_init__(self) -> None:
         _require_utc("exchange_ts", self.exchange_ts)

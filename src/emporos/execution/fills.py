@@ -9,9 +9,11 @@ in ONE transaction. The fills themselves are the source of truth for quantities:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
+from typing import Protocol
 
 from emporos.broker.models import BrokerTrade
 from emporos.core.clock import Clock
@@ -25,6 +27,12 @@ from emporos.persistence.transactions import FillOutcome
 from emporos.portfolio.ledger import PositionCalculator
 
 _ATTEMPTS = 3
+
+
+class FillListener(Protocol):
+    """Told, synchronously and after the fill is durable, about each newly applied fill."""
+
+    def on_fill(self, order: OrderRecord, execution: ExecutionRecord) -> None: ...
 
 
 class FillResult(StrEnum):
@@ -44,7 +52,9 @@ class FillProcessor:
         clock: Clock,
         ids: IdGenerator,
         account_id: str,
+        listeners: Sequence[FillListener] = (),
     ) -> None:
+        self._listeners = tuple(listeners)
         self._journal = journal
         self._costs = costs
         self._calculator = calculator
@@ -93,7 +103,11 @@ class FillProcessor:
         position = self._calculator.apply(held or self._flat(trade), execution)
         updated = self._filled(order, trade, filled)
         outcome = await self._journal.record_fill(order, updated, execution, position)
-        return FillResult.APPLIED if outcome == FillOutcome.APPLIED else FillResult.DUPLICATE
+        if outcome != FillOutcome.APPLIED:
+            return FillResult.DUPLICATE
+        for listener in self._listeners:
+            listener.on_fill(updated, execution)
+        return FillResult.APPLIED
 
     def _filled(self, order: OrderRecord, trade: BrokerTrade, filled: int) -> OrderRecord:
         state = OrderState(order.state)

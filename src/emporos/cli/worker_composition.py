@@ -1,0 +1,479 @@
+"""Composition root for the trading worker in PAPER mode: the only place its parts are chosen.
+
+    market data ─▶ marks ─────────────────────────────▶ risk facts ─┐
+    strategies ─▶ signals ─▶ recorder ─▶ RISK ─▶ EXECUTION ─▶ paper broker (its own books)
+                                                       │              │ trade book / order updates
+                                platform books ◀── fill processor ◀───┘
+                                     │
+                       reconciler (halts through the kill switch) · snapshots · square-off
+
+Everything a strategy signal, a square-off and (later) a dashboard command does to a broker goes
+through the one `GatedExecutionSink`. The worker holds no credentials: the venue behind it is the
+paper broker, whose only outside contact is a market-data source. Live trading would swap the
+venue and broker here and nothing else.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from decimal import Decimal
+from typing import Any
+
+from pymongo import AsyncMongoClient
+
+from emporos.broker.angelone.endpoints import EndpointGroup
+from emporos.broker.angelone.limits import ANGELONE_RATE_LIMITS
+from emporos.broker.models import MarketDataMode
+from emporos.broker.paper.broker import PaperBroker
+from emporos.broker.paper.costs import ScheduledCosts
+from emporos.broker.paper.factory import PaperBrokerConfig, PaperBrokerFactory
+from emporos.broker.paper.market import MarketDataSource
+from emporos.broker.ratelimit import GroupRateLimiter
+from emporos.cli.paper_composition import PaperComposer
+from emporos.core.alerts import AlertSink
+from emporos.core.clock import Clock, Sleeper
+from emporos.core.ids import IdGenerator
+from emporos.domain.candles import Timeframe
+from emporos.domain.fees import FeeSchedule, IntradayCharges
+from emporos.domain.marketable import MarketableLimit
+from emporos.domain.money import Money
+from emporos.domain.trading_mode import TradingMode
+from emporos.execution.engine import ExecutionEngine
+from emporos.execution.fills import FillProcessor, FillSynchroniser
+from emporos.execution.gateway import BrokerOrderGateway
+from emporos.execution.order_updates import OrderUpdateTranslator
+from emporos.execution.pricing import MarketableLimitPricer
+from emporos.execution.reprice_scheduler import RepriceScheduler
+from emporos.execution.repricing import RepriceCoordinator, RepricePolicy
+from emporos.execution.state import OrderStateMachine
+from emporos.marketdata.session import SessionWindow
+from emporos.observability.alerts import EventOutbox, LifecycleEvents, OutboxAlertSink
+from emporos.persistence.collections import Collection
+from emporos.persistence.instrument_ticks import InstrumentTickSizes
+from emporos.persistence.ledger_reader import PlatformLedger
+from emporos.persistence.order_journal import MongoOrderJournal
+from emporos.persistence.paper_books import PaperBooks
+from emporos.persistence.paper_journal import MongoPaperJournal
+from emporos.persistence.repositories import (
+    Database,
+    ExecutionRepository,
+    InstrumentRepository,
+    KillSwitchRepository,
+    OrderEventRepository,
+    OrderRepository,
+    PortfolioSnapshotRepository,
+    PositionRepository,
+    ReconciliationRunRepository,
+    RiskEventRepository,
+    SignalRepository,
+    StrategyRepository,
+    StrategyRunRepository,
+    SystemEventRepository,
+)
+from emporos.persistence.transactions import TransactionRunner
+from emporos.portfolio.ledger import PortfolioValuator, PositionCalculator
+from emporos.portfolio.marks import LatestTickMarks
+from emporos.portfolio.reconciliation import (
+    Reconciler,
+    ReconciliationComparator,
+    ReconciliationTracker,
+)
+from emporos.portfolio.replay import PositionReplay
+from emporos.portfolio.service import PortfolioService
+from emporos.portfolio.snapshots import SnapshotSchedule, SnapshotService
+from emporos.portfolio.sources import BrokerReconciliationSource
+from emporos.risk.assembly import MonitoredSystemFacts, SnapshotAssembler
+from emporos.risk.engine import RiskEngine
+from emporos.risk.kill_switch import (
+    FileSentinelKillSwitch,
+    KillSwitchControl,
+    KillSwitchMonitor,
+    KillSwitchReader,
+    KillSwitchWriter,
+    MongoKillSwitch,
+)
+from emporos.risk.limits import RiskLimits
+from emporos.risk.rejection_log import MongoRejectionLog
+from emporos.risk.standard import StandardRuleSet
+from emporos.session.bar_feed import ClosedBarQueue
+from emporos.session.close_out import EndOfDay
+from emporos.session.halt import KillSwitchHalt
+from emporos.session.host import ManagedRun, StrategyHost
+from emporos.session.jobs import Job, JobScheduler
+from emporos.session.lifecycle import SessionLifecycle
+from emporos.session.quoter import MarkRepriceQuoter
+from emporos.session.recovery import StartupRecovery
+from emporos.session.replacement import RiskReplacementReviewer
+from emporos.session.risk_facts import (
+    JournalOrderFlow,
+    LedgerAccountFacts,
+    QuotedMarketFacts,
+    VenueHealth,
+)
+from emporos.session.signal_path import GatedExecutionSink
+from emporos.session.square_off import SquareOffService
+from emporos.session.strategy_positions import StrategyPositionBook
+from emporos.session.strategy_runs import (
+    RunEnvironment,
+    StrategyRunLauncher,
+    StrategyRunnerBuilder,
+)
+from emporos.session.updates import OrderUpdateRouter
+from emporos.session.worker import SessionSchedule, TradingWorker
+from emporos.signals.recorder import SignalRecorder
+from emporos.strategies.config import ResolvedStrategyConfig
+from emporos.strategies.registry import StrategyRegistry
+from emporos.strategies.runner import WallClockSync
+
+# The execution engine's own order-per-second budget (plan.md §12 step 3): the same numbers the
+# broker enforces on placeOrder, held independently so a paper session is paced like a live one.
+ORDER_BUDGET = "orders"
+
+
+@dataclass(frozen=True)
+class WorkerTuning:
+    """Intervals and bounds that are configuration, not code."""
+
+    fill_sync: timedelta = timedelta(seconds=2)
+    resolution: timedelta = timedelta(seconds=5)
+    reconcile: timedelta = timedelta(minutes=5)
+    reprice: timedelta = timedelta(seconds=2)
+    events: timedelta = timedelta(seconds=2)
+    kill_switch: timedelta = timedelta(seconds=5)
+    reprice_step_bps: Decimal = Decimal(5)
+    mark_max_age: timedelta = timedelta(seconds=120)
+    snapshot: SnapshotSchedule = field(default_factory=SnapshotSchedule)
+    schedule: SessionSchedule = field(default_factory=SessionSchedule)
+
+
+@dataclass(frozen=True)
+class WorkerAssembly:
+    """The finished worker and the handles a test or an operator command needs to look inside."""
+
+    worker: TradingWorker
+    broker: PaperBroker
+    engine: ExecutionEngine
+    sync: FillSynchroniser
+    reconciler: Reconciler
+    tracker: ReconciliationTracker
+    risk: RiskEngine
+    sink: GatedExecutionSink
+    marks: LatestTickMarks
+    book: StrategyPositionBook
+    outbox: EventOutbox
+    lifecycle: SessionLifecycle
+    ledger: PlatformLedger
+    journal: MongoOrderJournal
+    monitor: KillSwitchMonitor
+    control: KillSwitchControl
+    runs: tuple[ManagedRun, ...]
+
+
+class PaperVenue:
+    """The 'outside world' of a paper session: no login, and one market-data subscription."""
+
+    def __init__(
+        self, broker: PaperBroker, instruments: Sequence[str], health: VenueHealth
+    ) -> None:
+        self._broker = broker
+        self._instruments = list(instruments)
+        self._health = health
+
+    async def authenticate(self) -> None:
+        await self._broker.ensure_session()
+
+    async def connect(self) -> None:
+        await self._broker.subscribe_market_data(self._instruments, MarketDataMode.QUOTE)
+        self._health.set(session=True, feed=True)
+
+    async def close(self) -> None:
+        self._health.set(session=False, feed=False)
+
+
+class _BrokerCash:
+    def __init__(self, broker: PaperBroker) -> None:
+        self._broker = broker
+
+    async def available_cash(self) -> Money | None:
+        return (await self._broker.get_funds()).available_cash
+
+
+@dataclass(kw_only=True)
+class PaperWorkerComposer:
+    client: AsyncMongoClient[Mapping[str, Any]]
+    database: Database
+    market: MarketDataSource
+    bars: ClosedBarQueue
+    registry: StrategyRegistry
+    configs: Sequence[ResolvedStrategyConfig]
+    limits: RiskLimits
+    fees: FeeSchedule
+    account_id: str
+    clock: Clock
+    sleeper: Sleeper
+    ids: IdGenerator
+    kill_switch_sentinel: FileSentinelKillSwitch
+    window: SessionWindow
+    starting_cash: Money = field(default_factory=lambda: Money.of("1000000"))
+    tuning: WorkerTuning = field(default_factory=WorkerTuning)
+    session_date: date | None = None
+    kill_switch_collection: str = Collection.KILL_SWITCH
+    paper_flush: timedelta = timedelta(seconds=1)
+
+    async def build(self) -> WorkerAssembly:
+        db = self.database
+        outbox = EventOutbox()
+        alerts: AlertSink = OutboxAlertSink(outbox, self.clock, self.ids)
+        lifecycle = SessionLifecycle(self.clock, (LifecycleEvents(outbox, self.ids),))
+
+        # --- the broker: paper, with its own books, fed by a market-data source -----------
+        costs = ScheduledCosts(IntradayCharges(self.fees))
+        paper_books = PaperBooks.in_database(db)
+        paper_journal = paper_books.journal(self.client)
+        runtime = await PaperComposer(
+            source=self.market,
+            factory=PaperBrokerFactory(
+                PaperBrokerConfig(self.account_id, self.starting_cash), costs
+            ),
+            journal=paper_journal,
+            store=paper_books.store(),
+            client_code=self.account_id,
+            clock=self.clock,
+            ids=self.ids,
+            sleeper=self.sleeper,
+            alerts=alerts,
+        ).open()
+        broker = runtime.broker
+
+        # --- the platform's books: one journal, one ledger --------------------------------
+        orders, events = OrderRepository(db), OrderEventRepository(db)
+        executions, positions = ExecutionRepository(db), PositionRepository(db)
+        journal = MongoOrderJournal(
+            orders, events, executions, positions, TransactionRunner(self.client), self.account_id
+        )
+        ledger = PlatformLedger(self.account_id, orders, executions, positions, self.clock)
+        marks = LatestTickMarks(self.clock, self.tuning.mark_max_age)
+        broker.on_tick(marks.on_tick)
+        ticks = InstrumentTickSizes(InstrumentRepository(db))
+        book = StrategyPositionBook(self.account_id, PositionCalculator())
+        machine = OrderStateMachine()
+        sync = FillSynchroniser(
+            broker,
+            FillProcessor(
+                journal, costs, PositionCalculator(), machine, self.clock, self.ids,
+                self.account_id, listeners=[book],
+            ),
+        )  # fmt: skip
+        book.load(
+            await ledger.all_executions(),
+            {o.id: o for o in await orders.find({"account_id": self.account_id})},
+        )
+        portfolio = PortfolioService(ledger, marks, PortfolioValuator())
+
+        # --- execution ----------------------------------------------------------------------
+        run_buffers: dict[str, MarketableLimit] = {}  # filled as runs start, below
+        default_buffer = MarketableLimit(
+            max((c.execution.limit_buffer_bps for c in self.configs), default=Decimal(5))
+        )
+        engine = ExecutionEngine(
+            BrokerOrderGateway(broker), journal,
+            GroupRateLimiter(
+                {ORDER_BUDGET: ANGELONE_RATE_LIMITS[EndpointGroup.PLACE_ORDER.value]},
+                self.clock,
+                self.sleeper,
+            ),
+            self.clock, self.ids, machine,
+            MarketableLimitPricer(default_buffer, ticks, run_buffers),
+            self.account_id,
+        )  # fmt: skip
+
+        # --- the kill switch, reconciliation and risk -------------------------------------
+        readers: list[KillSwitchReader] = [self.kill_switch_sentinel]
+        writers: list[KillSwitchWriter] = [self.kill_switch_sentinel]
+        flag = MongoKillSwitch(KillSwitchRepository(db, self.kill_switch_collection))
+        readers.append(flag)
+        writers.append(flag)
+        monitor = KillSwitchMonitor(
+            readers, self.clock, self.sleeper, self.tuning.kill_switch.total_seconds()
+        )
+        control = KillSwitchControl(writers, readers, self.clock)
+        tracker = ReconciliationTracker(self.clock)
+        health = VenueHealth()
+        reconciler = Reconciler(
+            BrokerReconciliationSource(ledger, broker),
+            ReconciliationComparator(PositionReplay(PositionCalculator())),
+            sync,
+            _RunLog(ReconciliationRunRepository(db)),
+            KillSwitchHalt(control),
+            tracker, self.clock, self.ids, alerts,
+        )  # fmt: skip
+        assembler = SnapshotAssembler(
+            self.clock,
+            MonitoredSystemFacts(
+                TradingMode.PAPER,
+                False,
+                monitor,
+                health,
+                tracker,  # paper is never live
+            ),
+            LedgerAccountFacts(portfolio, book, marks),
+            QuotedMarketFacts(broker, marks),
+            JournalOrderFlow(journal, ledger, self.clock),
+        )
+        risk = RiskEngine(
+            StandardRuleSet(self.limits, self.window).rules(),
+            assembler,
+            MongoRejectionLog(RiskEventRepository(db), self.ids),
+            self.ids, self.clock, alerts,
+        )  # fmt: skip
+        sink = GatedExecutionSink(
+            SignalRecorder(SignalRepository(db), self.ids), risk, engine, alerts
+        )
+
+        # --- strategies ---------------------------------------------------------------------
+        launcher = StrategyRunLauncher(
+            self.registry, StrategyRepository(db), StrategyRunRepository(db), self.clock, self.ids
+        )
+        builder = StrategyRunnerBuilder(self.registry)
+        session_date = (self.session_date or self.clock.now().date()).isoformat()
+        runs: list[ManagedRun] = []
+        for config in self.configs:
+            started = await launcher.start(config, session_date)
+            prepared = builder.build(
+                started,
+                RunEnvironment(
+                    self.clock, WallClockSync(), sink, book.view_for(started.run_id), alerts
+                ),
+            )
+            runs.append(ManagedRun(started.run_id, prepared.runner))
+        engine_prices = {
+            r.run_id: MarketableLimit(c.execution.limit_buffer_bps)
+            for r, c in zip(runs, self.configs, strict=True)
+        }
+        engine._pricer = MarketableLimitPricer(default_buffer, ticks, engine_prices)
+
+        # --- jobs ----------------------------------------------------------------------------
+        policy = _reprice_policy(self.configs)
+        repricer = RepriceScheduler(
+            journal,
+            RepriceCoordinator(
+                engine, RiskReplacementReviewer(risk, self.clock), policy, self.clock, sync
+            ),
+            policy,
+            MarkRepriceQuoter(marks, ticks, self.tuning.reprice_step_bps),
+            self.clock, alerts,
+        )  # fmt: skip
+        snapshots = SnapshotService(
+            self.account_id, portfolio, _BrokerCash(broker), journal,
+            PortfolioSnapshotRepository(db), self.clock,
+        )  # fmt: skip
+        updates = OrderUpdateRouter()
+        broker.on_order_update(updates.on_update)
+        t = self.tuning
+        always = JobScheduler(
+            [
+                Job("kill_switch", t.kill_switch, monitor.refresh),
+                Job("fills", t.fill_sync, sync.sync),
+                Job("resolution", t.resolution, engine.resolve_unresolved),
+                Job("reconcile", t.reconcile, reconciler.run),
+                Job("snapshot", t.snapshot.interval, _Intraday(snapshots)),
+                Job("paper_flush", self.paper_flush, paper_journal.flush),
+                Job("events", t.events, _Drain(outbox, SystemEventRepository(db))),
+            ],
+            self.clock, alerts,
+        )  # fmt: skip
+        while_trading = JobScheduler(
+            [Job("reprice", t.reprice, repricer.run_once)], self.clock, alerts
+        )
+        end_of_day = EndOfDay(sync, engine, reconciler, snapshots, alerts)
+        worker = TradingWorker(
+            lifecycle, t.schedule, self.clock, self.sleeper, alerts,
+            PaperVenue(broker, sorted({i for c in self.configs for i in c.instrument_ids}), health),
+            StartupRecovery(engine, sync, reconciler, alerts),
+            StrategyHost(runs, self.bars, updates, journal, OrderUpdateTranslator()),
+            _SwitchView(monitor),
+            always, while_trading,
+            SquareOffService(ledger, journal, marks, sink, self.clock, alerts),
+            _Books(ledger, journal),
+            end_of_day,
+            _Flush(outbox, SystemEventRepository(db), paper_journal),
+        )  # fmt: skip
+        return WorkerAssembly(
+            worker, broker, engine, sync, reconciler, tracker, risk, sink, marks, book, outbox,
+            lifecycle, ledger, journal, monitor, control, tuple(runs),
+        )  # fmt: skip
+
+
+def bar_queue_for(configs: Sequence[ResolvedStrategyConfig]) -> ClosedBarQueue:
+    return ClosedBarQueue(frozenset({c.timeframe for c in configs}) or frozenset({Timeframe.M5}))
+
+
+def _reprice_policy(configs: Sequence[ResolvedStrategyConfig]) -> RepricePolicy:
+    """One policy for the session: the most patient timing, the tightest chase, the fewest tries."""
+    if not configs:
+        return RepricePolicy(timedelta(seconds=30), 3, Decimal(20))
+    return RepricePolicy(
+        after=timedelta(seconds=min(c.execution.reprice_after_seconds for c in configs)),
+        max_reprices=max(c.execution.max_reprices for c in configs),
+        max_chase_bps=Decimal(50),
+    )
+
+
+class _RunLog:
+    def __init__(self, runs: ReconciliationRunRepository) -> None:
+        self._runs = runs
+
+    async def record(self, record: Any) -> None:
+        await self._runs.insert(record)
+
+
+class _Intraday:
+    def __init__(self, snapshots: SnapshotService) -> None:
+        self._snapshots = snapshots
+
+    async def __call__(self) -> object:
+        from emporos.portfolio.snapshots import SnapshotKind
+
+        return await self._snapshots.take(SnapshotKind.INTRADAY)
+
+
+class _Drain:
+    def __init__(self, outbox: EventOutbox, store: SystemEventRepository) -> None:
+        self._outbox, self._store = outbox, store
+
+    async def __call__(self) -> object:
+        return await self._outbox.drain(self._store)
+
+
+class _Flush:
+    """Everything that must be durable before the process may end: fills, then events."""
+
+    def __init__(
+        self, outbox: EventOutbox, store: SystemEventRepository, paper: MongoPaperJournal
+    ) -> None:
+        self._outbox, self._store, self._paper = outbox, store, paper
+
+    async def flush(self) -> object:
+        await self._paper.flush()
+        return await self._outbox.drain(self._store)
+
+
+class _SwitchView:
+    def __init__(self, monitor: KillSwitchMonitor) -> None:
+        self._monitor = monitor
+
+    async def halted(self) -> bool:
+        return (await self._monitor.refresh()).halted
+
+
+class _Books:
+    def __init__(self, ledger: PlatformLedger, journal: MongoOrderJournal) -> None:
+        self._ledger, self._journal = ledger, journal
+
+    async def open_positions(self) -> list[Any]:
+        return await self._ledger.open_positions()
+
+    async def active(self) -> list[Any]:
+        return await self._journal.active()

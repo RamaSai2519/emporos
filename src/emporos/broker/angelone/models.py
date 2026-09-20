@@ -70,6 +70,16 @@ class LtpResponse(_Response):
     ltp: Decimal
 
 
+class DepthLevel(_Response):
+    price: Decimal
+    quantity: int
+
+
+class QuoteDepth(_Response):
+    buy: tuple[DepthLevel, ...] = ()
+    sell: tuple[DepthLevel, ...] = ()
+
+
 class QuoteEntry(_Response):
     exchange: str
     trading_symbol: str = Field(alias="tradingSymbol")
@@ -83,6 +93,7 @@ class QuoteEntry(_Response):
     lower_circuit: Decimal = Field(alias="lowerCircuit")
     upper_circuit: Decimal = Field(alias="upperCircuit")
     exch_trade_time: ExchangeTime = Field(alias="exchTradeTime")
+    depth: QuoteDepth | None = None
 
 
 class QuoteResponse(_Response):

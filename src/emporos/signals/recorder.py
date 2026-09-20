@@ -21,6 +21,10 @@ class SignalStore(Protocol):
 
     async def insert(self, record: SignalRecord) -> None: ...
 
+    async def get(self, record_id: str) -> SignalRecord | None: ...
+
+    async def replace(self, record: SignalRecord) -> None: ...
+
 
 class SignalRecorder:
     def __init__(self, store: SignalStore, ids: IdGenerator) -> None:
@@ -29,10 +33,15 @@ class SignalRecorder:
         self._sequence: defaultdict[str, int] = defaultdict(int)
 
     async def submit(self, signal: Signal) -> None:
+        await self.record(signal)
+
+    async def record(self, signal: Signal) -> str:
+        """Persist the signal and return its id: the key risk, execution and the order all carry."""
         self._sequence[signal.strategy_run_id] += 1
+        signal_id = self._ids.new_ulid()
         await self._store.insert(
             SignalRecord(
-                _id=self._ids.new_ulid(),
+                _id=signal_id,
                 strategy_run_id=signal.strategy_run_id,
                 instrument_id=signal.instrument_id,
                 ts=signal.ts,
@@ -46,3 +55,10 @@ class SignalRecorder:
                 sequence=self._sequence[signal.strategy_run_id],
             )
         )
+        return signal_id
+
+    async def link(self, signal_id: str, ordertag: str) -> None:
+        """Tie a signal to the order it produced (EM-99 H3)."""
+        record = await self._store.get(signal_id)
+        if record is not None:
+            await self._store.replace(record.model_copy(update={"ordertag": ordertag}))

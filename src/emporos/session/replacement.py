@@ -5,9 +5,8 @@ layer sits above both: it turns an execution `Replacement` into a fresh signal a
 engine judge it like any other.
 """
 
-from dataclasses import replace
-
 from emporos.core.clock import Clock
+from emporos.domain.signals import Signal, SignalKind
 from emporos.execution.repricing import Replacement
 from emporos.risk.approval import RiskDecision
 from emporos.risk.engine import RiskEngine
@@ -19,8 +18,12 @@ class RiskReplacementReviewer:
         self._clock = clock
 
     async def review(self, replacement: Replacement) -> RiskDecision:
-        signal = replace(
-            replacement.basis.signal,
+        signal = Signal(
+            strategy_run_id=replacement.strategy_run_id,
+            instrument_id=replacement.instrument_id,
+            kind=SignalKind(replacement.kind),
+            side=replacement.side,
+            order_type=replacement.order_type,
             quantity=replacement.quantity,
             limit_price=replacement.limit_price,
             ts=self._clock.now(),
