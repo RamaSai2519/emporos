@@ -10,7 +10,9 @@ from typing import TypeVar
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.positions import Position
+from emporos.domain.signals import Signal
 from emporos.domain.trading_mode import TradingMode
+from emporos.risk.approval import RiskRejection
 from emporos.risk.limits import RiskLimits
 from emporos.risk.snapshot import (
     AccountFacts,
@@ -22,6 +24,7 @@ from emporos.risk.snapshot import (
     SystemFacts,
     WorkingOrder,
 )
+from emporos.risk.verdict import RuleVerdict
 from tests.support.strategies import INSTRUMENT, T0
 
 _T = TypeVar("_T")
@@ -93,3 +96,58 @@ def generous_limits(**changes: object) -> RiskLimits:
 
 def _replace(obj: _T, changes: dict[str, object]) -> _T:
     return replace(obj, **changes)  # type: ignore[type-var]
+
+
+class StaticSnapshots:
+    """A `SnapshotProvider` that returns one snapshot, or fails on demand."""
+
+    def __init__(
+        self, snapshot: RiskSnapshot | None = None, error: Exception | None = None
+    ) -> None:
+        self._snapshot = snapshot
+        self._error = error
+        self.asked: list[Signal] = []
+
+    async def snapshot(self, signal: Signal) -> RiskSnapshot:
+        self.asked.append(signal)
+        if self._error is not None:
+            raise self._error
+        assert self._snapshot is not None
+        return self._snapshot
+
+
+class MemoryRejectionLog:
+    """A `RejectionLog` that keeps rejections in memory, or fails on demand."""
+
+    def __init__(self, error: Exception | None = None) -> None:
+        self.rejections: list[RiskRejection] = []
+        self.calls: list[str] = []
+        self._error = error
+
+    async def record(self, rejection: RiskRejection) -> None:
+        self.calls.append("record")
+        if self._error is not None:
+            raise self._error
+        self.rejections.append(rejection)
+
+
+class ScriptedRule:
+    """A rule that says what it is told, and remembers being asked."""
+
+    def __init__(
+        self,
+        name: str,
+        allow: bool = True,
+        error: Exception | None = None,
+        log: list[str] | None = None,
+    ) -> None:
+        self.name = name
+        self._allow = allow
+        self._error = error
+        self._log = log if log is not None else []
+
+    def evaluate(self, signal: Signal, snapshot: RiskSnapshot) -> RuleVerdict:
+        self._log.append(self.name)
+        if self._error is not None:
+            raise self._error
+        return RuleVerdict.allow() if self._allow else RuleVerdict.block(f"{self.name} says no")

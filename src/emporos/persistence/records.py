@@ -174,8 +174,21 @@ class PortfolioSnapshotRecord(Record):
 
 
 class RiskEventRecord(Record):
+    """One risk rejection: which rule blocked which signal, and the state it judged it against."""
+
     rule: str
     ts: datetime
+    signal_id: str | None = None
+    strategy_run_id: str | None = None
+    instrument_id: str | None = None
+    side: OrderSide | None = None
+    kind: str | None = None
+    quantity: int | None = None
+    limit_price: MoneyField | None = None
+    reason: str = ""
+    details: dict[str, str] = Field(default_factory=dict)
+    trace: list[dict[str, Any]] = Field(default_factory=list)  # every rule run, in order
+    snapshot: dict[str, Any] = Field(default_factory=dict)  # the state the rules judged
 
 
 class ReconciliationRunRecord(Record):

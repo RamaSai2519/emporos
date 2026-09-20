@@ -157,6 +157,7 @@ PLATFORM_SCHEMA = Schema(
         _spec(
             Collection.RISK_EVENTS,
             IndexSpec.on("rule", "ts"),
+            IndexSpec.on("signal_id"),
             IndexSpec.on("ts", expire_after=2 * _YEAR),
         ),
         _spec(

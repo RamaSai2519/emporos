@@ -180,8 +180,14 @@ class PortfolioSnapshotRepository(Repository[PortfolioSnapshotRecord]):
 
 
 class RiskEventRepository(Repository[RiskEventRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.RISK_EVENTS, RiskEventRecord)
+    def __init__(self, database: Database, collection: str = Collection.RISK_EVENTS) -> None:
+        super().__init__(database, collection, RiskEventRecord)
+
+    async def for_signal(self, signal_id: str) -> list[RiskEventRecord]:
+        return await self.find({"signal_id": signal_id}, sort=[("ts", ASCENDING)])
+
+    async def for_rule(self, rule: str) -> list[RiskEventRecord]:
+        return await self.find({"rule": rule}, sort=[("ts", ASCENDING)])
 
 
 class ReconciliationRunRepository(Repository[ReconciliationRunRecord]):
