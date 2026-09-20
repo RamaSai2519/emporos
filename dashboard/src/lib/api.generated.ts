@@ -90,6 +90,7 @@ export interface paths {
                             as_of: string;
                             items: {
                                 id: string;
+                                instrument_id: string;
                                 symbol: string;
                                 /** @enum {string} */
                                 exchange: "NSE" | "BSE";
@@ -376,7 +377,7 @@ export interface paths {
                                 idempotency_key: string;
                                 type: string;
                                 /** @enum {string} */
-                                status: "pending" | "accepted" | "executing" | "done" | "failed" | "rejected" | "expired";
+                                status: "PENDING" | "ACCEPTED" | "EXECUTING" | "DONE" | "FAILED" | "REJECTED" | "EXPIRED";
                                 /** Format: date-time */
                                 created_at: string;
                                 message: string | null;
@@ -463,7 +464,8 @@ export interface paths {
                         type: "SET_KILL_SWITCH";
                         params: {
                             /** @constant */
-                            enabled: true;
+                            halted: true;
+                            reason: string;
                         };
                         /** Format: uuid */
                         idempotency_key: string;
@@ -477,7 +479,7 @@ export interface paths {
                         /** @constant */
                         type: "CLOSE_POSITION";
                         params: {
-                            position_id: string;
+                            instrument_id: string;
                         };
                         /** Format: uuid */
                         idempotency_key: string;
@@ -493,7 +495,7 @@ export interface paths {
                         /** @constant */
                         type: "START_STRATEGY";
                         params: {
-                            strategy_id: string;
+                            name: string;
                         };
                         /** Format: uuid */
                         idempotency_key: string;
@@ -501,7 +503,7 @@ export interface paths {
                         /** @constant */
                         type: "STOP_STRATEGY";
                         params: {
-                            strategy_id: string;
+                            name: string;
                         };
                         /** Format: uuid */
                         idempotency_key: string;
@@ -509,7 +511,7 @@ export interface paths {
                         /** @constant */
                         type: "UPDATE_STRATEGY_CONFIG";
                         params: {
-                            strategy_id: string;
+                            name: string;
                             config: {
                                 [key: string]: unknown;
                             };
@@ -525,11 +527,9 @@ export interface paths {
                             instrument_id: string;
                             /** @enum {string} */
                             side: "BUY" | "SELL";
-                            /** @enum {string} */
-                            order_type: "LIMIT" | "STOPLOSS_LIMIT";
                             quantity: number;
                             limit_price: string;
-                            trigger_price?: string;
+                            reason: string;
                         };
                         /** Format: uuid */
                         idempotency_key: string;
@@ -554,7 +554,7 @@ export interface paths {
                             idempotency_key: string;
                             type: string;
                             /** @enum {string} */
-                            status: "pending" | "accepted" | "executing" | "done" | "failed" | "rejected" | "expired";
+                            status: "PENDING" | "ACCEPTED" | "EXECUTING" | "DONE" | "FAILED" | "REJECTED" | "EXPIRED";
                             /** Format: date-time */
                             created_at: string;
                             message: string | null;
@@ -598,7 +598,7 @@ export interface paths {
                             idempotency_key: string;
                             type: string;
                             /** @enum {string} */
-                            status: "pending" | "accepted" | "executing" | "done" | "failed" | "rejected" | "expired";
+                            status: "PENDING" | "ACCEPTED" | "EXECUTING" | "DONE" | "FAILED" | "REJECTED" | "EXPIRED";
                             /** Format: date-time */
                             created_at: string;
                             message: string | null;

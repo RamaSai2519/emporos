@@ -24,6 +24,8 @@ fastapi = "==0.115.0"
 uvicorn = {extras = ["standard"], version = "==0.30.6"}
 boto3 = "==1.35.36"
 pyarrow = "==17.0.0"
+argon2-cffi = "==23.1.0"
+pyjwt = "==2.9.0"
 
 [dev-packages]
 pytest = "==8.3.3"

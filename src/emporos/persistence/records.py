@@ -237,12 +237,27 @@ class KillSwitchRecord(Record):
 
 
 class CommandRecord(Record):
+    """One operator command. `idempotency_key` is client-generated and unique, so a double click, a
+    refresh or a network retry cannot create it twice. Status only moves forward:
+    PENDING → ACCEPTED → EXECUTING → DONE | FAILED | REJECTED, or PENDING → EXPIRED."""
+
     idempotency_key: str
     type: str
     status: str
     created_at: datetime
+    params: dict[str, Any] = Field(default_factory=dict)
+    issued_by: str = "operator"
+    expires_at: datetime | None = None
+    updated_at: datetime | None = None
+    reason: str = ""  # why it was rejected, failed or expired
+    attempts: int = 0  # how many times a worker has begun executing it
 
 
 class CommandResultRecord(Record):
+    """One entry in a command's outcome log: state changes and progress, append-only."""
+
     command_id: str
     created_at: datetime
+    status: str | None = None
+    message: str = ""
+    data: dict[str, Any] = Field(default_factory=dict)

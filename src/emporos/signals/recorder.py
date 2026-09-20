@@ -13,6 +13,7 @@ from typing import Protocol
 
 from emporos.core.ids import IdGenerator
 from emporos.domain.signals import Signal
+from emporos.persistence.errors import DuplicateRecordError
 from emporos.persistence.records import SignalRecord
 
 
@@ -35,10 +36,22 @@ class SignalRecorder:
     async def submit(self, signal: Signal) -> None:
         await self.record(signal)
 
-    async def record(self, signal: Signal) -> str:
-        """Persist the signal and return its id: the key risk, execution and the order all carry."""
+    async def record(self, signal: Signal, signal_id: str | None = None) -> str:
+        """Persist the signal and return its id: the key risk, execution and the order all carry.
+
+        A caller-chosen `signal_id` makes recording idempotent: the second time, the signal is
+        already on record and is not written again.
+        """
         self._sequence[signal.strategy_run_id] += 1
-        signal_id = self._ids.new_ulid()
+        signal_id = signal_id or self._ids.new_ulid()
+        try:
+            await self._insert(signal, signal_id)
+        except DuplicateRecordError:
+            if await self._store.get(signal_id) is None:
+                raise
+        return signal_id
+
+    async def _insert(self, signal: Signal, signal_id: str) -> None:
         await self._store.insert(
             SignalRecord(
                 _id=signal_id,
@@ -55,7 +68,6 @@ class SignalRecorder:
                 sequence=self._sequence[signal.strategy_run_id],
             )
         )
-        return signal_id
 
     async def link(self, signal_id: str, ordertag: str) -> None:
         """Tie a signal to the order it produced (EM-99 H3)."""

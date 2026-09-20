@@ -58,13 +58,16 @@ class SquareOffService:
         self._clock = clock
         self._alerts = alerts
 
-    async def flatten(self, reason: str) -> SquareOffReport:
+    async def flatten(self, reason: str, only: str | None = None) -> SquareOffReport:
+        """Exit every open position, or just `only` when given."""
         working = await self._orders.active()
         marks = self._marks.marks()
         submitted: list[str] = []
         closing: list[str] = []
         unpriced: list[str] = []
         for position in await self._positions.open_positions():
+            if only is not None and position.instrument_id != only:
+                continue
             side = OrderSide.SELL if position.net_quantity > 0 else OrderSide.BUY
             instrument = position.instrument_id
             if any(

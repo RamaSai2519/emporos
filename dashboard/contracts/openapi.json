@@ -208,6 +208,9 @@
                           "id": {
                             "type": "string"
                           },
+                          "instrument_id": {
+                            "type": "string"
+                          },
                           "symbol": {
                             "type": "string"
                           },
@@ -262,6 +265,7 @@
                         },
                         "required": [
                           "id",
+                          "instrument_id",
                           "symbol",
                           "exchange",
                           "strategy_id",
@@ -809,13 +813,13 @@
                           "status": {
                             "type": "string",
                             "enum": [
-                              "pending",
-                              "accepted",
-                              "executing",
-                              "done",
-                              "failed",
-                              "rejected",
-                              "expired"
+                              "PENDING",
+                              "ACCEPTED",
+                              "EXECUTING",
+                              "DONE",
+                              "FAILED",
+                              "REJECTED",
+                              "EXPIRED"
                             ]
                           },
                           "created_at": {
@@ -932,13 +936,18 @@
                       "params": {
                         "type": "object",
                         "properties": {
-                          "enabled": {
+                          "halted": {
                             "type": "boolean",
                             "const": true
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1
                           }
                         },
                         "required": [
-                          "enabled"
+                          "halted",
+                          "reason"
                         ],
                         "additionalProperties": false
                       },
@@ -990,13 +999,13 @@
                       "params": {
                         "type": "object",
                         "properties": {
-                          "position_id": {
+                          "instrument_id": {
                             "type": "string",
                             "minLength": 1
                           }
                         },
                         "required": [
-                          "position_id"
+                          "instrument_id"
                         ],
                         "additionalProperties": false
                       },
@@ -1056,13 +1065,13 @@
                       "params": {
                         "type": "object",
                         "properties": {
-                          "strategy_id": {
+                          "name": {
                             "type": "string",
                             "minLength": 1
                           }
                         },
                         "required": [
-                          "strategy_id"
+                          "name"
                         ],
                         "additionalProperties": false
                       },
@@ -1089,13 +1098,13 @@
                       "params": {
                         "type": "object",
                         "properties": {
-                          "strategy_id": {
+                          "name": {
                             "type": "string",
                             "minLength": 1
                           }
                         },
                         "required": [
-                          "strategy_id"
+                          "name"
                         ],
                         "additionalProperties": false
                       },
@@ -1122,7 +1131,7 @@
                       "params": {
                         "type": "object",
                         "properties": {
-                          "strategy_id": {
+                          "name": {
                             "type": "string",
                             "minLength": 1
                           },
@@ -1139,7 +1148,7 @@
                           }
                         },
                         "required": [
-                          "strategy_id",
+                          "name",
                           "config",
                           "force"
                         ],
@@ -1179,13 +1188,6 @@
                               "SELL"
                             ]
                           },
-                          "order_type": {
-                            "type": "string",
-                            "enum": [
-                              "LIMIT",
-                              "STOPLOSS_LIMIT"
-                            ]
-                          },
                           "quantity": {
                             "type": "integer",
                             "exclusiveMinimum": 0,
@@ -1195,17 +1197,17 @@
                             "type": "string",
                             "pattern": "^-?\\d+(\\.\\d+)?$"
                           },
-                          "trigger_price": {
+                          "reason": {
                             "type": "string",
-                            "pattern": "^-?\\d+(\\.\\d+)?$"
+                            "minLength": 1
                           }
                         },
                         "required": [
                           "instrument_id",
                           "side",
-                          "order_type",
                           "quantity",
-                          "limit_price"
+                          "limit_price",
+                          "reason"
                         ],
                         "additionalProperties": false
                       },
@@ -1273,13 +1275,13 @@
                     "status": {
                       "type": "string",
                       "enum": [
-                        "pending",
-                        "accepted",
-                        "executing",
-                        "done",
-                        "failed",
-                        "rejected",
-                        "expired"
+                        "PENDING",
+                        "ACCEPTED",
+                        "EXECUTING",
+                        "DONE",
+                        "FAILED",
+                        "REJECTED",
+                        "EXPIRED"
                       ]
                     },
                     "created_at": {
@@ -1343,13 +1345,13 @@
                     "status": {
                       "type": "string",
                       "enum": [
-                        "pending",
-                        "accepted",
-                        "executing",
-                        "done",
-                        "failed",
-                        "rejected",
-                        "expired"
+                        "PENDING",
+                        "ACCEPTED",
+                        "EXECUTING",
+                        "DONE",
+                        "FAILED",
+                        "REJECTED",
+                        "EXPIRED"
                       ]
                     },
                     "created_at": {

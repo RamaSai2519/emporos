@@ -12,7 +12,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
-from pymongo import ASCENDING
+from pymongo import ASCENDING, ReturnDocument
 from pymongo.asynchronous.client_session import AsyncClientSession
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -256,8 +256,8 @@ class KillSwitchRepository(Repository[KillSwitchRecord]):
 
 
 class CommandRepository(Repository[CommandRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.COMMANDS, CommandRecord)
+    def __init__(self, database: Database, collection: str = Collection.COMMANDS) -> None:
+        super().__init__(database, collection, CommandRecord)
 
     async def get_by_idempotency_key(self, idempotency_key: str) -> CommandRecord | None:
         return await self.find_one({"idempotency_key": idempotency_key})
@@ -265,10 +265,46 @@ class CommandRepository(Repository[CommandRecord]):
     async def with_status(self, status: str) -> list[CommandRecord]:
         return await self.find({"status": status}, sort=[("created_at", ASCENDING)])
 
+    async def in_statuses(self, statuses: Sequence[str]) -> list[CommandRecord]:
+        return await self.find(
+            {"status": {"$in": list(statuses)}},
+            sort=[("created_at", ASCENDING), ("_id", ASCENDING)],
+        )
+
+    async def transition(
+        self,
+        command_id: str,
+        allowed_from: Sequence[str],
+        to: str,
+        at: datetime,
+        *,
+        reason: str = "",
+        count_attempt: bool = False,
+    ) -> CommandRecord | None:
+        """Atomically move one command from any of `allowed_from` to `to`. Returns the command as
+        it now stands, or None if it was not in an allowed state — so two workers racing for the
+        same command cannot both win it."""
+        update: dict[str, Any] = {
+            "$set": {"status": to, "updated_at": at, "reason": reason},
+        }
+        if count_attempt:
+            update["$inc"] = {"attempts": 1}
+        document = await self._collection.find_one_and_update(
+            {"_id": command_id, "status": {"$in": list(allowed_from)}},
+            update,
+            return_document=ReturnDocument.AFTER,
+        )
+        return None if document is None else CommandRecord.model_validate(document)
+
+    async def updated_since(self, since: datetime, limit: int = 500) -> list[CommandRecord]:
+        return await self.find(
+            {"updated_at": {"$gt": since}}, sort=[("updated_at", ASCENDING)], limit=limit
+        )
+
 
 class CommandResultRepository(Repository[CommandResultRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.COMMAND_RESULTS, CommandResultRecord)
+    def __init__(self, database: Database, collection: str = Collection.COMMAND_RESULTS) -> None:
+        super().__init__(database, collection, CommandResultRecord)
 
     async def for_command(self, command_id: str) -> list[CommandResultRecord]:
         return await self.find({"command_id": command_id})

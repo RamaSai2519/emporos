@@ -1,0 +1,3 @@
+src/lib/api.generated.ts
+contracts/openapi.json
+package-lock.json
