@@ -223,8 +223,8 @@ class KillSwitchRepository(Repository[KillSwitchRecord]):
 
     CURRENT_ID = "kill_switch"
 
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.KILL_SWITCH, KillSwitchRecord)
+    def __init__(self, database: Database, collection: str = Collection.KILL_SWITCH) -> None:
+        super().__init__(database, collection, KillSwitchRecord)
 
     async def current(self) -> KillSwitchRecord | None:
         return await self.get(self.CURRENT_ID)

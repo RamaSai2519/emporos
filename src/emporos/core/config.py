@@ -111,6 +111,22 @@ class Settings(BaseSettings):
     angelone_public_ip: str | None = Field(default=None, alias="ANGELONE_CLIENT_PUBLIC_IP")
     angelone_mac_address: str | None = Field(default=None, alias="ANGELONE_CLIENT_MAC_ADDRESS")
 
+    # Real orders are inert unless this is exactly "true" (plan.md §11 TradingModeGuard). Kept as
+    # text so that "1", "yes" or a typo can never enable live trading by accident.
+    live_trading_flag: str | None = Field(default=None, alias="LIVE_TRADING_ENABLED")
+    # The kill switch's file sentinel: while this file exists, all new orders are halted.
+    kill_switch_file: str | None = Field(default=None, alias="KILL_SWITCH_FILE")
+
+    @property
+    def live_trading_enabled(self) -> bool:
+        return self.live_trading_flag == "true"
+
+    @property
+    def kill_switch_path(self) -> Path:
+        if self.kill_switch_file:
+            return Path(self.kill_switch_file).expanduser()
+        return Path.home() / ".emporos" / "HALT"
+
     @property
     def profile(self) -> str:
         return Environment(self.env).profile

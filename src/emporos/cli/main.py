@@ -18,6 +18,7 @@ import typer
 from emporos.cli.backtest_commands import backtest_app
 from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
+from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
@@ -52,12 +53,17 @@ app = typer.Typer(
 db_app = typer.Typer(help="Database migrations and maintenance.", no_args_is_help=True)
 instruments_app = typer.Typer(help="Instrument master sync.", no_args_is_help=True)
 app.add_typer(db_app, name="db")
+kill_switch_app = typer.Typer(help="Inspect the kill switch.", no_args_is_help=True)
+kill_switch_app.command("status")(kill_switch_status)
 history_app = typer.Typer(
     help="Historical candles: backfill, gap repair, calendar.", no_args_is_help=True
 )
 app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
+app.command("halt")(halt)
+app.command("resume")(resume)
+app.add_typer(kill_switch_app, name="kill-switch")
 
 
 def _not_implemented(feature: str, jira_ref: str) -> None:
@@ -78,12 +84,6 @@ def run() -> None:
 def backfill() -> None:
     """Backfill historical candles for the instrument universe."""
     _not_implemented("backfill", "EM-55")
-
-
-@app.command()
-def halt() -> None:
-    """Trip the kill switch. Halts all trading immediately (plan.md §11)."""
-    _not_implemented("halt", "EM-74")
 
 
 async def _migrate() -> MigrationReport:

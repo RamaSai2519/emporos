@@ -14,10 +14,10 @@ def test_help_lists_all_subcommands() -> None:
 
 
 def test_placeholder_command_exits_nonzero_with_a_message() -> None:
-    result = runner.invoke(app, ["halt"])
+    result = runner.invoke(app, ["run"])
 
     assert result.exit_code == 1
-    assert "EM-74" in result.output
+    assert "not implemented yet" in result.output
 
 
 def test_nested_subcommand_group_help() -> None:

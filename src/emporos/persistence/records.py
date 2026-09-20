@@ -217,7 +217,12 @@ class MarketCalendarRecord(Record):
 
 
 class KillSwitchRecord(Record):
+    """The kill switch: one document. `halted` is what the worker polls; the rest is who and why."""
+
     halted: bool = False
+    reason: str = ""
+    set_by: str | None = None
+    changed_at: datetime | None = None
 
 
 class CommandRecord(Record):
