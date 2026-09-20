@@ -45,6 +45,20 @@ def calls_named(names: set[str], root: Path = SRC) -> list[Hit]:
     return hits
 
 
+def string_constants(values: set[str], root: Path = SRC) -> list[Hit]:
+    """Every string literal that, ignoring case and padding, is exactly one of `values`."""
+    hits = []
+    for path, tree in python_files(root):
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and node.value.strip().upper() in values
+            ):
+                hits.append(Hit(path, node.lineno, node.value))
+    return hits
+
+
 def parameters_annotated(names: set[str], under: str, root: Path = SRC) -> list[Hit]:
     """Every function parameter, in files whose path starts with `under`, annotated with one of
     `names` (bare or dotted; unions and string annotations included)."""
