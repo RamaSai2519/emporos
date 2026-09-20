@@ -18,12 +18,25 @@ from emporos.session.strategy_files import STRATEGY_CONFIG_DIR, StrategyConfigLo
 from emporos.strategies.builtin.momentum_v1 import MomentumParameters
 from emporos.strategies.resolution import StrategyConfigResolver
 
-MASTER = InstrumentCache(
-    [
-        Instrument(Exchange.NSE, "1001", "RELIANCE-EQ", "Reliance", 1, Money.of("0.05")),
-        Instrument(Exchange.NSE, "1002", "TCS-EQ", "TCS", 1, Money.of("0.05")),
-    ]
-)
+
+def _master() -> InstrumentCache:
+    """Every instrument any shipped file names, with a made-up token: the test is about the files
+    loading, not about the real master."""
+    symbols: set[str] = set()
+    for path in STRATEGY_CONFIG_DIR.glob("*.yaml"):
+        symbols |= {
+            i.removeprefix("NSE:")
+            for i in yaml.safe_load(path.read_text())["universe"]["instruments"]
+        }
+    return InstrumentCache(
+        [
+            Instrument(Exchange.NSE, str(1001 + n), symbol, symbol, 1, Money.of("0.05"))
+            for n, symbol in enumerate(sorted(symbols))
+        ]
+    )
+
+
+MASTER = _master()
 
 
 def _loader() -> StrategyConfigLoader:
@@ -42,7 +55,8 @@ def _has_float(node: object) -> bool:
 
 def test_every_shipped_strategy_file_loads_and_validates() -> None:
     assert list(STRATEGY_CONFIG_DIR.glob("*.yaml")), "the loader would pass vacuously"
-    assert {c.name for c in _loader().load_all()} >= {"momentum_v1"}
+    names = {c.name for c in _loader().load_all()}
+    assert names >= {"momentum_v1", "orb_v1", "vwap_reversion_v1", "rsi_pullback_v1"}
 
 
 def test_no_shipped_strategy_file_contains_a_yaml_float() -> None:
@@ -53,7 +67,7 @@ def test_no_shipped_strategy_file_contains_a_yaml_float() -> None:
 def test_momentum_v1_is_the_plan_9_example() -> None:
     config = {c.name: c for c in _loader().load_all()}["momentum_v1"]
 
-    assert config.enabled and config.timeframe is Timeframe.M5
+    assert config.timeframe is Timeframe.M5
     assert [m.symbol for m in config.universe] == ["NSE:RELIANCE-EQ", "NSE:TCS-EQ"]
     assert isinstance(config.parameters, MomentumParameters)
     assert (config.parameters.fast_ema, config.parameters.slow_ema) == (20, 50)
@@ -67,3 +81,8 @@ def test_momentum_v1_is_the_plan_9_example() -> None:
 
 def test_the_config_directory_is_the_one_the_loader_reads() -> None:
     assert STRATEGY_CONFIG_DIR == CONFIG_DIR / "strategies" == Path(STRATEGY_CONFIG_DIR)
+
+
+def test_a_strategy_that_has_not_been_curated_is_not_enabled() -> None:
+    """Enabling one is a decision recorded in docs/strategies/, never a default."""
+    assert [c.name for c in _loader().load_enabled()] == []

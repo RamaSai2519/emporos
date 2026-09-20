@@ -1,0 +1,39 @@
+# The curation plan — fixed BEFORE any result was seen (docs/strategies/README.md).
+#
+# Each strategy is tuned ONLY on the training window of each walk-forward step, from this small,
+# pre-declared grid; the chosen parameters are then run once on the following, unseen test window.
+# The training objective is the annualised Sharpe ratio of the training run. Nothing in this file
+# may be changed after looking at a result: add a strategy or a grid, and every run is repeated.
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: orb_v1
+    file: config/strategies/orb_v1.yaml
+    candidates:
+      - {name: r3_t15_s10, overrides: {range_bars: 3, target_r: "1.5", stop_atr_mult: "1.0"}}
+      - {name: r3_t30_s10, overrides: {range_bars: 3, target_r: "3.0", stop_atr_mult: "1.0"}}
+      - {name: r6_t15_s10, overrides: {range_bars: 6, target_r: "1.5", stop_atr_mult: "1.0"}}
+      - {name: r6_t30_s10, overrides: {range_bars: 6, target_r: "3.0", stop_atr_mult: "1.0"}}
+      - {name: r6_t20_s15, overrides: {range_bars: 6, target_r: "2.0", stop_atr_mult: "1.5"}}
+      - {name: r3_t20_s15, overrides: {range_bars: 3, target_r: "2.0", stop_atr_mult: "1.5"}}
+  - name: vwap_reversion_v1
+    file: config/strategies/vwap_reversion_v1.yaml
+    candidates:
+      - {name: z20_x30_s15, overrides: {entry_z: "2.0", rsi_extreme: 30, stop_atr_mult: "1.5"}}
+      - {name: z20_x25_s25, overrides: {entry_z: "2.0", rsi_extreme: 25, stop_atr_mult: "2.5"}}
+      - {name: z25_x30_s15, overrides: {entry_z: "2.5", rsi_extreme: 30, stop_atr_mult: "1.5"}}
+      - {name: z25_x25_s25, overrides: {entry_z: "2.5", rsi_extreme: 25, stop_atr_mult: "2.5"}}
+      - {name: z30_x30_s25, overrides: {entry_z: "3.0", rsi_extreme: 30, stop_atr_mult: "2.5"}}
+      - {name: z30_x25_s15, overrides: {entry_z: "3.0", rsi_extreme: 25, stop_atr_mult: "1.5"}}
+  - name: rsi_pullback_v1
+    file: config/strategies/rsi_pullback_v1.yaml
+    candidates:
+      - {name: e05_x55, overrides: {rsi_entry: 5, rsi_exit: 55}}
+      - {name: e05_x70, overrides: {rsi_entry: 5, rsi_exit: 70}}
+      - {name: e10_x55, overrides: {rsi_entry: 10, rsi_exit: 55}}
+      - {name: e10_x70, overrides: {rsi_entry: 10, rsi_exit: 70}}
+      - {name: e15_x55, overrides: {rsi_entry: 15, rsi_exit: 55}}
+      - {name: e15_x70, overrides: {rsi_entry: 15, rsi_exit: 70}}

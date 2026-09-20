@@ -9,7 +9,7 @@
 # unquoted 15:00 is a base-60 integer in YAML 1.1. No secrets belong in this file; the loader
 # rejects any credential-shaped key.
 name: momentum_v1
-enabled: true
+enabled: false   # a year of real data says it loses money (docs/backtests/README.md); do not run it
 timeframe: 5m
 
 universe:
