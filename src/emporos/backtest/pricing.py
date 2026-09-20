@@ -29,6 +29,8 @@ class GateRejection:
 
 
 class SignalGate(Protocol):
+    name: str  # what a report calls it: "none" when nothing is checked
+
     def review(self, signal: Signal) -> Signal | GateRejection:
         """The signal to trade (possibly resized), or why it may not be traded."""
         ...

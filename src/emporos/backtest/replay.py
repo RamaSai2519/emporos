@@ -1,7 +1,7 @@
 """`BarReplay` — drives one strategy over a feed of closed bars, session by session.
 
     for each bar:  clock ─▶ observer.before_bar ─▶ strategy sees the bar ─▶ its signals
-    at each day's end:  strategy.on_session_end ─▶ observer.session_closed ─▶ next session
+    each day's end:  observer.session_ending ─▶ strategy.on_session_end ─▶ observer.session_closed
 
 The order inside a bar is the look-ahead guarantee (plan.md §10): the clock moves to the bar's
 close FIRST, so anything the observer settles (fills of orders from earlier bars) happens before
@@ -30,13 +30,21 @@ class SessionObserver(Protocol):
         """The clock stands at `bar.closes_at`; the strategy has not seen the bar yet."""
         ...
 
+    async def session_ending(self, day: date) -> None:
+        """`day` (an IST date) is ending: the strategy can still be told what happens to its
+        orders. Runs BEFORE the strategy's `on_session_end`."""
+        ...
+
     async def session_closed(self, day: date) -> None:
-        """`day` (an IST date) is over; the strategy has had its `on_session_end`."""
+        """`day` is over; the strategy has had its `on_session_end` and hears no more today."""
         ...
 
 
 class NoObserver:
     async def before_bar(self, bar: Candle) -> None:
+        return None
+
+    async def session_ending(self, day: date) -> None:
         return None
 
     async def session_closed(self, day: date) -> None:
@@ -72,6 +80,7 @@ class BarReplay:
         return self._runner.report()
 
     async def _close_session(self, day: date) -> None:
+        await self._observer.session_ending(day)
         await self._runner.end_session()
         await self._observer.session_closed(day)
         await self._runner.begin_session()

@@ -79,6 +79,9 @@ class RecordingObserver:
     async def before_bar(self, bar: Candle) -> None:
         self.log.append(("bar", bar.ts, self._clock.now()))
 
+    async def session_ending(self, day: date) -> None:
+        self.log.append(("ending", day, self._clock.now()))
+
     async def session_closed(self, day: date) -> None:
         self.log.append(("session", day, self._clock.now()))
 

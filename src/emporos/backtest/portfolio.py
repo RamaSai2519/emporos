@@ -129,6 +129,13 @@ class BacktestPortfolio:
     def mark(self, instrument_id: str, price: Money) -> None:
         self._marks[instrument_id] = price
 
+    def last_price(self, instrument_id: str) -> Money:
+        """The latest price seen for an instrument: its last bar close or fill."""
+        try:
+            return self._marks[instrument_id]
+        except KeyError:
+            raise LookupError(f"no price has been seen for {instrument_id}") from None
+
     def _track_cycle(
         self, fill: Fill, held: int, now_held: int, base_gross: Money, base_fees: Money
     ) -> None:

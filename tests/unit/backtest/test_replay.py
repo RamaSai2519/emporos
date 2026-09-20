@@ -71,7 +71,7 @@ async def test_the_session_close_comes_before_the_next_days_first_bar() -> None:
     await rig.replay.run(feed_for(bars, 2))
 
     kinds = [kind for kind, _, _ in observer.log]
-    assert kinds == ["bar", "bar", "session", "bar", "bar", "session"]
+    assert kinds == ["bar", "bar", "ending", "session", "bar", "bar", "ending", "session"]
 
 
 async def test_the_strategy_gets_on_session_end_every_day_and_keeps_receiving_bars() -> None:
