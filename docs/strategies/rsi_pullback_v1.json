@@ -1,0 +1,139 @@
+[
+  {
+    "strategy": "rsi_pullback_v1",
+    "passed": false,
+    "candidates": [
+      "e05_x55",
+      "e05_x70",
+      "e10_x55",
+      "e10_x70",
+      "e15_x55",
+      "e15_x70"
+    ],
+    "out_of_sample": {
+      "trades": 51,
+      "net_pnl": "-3484.56",
+      "gross_pnl": "-700.30",
+      "charges": "2784.26",
+      "win_rate": "0.07843137254901960784313725490196078",
+      "profit_factor": "0.09809372209496447567651512210272936",
+      "net_at_double_costs": "-6268.82",
+      "window_nets": [
+        "-525.97",
+        "-887.64",
+        "-720.17",
+        "-687.12",
+        "-663.66"
+      ],
+      "window_max_drawdowns": [
+        "0.006231002158096842970905990693644844",
+        "0.01091565052940935027701576568591724",
+        "0.0072244",
+        "0.006902581878412642160507727955796597",
+        "0.0066366"
+      ],
+      "instrument_nets": {
+        "NSE:10999": "-335.67",
+        "NSE:11483": "-43.84",
+        "NSE:11532": "-284.86",
+        "NSE:11630": "-244.02",
+        "NSE:11723": "-33.72",
+        "NSE:1333": "-79.08",
+        "NSE:13538": "-10.64",
+        "NSE:14977": "-78.16",
+        "NSE:1594": "-53.86",
+        "NSE:16675": "-115.64",
+        "NSE:17963": "-476.05",
+        "NSE:1922": "-75.92",
+        "NSE:2031": "-342.42",
+        "NSE:20374": "-88.03",
+        "NSE:236": "-206.63",
+        "NSE:2475": "53.99",
+        "NSE:25": "-196.12",
+        "NSE:3351": "111.61",
+        "NSE:3506": "-105.03",
+        "NSE:3787": "-157.24",
+        "NSE:5900": "-539.16",
+        "NSE:7229": "-184.07"
+      },
+      "compounded_return": "-0.0343665844587114485542032406"
+    },
+    "windows": [
+      [
+        "2026-01-30",
+        "2026-03-13",
+        "e15_x55"
+      ],
+      [
+        "2026-03-13",
+        "2026-04-24",
+        "e05_x70"
+      ],
+      [
+        "2026-04-24",
+        "2026-06-05",
+        "e05_x55"
+      ],
+      [
+        "2026-06-05",
+        "2026-07-17",
+        "e15_x70"
+      ],
+      [
+        "2026-07-17",
+        "2026-08-28",
+        "e05_x55"
+      ]
+    ],
+    "checks": [
+      {
+        "name": "net profit is positive",
+        "passed": false,
+        "actual": "-3484.56",
+        "required": "> 0"
+      },
+      {
+        "name": "enough trades to mean something",
+        "passed": false,
+        "actual": "51",
+        "required": ">= 150"
+      },
+      {
+        "name": "profit factor",
+        "passed": false,
+        "actual": "0.098",
+        "required": ">= 1.2"
+      },
+      {
+        "name": "profitable in most out-of-sample windows",
+        "passed": false,
+        "actual": "0 of 5",
+        "required": ">= 60% of windows"
+      },
+      {
+        "name": "no window's drawdown is too deep",
+        "passed": true,
+        "actual": "1.1%",
+        "required": "<= 10%"
+      },
+      {
+        "name": "profitable across instruments, not a few",
+        "passed": false,
+        "actual": "2 of 22",
+        "required": ">= 50% of instruments"
+      },
+      {
+        "name": "still profitable without its best window",
+        "passed": false,
+        "actual": "-2958.59",
+        "required": "> 0"
+      },
+      {
+        "name": "still profitable if charges were twice as high",
+        "passed": false,
+        "actual": "-6268.82",
+        "required": "> 0"
+      }
+    ]
+  }
+]

@@ -38,6 +38,7 @@ _TO = typer.Option(..., "--to", formats=["%Y-%m-%d"])
 _CASH = typer.Option("100000", help="Starting cash, a quoted number.")
 _REPORT = typer.Option(Path("docs/strategies/curation.md"), help="The human-readable report.")
 _FEES = typer.Option(False, help="Price days before the oldest fee schedule with it.")
+_ONLY = typer.Option(None, "--only", help="Run just this strategy from the plan (repeatable).")
 _JSON = typer.Option(Path("docs/strategies/curation.json"), help="The machine-readable record.")
 
 
@@ -69,7 +70,12 @@ def _record_document(record: CurationRecord) -> dict[str, Any]:
 
 
 async def _curate(
-    plan_path: Path, first: datetime, last: datetime, cash: str, assume_fees: bool
+    plan_path: Path,
+    first: datetime,
+    last: datetime,
+    cash: str,
+    assume_fees: bool,
+    only: list[str] | None,
 ) -> tuple[list[CurationRecord], SelectionCriteria]:
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     if plan.get("objective") != "sharpe":
@@ -102,7 +108,7 @@ async def _curate(
             RiskGateFactory(RiskLimitsLoader().load()), StrategyCurator(criteria), SHARPE,
         )  # fmt: skip
         records = await run.run(
-            [strategy(e) for e in plan["strategies"]],
+            [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
             WindowPlan(
                 first.date(),
                 last.date(),
@@ -120,10 +126,13 @@ def backtest_curate(
     plan: Path = _PLAN, first: datetime = _FROM, last: datetime = _TO, cash: str = _CASH,
     report: Path = _REPORT, record: Path = _JSON,
     assume_earliest_fees: bool = _FEES,
+    only: list[str] | None = _ONLY,
 ) -> None:  # fmt: skip
     """Walk-forward every strategy in PLAN under the risk rules; report passes AND failures."""
     try:
-        records, criteria = asyncio.run(_curate(plan, first, last, cash, assume_earliest_fees))
+        records, criteria = asyncio.run(
+            _curate(plan, first, last, cash, assume_earliest_fees, only)
+        )
     except (EmporosError, ValueError, LookupError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"curation failed: {message}", fg=typer.colors.RED)

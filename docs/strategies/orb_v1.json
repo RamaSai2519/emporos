@@ -1,0 +1,136 @@
+[
+  {
+    "strategy": "orb_v1",
+    "passed": false,
+    "candidates": [
+      "r3_t15_s10",
+      "r3_t30_s10",
+      "r6_t15_s10",
+      "r6_t30_s10",
+      "r6_t20_s15",
+      "r3_t20_s15"
+    ],
+    "out_of_sample": {
+      "trades": 40,
+      "net_pnl": "-3769.43",
+      "gross_pnl": "-1595.50",
+      "charges": "2173.93",
+      "win_rate": "0.325",
+      "profit_factor": "0.2166539206477194324142345322903765",
+      "net_at_double_costs": "-5943.36",
+      "window_nets": [
+        "-1021.76",
+        "-653.98",
+        "-697.91",
+        "-823.37",
+        "-572.41"
+      ],
+      "window_max_drawdowns": [
+        "0.0102176",
+        "0.007077738554760098094201225077804537",
+        "0.0069791",
+        "0.01217325185427994614677205835407810",
+        "0.006596903960180585337722277207245714"
+      ],
+      "instrument_nets": {
+        "NSE:10999": "-664.01",
+        "NSE:11483": "-75.17",
+        "NSE:11532": "-213.94",
+        "NSE:11630": "216.45",
+        "NSE:11723": "-133.64",
+        "NSE:1333": "-644.19",
+        "NSE:13538": "-166.33",
+        "NSE:1394": "-470.23",
+        "NSE:14977": "-81.17",
+        "NSE:1660": "162.76",
+        "NSE:16675": "-124.49",
+        "NSE:1922": "-168.21",
+        "NSE:2031": "-389.51",
+        "NSE:236": "-547.95",
+        "NSE:317": "-71.65",
+        "NSE:3351": "25.35",
+        "NSE:3506": "-70.90",
+        "NSE:5900": "-386.74",
+        "NSE:7229": "34.14"
+      },
+      "compounded_return": "-0.0371362225048863738479387771"
+    },
+    "windows": [
+      [
+        "2026-01-30",
+        "2026-03-13",
+        "r3_t15_s10"
+      ],
+      [
+        "2026-03-13",
+        "2026-04-24",
+        "r3_t15_s10"
+      ],
+      [
+        "2026-04-24",
+        "2026-06-05",
+        "r3_t15_s10"
+      ],
+      [
+        "2026-06-05",
+        "2026-07-17",
+        "r3_t20_s15"
+      ],
+      [
+        "2026-07-17",
+        "2026-08-28",
+        "r6_t30_s10"
+      ]
+    ],
+    "checks": [
+      {
+        "name": "net profit is positive",
+        "passed": false,
+        "actual": "-3769.43",
+        "required": "> 0"
+      },
+      {
+        "name": "enough trades to mean something",
+        "passed": false,
+        "actual": "40",
+        "required": ">= 150"
+      },
+      {
+        "name": "profit factor",
+        "passed": false,
+        "actual": "0.217",
+        "required": ">= 1.2"
+      },
+      {
+        "name": "profitable in most out-of-sample windows",
+        "passed": false,
+        "actual": "0 of 5",
+        "required": ">= 60% of windows"
+      },
+      {
+        "name": "no window's drawdown is too deep",
+        "passed": true,
+        "actual": "1.2%",
+        "required": "<= 10%"
+      },
+      {
+        "name": "profitable across instruments, not a few",
+        "passed": false,
+        "actual": "4 of 19",
+        "required": ">= 50% of instruments"
+      },
+      {
+        "name": "still profitable without its best window",
+        "passed": false,
+        "actual": "-3197.02",
+        "required": "> 0"
+      },
+      {
+        "name": "still profitable if charges were twice as high",
+        "passed": false,
+        "actual": "-5943.36",
+        "required": "> 0"
+      }
+    ]
+  }
+]
