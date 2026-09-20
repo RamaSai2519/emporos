@@ -163,6 +163,10 @@ class FillSynchroniser:
             counts[FillResult.REFUSED],
         )
 
+    async def adopt(self) -> None:
+        """`FillAdopter` for the reconciler: bring in every unapplied broker fill."""
+        await self.sync()
+
     @staticmethod
     def _order(trade: BrokerTrade) -> tuple[str, str]:
         stamp = trade.executed_at.isoformat() if trade.executed_at else ""

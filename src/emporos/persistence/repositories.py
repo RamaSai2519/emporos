@@ -153,6 +153,14 @@ class ExecutionRepository(Repository[ExecutionRecord]):
     async def for_order(self, order_id: str) -> list[ExecutionRecord]:
         return await self.find({"order_id": order_id}, sort=[("ts", ASCENDING)])
 
+    async def for_account(self, account_id: str) -> list[ExecutionRecord]:
+        """Every fill of an account, in the order it was booked: the whole history a position is
+        the running total of."""
+        return await self.find(
+            {"account_id": account_id},
+            sort=[("ts", ASCENDING), ("session_trade_no", ASCENDING), ("_id", ASCENDING)],
+        )
+
     async def for_account_session(
         self, account_id: str, session_date: str
     ) -> list[ExecutionRecord]:
@@ -169,6 +177,9 @@ class PositionRepository(Repository[PositionRecord]):
 
     async def get_for(self, account_id: str, instrument_id: str) -> PositionRecord | None:
         return await self.find_one({"account_id": account_id, "instrument_id": instrument_id})
+
+    async def all_for_account(self, account_id: str) -> list[PositionRecord]:
+        return await self.find({"account_id": account_id}, sort=[("instrument_id", ASCENDING)])
 
     async def open_for_account(self, account_id: str) -> list[PositionRecord]:
         return await self.find({"account_id": account_id, "net_quantity": {"$ne": 0}})

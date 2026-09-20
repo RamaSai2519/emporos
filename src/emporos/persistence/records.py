@@ -171,6 +171,7 @@ class PortfolioSnapshotRecord(Record):
     account_id: str
     ts: datetime
     session_date: str | None = None
+    kind: str | None = None  # INTRADAY (periodic) or EOD (end of session)
     cash: MoneyField | None = None
     realised_pnl: MoneyField | None = None
     unrealised_pnl: MoneyField | None = None
@@ -198,8 +199,11 @@ class RiskEventRecord(Record):
 
 
 class ReconciliationRunRecord(Record):
-    status: str
+    status: str  # CLEAN, HEALED or FAILED
     ts: datetime
+    trigger: str | None = None  # STARTUP, PERIODIC, EOD or MANUAL
+    discrepancies: list[dict[str, str]] = Field(default_factory=list)  # what was found
+    healed: list[dict[str, str]] = Field(default_factory=list)  # what was safely adopted
 
 
 class BacktestRunRecord(Record):
