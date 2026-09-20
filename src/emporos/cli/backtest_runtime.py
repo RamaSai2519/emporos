@@ -43,6 +43,7 @@ from emporos.strategies.resolution import StrategyConfigResolver
 class BacktestRuntime:
     reader: CandleReader
     instruments: AsOfInstruments
+    database: AsyncDatabase  # type: ignore[type-arg]
 
 
 class InstrumentErasReader:
@@ -88,7 +89,7 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
         database = mongo.database()
         repository = CandleRepository(MongoCandleStore(database), cold_archive(settings))
         eras = await InstrumentErasReader(database).read()
-        yield BacktestRuntime(repository, AsOfInstruments(eras))
+        yield BacktestRuntime(repository, AsOfInstruments(eras), database)
     finally:
         await mongo.close()
 

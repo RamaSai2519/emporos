@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -20,13 +20,22 @@ from emporos.backtest.curation import (
 )
 from emporos.backtest.curation_run import CurationRun, PlannedStrategy, WindowPlan
 from emporos.backtest.risk_gate import RiskGateFactory
+from emporos.backtest.robustness.recording import (
+    LedgerRecorder,
+    NoRecording,
+    ResultRecorder,
+    TrialContext,
+    WalkForwardTrials,
+)
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
 from emporos.cli.backtest_runtime import open_backtest_runtime
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.core.ids import IdGenerator
 from emporos.domain.instruments import InstrumentResolver
 from emporos.domain.money import Money
+from emporos.persistence.trial_ledger import MongoTrialLedger
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
 from emporos.session.strategy_files import StrategyConfigLoader
@@ -40,6 +49,10 @@ _REPORT = typer.Option(Path("docs/strategies/curation.md"), help="The human-read
 _FEES = typer.Option(False, help="Price days before the oldest fee schedule with it.")
 _ONLY = typer.Option(None, "--only", help="Run just this strategy from the plan (repeatable).")
 _JSON = typer.Option(Path("docs/strategies/curation.json"), help="The machine-readable record.")
+_RECORD = typer.Option(
+    True, "--record/--no-record", help="Append every backtest tried to the trial ledger."
+)
+_EXPERIMENT = typer.Option(None, help="Ledger experiment name (default: curation-<today>).")
 
 
 def _record_document(record: CurationRecord) -> dict[str, Any]:
@@ -76,6 +89,8 @@ async def _curate(
     cash: str,
     assume_fees: bool,
     only: list[str] | None,
+    record_trials: bool,
+    experiment: str | None,
 ) -> tuple[list[CurationRecord], SelectionCriteria]:
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     if plan.get("objective") != "sharpe":
@@ -102,10 +117,12 @@ async def _curate(
 
     criteria = SelectionCriteria()
     async with open_backtest_runtime(Settings.default()) as runtime:
+        recorder = _recorder(runtime.database, record_trials, experiment, first, last, assume_fees)
         run = CurationRun(
             runtime.reader, registry, runtime.instruments,
             schedules,
             RiskGateFactory(RiskLimitsLoader().load()), StrategyCurator(criteria), SHARPE,
+            recorder=recorder,
         )  # fmt: skip
         records = await run.run(
             [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
@@ -122,16 +139,40 @@ async def _curate(
     return records, criteria
 
 
+def _recorder(
+    database: Any,
+    enabled: bool,
+    experiment: str | None,
+    first: datetime,
+    last: datetime,
+    assume_fees: bool,
+) -> ResultRecorder:
+    if not enabled:
+        return NoRecording()
+    now = datetime.now(UTC)
+    fees = "earliest fee schedule assumed before the first" if assume_fees else "dated fees, strict"
+    context = TrialContext(
+        experiment=experiment or f"curation-{now:%Y-%m-%d}",
+        batch=IdGenerator().new_ulid(),
+        dataset_version=f"candles 5m {first:%Y-%m-%d}..{last:%Y-%m-%d}",
+        cost_model=f"Angel One {fees}; platform risk gate",
+        recorded_at=now,
+    )
+    return LedgerRecorder(MongoTrialLedger(database), WalkForwardTrials(context))
+
+
 def backtest_curate(
     plan: Path = _PLAN, first: datetime = _FROM, last: datetime = _TO, cash: str = _CASH,
     report: Path = _REPORT, record: Path = _JSON,
     assume_earliest_fees: bool = _FEES,
     only: list[str] | None = _ONLY,
+    record_trials: bool = _RECORD,
+    experiment: str | None = _EXPERIMENT,
 ) -> None:  # fmt: skip
     """Walk-forward every strategy in PLAN under the risk rules; report passes AND failures."""
     try:
         records, criteria = asyncio.run(
-            _curate(plan, first, last, cash, assume_earliest_fees, only)
+            _curate(plan, first, last, cash, assume_earliest_fees, only, record_trials, experiment)
         )
     except (EmporosError, ValueError, LookupError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)

@@ -42,3 +42,23 @@ MoneyField = Annotated[
     BeforeValidator(_CODEC.decode),
     PlainSerializer(_serialize, return_type=Any),
 ]
+
+
+def _decode_decimal(value: object) -> Decimal:
+    if isinstance(value, Decimal128):
+        return value.to_decimal()
+    if isinstance(value, Decimal | int | str) and not isinstance(value, bool):
+        return Decimal(value)
+    raise ValueError(f"cannot read a decimal from {type(value).__name__}; floats are forbidden")
+
+
+def _encode_decimal(value: Decimal) -> Decimal128:
+    return Decimal128(value)
+
+
+DecimalField = Annotated[
+    Decimal,
+    BeforeValidator(_decode_decimal),
+    PlainSerializer(_encode_decimal, return_type=Any),
+]
+"""An exact non-money number (a ratio, a statistic) stored as `Decimal128`, floats refused."""

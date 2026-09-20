@@ -23,12 +23,14 @@ from emporos.backtest.settings import FillSettings
 from emporos.backtest.summary import BacktestSummary
 from emporos.cli.backtest_runtime import run_backtest
 from emporos.cli.curation_commands import backtest_curate
+from emporos.cli.trial_commands import trials_app
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.domain.money import Money
 
 backtest_app = typer.Typer(help="Backtest a strategy over stored history.", no_args_is_help=True)
 backtest_app.command("curate")(backtest_curate)
+backtest_app.add_typer(trials_app, name="trials")
 
 _DATE = ["%Y-%m-%d"]
 _STRATEGY = typer.Argument(..., exists=True, dir_okay=False, help="A strategy YAML file.")

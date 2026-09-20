@@ -25,13 +25,21 @@ class DecimalMath:
             return sum(values, ZERO) / len(values)
 
     @staticmethod
+    def sample_variance(values: Sequence[Decimal]) -> Decimal:
+        """Variance with the n-1 (sample) denominator."""
+        if len(values) < 2:
+            raise ValueError("a sample variance needs at least two values")
+        with localcontext(CONTEXT):
+            centre = sum(values, ZERO) / len(values)
+            return sum(((v - centre) ** 2 for v in values), ZERO) / (len(values) - 1)
+
+    @staticmethod
     def sample_stdev(values: Sequence[Decimal]) -> Decimal:
         """Standard deviation with the n-1 (sample) denominator."""
         if len(values) < 2:
             raise ValueError("a sample standard deviation needs at least two values")
         with localcontext(CONTEXT):
-            centre = sum(values, ZERO) / len(values)
-            return (sum(((v - centre) ** 2 for v in values), ZERO) / (len(values) - 1)).sqrt()
+            return DecimalMath.sample_variance(values).sqrt()
 
     @staticmethod
     def sqrt(value: Decimal) -> Decimal:

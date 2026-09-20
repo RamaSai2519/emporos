@@ -53,3 +53,17 @@ trading is the honest test). Longer-holding ideas (the platform is intraday cash
 larger position sizes (flat brokerage dilutes) are the two things the numbers point to.
 
 Reproduce: `pipenv run emporos backtest curate --only <name> --from 2025-09-22 --to 2026-09-18 --cash 100000 --assume-earliest-fees`
+
+## The trial ledger (EM-117)
+
+Every backtest tried in search of a result is appended to the `trial_ledger` collection, failures
+included, and cannot be edited or removed (`emporos backtest trials list` counts them). `emporos
+backtest curate` now records each training candidate and each test run as it goes (`--no-record`
+turns that off). The three curations above and the momentum_v1 runs were backfilled from their
+published records: 108 trials.
+
+**The backfilled trials cannot yet feed a Deflated Sharpe Ratio.** The records never kept the
+training-window scores, so those trials are counted (the size of the search) but carry no Sharpe,
+and the spread of the trials' Sharpes, which sets how much luck to expect from the best of them,
+cannot be measured. `DeflatedSharpe` reports that as a reason instead of guessing. Any strategy
+curated from now on records its scores, so its DSR can be computed.

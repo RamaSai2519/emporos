@@ -15,6 +15,7 @@ from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
 from emporos.backtest.job import ResolverTickSizes
 from emporos.backtest.pricing import GateContext, SignalGate
+from emporos.backtest.robustness.recording import NoRecording, ResultRecorder
 from emporos.backtest.tuning import BestScoreSelector, ConfigVariants, Objective, ParameterCandidate
 from emporos.backtest.universe import AsOfInstruments
 from emporos.backtest.walkforward import WalkForwardMode, WalkForwardPlanner
@@ -63,6 +64,7 @@ class CurationRun:
         curator: StrategyCurator,
         objective: Objective,
         assume_current_universe: bool = True,
+        recorder: ResultRecorder | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -72,6 +74,7 @@ class CurationRun:
         self._curator = curator
         self._objective = objective
         self._assume = assume_current_universe
+        self._recorder = recorder or NoRecording()
 
     async def run(
         self,
@@ -103,6 +106,7 @@ class CurationRun:
                 assumptions=("universe resolved from earliest recorded definitions",),
             )  # fmt: skip
             result = await runner.run(base, planned.candidates, windows)
+            await self._recorder.record(planned.name, result)
             records.append(
                 self._curator.evaluate(planned.name, [c.name for c in planned.candidates], result)
             )

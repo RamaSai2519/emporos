@@ -32,6 +32,7 @@ class Collection(StrEnum):
     RECONCILIATION_RUNS = "reconciliation_runs"
     BACKTEST_RUNS = "backtest_runs"
     BACKTEST_TRADES = "backtest_trades"
+    TRIAL_LEDGER = "trial_ledger"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"
     HISTORY_COVERAGE = "history_coverage"

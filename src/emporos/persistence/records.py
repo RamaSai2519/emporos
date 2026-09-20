@@ -14,7 +14,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from emporos.domain.orders import OrderSide, OrderType
-from emporos.persistence.money_codec import MoneyField
+from emporos.persistence.money_codec import DecimalField, MoneyField
 
 
 class Record(BaseModel):
@@ -214,6 +214,25 @@ class BacktestRunRecord(Record):
 
 class BacktestTradeRecord(Record):
     backtest_run_id: str
+
+
+class TrialRecord(Record):
+    """One attempted experiment, append-only (`emporos.domain.experiments.Trial`)."""
+
+    experiment: str
+    strategy: str
+    candidate: str
+    role: str
+    dataset_version: str
+    config_hash: str | None = None
+    cost_model: str
+    recorded_at: datetime
+    run_id: str | None = None
+    trade_count: int | None = None
+    net_pnl: MoneyField | None = None
+    daily_sharpe: DecimalField | None = None
+    verdict: str | None = None
+    note: str = ""
 
 
 class SystemEventRecord(Record):

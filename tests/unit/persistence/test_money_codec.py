@@ -70,3 +70,22 @@ def test_record_extra_fields_pass_through_unchanged() -> None:
     document = RecordFactory().order().to_document() | {"note": "kept"}
 
     assert OrderRecord.model_validate(document).to_document()["note"] == "kept"
+
+
+class TestDecimalField:
+    def test_reads_decimal128_ints_and_strings_exactly_and_refuses_floats(self) -> None:
+        from pydantic import BaseModel
+
+        from emporos.persistence.money_codec import DecimalField
+
+        class Holder(BaseModel):
+            value: DecimalField
+
+        assert Holder(value=Decimal128(Decimal("0.1234567890123456789"))).value == Decimal(
+            "0.1234567890123456789"
+        )
+        assert Holder(value=3).value == Decimal(3)
+        assert Holder(value="1.50").value == Decimal("1.50")
+        assert isinstance(Holder(value="1.5").model_dump()["value"], Decimal128)
+        with pytest.raises(ValueError, match="floats"):
+            Holder(value=0.5)

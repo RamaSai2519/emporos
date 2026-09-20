@@ -178,6 +178,13 @@ PLATFORM_SCHEMA = Schema(
         ),
         _spec(Collection.BACKTEST_RUNS, IndexSpec.on("strategy_id", "created_at")),
         _spec(Collection.BACKTEST_TRADES, IndexSpec.on("backtest_run_id")),
+        # No TTL, on purpose: the number of experiments ever tried is evidence, and an expired
+        # entry would make a search look smaller than it was.
+        _spec(
+            Collection.TRIAL_LEDGER,
+            IndexSpec.on("strategy", "recorded_at"),
+            IndexSpec.on("experiment", "recorded_at"),
+        ),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),
