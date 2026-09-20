@@ -34,6 +34,11 @@ class FeeScheduleLibrary:
         parser = FeeScheduleParser()
         return cls([parser.parse(path) for path in sorted(directory.glob("*.yaml"))])
 
+    @property
+    def earliest(self) -> FeeSchedule:
+        """The oldest schedule: what a run over days before any schedule may explicitly assume."""
+        return self._schedules[0]
+
     def for_date(self, day: date) -> FeeSchedule:
         in_force = [s for s in self._schedules if s.effective_from <= day]
         if not in_force:
