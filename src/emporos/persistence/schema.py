@@ -95,6 +95,28 @@ def _spec(
     return CollectionSpec(name=name, indexes=indexes, timeseries=timeseries)
 
 
+# The order-book collections exist twice — the platform's and the paper broker's — with the same
+# indexes: the unique keys are the database-level backstop for order and fill idempotency.
+_ORDER_INDEXES = (
+    IndexSpec.on("idempotency_key", unique=True),
+    IndexSpec.on("ordertag", unique=True),
+    IndexSpec.on("broker_order_id"),
+    IndexSpec.on("state", "session_date"),
+    IndexSpec.on("account_id", "session_date"),
+)
+_ORDER_EVENT_INDEXES = (IndexSpec.on("order_id", "seq", unique=True),)
+_EXECUTION_INDEXES = (
+    IndexSpec.on("broker_trade_id", unique=True),
+    IndexSpec.on("order_id"),
+    IndexSpec.on("account_id", "session_date"),
+)
+_POSITION_INDEXES = (IndexSpec.on("account_id", "instrument_id", unique=True),)
+_SNAPSHOT_INDEXES = (
+    IndexSpec.on("account_id", "ts"),
+    IndexSpec.on("ts", expire_after=5 * _YEAR),
+)
+
+
 PLATFORM_SCHEMA = Schema(
     collections=(
         _spec(Collection.USERS),
@@ -133,27 +155,16 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("instrument_id", "ts"),
             IndexSpec.on("ts", expire_after=_YEAR),
         ),
-        _spec(
-            Collection.ORDERS,
-            IndexSpec.on("idempotency_key", unique=True),
-            IndexSpec.on("ordertag", unique=True),
-            IndexSpec.on("broker_order_id"),
-            IndexSpec.on("state", "session_date"),
-            IndexSpec.on("account_id", "session_date"),
-        ),
-        _spec(Collection.ORDER_EVENTS, IndexSpec.on("order_id", "seq", unique=True)),
-        _spec(
-            Collection.EXECUTIONS,
-            IndexSpec.on("broker_trade_id", unique=True),
-            IndexSpec.on("order_id"),
-            IndexSpec.on("account_id", "session_date"),
-        ),
-        _spec(Collection.POSITIONS, IndexSpec.on("account_id", "instrument_id", unique=True)),
-        _spec(
-            Collection.PORTFOLIO_SNAPSHOTS,
-            IndexSpec.on("account_id", "ts"),
-            IndexSpec.on("ts", expire_after=5 * _YEAR),
-        ),
+        _spec(Collection.ORDERS, *_ORDER_INDEXES),
+        _spec(Collection.ORDER_EVENTS, *_ORDER_EVENT_INDEXES),
+        _spec(Collection.EXECUTIONS, *_EXECUTION_INDEXES),
+        _spec(Collection.POSITIONS, *_POSITION_INDEXES),
+        _spec(Collection.PORTFOLIO_SNAPSHOTS, *_SNAPSHOT_INDEXES),
+        _spec(Collection.PAPER_ORDERS, *_ORDER_INDEXES),
+        _spec(Collection.PAPER_ORDER_EVENTS, *_ORDER_EVENT_INDEXES),
+        _spec(Collection.PAPER_EXECUTIONS, *_EXECUTION_INDEXES),
+        _spec(Collection.PAPER_POSITIONS, *_POSITION_INDEXES),
+        _spec(Collection.PAPER_PORTFOLIO_SNAPSHOTS, *_SNAPSHOT_INDEXES),
         _spec(
             Collection.RISK_EVENTS,
             IndexSpec.on("rule", "ts"),

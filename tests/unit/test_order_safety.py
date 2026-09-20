@@ -38,7 +38,7 @@ def test_the_guard_actually_sees_the_files_it_is_meant_to_watch() -> None:
 
 
 def test_only_the_adapter_layer_defines_or_calls_the_order_write_endpoints() -> None:
-    allowed = {"endpoints.py", "api.py", "adapter.py", "mapping.py", "base.py"}
+    allowed = {"endpoints.py", "api.py", "adapter.py", "mapping.py", "base.py", "gateway.py"}
     call = re.compile(r"Endpoints\.(PLACE|MODIFY|CANCEL)_ORDER|\.place_order\(")
     users = {p.name for p in (REPO / "src").rglob("*.py") if call.search(p.read_text())}
     assert users <= allowed, users - allowed

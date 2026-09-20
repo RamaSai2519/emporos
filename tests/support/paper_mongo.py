@@ -17,14 +17,8 @@ from emporos.core.ids import IdGenerator
 from emporos.domain.money import Money
 from emporos.persistence.collections import Collection
 from emporos.persistence.migrations import MigrationRunner, MongoSchemaStore
-from emporos.persistence.paper_journal import MongoPaperJournal, MongoPaperSessionStore
-from emporos.persistence.repositories import (
-    ExecutionRepository,
-    OrderEventRepository,
-    OrderRepository,
-    PortfolioSnapshotRepository,
-    PositionRepository,
-)
+from emporos.persistence.paper_books import PaperBooks
+from emporos.persistence.paper_journal import MongoPaperJournal
 from emporos.persistence.schema import PLATFORM_SCHEMA
 from emporos.persistence.transactions import FillApplier, TransactionRunner
 
@@ -38,34 +32,35 @@ class PaperMongoRig:
     ) -> None:
         self.database = database
         self.account_id = f"PAPERIT{IdGenerator().new_ulid()}"
-        self.orders = OrderRepository(database)
-        self.events = OrderEventRepository(database)
-        self.executions = ExecutionRepository(database)
-        self.positions = PositionRepository(database)
-        self.snapshots = PortfolioSnapshotRepository(database)
+        self.books = PaperBooks.in_database(database)
+        self.orders = self.books.orders
+        self.events = self.books.events
+        self.executions = self.books.executions
+        self.positions = self.books.positions
+        self.snapshots = self.books.snapshots
         self.fills = fills or FillApplier(
             TransactionRunner(client), self.orders, self.executions, self.positions
         )
-        self.store = MongoPaperSessionStore(self.orders, self.events, self.executions)
+        self.store = self.books.store()
 
     async def prepare(self) -> None:
         await MigrationRunner(MongoSchemaStore(self.database), PLATFORM_SCHEMA).apply()
 
     def journal(self) -> MongoPaperJournal:
-        return MongoPaperJournal(
-            self.orders, self.events, self.fills, self.positions, self.snapshots
-        )
+        return self.books.journal_with(self.fills)
 
     async def cleanup(self) -> None:
         """Delete this rig's scratch rows: its account's, and nothing else."""
         mine = {"account_id": self.account_id}
         order_ids = [r.id for r in await self.orders.find(mine)]
         for collection in (
-            Collection.ORDERS, Collection.EXECUTIONS, Collection.POSITIONS,
-            Collection.PORTFOLIO_SNAPSHOTS,
+            Collection.PAPER_ORDERS, Collection.PAPER_EXECUTIONS, Collection.PAPER_POSITIONS,
+            Collection.PAPER_PORTFOLIO_SNAPSHOTS,
         ):  # fmt: skip
             await self.database[collection].delete_many(mine)
-        await self.database[Collection.ORDER_EVENTS].delete_many({"order_id": {"$in": order_ids}})
+        await self.database[Collection.PAPER_ORDER_EVENTS].delete_many(
+            {"order_id": {"$in": order_ids}}
+        )
 
 
 async def assert_session_reconstructs(

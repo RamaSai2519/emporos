@@ -67,7 +67,10 @@ def _mentions(annotation: ast.expr, names: set[str]) -> bool:
             return True
         if isinstance(node, ast.Attribute) and node.attr in names:
             return True
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if any(name in node.value.replace("|", " ").split() for name in names):
-                return True
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and any(name in node.value.replace("|", " ").split() for name in names)
+        ):
+            return True
     return False

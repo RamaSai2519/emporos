@@ -48,7 +48,8 @@ def test_a_bare_yaml_float_is_refused_because_money_is_never_a_float(tmp_path: P
 
 @pytest.mark.parametrize(
     "line",
-    ['max_daily_loss: "0"', 'max_daily_loss: "-5"', "max_order_quantity: 0", "max_open_positions: -1",
+    ['max_daily_loss: "0"', 'max_daily_loss: "-5"', "max_order_quantity: 0",
+     "max_open_positions: -1",
      'max_price_deviation_pct: "100"', 'max_spread_bps: "0"'],
 )  # fmt: skip
 def test_a_zero_or_negative_or_absurd_limit_is_refused(tmp_path: Path, line: str) -> None:

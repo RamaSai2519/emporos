@@ -12,15 +12,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from decimal import Decimal
 from typing import Protocol
 
 from emporos.backtest.orders import SimOrderRequest
+from emporos.domain.marketable import MarketableLimit
 from emporos.domain.money import Money
-from emporos.domain.orders import OrderSide, OrderType
 from emporos.domain.signals import Signal
-
-_BPS = Decimal(10_000)
 
 
 @dataclass(frozen=True)
@@ -55,29 +53,17 @@ class OrderPricing(Protocol):
 
 class MarketableLimitPricing:
     def __init__(self, limit_buffer_bps: Decimal, ticks: TickSizes) -> None:
-        if limit_buffer_bps < 0:
-            raise ValueError("the limit buffer cannot be negative")
-        self._buffer = limit_buffer_bps / _BPS
+        self._rule = MarketableLimit(limit_buffer_bps)
         self._ticks = ticks
 
     def order_for(self, signal: Signal, tag: str) -> SimOrderRequest:
-        tick = self._ticks.tick_size(signal.instrument_id)
-        buying = signal.side is OrderSide.BUY
-        mode = ROUND_CEILING if buying else ROUND_FLOOR
-        limit = signal.limit_price.amount
-        if signal.order_type is OrderType.LIMIT:
-            limit *= (1 + self._buffer) if buying else (1 - self._buffer)
-        trigger = signal.trigger_price
+        prices = self._rule.prices(signal, self._ticks.tick_size(signal.instrument_id))
         return SimOrderRequest(
             instrument_id=signal.instrument_id,
             side=signal.side,
             order_type=signal.order_type,
             quantity=signal.quantity,
-            limit_price=self._to_tick(limit, tick, mode),
+            limit_price=prices.limit,
             tag=tag,
-            trigger_price=None if trigger is None else self._to_tick(trigger.amount, tick, mode),
+            trigger_price=prices.trigger,
         )
-
-    @staticmethod
-    def _to_tick(price: Decimal, tick: Money, mode: str) -> Money:
-        return Money((price / tick.amount).to_integral_value(mode) * tick.amount)

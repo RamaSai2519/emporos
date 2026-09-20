@@ -11,9 +11,11 @@ not a lesser-tracked code path (plan.md §6, §12).
 * `MongoPaperSessionStore` implements `PaperSessionStore`: it reads a session back so a restart
   resumes it exactly.
 
-Adoption: if an order with the same `ordertag` already exists (the execution engine writes the
-intent BEFORE calling the broker, Decision 7), the paper broker updates THAT document instead of
-inserting a second one — the unique `ordertag` and `idempotency_key` indexes stay satisfied.
+Storage: these are the paper broker's OWN books (`paper_*` collections, `PaperBooks`). The
+platform's `orders`/`order_events`/`executions`/`positions` belong to the execution layer alone,
+which fills them from what this broker reports — one writer per collection (EM-99 G6). An order
+that already carries the same `ordertag` in the paper books is updated in place rather than
+inserted twice, so a replayed placement never duplicates.
 """
 
 from __future__ import annotations

@@ -111,8 +111,8 @@ class SignalRepository(Repository[SignalRecord]):
 
 
 class OrderRepository(Repository[OrderRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.ORDERS, OrderRecord)
+    def __init__(self, database: Database, collection: str = Collection.ORDERS) -> None:
+        super().__init__(database, collection, OrderRecord)
 
     async def get_by_idempotency_key(self, idempotency_key: str) -> OrderRecord | None:
         return await self.find_one({"idempotency_key": idempotency_key})
@@ -131,8 +131,8 @@ class OrderRepository(Repository[OrderRecord]):
 
 
 class OrderEventRepository(Repository[OrderEventRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.ORDER_EVENTS, OrderEventRecord)
+    def __init__(self, database: Database, collection: str = Collection.ORDER_EVENTS) -> None:
+        super().__init__(database, collection, OrderEventRecord)
 
     async def for_order(self, order_id: str) -> list[OrderEventRecord]:
         return await self.find({"order_id": order_id}, sort=[("seq", ASCENDING)])
@@ -144,8 +144,8 @@ class OrderEventRepository(Repository[OrderEventRecord]):
 
 
 class ExecutionRepository(Repository[ExecutionRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.EXECUTIONS, ExecutionRecord)
+    def __init__(self, database: Database, collection: str = Collection.EXECUTIONS) -> None:
+        super().__init__(database, collection, ExecutionRecord)
 
     async def get_by_broker_trade_id(self, broker_trade_id: str) -> ExecutionRecord | None:
         return await self.find_one({"broker_trade_id": broker_trade_id})
@@ -164,8 +164,8 @@ class ExecutionRepository(Repository[ExecutionRecord]):
 
 
 class PositionRepository(Repository[PositionRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.POSITIONS, PositionRecord)
+    def __init__(self, database: Database, collection: str = Collection.POSITIONS) -> None:
+        super().__init__(database, collection, PositionRecord)
 
     async def get_for(self, account_id: str, instrument_id: str) -> PositionRecord | None:
         return await self.find_one({"account_id": account_id, "instrument_id": instrument_id})
@@ -175,8 +175,10 @@ class PositionRepository(Repository[PositionRecord]):
 
 
 class PortfolioSnapshotRepository(Repository[PortfolioSnapshotRecord]):
-    def __init__(self, database: Database) -> None:
-        super().__init__(database, Collection.PORTFOLIO_SNAPSHOTS, PortfolioSnapshotRecord)
+    def __init__(
+        self, database: Database, collection: str = Collection.PORTFOLIO_SNAPSHOTS
+    ) -> None:
+        super().__init__(database, collection, PortfolioSnapshotRecord)
 
 
 class RiskEventRepository(Repository[RiskEventRecord]):

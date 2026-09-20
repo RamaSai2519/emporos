@@ -20,6 +20,14 @@ class Collection(StrEnum):
     EXECUTIONS = "executions"
     POSITIONS = "positions"
     PORTFOLIO_SNAPSHOTS = "portfolio_snapshots"
+    # The paper broker's own books: what a simulated exchange knows. Platform order state
+    # (`orders`, `order_events`, ...) is written only by the execution layer, from what the
+    # broker reports, exactly as with a real broker — so there is one writer per collection.
+    PAPER_ORDERS = "paper_orders"
+    PAPER_ORDER_EVENTS = "paper_order_events"
+    PAPER_EXECUTIONS = "paper_executions"
+    PAPER_POSITIONS = "paper_positions"
+    PAPER_PORTFOLIO_SNAPSHOTS = "paper_portfolio_snapshots"
     RISK_EVENTS = "risk_events"
     RECONCILIATION_RUNS = "reconciliation_runs"
     BACKTEST_RUNS = "backtest_runs"

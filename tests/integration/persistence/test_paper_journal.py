@@ -137,10 +137,14 @@ async def test_money_is_stored_as_decimal128_never_a_float(rig: PaperMongoRig) -
     s = Session(rig.account_id)
     await write(rig, s.entries())
 
-    order = await rig.database[Collection.ORDERS].find_one({"ordertag": s.tag})
-    execution = await rig.database[Collection.EXECUTIONS].find_one({"account_id": rig.account_id})
-    position = await rig.database[Collection.POSITIONS].find_one({"account_id": rig.account_id})
-    snapshot = await rig.database[Collection.PORTFOLIO_SNAPSHOTS].find_one(
+    order = await rig.database[Collection.PAPER_ORDERS].find_one({"ordertag": s.tag})
+    execution = await rig.database[Collection.PAPER_EXECUTIONS].find_one(
+        {"account_id": rig.account_id}
+    )
+    position = await rig.database[Collection.PAPER_POSITIONS].find_one(
+        {"account_id": rig.account_id}
+    )
+    snapshot = await rig.database[Collection.PAPER_PORTFOLIO_SNAPSHOTS].find_one(
         {"account_id": rig.account_id}
     )
 

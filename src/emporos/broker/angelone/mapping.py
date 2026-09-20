@@ -84,6 +84,13 @@ def _money(value: Decimal | None) -> Money | None:
     return None if value is None else Money(value)
 
 
+def _money_or_none_if_zero(value: Decimal | None) -> Money | None:
+    """SmartAPI writes 0 where a field does not apply (no trigger on a plain limit, no average
+    price before a fill). The neutral DTO says "not applicable" as None, so a tag-resolved order
+    compares equal to the intent it was placed from."""
+    return None if not value else Money(value)
+
+
 def _price_text(value: Money) -> str:
     return format(value.amount, "f")
 
@@ -196,8 +203,8 @@ class AccountMapper:
             filled_quantity=filled,
             status=self._statuses.map(entry.order_status or entry.status, filled, entry.quantity),
             price=_money(entry.price),
-            trigger_price=_money(entry.trigger_price),
-            average_price=_money(entry.average_price),
+            trigger_price=_money_or_none_if_zero(entry.trigger_price),
+            average_price=_money_or_none_if_zero(entry.average_price),
             status_message=entry.text or "",
             updated_at=parse_exchange_time(entry.update_time),
         )

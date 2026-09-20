@@ -28,6 +28,10 @@ class DuplicateRecordError(DefinitiveError):
         self.key_fields = key_fields
 
 
+class ConcurrentModificationError(ValueError):
+    """A record changed between being read and being written; reload it and decide again."""
+
+
 class SchemaDriftError(DefinitiveError):
     """An existing index disagrees with the declared schema and needs a manual decision."""
 

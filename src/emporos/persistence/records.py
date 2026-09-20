@@ -93,6 +93,12 @@ class SignalRecord(Record):
 
 
 class OrderRecord(Record):
+    strategy_run_id: str | None = None
+    signal_id: str | None = None
+    parent_order_id: str | None = None
+    reprice_count: int = 0
+    absence_checks: int = 0  # consecutive broker look-ups that found no such order
+    original_limit_price: MoneyField | None = None
     idempotency_key: str
     ordertag: str
     instrument_id: str
