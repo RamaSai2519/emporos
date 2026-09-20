@@ -208,3 +208,8 @@ class TestStandardRuleSet:
         )  # fmt: skip
         decision = await engine.review(make_signal(quantity=10_000), "s")
         assert isinstance(decision, RiskRejection) and decision.rule == "KillSwitchGuard"
+
+
+def test_the_engine_reports_the_rules_it_runs_in_order() -> None:
+    rig = Rig(ScriptedRule("a"), ScriptedRule("b"))
+    assert rig.engine.rule_names == ("a", "b")

@@ -133,6 +133,18 @@ class TestFileSentinel:
         await sentinel.engage("b", "rama", NOW)
         assert [p.name for p in tmp_path.iterdir()] == ["HALT"]
 
+    async def test_a_failed_write_leaves_neither_a_sentinel_nor_a_temporary_file(
+        self, tmp_path: Path
+    ) -> None:
+        class Boom:
+            def __str__(self) -> str:
+                raise RuntimeError("cannot render the reason")
+
+        sentinel = FileSentinelKillSwitch(tmp_path / "HALT")
+        with pytest.raises(RuntimeError):
+            await sentinel.engage(Boom(), "rama", NOW)  # type: ignore[arg-type]
+        assert list(tmp_path.iterdir()) == []
+
     async def test_an_unreadable_sentinel_raises_rather_than_reading_as_clear(
         self, tmp_path: Path
     ) -> None:

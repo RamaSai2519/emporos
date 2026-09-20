@@ -1,0 +1,16 @@
+# Risk limits (plan.md §11). Every value is a hard cap the risk engine enforces on every order.
+# Money is a QUOTED string or an integer, never a bare decimal (a YAML float is refused).
+# These are deliberately conservative starting points for a small account; tune them
+# deliberately, never to make a rejected signal go through.
+
+max_daily_loss: "2000"            # rupees; new entries stop once the day's loss exceeds this
+max_strategy_loss: "1000"         # rupees, per strategy run
+max_position_value: "25000"       # rupees, per instrument
+max_open_positions: 3
+max_capital_deployed: "60000"     # rupees, across all positions
+max_order_quantity: 500           # shares in one order (fat-finger)
+max_price_deviation_pct: "2"      # limit price vs last traded price, percent
+max_spread_bps: "20"              # widest bid/ask spread an entry tolerates, basis points
+duplicate_window_seconds: 5       # a second live order, same instrument and side, inside this
+max_orders_per_second: 2          # our own budget, well under the broker's
+max_orders_per_minute: 60

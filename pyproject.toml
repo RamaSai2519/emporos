@@ -150,6 +150,23 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "risk is a pure gate: it knows no broker, no execution engine, and no operator surface"
+type = "forbidden"
+source_modules = ["emporos.risk"]
+forbidden_modules = [
+    "emporos.broker", "emporos.execution", "emporos.api", "emporos.cli", "emporos.backtest",
+    "emporos.portfolio", "emporos.session",
+]
+
+[[tool.importlinter.contracts]]
+name = "execution knows no strategy, backtest or operator surface"
+type = "forbidden"
+source_modules = ["emporos.execution"]
+forbidden_modules = [
+    "emporos.strategies", "emporos.api", "emporos.cli", "emporos.backtest", "emporos.session",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]
