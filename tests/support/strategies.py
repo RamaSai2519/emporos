@@ -13,7 +13,7 @@ from decimal import Decimal
 from typing import Any
 
 from emporos.cli.strategy_composition import build_registry
-from emporos.core.clock import FixedClock
+from emporos.core.clock import Clock, FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
@@ -23,7 +23,6 @@ from emporos.domain.positions import Position
 from emporos.domain.signals import Signal, SignalKind
 from emporos.domain.ticks import Tick
 from emporos.instruments.cache import InstrumentCache
-from emporos.persistence.candles import CandleReader
 from emporos.persistence.errors import DuplicateRecordError
 from emporos.persistence.records import SignalRecord, StrategyRecord, StrategyRunRecord
 from emporos.session.strategy_runs import RunEnvironment, StartedRun, StrategyRunnerBuilder
@@ -129,7 +128,7 @@ def make_config(
 
 
 def make_context(
-    clock: FixedClock,
+    clock: Clock,
     history: ClosedBarHistory | None = None,
     positions: PositionView | None = None,
     config: ResolvedStrategyConfig | None = None,
@@ -521,42 +520,6 @@ async def replay(
 
 def resolved(raw: dict[str, Any]) -> ResolvedStrategyConfig:
     return StrategyConfigResolver(build_registry(), INSTRUMENT_MASTER).resolve(raw)
-
-
-class RepositoryBarFeed:
-    """A market feed that reads closed bars through `CandleReader` (the `CandleRepository`
-    Protocol) and yields them in time order, instruments interleaved. It can only hand out what
-    the repository holds for the requested, already-finished range: an iterator over closed bars,
-    not a random-access frame (plan.md §10). Phase 10's DataFeed will grow from this."""
-
-    def __init__(
-        self,
-        reader: CandleReader,
-        instrument_ids: Sequence[str],
-        timeframe: Timeframe,
-        start: datetime,
-        end: datetime,
-    ) -> None:
-        self._reader = reader
-        self._instrument_ids = tuple(instrument_ids)
-        self._timeframe = timeframe
-        self._start = start
-        self._end = end
-
-    def __aiter__(self) -> AsyncIterator[MarketEvent]:
-        return self._iterate()
-
-    async def _iterate(self) -> AsyncIterator[MarketEvent]:
-        bars = [
-            bar
-            for instrument_id in self._instrument_ids
-            for bar in await self._reader.get_range(
-                instrument_id, self._timeframe, self._start, self._end
-            )
-        ]
-        rank = {instrument_id: index for index, instrument_id in enumerate(self._instrument_ids)}
-        for bar in sorted(bars, key=lambda b: (b.ts, rank[b.instrument_id])):
-            yield bar
 
 
 def session_bars(

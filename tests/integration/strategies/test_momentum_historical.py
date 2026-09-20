@@ -16,6 +16,7 @@ import pytest
 import yaml
 from pymongo.asynchronous.database import AsyncDatabase
 
+from emporos.backtest.feed import ClosedBarFeed, FeedWindow
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.config import CONFIG_DIR
 from emporos.domain.candles import Candle, Timeframe
@@ -32,7 +33,6 @@ from emporos.strategies.resolution import StrategyConfigResolver
 from tests.support.fakes import InMemoryObjectStore
 from tests.support.strategies import (
     T0,
-    RepositoryBarFeed,
     replay,
     session_bars,
     wave_closes,
@@ -71,13 +71,12 @@ class Scratch:
             self.bars[instrument_id] = session_bars(closes, instrument_id)
             await self.hot.upsert(self.bars[instrument_id])
 
-    def feed(self) -> RepositoryBarFeed:
-        return RepositoryBarFeed(
+    def feed(self) -> ClosedBarFeed:
+        return ClosedBarFeed(
             self.repository,
             self.ids,
             Timeframe.M5,
-            T0 - timedelta(days=1),
-            T0 + timedelta(days=DAYS + 1),
+            FeedWindow(T0 - timedelta(days=1), T0 + timedelta(days=DAYS + 1)),
         )
 
     async def cleanup(self) -> None:

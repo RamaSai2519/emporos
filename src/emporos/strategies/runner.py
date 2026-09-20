@@ -160,6 +160,12 @@ class StrategyRunner:
             self._guard("on_session_end", self._strategy.on_session_end)
             await self._forward_signals()
 
+    async def begin_session(self) -> None:
+        """The next trading day, after `end_session()`: deliver events again. A run that spans
+        days (a backtest) ends and begins a session per day; a halted strategy stays halted."""
+        if self._state is RunnerState.ENDED:
+            self._state = RunnerState.RUNNING
+
     async def shutdown(self) -> None:
         if self._state is RunnerState.STOPPED:
             return
