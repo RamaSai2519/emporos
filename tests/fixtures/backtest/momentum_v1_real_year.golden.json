@@ -1,8 +1,8 @@
 {
   "run": {
-    "run_id": "bt-863a715e6ab02140-20250922",
+    "run_id": "bt-cc1930a4acb88673-20250922",
     "strategy": "momentum_v1",
-    "config_hash": "sha256:863a715e6ab021404647061024e5460c525383b69651a8c647a26257a9d05b17",
+    "config_hash": "sha256:cc1930a4acb88673d4721b67fa4d48a3293e5465c4f133ba0f723e4af35df4a4",
     "timeframe": "5m",
     "instruments": [
       {
