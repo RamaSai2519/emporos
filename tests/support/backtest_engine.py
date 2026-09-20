@@ -243,3 +243,15 @@ WORKED_DAY = [
     ("104", "105", "103", "104.5"),  # bar 6: the sell fills here, at 103.90
     ("104.5", "105", "104", "104.5"),
 ]
+
+
+# A falling session: the mirror of WORKED_DAY. What wins on a rising day loses on this one.
+DOWN_DAY = [
+    ("100", "101", "99", "100"),
+    ("100", "100.5", "98", "99"),  # bar 2: BUY signal at 99 -> limit 99.05
+    ("99", "99.2", "97", "98"),  # bar 3: the buy fills at 99.05
+    ("98", "98.5", "96", "97"),
+    ("97", "97.5", "95", "96"),  # bar 5: SELL signal at 96 -> limit 95.95
+    ("96", "96.5", "94", "95"),  # bar 6: the sell fills at 95.95
+    ("95", "95.5", "93", "94"),
+]
