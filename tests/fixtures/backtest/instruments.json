@@ -1,0 +1,20 @@
+[
+  {
+    "exchange": "NSE",
+    "token": "2885",
+    "tradingsymbol": "RELIANCE-EQ",
+    "name": "RELIANCE",
+    "lot_size": 1,
+    "tick_size": "0.1",
+    "valid_from": "2026-09-19T08:22:12.152000+00:00"
+  },
+  {
+    "exchange": "NSE",
+    "token": "11536",
+    "tradingsymbol": "TCS-EQ",
+    "name": "TCS",
+    "lot_size": 1,
+    "tick_size": "0.1",
+    "valid_from": "2026-09-19T08:22:12.152000+00:00"
+  }
+]

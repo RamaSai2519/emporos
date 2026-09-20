@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import datetime
 
 from emporos.broker.angelone.api import AngelOneApi
 from emporos.broker.angelone.candle_backfill import AngelOneCandleBackfill
@@ -18,11 +19,14 @@ from emporos.cli.history_composition import HistoryComposer, HistoryStack
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
+from emporos.domain.candles import Timeframe
 from emporos.history.calendar import StoredTradingCalendar
+from emporos.history.derived import DerivedBarBackfill
 from emporos.instruments.cache import InstrumentCache
 from emporos.instruments.store import MongoInstrumentMasterStore
+from emporos.marketdata.session import SessionWindow
 from emporos.persistence.calendar_store import MongoCalendarStore
-from emporos.persistence.candle_cold import ParquetCandleArchive
+from emporos.persistence.candle_cold import DisabledColdArchive, ParquetCandleArchive
 from emporos.persistence.candle_hot import MongoCandleStore
 from emporos.persistence.candle_rollup import CandleRollup
 from emporos.persistence.candles import CandleRepository
@@ -42,6 +46,52 @@ from emporos.persistence.transactions import TransactionRunner
 class HistoryRuntime:
     stack: HistoryStack
     instruments: InstrumentCache
+
+
+@dataclass(frozen=True)
+class BarFetchRuntime:
+    fetcher: DerivedBarBackfill
+    instruments: InstrumentCache
+    hot_cutoff: datetime | None  # the oldest bar the hot tier will take for the timeframe
+
+
+@asynccontextmanager
+async def open_bar_fetch_runtime(
+    settings: Settings, keep: Timeframe
+) -> AsyncIterator[BarFetchRuntime]:
+    """Mongo and the broker only: no S3, so bars older than the hot retention cannot be stored
+    (the cold tier is `DisabledColdArchive`, which refuses)."""
+    clock = SystemClock()
+    mongo = MongoClientFactory(settings)
+    broker = AngelOneStackFactory(settings, clock, AsyncioSleeper(), RandomJitter()).build()
+    try:
+        database = mongo.database()
+        master = MongoInstrumentMasterStore(
+            TransactionRunner(mongo.client),
+            InstrumentRepository(database),
+            InstrumentVersionRepository(database),
+            StagedCollectionLoader(
+                database, PLATFORM_SCHEMA.spec_for(Collection.INSTRUMENTS), InstrumentRecord
+            ),
+        )
+        instruments = InstrumentCache()
+        await instruments.load_from(master)
+        calendar = await StoredTradingCalendar.from_store(MongoCalendarStore(database))
+        placement = RetentionPlacement(clock)
+        repository = CandleRepository(MongoCandleStore(database), DisabledColdArchive(), placement)
+        fetcher = DerivedBarBackfill(
+            AngelOneCandleBackfill(AngelOneApi(broker.transport)),
+            repository,
+            SessionWindow(calendar=calendar),
+            keep,
+        )
+        yield BarFetchRuntime(fetcher, instruments, placement.hot_cutoff(keep))
+    finally:
+        try:
+            await broker.sessions.logout()
+        finally:
+            await broker.aclose()
+            await mongo.close()
 
 
 @asynccontextmanager

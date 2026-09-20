@@ -1,0 +1,114 @@
+"""Composition root for `emporos backtest`: read-only Mongo (candles, instrument history), the
+strategy registry, the fee schedules. No broker, no credentials, nothing that can place an order.
+
+The candle reader is a `CandleRepository`, the only allowed path to candles. With no S3 bucket
+configured its cold tier is `DisabledColdArchive`: ranges older than the hot retention read as
+empty, which the backtest then reports as missing bars rather than inventing them.
+"""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from pathlib import Path
+
+from pymongo.asynchronous.database import AsyncDatabase
+
+from emporos.backtest.costs import EarliestBeforeFirst, ScheduleSource, StrictSchedules
+from emporos.backtest.engine import BacktestResult
+from emporos.backtest.job import BacktestJob, BacktestRequest
+from emporos.backtest.universe import AsOfInstruments, InstrumentEra
+from emporos.cli.strategy_composition import build_registry
+from emporos.core.config import Settings
+from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
+from emporos.persistence.candle_cold import (
+    ColdCandleArchive,
+    DisabledColdArchive,
+    ParquetCandleArchive,
+)
+from emporos.persistence.candle_hot import MongoCandleStore
+from emporos.persistence.candles import CandleReader, CandleRepository
+from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.object_store import S3ClientFactory
+from emporos.persistence.records import InstrumentRecord, InstrumentVersionRecord
+from emporos.persistence.repositories import InstrumentRepository, InstrumentVersionRepository
+from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.session.strategy_files import StrategyConfigLoader
+from emporos.strategies.config import ResolvedStrategyConfig
+from emporos.strategies.resolution import StrategyConfigResolver
+
+
+@dataclass(frozen=True)
+class BacktestRuntime:
+    reader: CandleReader
+    instruments: AsOfInstruments
+
+
+class InstrumentErasReader:
+    """The instrument master's history as eras: current definitions (open-ended, from their own
+    `valid_from`) plus every superseded one (`instrument_versions`, closed)."""
+
+    def __init__(self, database: AsyncDatabase) -> None:  # type: ignore[type-arg]
+        self._current = InstrumentRepository(database)
+        self._versions = InstrumentVersionRepository(database)
+
+    async def read(self) -> list[InstrumentEra]:
+        current = [self._current_era(r) for r in await self._current.all()]
+        closed = [self._closed_era(r) for r in await self._versions.find({})]
+        return [*current, *closed]
+
+    @staticmethod
+    def _current_era(record: InstrumentRecord) -> InstrumentEra:
+        instrument = Instrument(
+            Exchange(record.exchange), record.token, record.tradingsymbol, record.name,
+            record.lot_size, record.tick_size,
+        )  # fmt: skip
+        return InstrumentEra(instrument, record.valid_from, None)
+
+    @staticmethod
+    def _closed_era(record: InstrumentVersionRecord) -> InstrumentEra:
+        instrument = Instrument(
+            Exchange(record.exchange), record.token, record.tradingsymbol, record.name,
+            record.lot_size, record.tick_size,
+        )  # fmt: skip
+        return InstrumentEra(instrument, record.valid_from, record.valid_to)
+
+
+def cold_archive(settings: Settings) -> ColdCandleArchive:
+    if settings.s3_bucket:
+        return ParquetCandleArchive(S3ClientFactory(settings).create_store())
+    return DisabledColdArchive()
+
+
+@asynccontextmanager
+async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRuntime]:
+    mongo = MongoClientFactory(settings)
+    try:
+        database = mongo.database()
+        repository = CandleRepository(MongoCandleStore(database), cold_archive(settings))
+        eras = await InstrumentErasReader(database).read()
+        yield BacktestRuntime(repository, AsOfInstruments(eras))
+    finally:
+        await mongo.close()
+
+
+async def run_backtest(
+    settings: Settings, strategy_file: Path, request: BacktestRequest, assume_earliest_fees: bool
+) -> BacktestResult:
+    registry = build_registry()
+    library = FeeScheduleLibrary.from_directory()
+
+    def schedules() -> ScheduleSource:
+        if assume_earliest_fees:
+            return EarliestBeforeFirst(library)
+        return StrictSchedules(library)
+
+    def config_for(resolver: InstrumentResolver) -> ResolvedStrategyConfig:
+        return StrategyConfigLoader(StrategyConfigResolver(registry, resolver)).load_file(
+            strategy_file
+        )
+
+    async with open_backtest_runtime(settings) as runtime:
+        job = BacktestJob(runtime.reader, registry, runtime.instruments, config_for, schedules)
+        return await job.run(request)

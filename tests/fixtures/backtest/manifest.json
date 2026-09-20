@@ -1,0 +1,14 @@
+{
+  "file": "momentum_v1_5m_bars.csv.gz",
+  "sha256": "9f67d62db7b79c7ced246aece1c495f0ea12816c92844b4b0369e651be2cfce5",
+  "bars": 36488,
+  "timeframe": "5m",
+  "first_day": "2025-09-22",
+  "last_day": "2026-09-18",
+  "symbols": [
+    "RELIANCE-EQ",
+    "TCS-EQ"
+  ],
+  "source": "Angel One getCandleData 1m, derived to 5m by emporos.marketdata.timeframes",
+  "note": "the broker's history has no bars for 15:15-15:20 IST on recent sessions"
+}

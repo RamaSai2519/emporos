@@ -13,6 +13,7 @@ from emporos.backtest.document import BacktestDocument
 from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
 from emporos.cli.strategy_composition import build_registry
+from emporos.domain.candles import Candle
 from emporos.domain.money import Money
 from tests.support.backtest import InMemoryCandles
 from tests.support.backtest_engine import FixedSchedule, FixedTicks
@@ -30,12 +31,17 @@ DAYS = 6
 PER_DAY = 75
 
 
-async def momentum_backtest(days: int = DAYS) -> BacktestResult:
+def momentum_candles(days: int = DAYS) -> list[Candle]:
     """Two instruments on offset waves, `days` sessions of 75 five-minute bars each."""
-    candles = []
+    candles: list[Candle] = []
     for shift, instrument_id in enumerate((INSTRUMENT, OTHER_INSTRUMENT)):
         closes = wave_closes(days * PER_DAY + 30 * shift, period=90, amplitude=60)[30 * shift :]
         candles += session_bars(closes, instrument_id, per_day=PER_DAY)
+    return candles
+
+
+async def momentum_backtest(days: int = DAYS) -> BacktestResult:
+    candles = momentum_candles(days)
     spec = BacktestSpec(
         config=resolved(momentum_raw()),
         window=FeedWindow(T0 - timedelta(hours=1), T0 + timedelta(days=days) + timedelta(hours=10)),

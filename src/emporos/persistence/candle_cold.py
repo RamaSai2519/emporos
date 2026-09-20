@@ -17,6 +17,7 @@ from typing import Any, Protocol
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from emporos.core.errors import ConfigurationError
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.persistence.object_store import ObjectNotFoundError, ObjectStore
@@ -43,6 +44,22 @@ class ColdCandleArchive(Protocol):
     ) -> list[Candle]: ...
 
     async def archive(self, candles: Iterable[Candle]) -> None: ...
+
+
+class DisabledColdArchive:
+    """The cold tier when no bucket is configured: it holds nothing and refuses to be written to.
+    Reading it is fine (a range older than the hot retention is simply empty); silently dropping
+    bars that belong in it would not be, so `archive` raises."""
+
+    async def read(
+        self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
+    ) -> list[Candle]:
+        return []
+
+    async def archive(self, candles: Iterable[Candle]) -> None:
+        raise ConfigurationError(
+            "S3_BUCKET is not set: bars older than their hot retention cannot be stored"
+        )
 
 
 class ParquetCandleCodec:

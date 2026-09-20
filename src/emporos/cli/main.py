@@ -15,12 +15,14 @@ from datetime import date, datetime, timedelta
 import httpx
 import typer
 
+from emporos.cli.backtest_commands import backtest_app
 from emporos.cli.history_composition import resolve_symbols
-from emporos.cli.history_runtime import open_history_runtime
+from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
-from emporos.core.errors import EmporosError
+from emporos.core.errors import ConfigurationError, EmporosError
+from emporos.domain.candles import Timeframe
 from emporos.domain.instruments import Exchange
 from emporos.instruments.cache import InstrumentCache
 from emporos.instruments.differ import InstrumentDiffer
@@ -28,6 +30,8 @@ from emporos.instruments.downloader import MASTER_URL, InstrumentMasterDownloade
 from emporos.instruments.store import MongoInstrumentMasterStore
 from emporos.instruments.sync import InstrumentSyncService, SyncOutcome, SyncResult
 from emporos.instruments.validator import InstrumentMasterValidator
+from emporos.marketdata.session import SessionWindow
+from emporos.marketdata.timeframes import DERIVED_TIMEFRAMES
 from emporos.persistence.collections import Collection
 from emporos.persistence.migrations import MigrationReport, MigrationRunner, MongoSchemaStore
 from emporos.persistence.mongo import MongoClientFactory
@@ -53,6 +57,7 @@ history_app = typer.Typer(
 )
 app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
+app.add_typer(backtest_app, name="backtest")
 
 
 def _not_implemented(feature: str, jira_ref: str) -> None:
@@ -67,12 +72,6 @@ def _not_implemented(feature: str, jira_ref: str) -> None:
 def run() -> None:
     """Start the trading worker (market data, risk, execution, session lifecycle)."""
     _not_implemented("run", "EM-31 onward")
-
-
-@app.command()
-def backtest() -> None:
-    """Run a strategy against historical data."""
-    _not_implemented("backtest", "Phase 10")
 
 
 @app.command()
@@ -214,6 +213,59 @@ def _run_history(symbols: list[str], days: int, reconcile: bool) -> None:
 def history_backfill(symbols: list[str] = _SYMBOLS, days: int = _DAYS) -> None:
     """Backfill 1m history for the symbols. Resumable: re-run to continue after an interruption."""
     _run_history(symbols, days, reconcile=False)
+
+
+_TIMEFRAME = typer.Option("5m", "--timeframe", "-t", help="The derived timeframe to store.")
+_FROM = typer.Option(..., "--from", formats=["%Y-%m-%d"], help="First IST day.")
+_TO = typer.Option(..., "--to", formats=["%Y-%m-%d"], help="Last IST day (inclusive).")
+
+
+async def _fetch_bars(
+    symbols: list[str], timeframe: Timeframe, first: date, last: date
+) -> HistoryOutcome:
+    async with open_bar_fetch_runtime(Settings.default(), timeframe) as runtime:
+        instruments = resolve_symbols(runtime.instruments, Exchange.NSE, symbols)
+        earliest = SessionWindow().open_at(first)
+        if runtime.hot_cutoff is not None and earliest < runtime.hot_cutoff:
+            raise ConfigurationError(
+                f"{first} is older than the hot retention for {timeframe.value} bars "
+                f"({runtime.hot_cutoff.date()}), and no S3 bucket is configured to hold them"
+            )
+        report = await runtime.fetcher.run(instruments, first, last)
+    full = 375 * 60 // int(timeframe.duration.total_seconds())
+    short = sorted((i, d, n) for (i, d), n in report.bars_per_day.items() if n < full)
+    lines = [
+        f"fetch-bars {timeframe.value}: {report.chunks_fetched} chunk(s) fetched, "
+        f"{report.bars_written} bar(s) written, {len(report.failed_chunks)} chunk(s) failed, "
+        f"{len(report.bars_per_day)} instrument-day(s) with bars"
+    ]
+    lines += [f"  short day: {i} {d} has {n} of {full} bars" for i, d, n in short[:20]]
+    return HistoryOutcome("\n".join(lines), report.ok)
+
+
+@history_app.command("fetch-bars")
+def history_fetch_bars(
+    symbols: list[str] = _SYMBOLS,
+    timeframe: str = _TIMEFRAME,
+    first: datetime = _FROM,
+    last: datetime = _TO,
+) -> None:
+    """Fetch 1m history, derive one timeframe (like the live pipeline) and store only that.
+
+    For backtest data when no S3 bucket is configured: a year of 5m bars fits the hot tier.
+    """
+    try:
+        frame = Timeframe(timeframe)
+        if frame not in DERIVED_TIMEFRAMES:  # refuse before opening Mongo or the broker
+            raise ConfigurationError(f"{timeframe} is not a timeframe derived from 1m bars")
+        outcome = asyncio.run(_fetch_bars(symbols, frame, first.date(), last.date()))
+    except (EmporosError, ValueError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"fetch-bars failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(outcome.summary)
+    if not outcome.complete:
+        raise typer.Exit(code=2)
 
 
 @history_app.command("reconcile")

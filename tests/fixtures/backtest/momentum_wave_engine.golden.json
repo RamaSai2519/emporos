@@ -1,0 +1,632 @@
+{
+  "run": {
+    "run_id": "bt-3e5e586c7d91a410-20260105",
+    "strategy": "momentum_v1",
+    "config_hash": "sha256:3e5e586c7d91a410f37b6e4c374cf240369441b91c52d8feb28def20ffed2a11",
+    "timeframe": "5m",
+    "instruments": [
+      {
+        "symbol": "NSE:ALPHA-EQ",
+        "instrument_id": "NSE:1001"
+      },
+      {
+        "symbol": "NSE:BETA-EQ",
+        "instrument_id": "NSE:1002"
+      }
+    ],
+    "window_start": "2026-01-05T02:45:00+00:00",
+    "window_end": "2026-01-11T13:45:00+00:00",
+    "first_trading_day": "2026-01-05",
+    "starting_cash": "1000000.00",
+    "strategy_halted": false,
+    "halt_reason": null,
+    "alerts": []
+  },
+  "assumptions": [
+    "risk gate: none. NO RISK ENGINE: every signal was traded as the strategy sized it (Phase 11 is not built); position limits, loss limits and exposure caps were not applied",
+    "no margin or funds check: the account is never short of cash",
+    "orders are priced by a minimal marketable-limit stand-in (limit_buffer_bps from the config, tick-rounded); Phase 12 owns the real execution pricing",
+    "intraday: resting orders are cancelled and positions exited from session.square_off_at; anything still open at the session's close is closed by the broker's forced square-off",
+    "fills: through crossing, at the order's own limit, 0.1 of bar volume, 0 bps rejected (seed 0), forced square-off 10 bps against",
+    "fee schedule NOT reconciled against a contract note (verified: false)"
+  ],
+  "activity": {
+    "signals": 75,
+    "signals_refused_by_the_gate": 0,
+    "orders_sent": 80,
+    "orders_rejected_by_the_exchange": 0,
+    "fills": 80,
+    "orders_cancelled_or_expired": 0,
+    "signals_refused_after_square_off": 1,
+    "square_off_exit_signals": 6,
+    "forced_square_offs": 0,
+    "unclosed_bars_skipped": 0,
+    "positions_open_at_end": 0
+  },
+  "costs": {
+    "schedules": [
+      {
+        "name": "hand",
+        "effective_from": "2026-01-01",
+        "verified": false
+      }
+    ],
+    "all_verified": false,
+    "days_priced_with_a_schedule_that_did_not_yet_exist": 0
+  },
+  "metrics": {
+    "conventions": {
+      "annualisation_days": 252,
+      "risk_free_annual": "0.00000000",
+      "returns": "daily, from end-of-day equity; fractions, not percent",
+      "cagr_years": "calendar days first to last trading day inclusive / 365"
+    },
+    "account": {
+      "starting_cash": "1000000.00",
+      "ending_equity": "1009213.04",
+      "trading_days": 6
+    },
+    "returns": {
+      "total_return": "0.00921304",
+      "cagr": "0.74698931",
+      "years": "0.01643836",
+      "sharpe": "28.92579844",
+      "sortino": null,
+      "calmar": "570.26447451"
+    },
+    "drawdown": {
+      "max_drawdown": "0.00130990",
+      "count": 40,
+      "longest_days": 1,
+      "worst_periods": [
+        {
+          "peak_at": "2026-01-09T09:35:00+00:00",
+          "trough_at": "2026-01-10T07:00:00+00:00",
+          "recovered_at": null,
+          "depth": "0.00130990"
+        },
+        {
+          "peak_at": "2026-01-06T08:50:00+00:00",
+          "trough_at": "2026-01-07T04:30:00+00:00",
+          "recovered_at": "2026-01-07T06:20:00+00:00",
+          "depth": "0.00113571"
+        },
+        {
+          "peak_at": "2026-01-09T04:35:00+00:00",
+          "trough_at": "2026-01-09T06:00:00+00:00",
+          "recovered_at": "2026-01-09T09:10:00+00:00",
+          "depth": "0.00085022"
+        },
+        {
+          "peak_at": "2026-01-07T09:45:00+00:00",
+          "trough_at": "2026-01-08T05:45:00+00:00",
+          "recovered_at": "2026-01-08T06:55:00+00:00",
+          "depth": "0.00083966"
+        },
+        {
+          "peak_at": "2026-01-05T07:35:00+00:00",
+          "trough_at": "2026-01-05T09:15:00+00:00",
+          "recovered_at": "2026-01-06T06:30:00+00:00",
+          "depth": "0.00078754"
+        }
+      ]
+    },
+    "trades": {
+      "count": 40,
+      "wins": 14,
+      "losses": 26,
+      "breakeven": 0,
+      "win_rate": "0.35000000",
+      "gross_pnl": "11807.00",
+      "fees": "2593.96",
+      "net_pnl": "9213.04",
+      "gross_profit": "16318.96",
+      "gross_loss": "7105.92",
+      "profit_factor": "2.29653022",
+      "average_trade": "230.33",
+      "average_win": "1165.64",
+      "average_loss": "-273.30",
+      "expectancy": "0.00465024",
+      "max_consecutive_wins": 2,
+      "max_consecutive_losses": 6
+    },
+    "exposure": {
+      "time_in_market": "0.66444444",
+      "average_exposure": "0.03825966"
+    },
+    "turnover": {
+      "traded_notional": "3972334.50",
+      "turnover": "3.94770854",
+      "annualised_turnover": "240.15226969"
+    },
+    "monthly_returns": [
+      {
+        "month": "2026-01",
+        "return": "0.00921304",
+        "pnl": "9213.04"
+      }
+    ]
+  },
+  "trades": [
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-05T04:15:00+00:00",
+      "closed_at": "2026-01-05T05:05:00+00:00",
+      "entry_price": "1004.5500",
+      "exit_price": "1014.4500",
+      "gross_pnl": "485.10",
+      "fees": "64.81",
+      "net_pnl": "420.29"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-05T05:20:00+00:00",
+      "closed_at": "2026-01-05T05:25:00+00:00",
+      "entry_price": "1060.5500",
+      "exit_price": "1056.4500",
+      "gross_pnl": "-192.70",
+      "fees": "64.82",
+      "net_pnl": "-257.52"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-05T05:10:00+00:00",
+      "closed_at": "2026-01-05T07:45:00+00:00",
+      "entry_price": "1017.5500",
+      "exit_price": "1055.4500",
+      "gross_pnl": "1857.10",
+      "fees": "65.43",
+      "net_pnl": "1791.67"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-05T07:50:00+00:00",
+      "closed_at": "2026-01-05T07:55:00+00:00",
+      "entry_price": "1060.5500",
+      "exit_price": "1056.4500",
+      "gross_pnl": "-192.70",
+      "fees": "64.82",
+      "net_pnl": "-257.52"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-05T09:00:00+00:00",
+      "closed_at": "2026-01-05T09:10:00+00:00",
+      "entry_price": "1003.5500",
+      "exit_price": "1000.4500",
+      "gross_pnl": "-151.90",
+      "fees": "64.61",
+      "net_pnl": "-216.51"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-05T09:15:00+00:00",
+      "closed_at": "2026-01-05T09:50:00+00:00",
+      "entry_price": "1005.5500",
+      "exit_price": "1012.4500",
+      "gross_pnl": "338.10",
+      "fees": "64.77",
+      "net_pnl": "273.33"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-06T05:15:00+00:00",
+      "closed_at": "2026-01-06T05:25:00+00:00",
+      "entry_price": "1003.5500",
+      "exit_price": "1000.4500",
+      "gross_pnl": "-151.90",
+      "fees": "64.61",
+      "net_pnl": "-216.51"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-06T05:30:00+00:00",
+      "closed_at": "2026-01-06T09:05:00+00:00",
+      "entry_price": "1005.5500",
+      "exit_price": "1053.4500",
+      "gross_pnl": "2347.10",
+      "fees": "65.34",
+      "net_pnl": "2281.76"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-06T09:10:00+00:00",
+      "closed_at": "2026-01-06T09:15:00+00:00",
+      "entry_price": "1019.5500",
+      "exit_price": "1012.4500",
+      "gross_pnl": "-347.90",
+      "fees": "64.81",
+      "net_pnl": "-412.71"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-07T04:05:00+00:00",
+      "closed_at": "2026-01-07T04:20:00+00:00",
+      "entry_price": "1005.5500",
+      "exit_price": "1002.4500",
+      "gross_pnl": "-151.90",
+      "fees": "64.64",
+      "net_pnl": "-216.54"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-07T05:25:00+00:00",
+      "closed_at": "2026-01-07T05:30:00+00:00",
+      "entry_price": "1019.5500",
+      "exit_price": "1012.4500",
+      "gross_pnl": "-347.90",
+      "fees": "64.81",
+      "net_pnl": "-412.71"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-07T06:35:00+00:00",
+      "closed_at": "2026-01-07T06:50:00+00:00",
+      "entry_price": "1005.5500",
+      "exit_price": "1002.4500",
+      "gross_pnl": "-151.90",
+      "fees": "64.64",
+      "net_pnl": "-216.54"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-07T04:25:00+00:00",
+      "closed_at": "2026-01-07T07:55:00+00:00",
+      "entry_price": "1010.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "2151.10",
+      "fees": "65.40",
+      "net_pnl": "2085.70"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-07T08:25:00+00:00",
+      "closed_at": "2026-01-07T08:30:00+00:00",
+      "entry_price": "1051.5500",
+      "exit_price": "1042.4500",
+      "gross_pnl": "-427.70",
+      "fees": "64.61",
+      "net_pnl": "-492.31"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-07T09:25:00+00:00",
+      "closed_at": "2026-01-07T09:30:00+00:00",
+      "entry_price": "1035.5500",
+      "exit_price": "1031.4500",
+      "gross_pnl": "-196.80",
+      "fees": "64.78",
+      "net_pnl": "-261.58"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-07T06:55:00+00:00",
+      "closed_at": "2026-01-07T09:50:00+00:00",
+      "entry_price": "1010.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "2151.10",
+      "fees": "65.40",
+      "net_pnl": "2085.70"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-08T04:40:00+00:00",
+      "closed_at": "2026-01-08T04:45:00+00:00",
+      "entry_price": "1051.5500",
+      "exit_price": "1042.4500",
+      "gross_pnl": "-427.70",
+      "fees": "64.61",
+      "net_pnl": "-492.31"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-08T05:20:00+00:00",
+      "closed_at": "2026-01-08T05:35:00+00:00",
+      "entry_price": "1003.5500",
+      "exit_price": "1003.4500",
+      "gross_pnl": "-4.90",
+      "fees": "64.65",
+      "net_pnl": "-69.55"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-08T05:40:00+00:00",
+      "closed_at": "2026-01-08T05:45:00+00:00",
+      "entry_price": "1035.5500",
+      "exit_price": "1031.4500",
+      "gross_pnl": "-196.80",
+      "fees": "64.78",
+      "net_pnl": "-261.58"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-08T05:45:00+00:00",
+      "closed_at": "2026-01-08T07:45:00+00:00",
+      "entry_price": "1008.5500",
+      "exit_price": "1037.4500",
+      "gross_pnl": "1416.10",
+      "fees": "65.14",
+      "net_pnl": "1350.96"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-08T07:50:00+00:00",
+      "closed_at": "2026-01-08T08:05:00+00:00",
+      "entry_price": "1003.5500",
+      "exit_price": "1003.4500",
+      "gross_pnl": "-4.90",
+      "fees": "64.65",
+      "net_pnl": "-69.55"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-08T07:50:00+00:00",
+      "closed_at": "2026-01-08T08:50:00+00:00",
+      "entry_price": "1045.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "418.30",
+      "fees": "64.75",
+      "net_pnl": "353.55"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-08T08:55:00+00:00",
+      "closed_at": "2026-01-08T09:10:00+00:00",
+      "entry_price": "1058.5500",
+      "exit_price": "1057.4500",
+      "gross_pnl": "-51.70",
+      "fees": "64.84",
+      "net_pnl": "-116.54"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-08T08:15:00+00:00",
+      "closed_at": "2026-01-08T09:50:00+00:00",
+      "entry_price": "1008.5500",
+      "exit_price": "1036.4500",
+      "gross_pnl": "1367.10",
+      "fees": "65.13",
+      "net_pnl": "1301.97"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-09T04:40:00+00:00",
+      "closed_at": "2026-01-09T04:45:00+00:00",
+      "entry_price": "1031.5500",
+      "exit_price": "1028.4500",
+      "gross_pnl": "-148.80",
+      "fees": "64.73",
+      "net_pnl": "-213.53"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-09T04:05:00+00:00",
+      "closed_at": "2026-01-09T05:05:00+00:00",
+      "entry_price": "1045.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "418.30",
+      "fees": "64.75",
+      "net_pnl": "353.55"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-09T05:10:00+00:00",
+      "closed_at": "2026-01-09T05:25:00+00:00",
+      "entry_price": "1058.5500",
+      "exit_price": "1057.4500",
+      "gross_pnl": "-51.70",
+      "fees": "64.84",
+      "net_pnl": "-116.54"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-09T05:55:00+00:00",
+      "closed_at": "2026-01-09T06:00:00+00:00",
+      "entry_price": "1011.5500",
+      "exit_price": "1002.4500",
+      "gross_pnl": "-445.90",
+      "fees": "64.66",
+      "net_pnl": "-510.56"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-09T07:10:00+00:00",
+      "closed_at": "2026-01-09T07:15:00+00:00",
+      "entry_price": "1031.5500",
+      "exit_price": "1028.4500",
+      "gross_pnl": "-148.80",
+      "fees": "64.73",
+      "net_pnl": "-213.53"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-09T06:40:00+00:00",
+      "closed_at": "2026-01-09T07:20:00+00:00",
+      "entry_price": "1001.5500",
+      "exit_price": "1010.4500",
+      "gross_pnl": "436.10",
+      "fees": "64.74",
+      "net_pnl": "371.36"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-09T08:25:00+00:00",
+      "closed_at": "2026-01-09T08:30:00+00:00",
+      "entry_price": "1011.5500",
+      "exit_price": "1002.4500",
+      "gross_pnl": "-445.90",
+      "fees": "64.66",
+      "net_pnl": "-510.56"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-09T09:10:00+00:00",
+      "closed_at": "2026-01-09T09:50:00+00:00",
+      "entry_price": "1001.5500",
+      "exit_price": "1010.4500",
+      "gross_pnl": "436.10",
+      "fees": "64.74",
+      "net_pnl": "371.36"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-09T07:25:00+00:00",
+      "closed_at": "2026-01-09T09:50:00+00:00",
+      "entry_price": "1019.5500",
+      "exit_price": "1053.4500",
+      "gross_pnl": "1661.10",
+      "fees": "65.38",
+      "net_pnl": "1595.72"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-10T04:05:00+00:00",
+      "closed_at": "2026-01-10T04:10:00+00:00",
+      "entry_price": "1057.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "-145.70",
+      "fees": "64.79",
+      "net_pnl": "-210.49"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-10T06:10:00+00:00",
+      "closed_at": "2026-01-10T06:15:00+00:00",
+      "entry_price": "1027.5500",
+      "exit_price": "1022.4500",
+      "gross_pnl": "-244.80",
+      "fees": "64.63",
+      "net_pnl": "-309.43"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 47,
+      "opened_at": "2026-01-10T06:35:00+00:00",
+      "closed_at": "2026-01-10T06:40:00+00:00",
+      "entry_price": "1057.5500",
+      "exit_price": "1054.4500",
+      "gross_pnl": "-145.70",
+      "fees": "64.79",
+      "net_pnl": "-210.49"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-10T06:55:00+00:00",
+      "closed_at": "2026-01-10T07:00:00+00:00",
+      "entry_price": "1015.5500",
+      "exit_price": "1011.4500",
+      "gross_pnl": "-200.90",
+      "fees": "64.79",
+      "net_pnl": "-265.69"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 48,
+      "opened_at": "2026-01-10T08:40:00+00:00",
+      "closed_at": "2026-01-10T08:45:00+00:00",
+      "entry_price": "1027.5500",
+      "exit_price": "1022.4500",
+      "gross_pnl": "-244.80",
+      "fees": "64.63",
+      "net_pnl": "-309.43"
+    },
+    {
+      "instrument_id": "NSE:1001",
+      "direction": "LONG",
+      "quantity": 49,
+      "opened_at": "2026-01-10T09:25:00+00:00",
+      "closed_at": "2026-01-10T09:30:00+00:00",
+      "entry_price": "1015.5500",
+      "exit_price": "1011.4500",
+      "gross_pnl": "-200.90",
+      "fees": "64.79",
+      "net_pnl": "-265.69"
+    },
+    {
+      "instrument_id": "NSE:1002",
+      "direction": "LONG",
+      "quantity": 50,
+      "opened_at": "2026-01-10T07:50:00+00:00",
+      "closed_at": "2026-01-10T09:50:00+00:00",
+      "entry_price": "1000.5000",
+      "exit_price": "1035.4500",
+      "gross_pnl": "1747.50",
+      "fees": "65.46",
+      "net_pnl": "1682.04"
+    }
+  ]
+}
