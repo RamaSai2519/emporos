@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -161,7 +162,10 @@ async def _curate(
             runtime.reader, registry, runtime.instruments,
             schedules,
             RiskGateFactory(scaler.limits(RiskLimitsLoader().load())), StrategyCurator(criteria),
-            SHARPE, recorder=_recorder(ledger, experiment, first, last, assume_fees),
+            SHARPE, recorder=_recorder(
+                ledger, experiment, first, last, assume_fees,
+                runtime.cache.fingerprint if runtime.cache else None,
+            ),
             assessors=assessor,
         )  # fmt: skip
         records = await run.run(
@@ -180,7 +184,12 @@ async def _curate(
 
 
 def _recorder(
-    ledger: TrialLedger, experiment: str | None, first: datetime, last: datetime, assume_fees: bool
+    ledger: TrialLedger,
+    experiment: str | None,
+    first: datetime,
+    last: datetime,
+    assume_fees: bool,
+    dataset_stamp: Callable[[], str] | None = None,
 ) -> ResultRecorder:
     now = datetime.now(UTC)
     fees = "earliest fee schedule assumed before the first" if assume_fees else "dated fees, strict"
@@ -191,7 +200,7 @@ def _recorder(
         cost_model=f"Angel One {fees}; platform risk gate at the benchmark capital",
         recorded_at=now,
     )
-    return LedgerRecorder(ledger, WalkForwardTrials(context))
+    return LedgerRecorder(ledger, WalkForwardTrials(context, dataset_stamp=dataset_stamp))
 
 
 def backtest_curate(

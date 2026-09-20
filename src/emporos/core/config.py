@@ -101,6 +101,11 @@ class Settings(BaseSettings):
     s3_secret_access_key: str | None = Field(default=None, alias="S3_SECRET_ACCESS_KEY")
     aws_region: str = Field(default="ap-south-1", alias="AWS_REGION")
 
+    # Where backtests keep their local copy of closed candle months (see persistence/candle_cache);
+    # unset uses ~/.cache/emporos/candles. It is derived data: deleting it only makes the next
+    # backtest slower.
+    candle_cache_dir: str | None = Field(default=None, alias="CANDLE_CACHE_DIR")
+
     angelone_client_code: str | None = Field(default=None, alias="ANGELONE_CLIENT_CODE")
     angelone_password: str | None = Field(default=None, alias="ANGELONE_PASSWORD")
     angelone_totp_secret: str | None = Field(default=None, alias="ANGELONE_TOTP_SECRET")

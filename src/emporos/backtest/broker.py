@@ -80,6 +80,10 @@ class SimulatedBroker:
         self._model = model or BarFillModel()
         self._rejects: RejectPolicy = rejects or NeverReject()
         self._orders: dict[str, _Order] = {}
+        # Only the orders still resting, in the order they were accepted, so a bar looks at the
+        # handful that can trade instead of every order the run has ever placed.
+        self._open: dict[str, _Order] = {}
+        self._open_by_instrument: dict[str, dict[str, _Order]] = {}
         self._tags: set[str] = set()
         self._fills = 0
 
@@ -95,6 +99,8 @@ class SimulatedBroker:
         if why is not None:
             order.status = OrderUpdateStatus.REJECTED
             return self._event(order, why)
+        self._open[order.order_id] = order
+        self._open_by_instrument.setdefault(request.instrument_id, {})[order.order_id] = order
         return self._event(order)
 
     def cancel(self, order_id: str) -> SimEvent:
@@ -102,10 +108,11 @@ class SimulatedBroker:
         if not order.is_open:
             raise OrderNotOpenError(f"order {order_id} is {order.status}")
         order.status = OrderUpdateStatus.CANCELLED
+        self._close(order)
         return self._event(order, "cancelled")
 
     def open_orders(self) -> tuple[OrderSnapshot, ...]:
-        return tuple(self._snapshot(o) for o in self._orders.values() if o.is_open)
+        return tuple(self._snapshot(o) for o in self._open.values())
 
     def order(self, order_id: str) -> OrderSnapshot:
         return self._snapshot(self._order(order_id))
@@ -131,8 +138,9 @@ class SimulatedBroker:
     def expire_open_orders(self) -> list[SimEvent]:
         """End of session: every order still resting is cancelled (they are day orders)."""
         events = []
-        for order in [o for o in self._orders.values() if o.is_open]:
+        for order in list(self._open.values()):
             order.status = OrderUpdateStatus.CANCELLED
+            self._close(order)
             events.append(self._event(order, "expired at the end of the session"))
         return events
 
@@ -151,10 +159,14 @@ class SimulatedBroker:
 
     # --- internals ------------------------------------------------------------------------
     def _working_in(self, instrument_id: str) -> list[_Order]:
-        return [
-            o for o in self._orders.values()
-            if o.is_open and o.request.instrument_id == instrument_id
-        ]  # fmt: skip
+        return list(self._open_by_instrument.get(instrument_id, {}).values())
+
+    def _close(self, order: _Order) -> None:
+        """The order reached a final state: it no longer rests."""
+        self._open.pop(order.order_id, None)
+        resting = self._open_by_instrument.get(order.request.instrument_id)
+        if resting is not None:
+            resting.pop(order.order_id, None)
 
     def _still_waiting_for_trigger(self, order: _Order, bar: Candle) -> bool:
         """A stop-limit rests untriggered until a bar reaches its trigger; that bar only ARMS it,
@@ -176,6 +188,8 @@ class SimulatedBroker:
         order.status = (
             OrderUpdateStatus.FILLED if order.remaining == 0 else OrderUpdateStatus.PARTIALLY_FILLED
         )
+        if order.status.is_terminal:
+            self._close(order)
         fill = Fill(
             self._fills, order.order_id, order.request.tag, order.request.instrument_id,
             order.request.side, quantity, price, self._clock.now(), reason,

@@ -20,8 +20,10 @@ from emporos.backtest.engine import BacktestResult
 from emporos.backtest.job import BacktestJob, BacktestRequest
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
 from emporos.cli.strategy_composition import build_registry
+from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
 from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
+from emporos.persistence.candle_cache import CachingCandleReader, CandleCacheFiles
 from emporos.persistence.candle_cold import (
     ColdCandleArchive,
     DisabledColdArchive,
@@ -44,6 +46,7 @@ class BacktestRuntime:
     reader: CandleReader
     instruments: AsOfInstruments
     database: AsyncDatabase  # type: ignore[type-arg]
+    cache: CachingCandleReader | None = None
 
 
 class InstrumentErasReader:
@@ -76,6 +79,12 @@ class InstrumentErasReader:
         return InstrumentEra(instrument, record.valid_from, record.valid_to)
 
 
+def candle_cache_root(settings: Settings) -> Path:
+    if settings.candle_cache_dir:
+        return Path(settings.candle_cache_dir).expanduser()
+    return Path.home() / ".cache" / "emporos" / "candles"
+
+
 def cold_archive(settings: Settings) -> ColdCandleArchive:
     if settings.s3_bucket:
         return ParquetCandleArchive(S3ClientFactory(settings).create_store())
@@ -88,8 +97,11 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
     try:
         database = mongo.database()
         repository = CandleRepository(MongoCandleStore(database), cold_archive(settings))
+        reader = CachingCandleReader(
+            repository, CandleCacheFiles(candle_cache_root(settings)), SystemClock()
+        )
         eras = await InstrumentErasReader(database).read()
-        yield BacktestRuntime(repository, AsOfInstruments(eras), database)
+        yield BacktestRuntime(reader, AsOfInstruments(eras), database, reader)
     finally:
         await mongo.close()
 

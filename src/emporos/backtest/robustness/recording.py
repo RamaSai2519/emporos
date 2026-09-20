@@ -8,6 +8,7 @@ separate step after the run, so it cannot influence which candidate is chosen.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -41,8 +42,16 @@ class NoRecording:
 class WalkForwardTrials:
     """Every backtest a walk-forward run performed, as trials."""
 
-    def __init__(self, context: TrialContext, annualisation_days: int = 252) -> None:
+    def __init__(
+        self,
+        context: TrialContext,
+        annualisation_days: int = 252,
+        dataset_stamp: Callable[[], str] | None = None,
+    ) -> None:
+        """`dataset_stamp` names the exact bars the runs read (e.g. the candle cache's
+        fingerprint); it is read when trials are listed, after the runs have finished."""
         self._context = context
+        self._stamp = dataset_stamp
         self._root_days = DecimalMath.sqrt(Decimal(annualisation_days))
 
     def of(self, strategy: str, result: WalkForwardResult) -> list[Trial]:
@@ -85,10 +94,13 @@ class WalkForwardTrials:
         daily_sharpe: Decimal | None = None, note: str = "",
     ) -> Trial:  # fmt: skip
         c = self._context
+        dataset = (
+            c.dataset_version if self._stamp is None else f"{c.dataset_version}; {self._stamp()}"
+        )
         return Trial(
             trial_id=f"{c.experiment}/{c.batch}/{strategy}/w{index}/{role.value}/{candidate}",
             experiment=c.experiment, strategy=strategy, candidate=candidate, role=role,
-            dataset_version=c.dataset_version, config_hash=config_hash, cost_model=c.cost_model,
+            dataset_version=dataset, config_hash=config_hash, cost_model=c.cost_model,
             recorded_at=c.recorded_at, run_id=run_id, trade_count=trade_count, net_pnl=net_pnl,
             daily_sharpe=daily_sharpe, note=note,
         )  # fmt: skip
