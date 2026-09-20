@@ -223,3 +223,24 @@ class PositionsFor:
         )  # fmt: skip
         await self._world.mongo.database()[Collection.POSITIONS].insert_one(record.to_document())
         assert DAY
+
+
+class TestTelemetry:
+    async def test_a_running_worker_reports_its_health_and_metrics(
+        self, world: WorkerWorld
+    ) -> None:
+        assembly, tape = await world.build()
+        seen: dict[str, object] = {}
+
+        async def look() -> None:
+            seen["health"] = await assembly.telemetry.report()
+            seen["metrics"] = await assembly.telemetry.sample()
+
+        tape.hooks.append((at(9, 41), look))
+        await assembly.worker.run_session()
+        health, metrics = seen["health"], seen["metrics"]
+        assert health.session_state == "TRADING" and health.healthy  # type: ignore[attr-defined]
+        assert health.open_orders == 0 and health.kill_switch_halted is False  # type: ignore[attr-defined]
+        assert metrics["WorkerHeartbeat"] == 1 and metrics["UnknownOrders"] == 0  # type: ignore[index]
+        assert metrics["TicksPerMinute"] >= 1 and metrics["ReconciliationMismatches"] == 0  # type: ignore[index,operator]
+        assert metrics["MaxDataStalenessSeconds"] is not None  # type: ignore[index]

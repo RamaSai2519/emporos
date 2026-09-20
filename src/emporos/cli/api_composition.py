@@ -103,6 +103,7 @@ class ApiComposer:
 
         @asynccontextmanager
         async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+            await self.database.command("ping")  # open the pool before requests fan out (H1)
             wake.start()
             try:
                 yield

@@ -66,8 +66,10 @@ from emporos.execution.pricing import MarketableLimitPricer
 from emporos.execution.reprice_scheduler import RepriceScheduler
 from emporos.execution.repricing import RepriceCoordinator, RepricePolicy
 from emporos.execution.state import OrderStateMachine
+from emporos.history.calendar import CalendarStore, StoredTradingCalendar
 from emporos.marketdata.session import SessionWindow
 from emporos.observability.alerts import EventOutbox, LifecycleEvents, OutboxAlertSink
+from emporos.observability.metrics import EmfMetricsSink, MetricsPublisher
 from emporos.persistence.collections import Collection
 from emporos.persistence.instrument_ticks import InstrumentTickSizes
 from emporos.persistence.ledger_reader import PlatformLedger
@@ -141,6 +143,7 @@ from emporos.session.strategy_runs import (
     StrategyRunLauncher,
     StrategyRunnerBuilder,
 )
+from emporos.session.telemetry import RejectionCounter, TickRate, WorkerTelemetry
 from emporos.session.updates import OrderUpdateRouter
 from emporos.session.worker import SessionSchedule, TradingWorker
 from emporos.signals.recorder import SignalRecorder
@@ -162,6 +165,7 @@ class WorkerTuning:
     reconcile: timedelta = timedelta(minutes=5)
     reprice: timedelta = timedelta(seconds=2)
     commands: timedelta = timedelta(seconds=1)
+    metrics: timedelta = timedelta(seconds=60)
     events: timedelta = timedelta(seconds=2)
     kill_switch: timedelta = timedelta(seconds=5)
     reprice_step_bps: Decimal = Decimal(5)
@@ -193,6 +197,7 @@ class WorkerAssembly:
     runs: tuple[ManagedRun, ...]
     host: StrategyHost
     processor: CommandProcessor
+    telemetry: WorkerTelemetry
 
 
 class PaperVenue:
@@ -251,6 +256,7 @@ class PaperWorkerComposer:
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
 
     async def build(self) -> WorkerAssembly:
+        await self.client.admin.command("ping")  # open the pool before anything fans out (H1)
         db = self.database
         outbox = EventOutbox()
         alerts: AlertSink = OutboxAlertSink(outbox, self.clock, self.ids)
@@ -284,6 +290,8 @@ class PaperWorkerComposer:
         ledger = PlatformLedger(self.account_id, orders, executions, positions, self.clock)
         marks = LatestTickMarks(self.clock, self.tuning.mark_max_age)
         broker.on_tick(marks.on_tick)
+        tick_rate = TickRate(self.clock)
+        broker.on_tick(tick_rate.on_tick)
         ticks = InstrumentTickSizes(InstrumentRepository(db))
         book = StrategyPositionBook(self.account_id, PositionCalculator())
         machine = OrderStateMachine()
@@ -350,10 +358,11 @@ class PaperWorkerComposer:
             QuotedMarketFacts(broker, marks),
             JournalOrderFlow(journal, ledger, self.clock),
         )
+        rejections = RejectionCounter(MongoRejectionLog(RiskEventRepository(db), self.ids))
         risk = RiskEngine(
             StandardRuleSet(self.limits, self.window).rules(),
             assembler,
-            MongoRejectionLog(RiskEventRepository(db), self.ids),
+            rejections,
             self.ids, self.clock, alerts,
         )  # fmt: skip
         sink = GatedExecutionSink(
@@ -419,6 +428,12 @@ class PaperWorkerComposer:
             self.clock, self.ids, alerts,
         )  # fmt: skip
         always.add(Job("commands", t.commands, _Commands(processor)))
+        telemetry = WorkerTelemetry(
+            self.clock, lifecycle, journal, portfolio, marks, tick_rate, rejections, health,
+            monitor, tracker,
+        )  # fmt: skip
+        publisher = MetricsPublisher([telemetry], EmfMetricsSink(self.clock))
+        always.add(Job("metrics", t.metrics, publisher.publish))
         worker = TradingWorker(
             lifecycle, t.schedule, self.clock, self.sleeper, alerts,
             PaperVenue(broker, sorted({i for c in self.configs for i in c.instrument_ids}), health),
@@ -433,7 +448,7 @@ class PaperWorkerComposer:
         )  # fmt: skip
         return WorkerAssembly(
             worker, broker, engine, sync, reconciler, tracker, risk, sink, marks, book, outbox,
-            lifecycle, ledger, journal, monitor, control, tuple(runs), host, processor,
+            lifecycle, ledger, journal, monitor, control, tuple(runs), host, processor, telemetry,
         )  # fmt: skip
 
     def _handlers(
@@ -600,3 +615,10 @@ class _Books:
 
     async def active(self) -> list[Any]:
         return await self._journal.active()
+
+
+async def stored_session_window(store: CalendarStore) -> SessionWindow:
+    """The trading session as the exchange calendar stored in `market_calendar` says it is, so a
+    holiday is not treated as an open session (EM-99 A4). Weekends are never trading days; a
+    weekday the store has never heard of is assumed to trade, as before the calendar was seeded."""
+    return SessionWindow(calendar=await StoredTradingCalendar.from_store(store))

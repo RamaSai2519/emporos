@@ -70,5 +70,13 @@ class MongoClientFactory:
     def database(self) -> AsyncDatabase[Mapping[str, Any]]:
         return self._client[self._database_name]
 
+    async def warm(self) -> None:
+        """Open the connection pool with ONE awaited round trip before anything fans out.
+
+        pymongo 4.9.1 can hang when several tasks make their FIRST operations on a cold client at
+        once (EM-99 H1); one warm-up call first makes the concurrent ones safe.
+        """
+        await self._client.admin.command("ping")
+
     async def close(self) -> None:
         await self._client.close()

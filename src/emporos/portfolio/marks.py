@@ -41,3 +41,10 @@ class LatestTickMarks:
     def marks(self) -> Mapping[str, Money]:
         now = self._clock.now()
         return {i: m.price for i, m in self._latest.items() if now - m.at <= self._max_age}
+
+    def max_age_seconds(self) -> float | None:
+        """Age of the STALEST mark held (None when there are none): how out of date the feed is."""
+        if not self._latest:
+            return None
+        now = self._clock.now()
+        return max((now - m.at).total_seconds() for m in self._latest.values())
