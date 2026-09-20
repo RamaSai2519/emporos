@@ -3,6 +3,14 @@
 The API process reads MongoDB and writes `commands` — nothing else. It never builds a broker, an
 execution engine or a risk engine; it does not even import them (an import contract and a
 process-level test enforce that).
+
+The API's SSE stream wakes on a plain one-second poll, never on a MongoDB change stream
+(EM-137). An async change stream pins a pooled connection to the SAME client the read
+repositories share, so its endless long-poll `getMore` starves request handling: with
+pymongo 4.9.1 the pool stays at one or two connections and every other operation queues
+behind the stream until the five-second server-selection timeout. The wake is documented
+(`emporos.control.wake`) as an optimisation, never a dependency — the stream keeps working
+with it absent.
 """
 
 from __future__ import annotations
@@ -19,7 +27,7 @@ from emporos.api.auth import Argon2Passcodes, AuthService, LoginThrottle, TokenS
 from emporos.api.queries import QueryService
 from emporos.api.stores import MongoPasscodeStore
 from emporos.control.submitter import CommandSubmitter
-from emporos.control.wake import ChangeStreamWake
+from emporos.control.wake import PollingWake
 from emporos.core.alerts import AlertSink
 from emporos.core.clock import Clock, Sleeper
 from emporos.core.ids import IdGenerator
@@ -44,8 +52,6 @@ from emporos.persistence.repositories import (
 )
 from emporos.risk.limits import RiskLimits
 
-_WATCHED = (Collection.ORDERS, Collection.POSITIONS, Collection.COMMANDS)
-
 
 def describe_limits(limits: RiskLimits) -> dict[str, str]:
     return {name: str(value) for name, value in limits.model_dump().items()}
@@ -66,10 +72,10 @@ class ApiComposer:
     kill_switch_collection: str = Collection.KILL_SWITCH
 
     def build(self) -> tuple[ApiServices, Any]:
-        """The services, and a FastAPI lifespan that runs the change-stream wake alongside."""
+        """The services, and a FastAPI lifespan that warms the pool before requests fan out."""
         db = self.database
         commands = CommandRepository(db, self.commands_collection)
-        wake = ChangeStreamWake(self._watch, self.sleeper, self.alerts)
+        wake = PollingWake(self.sleeper)
         services = ApiServices(
             auth=AuthService(
                 MongoPasscodeStore(UserRepository(db)),
@@ -104,14 +110,6 @@ class ApiComposer:
         @asynccontextmanager
         async def lifespan(_: FastAPI) -> AsyncIterator[None]:
             await self.database.command("ping")  # open the pool before requests fan out (H1)
-            wake.start()
-            try:
-                yield
-            finally:
-                await wake.stop()
+            yield
 
         return services, lifespan
-
-    async def _watch(self) -> Any:
-        pipeline = [{"$match": {"ns.coll": {"$in": [c.value for c in _WATCHED]}}}]
-        return await self.database.watch(pipeline)

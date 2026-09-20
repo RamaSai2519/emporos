@@ -4,6 +4,11 @@ A MongoDB change stream on `commands` wakes it the moment a command is inserted.
 OPTIMISATION, never a dependency: the processor polls at least every second regardless, so a dropped
 or unavailable stream costs latency (≤ 1 s) and nothing else. When the stream breaks it is
 reported once and re-opened after a back-off.
+
+Caution: a pymongo 4.9.1 async change stream pins a pooled connection for its whole lifetime
+(an endless long-poll `getMore`), so it must only ever run against a client whose pool is NOT
+shared with request handling — never on the API's read path (EM-137). Prefer `PollingWake`
+where the few hundred milliseconds saved do not matter.
 """
 
 from __future__ import annotations
