@@ -67,3 +67,34 @@ training-window scores, so those trials are counted (the size of the search) but
 and the spread of the trials' Sharpes, which sets how much luck to expect from the best of them,
 cannot be measured. `DeflatedSharpe` reports that as a reason instead of guessing. Any strategy
 curated from now on records its scores, so its DSR can be computed.
+
+## Re-judged at the 50,000 rupee benchmark (EM-118)
+
+`orb_v1`, `vwap_reversion_v1` and `rsi_pullback_v1` were run again under
+`config/robustness/benchmark.yaml` (50,000 rupees, 5,000 per position, 2% daily loss, cost
+scenarios, Monte Carlo, Deflated Sharpe, neighbouring parameters, always-long baseline). Reports:
+`docs/strategies/benchmark_50k/`. The thresholds were committed before the runs (`22acad0`).
+
+| strategy | OOS trades | gross | charges | net | verdict |
+|---|---|---|---|---|---|
+| orb_v1 | 167 | -915.68 | 2,220.59 | -3,136.27 | **rejected** |
+| vwap_reversion_v1 | 174 | -787.65 | 2,319.43 | -3,107.08 | **rejected** |
+| rsi_pullback_v1 | 171 | -864.94 | 2,273.74 | -3,138.68 | **rejected** |
+
+All three fail the same gates: profit after costs (P(net > 0) is 0.000, the 95% interval for net
+P&L is entirely below zero), profitable windows (0 of 5), parameter neighbours (0% of neighbouring
+parameter sets profit) and the always-long baseline (net -3,062.66 over the same windows, which no
+strategy beat). The gates that stay "unknown" would not change the outcome: history (260 trading
+days against 500 needed) and concentration (there is no profit to attribute).
+
+**The three look alike because the drag is structural.** At 5,000 per position the charges come to
+about 13 per round trip and the 5 bps marketable-limit buffer on each side to about 5.5 more, so a
+trade must gain about 0.37% gross to break even, and these signals gain nothing before costs. Even
+with the slippage removed entirely (scenario `no_slippage`) each still loses about 2,400, which is
+the charges alone. Every candidate, including the neighbours, lands within a few hundred rupees of
+the same loss per window. A strategy that is to pass here needs a genuine edge per trade well above
+0.37%, or fewer, larger trades; that is the constraint every new candidate should be designed
+against.
+
+The Deflated Sharpe is now computable (213 trials in the ledger, every candidate scored), and
+irrelevant here: a negative Sharpe cannot beat the luck of the search.
