@@ -15,7 +15,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Protocol
 
+from emporos.backtest.broker import SimulatedBroker
 from emporos.backtest.orders import SimOrderRequest
+from emporos.backtest.portfolio import BacktestPortfolio
+from emporos.core.clock import Clock
 from emporos.domain.marketable import MarketableLimit
 from emporos.domain.money import Money
 from emporos.domain.signals import Signal
@@ -24,6 +27,19 @@ from emporos.domain.signals import Signal
 @dataclass(frozen=True)
 class GateRejection:
     reason: str
+
+
+@dataclass(frozen=True)
+class GateContext:
+    """What a gate may look at: the run's clock, its simulated book and the orders resting in it.
+
+    Handed to the gate FACTORY once per run, so a gate can judge a signal against the state the
+    strategy actually created (its positions, its P&L) without the engine knowing what it needs.
+    """
+
+    clock: Clock
+    portfolio: BacktestPortfolio
+    broker: SimulatedBroker
 
 
 class SignalGate(Protocol):
@@ -35,9 +51,12 @@ class SignalGate(Protocol):
 
 
 class PassThroughGate:
-    """No risk engine exists yet: everything passes, unchanged. See the module docstring."""
+    """No risk checking: everything passes, unchanged. See the module docstring."""
 
     name = "none"
+
+    def __init__(self, context: GateContext | None = None) -> None:
+        del context  # a pass-through looks at nothing
 
     def review(self, signal: Signal) -> Signal | GateRejection:
         return signal

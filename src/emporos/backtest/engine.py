@@ -29,7 +29,13 @@ from emporos.backtest.flow import EventSettler, OrderEventQueue, OrderFlow, RunC
 from emporos.backtest.metrics.decimal_math import CONTEXT
 from emporos.backtest.metrics.report import MetricsCalculator, MetricsReport, MetricsSettings
 from emporos.backtest.portfolio import BacktestPortfolio, ClosedTrade
-from emporos.backtest.pricing import MarketableLimitPricing, PassThroughGate, SignalGate, TickSizes
+from emporos.backtest.pricing import (
+    GateContext,
+    MarketableLimitPricing,
+    PassThroughGate,
+    SignalGate,
+    TickSizes,
+)
 from emporos.backtest.replay import BarReplay
 from emporos.backtest.session import BacktestSession
 from emporos.backtest.settings import FillModelFactory, FillSettings
@@ -81,7 +87,7 @@ class BacktestEngine:
         registry: StrategyRegistry,
         ticks: TickSizes,
         schedules: Callable[[], ScheduleSource],
-        gate: Callable[[], SignalGate] = PassThroughGate,
+        gate: Callable[[GateContext], SignalGate] = PassThroughGate,
         fill_models: FillModelFactory | None = None,
         snapshotter: ConfigSnapshotter | None = None,
         metrics: Callable[[MetricsSettings], MetricsCalculator] = MetricsCalculator,
@@ -115,7 +121,7 @@ class BacktestEngine:
         )
         portfolio = BacktestPortfolio(spec.starting_cash)
         costs = BacktestCosts(self._schedules())
-        gate = self._gate()
+        gate = self._gate(GateContext(clock.view(), portfolio, broker))
         square_off = SessionSquareOff(config.session.square_off_at, run_id, clock)
         flow = OrderFlow(
             broker, gate, MarketableLimitPricing(config.execution.limit_buffer_bps, self._ticks),

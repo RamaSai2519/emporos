@@ -13,7 +13,7 @@ from typing import ClassVar
 from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
-from emporos.backtest.pricing import GateRejection, SignalGate
+from emporos.backtest.pricing import GateContext, GateRejection, SignalGate
 from emporos.backtest.settings import FillSettings
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.fees import FeeSchedule
@@ -137,6 +137,9 @@ class FixedTicks:
 class RefuseAll:
     name = "refuse_all"
 
+    def __init__(self, context: GateContext | None = None) -> None:
+        self.context = context
+
     def review(self, signal: Signal) -> Signal | GateRejection:
         return GateRejection("test: nothing is allowed")
 
@@ -145,6 +148,9 @@ class HalveSize:
     """A gate that resizes: the order must carry ITS quantity, not the strategy's."""
 
     name = "halve_size"
+
+    def __init__(self, context: GateContext | None = None) -> None:
+        self.context = context
 
     def review(self, signal: Signal) -> Signal | GateRejection:
         return replace(signal, quantity=max(1, signal.quantity // 2))
