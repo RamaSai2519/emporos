@@ -18,8 +18,10 @@ class GatewayFake implements CommandGateway {
   readonly calls: CommandInput[] = [];
   result: Command | null = null;
   ambiguous = false;
+  refusal: number | null = null;
   async submit(input: CommandInput) {
     this.calls.push(input);
+    if (this.refusal) throw new ApiError("Invalid request", this.refusal);
     if (this.ambiguous) throw new Error("Connection reset");
     return new PaperFixture().command(input);
   }
@@ -30,6 +32,40 @@ class GatewayFake implements CommandGateway {
   }
 }
 class SafetyTests {
+  readonly refusal = async () => {
+    const storage = new MemoryStorage();
+    const gateway = new GatewayFake();
+    gateway.refusal = 422;
+    const coordinator = new CommandCoordinator(
+      gateway,
+      storage,
+      () => crypto.randomUUID(),
+      () => {},
+    );
+    await coordinator.submit({
+      type: "CANCEL_ORDER",
+      params: { order_id: "order-1" },
+    });
+    expect(coordinator.state.result).toBeNull();
+    expect(coordinator.state.error).toContain("Request refused (422)");
+    expect(coordinator.pending).toBe(false);
+    expect(storage.getItem("emporos.command")).toBeNull();
+  };
+  readonly storageFailure = async () => {
+    const gateway = new GatewayFake();
+    const coordinator = new CommandCoordinator(
+      gateway,
+      new UnavailableStorage(),
+      () => crypto.randomUUID(),
+      () => {},
+    );
+    await coordinator.submit({
+      type: "CANCEL_ORDER",
+      params: { order_id: "order-1" },
+    });
+    expect(gateway.calls).toHaveLength(0);
+    expect(coordinator.state.error).toContain("storage is unavailable");
+  };
   readonly doubleSubmit = async () => {
     const gateway = new GatewayFake();
     const coordinator = new CommandCoordinator(
@@ -169,6 +205,20 @@ class SafetyTests {
     await expect(api.read("overview")).rejects.toThrow("does not match");
   };
 }
+class UnavailableStorage implements Storage {
+  readonly length = 0;
+  clear() {}
+  getItem() {
+    return null;
+  }
+  key() {
+    return null;
+  }
+  removeItem() {}
+  setItem() {
+    throw new Error("Storage unavailable");
+  }
+}
 class HttpFake {
   authorization: string | null = null;
   url = "";
@@ -182,6 +232,14 @@ class HttpFake {
   };
 }
 const suite = new SafetyTests();
+test(
+  "definitive API refusal does not masquerade as a durable command outcome",
+  suite.refusal,
+);
+test(
+  "a command is never sent if its intent cannot survive a reload",
+  suite.storageFailure,
+);
 test(
   "double-submit emits exactly one command and accepted is not done",
   suite.doubleSubmit,

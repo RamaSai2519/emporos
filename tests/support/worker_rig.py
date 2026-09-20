@@ -192,7 +192,7 @@ class WorkerWorld:
     strategy_name: str = ""
     system_event_ids: list[str] = field(default_factory=list)
 
-    async def build(self, tape: Tape | None = None) -> tuple[WorkerAssembly, Tape]:
+    async def build(self, tape: Tape | None = None, **extra: Any) -> tuple[WorkerAssembly, Tape]:
         """A worker over this world. Passing the previous run's tape models a RESTART: the market
         carries on where it was and the new process sees only what comes after."""
         registry = StrategyRegistry()
@@ -227,6 +227,7 @@ class WorkerWorld:
             tuning=tuning,
             session_date=date(2026, 9, 18),
             kill_switch_collection=self.kill_switch_collection,
+            **extra,
         )
         return await composer.build(), tape
 

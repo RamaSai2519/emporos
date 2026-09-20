@@ -264,7 +264,10 @@ class BackfillHandler:
 
     async def handle(self, params: Params, command: CommandRecord) -> Outcome:
         assert isinstance(params, TriggerBackfillParams)
-        job = await self._jobs.start("backfill", command.id, params.model_dump(mode="json"))
+        try:
+            job = await self._jobs.start("backfill", command.id, params.model_dump(mode="json"))
+        except LookupError as error:
+            return Outcome.rejected(str(error))
         return Outcome.done(f"backfill started: {job}", job_id=job)
 
 
@@ -276,5 +279,8 @@ class BacktestHandler:
         assert isinstance(params, RunBacktestParams)
         if params.end < params.start:
             return Outcome.rejected("the end date is before the start date")
-        job = await self._jobs.start("backtest", command.id, params.model_dump(mode="json"))
+        try:
+            job = await self._jobs.start("backtest", command.id, params.model_dump(mode="json"))
+        except LookupError as error:
+            return Outcome.rejected(str(error))
         return Outcome.done(f"backtest started: {job}", job_id=job)

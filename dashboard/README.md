@@ -21,20 +21,20 @@ Command payloads follow the EM-40 control models: halt uses `halted`/`reason`, c
 
 The API owner should reconcile the proposal with the real OpenAPI schema. Use `npm run contract:generate` after agreed schema changes. Generated types in `src/lib/api.generated.ts` are consumed by the command transport. `npm run contract:check` is part of the build and fails on stale generated artifacts. Set `EMPOROS_OPENAPI_URL` and run `npm run contract:verify` to detect differences against the real backend; this intentionally fails until the proposal is reconciled. API authentication, authorization, login throttling, CORS and worker-side command/risk enforcement are backend responsibilities and are not claimed as verified by frontend tests.
 
-| Endpoint                                       | Frontend expectation                                                            |
-| ---------------------------------------------- | ------------------------------------------------------------------------------- |
-| `POST /auth/login`                             | `{passcode}` → `{access_token, token_type: "bearer", expires_in}`               |
-| `GET /api/overview`                            | Worker snapshot, session state/mode, health, freshness, P&L, equity series      |
-| `GET /api/positions`                           | `{as_of, items}` with marks and worker-computed P&L; missing marks are null     |
-| `GET /api/orders`                              | Order book including sequenced state events                                     |
-| `GET /api/strategies`                          | Status, P&L, signal count and configuration per strategy                        |
-| `GET /api/risk`                                | Risk limit utilisation and rejection events                                     |
-| `GET /api/market`                              | Watchlist with quotes, instrument IDs and quote timestamps                      |
-| `GET /api/candles?instrument_id=…&interval=5m` | Ordered unique OHLC bars, Unix UTC seconds                                      |
-| `GET /api/system`                              | Health, reconciliation/system events and command audit                          |
-| `POST /api/commands`                           | `{type, params, idempotency_key}` → HTTP 202 with durable command record (uppercase status)        |
-| `GET /api/commands/{idempotency_key}`          | Original command and authoritative status; 404 does not imply safe resubmission |
-| `GET /api/events`                              | Authenticated SSE; `data: {"resource":"orders"}`; heartbeat at most 15s apart   |
+| Endpoint                                       | Frontend expectation                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `POST /auth/login`                             | `{passcode}` → `{access_token, token_type: "bearer", expires_in}`                           |
+| `GET /api/overview`                            | Worker snapshot, session state/mode, health, freshness, P&L, equity series                  |
+| `GET /api/positions`                           | `{as_of, items}` with marks and worker-computed P&L; missing marks are null                 |
+| `GET /api/orders`                              | Order book including sequenced state events                                                 |
+| `GET /api/strategies`                          | Status, P&L, signal count and configuration per strategy                                    |
+| `GET /api/risk`                                | Risk limit utilisation and rejection events                                                 |
+| `GET /api/market`                              | Watchlist with quotes, instrument IDs and quote timestamps                                  |
+| `GET /api/candles?instrument_id=…&interval=5m` | Ordered unique OHLC bars, Unix UTC seconds                                                  |
+| `GET /api/system`                              | Health, reconciliation/system events and command audit                                      |
+| `POST /api/commands`                           | `{type, params, idempotency_key}` → HTTP 202 with durable command record (uppercase status) |
+| `GET /api/commands/{idempotency_key}`          | Original command and authoritative status; 404 does not imply safe resubmission             |
+| `GET /api/events`                              | Authenticated SSE; `data: {"resource":"orders"}`; heartbeat at most 15s apart               |
 
 All API reads and mutations use `Authorization: Bearer …`. SSE uses fetch streaming directly to the API, preserving auth headers without query-string tokens or a long-lived Vercel proxy. Cache invalidation follows events; a two-second refresh also guards against lost events. Interrupted or stalled streams reconnect and show polling status. All timestamps display in Asia/Kolkata.
 

@@ -29,17 +29,17 @@ export class ApiSchema {
   static readonly overview = z.object({
     as_of: this.time,
     session_state: z.string(),
-    trading_mode: z.enum(["paper", "live"]),
-    broker_healthy: z.boolean(),
-    feed_healthy: z.boolean(),
-    worker_healthy: z.boolean(),
+    trading_mode: z.enum(["paper", "live", "unknown"]),
+    broker_healthy: z.boolean().nullable(),
+    feed_healthy: z.boolean().nullable(),
+    worker_healthy: z.boolean().nullable(),
     stale_after_seconds: z.number().positive(),
     kill_switch: z.boolean(),
     day_pnl: this.money.nullable(),
     realised_pnl: this.money.nullable(),
     unrealised_pnl: this.money.nullable(),
     open_positions: z.number().int().nonnegative(),
-    open_orders: z.number().int().nonnegative(),
+    open_orders: z.number().int().nonnegative().nullable(),
     equity_curve: z.array(
       z.object({ at: this.time, value: z.number().finite() }),
     ),
@@ -49,7 +49,7 @@ export class ApiSchema {
     id: z.string(),
     instrument_id: z.string(),
     symbol: z.string(),
-    exchange: z.enum(["NSE", "BSE"]),
+    exchange: z.enum(["NSE", "BSE", "UNKNOWN"]),
     strategy_id: z.string(),
     quantity: z.number().int(),
     average_price: this.money,
@@ -65,7 +65,7 @@ export class ApiSchema {
   static readonly order = z.object({
     id: z.string(),
     symbol: z.string(),
-    exchange: z.enum(["NSE", "BSE"]),
+    exchange: z.enum(["NSE", "BSE", "UNKNOWN"]),
     side: z.enum(["BUY", "SELL"]),
     order_type: z.enum(["LIMIT", "STOPLOSS_LIMIT"]),
     quantity: z.number().int(),
@@ -89,17 +89,18 @@ export class ApiSchema {
   static readonly strategy = z.object({
     id: z.string(),
     name: z.string(),
-    status: z.enum(["running", "stopped", "halted", "starting", "stopping"]),
+    status: z.enum(["running", "stopped", "halted", "starting", "stopping", "unknown"]),
     pnl: this.money.nullable(),
     signals: z.number().int(),
     description: z.string(),
-    config: z.record(z.string(), z.unknown()),
+    config: z.record(z.string(), z.unknown()).nullable(),
   });
   static readonly strategies = z.object({
     as_of: this.time,
     items: z.array(this.strategy),
   });
   static readonly risk = z.object({
+    configured_limits: z.record(z.string(), z.string()).optional(),
     as_of: this.time,
     limits: z.array(
       z.object({
@@ -114,7 +115,7 @@ export class ApiSchema {
   static readonly quote = z.object({
     instrument_id: z.string(),
     symbol: z.string(),
-    exchange: z.enum(["NSE", "BSE"]),
+    exchange: z.enum(["NSE", "BSE", "UNKNOWN"]),
     last_price: this.money.nullable(),
     change_percent: z.number().nullable(),
     as_of: this.time,
@@ -151,7 +152,10 @@ export class ApiSchema {
   static readonly commandInput = z.discriminatedUnion("type", [
     z.object({
       type: z.literal("SET_KILL_SWITCH"),
-      params: z.strictObject({ halted: z.literal(true), reason: z.string().min(1) }),
+      params: z.strictObject({
+        halted: z.literal(true),
+        reason: z.string().min(1),
+      }),
       idempotency_key: z.string().uuid(),
     }),
     z.object({

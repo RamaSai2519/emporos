@@ -33,6 +33,7 @@ export class LiveUpdates {
   private retry: ReturnType<typeof setTimeout> | null = null;
   private watchdog: ReturnType<typeof setTimeout> | null = null;
   private stopped = true;
+  private generation = 0;
   private lastId = "";
   constructor(
     private readonly api: ApiClient,
@@ -46,6 +47,7 @@ export class LiveUpdates {
   }
   stop() {
     this.stopped = true;
+    this.generation += 1;
     this.abort?.abort();
     if (this.retry) clearTimeout(this.retry);
     if (this.watchdog) clearTimeout(this.watchdog);
@@ -56,11 +58,14 @@ export class LiveUpdates {
   }
   private async connect() {
     if (this.stopped) return;
-    this.abort = new AbortController();
+    const generation = this.generation;
+    const abort = new AbortController();
+    this.abort = abort;
     this.status("connecting");
     this.heartbeat();
     try {
-      const response = await this.api.stream(this.abort.signal, this.lastId);
+      const response = await this.api.stream(abort.signal, this.lastId);
+      if (generation !== this.generation || this.stopped) return;
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No stream");
       this.status("live");
@@ -83,22 +88,28 @@ export class LiveUpdates {
           this.invalidate();
         }
       });
-      while (!this.stopped) {
+      while (!this.stopped && generation === this.generation) {
         const chunk = await reader.read();
-        if (chunk.done) break;
+        if (chunk.done || generation !== this.generation) break;
         this.heartbeat();
         parser.push(text.decode(chunk.value, { stream: true }));
       }
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
+      if (
+        generation === this.generation &&
+        !this.stopped &&
+        error instanceof ApiError &&
+        error.status === 401
+      ) {
         this.unauthorized();
         return;
       }
     } finally {
-      if (this.watchdog) clearTimeout(this.watchdog);
-      this.abort?.abort();
+      if (generation === this.generation && this.watchdog)
+        clearTimeout(this.watchdog);
+      abort.abort();
     }
-    if (!this.stopped) {
+    if (!this.stopped && generation === this.generation) {
       this.status("polling");
       this.retry = setTimeout(() => void this.connect(), 10_000);
     }

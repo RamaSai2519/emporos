@@ -32,6 +32,24 @@ from emporos.broker.paper.factory import PaperBrokerConfig, PaperBrokerFactory
 from emporos.broker.paper.market import MarketDataSource
 from emporos.broker.ratelimit import GroupRateLimiter
 from emporos.cli.paper_composition import PaperComposer
+from emporos.control.commands import CommandType
+from emporos.control.handlers import (
+    BackfillHandler,
+    BacktestHandler,
+    CancelOrderHandler,
+    ClosePositionHandler,
+    KillSwitchHandler,
+    PlaceManualOrderHandler,
+    ReconcileNowHandler,
+    SquareOffAllHandler,
+    StartStrategyHandler,
+    StopStrategyHandler,
+    TradingModeHandler,
+    UpdateStrategyConfigHandler,
+)
+from emporos.control.jobs import BackgroundJobs, JobFunction
+from emporos.control.processor import CommandHandler, CommandProcessor
+from emporos.control.strategies import ConfigValidator, StrategyController
 from emporos.core.alerts import AlertSink
 from emporos.core.clock import Clock, Sleeper
 from emporos.core.ids import IdGenerator
@@ -57,6 +75,8 @@ from emporos.persistence.order_journal import MongoOrderJournal
 from emporos.persistence.paper_books import PaperBooks
 from emporos.persistence.paper_journal import MongoPaperJournal
 from emporos.persistence.repositories import (
+    CommandRepository,
+    CommandResultRepository,
     Database,
     ExecutionRepository,
     InstrumentRepository,
@@ -79,6 +99,7 @@ from emporos.portfolio.reconciliation import (
     Reconciler,
     ReconciliationComparator,
     ReconciliationTracker,
+    ReconciliationTrigger,
 )
 from emporos.portfolio.replay import PositionReplay
 from emporos.portfolio.service import PortfolioService
@@ -140,6 +161,7 @@ class WorkerTuning:
     resolution: timedelta = timedelta(seconds=5)
     reconcile: timedelta = timedelta(minutes=5)
     reprice: timedelta = timedelta(seconds=2)
+    commands: timedelta = timedelta(seconds=1)
     events: timedelta = timedelta(seconds=2)
     kill_switch: timedelta = timedelta(seconds=5)
     reprice_step_bps: Decimal = Decimal(5)
@@ -169,6 +191,8 @@ class WorkerAssembly:
     monitor: KillSwitchMonitor
     control: KillSwitchControl
     runs: tuple[ManagedRun, ...]
+    host: StrategyHost
+    processor: CommandProcessor
 
 
 class PaperVenue:
@@ -221,6 +245,10 @@ class PaperWorkerComposer:
     session_date: date | None = None
     kill_switch_collection: str = Collection.KILL_SWITCH
     paper_flush: timedelta = timedelta(seconds=1)
+    commands_collection: str = Collection.COMMANDS
+    available: Sequence[ResolvedStrategyConfig] = ()  # every loadable strategy, for START
+    config_validator: ConfigValidator | None = None
+    job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
 
     async def build(self) -> WorkerAssembly:
         db = self.database
@@ -338,21 +366,11 @@ class PaperWorkerComposer:
         )
         builder = StrategyRunnerBuilder(self.registry)
         session_date = (self.session_date or self.clock.now().date()).isoformat()
-        runs: list[ManagedRun] = []
-        for config in self.configs:
-            started = await launcher.start(config, session_date)
-            prepared = builder.build(
-                started,
-                RunEnvironment(
-                    self.clock, WallClockSync(), sink, book.view_for(started.run_id), alerts
-                ),
-            )
-            runs.append(ManagedRun(started.run_id, prepared.runner))
-        engine_prices = {
-            r.run_id: MarketableLimit(c.execution.limit_buffer_bps)
-            for r, c in zip(runs, self.configs, strict=True)
-        }
-        engine._pricer = MarketableLimitPricer(default_buffer, ticks, engine_prices)
+        factory = _RunFactory(
+            launcher, builder, {c.name: c for c in (*self.available, *self.configs)},
+            session_date, self.clock, sink, book, alerts, run_buffers,
+        )  # fmt: skip
+        runs = [await factory.launch(config.name) for config in self.configs]
 
         # --- jobs ----------------------------------------------------------------------------
         policy = _reprice_policy(self.configs)
@@ -388,22 +406,127 @@ class PaperWorkerComposer:
             [Job("reprice", t.reprice, repricer.run_once)], self.clock, alerts
         )
         end_of_day = EndOfDay(sync, engine, reconciler, snapshots, alerts)
+        host = StrategyHost(runs, self.bars, updates, journal, OrderUpdateTranslator(), factory)
+        results = CommandResultRepository(db)
+        square_off = SquareOffService(ledger, journal, marks, sink, self.clock, alerts)
+        processor = CommandProcessor(
+            CommandRepository(db, self.commands_collection),
+            results,
+            self._handlers(
+                control, square_off, engine, sink, ledger, host, lifecycle, reconciler, results,
+                StrategyRepository(db),
+            ),
+            self.clock, self.ids, alerts,
+        )  # fmt: skip
+        always.add(Job("commands", t.commands, _Commands(processor)))
         worker = TradingWorker(
             lifecycle, t.schedule, self.clock, self.sleeper, alerts,
             PaperVenue(broker, sorted({i for c in self.configs for i in c.instrument_ids}), health),
             StartupRecovery(engine, sync, reconciler, alerts),
-            StrategyHost(runs, self.bars, updates, journal, OrderUpdateTranslator()),
+            host,
             _SwitchView(monitor),
             always, while_trading,
-            SquareOffService(ledger, journal, marks, sink, self.clock, alerts),
+            square_off,
             _Books(ledger, journal),
             end_of_day,
             _Flush(outbox, SystemEventRepository(db), paper_journal),
         )  # fmt: skip
         return WorkerAssembly(
             worker, broker, engine, sync, reconciler, tracker, risk, sink, marks, book, outbox,
-            lifecycle, ledger, journal, monitor, control, tuple(runs),
+            lifecycle, ledger, journal, monitor, control, tuple(runs), host, processor,
         )  # fmt: skip
+
+    def _handlers(
+        self,
+        control: KillSwitchControl,
+        square_off: SquareOffService,
+        engine: ExecutionEngine,
+        sink: GatedExecutionSink,
+        ledger: PlatformLedger,
+        host: StrategyHost,
+        lifecycle: SessionLifecycle,
+        reconciler: Reconciler,
+        results: CommandResultRepository,
+        strategies: StrategyRepository,
+    ) -> dict[CommandType, CommandHandler]:
+        controller = StrategyController(host, self.config_validator or _NoValidator(), strategies)
+        jobs = BackgroundJobs(self.job_runners, results, self.clock, self.ids)
+        return {
+            CommandType.SET_KILL_SWITCH: KillSwitchHandler(control),
+            CommandType.SQUARE_OFF_ALL: SquareOffAllHandler(square_off),
+            CommandType.CLOSE_POSITION: ClosePositionHandler(square_off),
+            CommandType.CANCEL_ORDER: CancelOrderHandler(engine),
+            CommandType.PLACE_MANUAL_ORDER: PlaceManualOrderHandler(sink, ledger, self.clock),
+            CommandType.START_STRATEGY: StartStrategyHandler(controller),
+            CommandType.STOP_STRATEGY: StopStrategyHandler(controller),
+            CommandType.UPDATE_STRATEGY_CONFIG: UpdateStrategyConfigHandler(controller, lifecycle),
+            CommandType.TRIGGER_BACKFILL: BackfillHandler(jobs),
+            CommandType.RUN_BACKTEST: BacktestHandler(jobs),
+            CommandType.RECONCILE_NOW: ReconcileNowHandler(_ReconcileNow(reconciler)),
+            CommandType.SET_TRADING_MODE: TradingModeHandler(),
+        }
+
+
+class _NoValidator:
+    def validate(self, name: str, raw: dict[str, Any]) -> dict[str, Any]:
+        raise ValueError("strategy configuration cannot be validated in this deployment")
+
+
+class _ReconcileNow:
+    def __init__(self, reconciler: Reconciler) -> None:
+        self._reconciler = reconciler
+
+    async def run_now(self) -> int:
+        return len(await self._reconciler.run(ReconciliationTrigger.MANUAL))
+
+
+class _Commands:
+    """Runs the command processor from the poll loop: recover once, then process what is pending."""
+
+    def __init__(self, processor: CommandProcessor) -> None:
+        self._processor = processor
+        self._recovered = False
+
+    async def __call__(self) -> object:
+        if not self._recovered:
+            self._recovered = True
+            await self._processor.recover()
+        return await self._processor.run_once()
+
+
+class _RunFactory:
+    """Launches a run of a named strategy: records it, builds its runner, registers its pricing."""
+
+    def __init__(
+        self,
+        launcher: StrategyRunLauncher,
+        builder: StrategyRunnerBuilder,
+        configs: Mapping[str, ResolvedStrategyConfig],
+        session_date: str,
+        clock: Clock,
+        sink: GatedExecutionSink,
+        book: StrategyPositionBook,
+        alerts: AlertSink,
+        buffers: dict[str, MarketableLimit],
+    ) -> None:
+        self._launcher, self._builder, self._configs = launcher, builder, configs
+        self._session_date, self._clock, self._sink = session_date, clock, sink
+        self._book, self._alerts, self._buffers = book, alerts, buffers
+
+    async def launch(self, name: str) -> ManagedRun:
+        config = self._configs.get(name)
+        if config is None:
+            raise ValueError(f"unknown strategy {name!r}")
+        started = await self._launcher.start(config, self._session_date)
+        prepared = self._builder.build(
+            started,
+            RunEnvironment(
+                self._clock, WallClockSync(), self._sink, self._book.view_for(started.run_id),
+                self._alerts,
+            ),
+        )  # fmt: skip
+        self._buffers[started.run_id] = MarketableLimit(config.execution.limit_buffer_bps)
+        return ManagedRun(started.run_id, prepared.runner, name)
 
 
 def bar_queue_for(configs: Sequence[ResolvedStrategyConfig]) -> ClosedBarQueue:

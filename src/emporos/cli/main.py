@@ -15,6 +15,7 @@ from datetime import date, datetime, timedelta
 import httpx
 import typer
 
+from emporos.cli.api_commands import api_app
 from emporos.cli.backtest_commands import backtest_app
 from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
@@ -61,6 +62,7 @@ history_app = typer.Typer(
 app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
+app.add_typer(api_app, name="api")
 app.command("halt")(halt)
 app.command("resume")(resume)
 app.add_typer(kill_switch_app, name="kill-switch")

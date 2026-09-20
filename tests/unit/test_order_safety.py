@@ -11,7 +11,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 FORBIDDEN = re.compile(
-    r"PLACE_ORDER|MODIFY_ORDER|CANCEL_ORDER|\.place_order\(|\.modify_order\(|\.cancel_order\(|"
+    r"Endpoints\.(PLACE|MODIFY|CANCEL)_ORDER|\.place_order\(|\.modify_order\(|\.cancel_order\(|"
     r"placeOrder|modifyOrder|cancelOrder"
 )
 

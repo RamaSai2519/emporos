@@ -338,7 +338,10 @@ export default class DashboardApp extends Component<
                       danger: true,
                       draft: {
                         type: "SET_KILL_SWITCH",
-                        params: { halted: true, reason: "Operator requested halt from dashboard" },
+                        params: {
+                          halted: true,
+                          reason: "Operator requested halt from dashboard",
+                        },
                       },
                     })
                   }

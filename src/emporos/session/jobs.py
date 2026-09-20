@@ -39,6 +39,12 @@ class JobScheduler:
         self._last: dict[str, datetime] = {}
         self._failing: set[str] = set()
 
+    def add(self, job: Job) -> None:
+        """Register one more job (the composition root adds jobs that need the finished graph)."""
+        if any(existing.name == job.name for existing in self._jobs):
+            raise ValueError("job names must be unique")
+        self._jobs.append(job)
+
     async def run_due(self) -> list[str]:
         """Run every job whose interval has elapsed; return the names that ran."""
         ran: list[str] = []

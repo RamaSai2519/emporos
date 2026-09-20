@@ -117,6 +117,13 @@ class Settings(BaseSettings):
     # The kill switch's file sentinel: while this file exists, all new orders are halted.
     kill_switch_file: str | None = Field(default=None, alias="KILL_SWITCH_FILE")
 
+    # The control-plane API. The signing secret comes from the environment here and from SSM
+    # Parameter Store in production; it is never written to Git. CORS origins are comma-separated.
+    api_jwt_secret: str | None = Field(default=None, alias="API_JWT_SECRET")
+    api_cors_origins: str | None = Field(default=None, alias="API_CORS_ORIGINS")
+    # The account whose books the API shows (the paper account id, or the live client code).
+    api_account_id: str | None = Field(default=None, alias="API_ACCOUNT_ID")
+
     @property
     def live_trading_enabled(self) -> bool:
         return self.live_trading_flag == "true"
