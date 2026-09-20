@@ -20,14 +20,23 @@ from emporos.backtest.curation import (
 )
 from emporos.backtest.curation_run import CurationRun, PlannedStrategy, WindowPlan
 from emporos.backtest.risk_gate import RiskGateFactory
+from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
+from emporos.backtest.robustness.benchmark import (
+    DEFAULT_BENCHMARK_FILE,
+    BenchmarkLoader,
+    BenchmarkScaler,
+)
+from emporos.backtest.robustness.perturbation import PerturbationRunner
 from emporos.backtest.robustness.recording import (
     LedgerRecorder,
-    NoRecording,
     ResultRecorder,
     TrialContext,
     WalkForwardTrials,
 )
+from emporos.backtest.robustness.report import RobustnessDocument
+from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger, TrialStatistics
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
+from emporos.backtest.walkforward_run import Backtester
 from emporos.cli.backtest_runtime import open_backtest_runtime
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.config import Settings
@@ -39,12 +48,20 @@ from emporos.persistence.trial_ledger import MongoTrialLedger
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
 from emporos.session.strategy_files import StrategyConfigLoader
+from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.resolution import StrategyConfigResolver
 
 _PLAN = typer.Option(Path("config/curation/plan.yaml"), exists=True, dir_okay=False)
 _FROM = typer.Option(..., "--from", formats=["%Y-%m-%d"])
 _TO = typer.Option(..., "--to", formats=["%Y-%m-%d"])
-_CASH = typer.Option("100000", help="Starting cash, a quoted number.")
+_CASH = typer.Option(None, help="Starting cash, a quoted number (default: the benchmark capital).")
+_BENCHMARK = typer.Option(
+    DEFAULT_BENCHMARK_FILE,
+    exists=True,
+    dir_okay=False,
+    help="Benchmark capital, costs and verdict thresholds.",
+)
+_BASELINE = "hold_baseline_v1"
 _REPORT = typer.Option(Path("docs/strategies/curation.md"), help="The human-readable report.")
 _FEES = typer.Option(False, help="Price days before the oldest fee schedule with it.")
 _ONLY = typer.Option(None, "--only", help="Run just this strategy from the plan (repeatable).")
@@ -79,14 +96,18 @@ def _record_document(record: CurationRecord) -> dict[str, Any]:
             {"name": c.name, "passed": c.passed, "actual": c.actual, "required": c.required}
             for c in record.verdict.checks
         ],
+        "robustness": None
+        if record.robustness is None
+        else RobustnessDocument().of(record.robustness),
     }
 
 
 async def _curate(
     plan_path: Path,
+    benchmark_path: Path,
     first: datetime,
     last: datetime,
-    cash: str,
+    cash: str | None,
     assume_fees: bool,
     only: list[str] | None,
     record_trials: bool,
@@ -96,17 +117,19 @@ async def _curate(
     if plan.get("objective") != "sharpe":
         raise ValueError("the plan's objective must be sharpe (the only one pre-registered)")
     windows = plan["windows"]
+    benchmark = BenchmarkLoader(benchmark_path).load()
+    scaler = BenchmarkScaler(benchmark)
     registry = build_registry()
     library = FeeScheduleLibrary.from_directory()
 
-    def strategy(entry: dict[str, Any]) -> PlannedStrategy:
-        def config_for(resolver: InstrumentResolver):  # type: ignore[no-untyped-def]
-            loader = StrategyConfigLoader(StrategyConfigResolver(registry, resolver))
-            return loader.load_file(Path(entry["file"]))
+    def load(file: str | Path, resolver: InstrumentResolver) -> ResolvedStrategyConfig:
+        loader = StrategyConfigLoader(StrategyConfigResolver(registry, resolver))
+        return scaler.strategy(loader.load_file(Path(file)))
 
+    def strategy(entry: dict[str, Any]) -> PlannedStrategy:
         return PlannedStrategy(
             entry["name"],
-            config_for,
+            lambda resolver: load(entry["file"], resolver),
             tuple(ParameterCandidate(c["name"], c["overrides"]) for c in entry["candidates"]),
         )
 
@@ -117,12 +140,27 @@ async def _curate(
 
     criteria = SelectionCriteria()
     async with open_backtest_runtime(Settings.default()) as runtime:
-        recorder = _recorder(runtime.database, record_trials, experiment, first, last, assume_fees)
+        ledger: TrialLedger = InMemoryTrialLedger()
+        if record_trials:
+            ledger = MongoTrialLedger(runtime.database)
+
+        async def trial_statistics() -> TrialStatistics:
+            return TrialStatistics.of(await ledger.all())
+
+        def assessor(backtester: Backtester, resolver: InstrumentResolver) -> RobustnessAssessor:
+            baseline = HoldBaseline(
+                backtester, load(f"config/strategies/{_BASELINE}.yaml", resolver)
+            )
+            return RobustnessAssessor(
+                benchmark, trial_statistics, PerturbationRunner(backtester), baseline
+            )
+
         run = CurationRun(
             runtime.reader, registry, runtime.instruments,
             schedules,
-            RiskGateFactory(RiskLimitsLoader().load()), StrategyCurator(criteria), SHARPE,
-            recorder=recorder,
+            RiskGateFactory(scaler.limits(RiskLimitsLoader().load())), StrategyCurator(criteria),
+            SHARPE, recorder=_recorder(ledger, experiment, first, last, assume_fees),
+            assessors=assessor,
         )  # fmt: skip
         records = await run.run(
             [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
@@ -133,46 +171,50 @@ async def _curate(
                 timedelta(days=windows["test_days"]),
                 timedelta(days=windows["embargo_days"]),
             ),
-            Money.of(cash),
+            Money.of(cash or str(benchmark.capital)),
             progress=lambda message: typer.echo(message),
         )
     return records, criteria
 
 
 def _recorder(
-    database: Any,
-    enabled: bool,
-    experiment: str | None,
-    first: datetime,
-    last: datetime,
-    assume_fees: bool,
+    ledger: TrialLedger, experiment: str | None, first: datetime, last: datetime, assume_fees: bool
 ) -> ResultRecorder:
-    if not enabled:
-        return NoRecording()
     now = datetime.now(UTC)
     fees = "earliest fee schedule assumed before the first" if assume_fees else "dated fees, strict"
     context = TrialContext(
         experiment=experiment or f"curation-{now:%Y-%m-%d}",
         batch=IdGenerator().new_ulid(),
         dataset_version=f"candles 5m {first:%Y-%m-%d}..{last:%Y-%m-%d}",
-        cost_model=f"Angel One {fees}; platform risk gate",
+        cost_model=f"Angel One {fees}; platform risk gate at the benchmark capital",
         recorded_at=now,
     )
-    return LedgerRecorder(MongoTrialLedger(database), WalkForwardTrials(context))
+    return LedgerRecorder(ledger, WalkForwardTrials(context))
 
 
 def backtest_curate(
-    plan: Path = _PLAN, first: datetime = _FROM, last: datetime = _TO, cash: str = _CASH,
+    plan: Path = _PLAN, first: datetime = _FROM, last: datetime = _TO, cash: str | None = _CASH,
+    benchmark: Path = _BENCHMARK,
     report: Path = _REPORT, record: Path = _JSON,
     assume_earliest_fees: bool = _FEES,
     only: list[str] | None = _ONLY,
     record_trials: bool = _RECORD,
     experiment: str | None = _EXPERIMENT,
 ) -> None:  # fmt: skip
-    """Walk-forward every strategy in PLAN under the risk rules; report passes AND failures."""
+    """Walk-forward every strategy in PLAN at the benchmark capital; classify each, failures too."""
     try:
         records, criteria = asyncio.run(
-            _curate(plan, first, last, cash, assume_earliest_fees, only, record_trials, experiment)
+            _curate(
+                plan,
+                benchmark,
+                first,
+                last,
+                cash,
+                assume_earliest_fees,
+                only,
+                record_trials,
+                experiment,
+            )
         )
     except (EmporosError, ValueError, LookupError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
@@ -184,5 +226,8 @@ def backtest_curate(
         json.dumps([_record_document(r) for r in records], indent=2) + "\n", encoding="utf-8"
     )
     for r in records:
-        typer.echo(f"{r.strategy}: {'PASSED' if r.verdict.passed else 'FAILED'}")
+        verdict = (
+            "" if r.robustness is None else f" -> {r.robustness.verdict.verdict.value.upper()}"
+        )
+        typer.echo(f"{r.strategy}: {'PASSED' if r.verdict.passed else 'FAILED'}{verdict}")
     typer.echo(f"report: {report}\nrecord: {record}")

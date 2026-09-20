@@ -5,7 +5,7 @@ no way to look at a test window before parameters are chosen."""
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Protocol
 
@@ -15,6 +15,7 @@ from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
 from emporos.backtest.job import ResolverTickSizes
 from emporos.backtest.pricing import GateContext, SignalGate
+from emporos.backtest.robustness.assessment import AssessorFactory
 from emporos.backtest.robustness.recording import NoRecording, ResultRecorder
 from emporos.backtest.tuning import BestScoreSelector, ConfigVariants, Objective, ParameterCandidate
 from emporos.backtest.universe import AsOfInstruments
@@ -65,6 +66,7 @@ class CurationRun:
         objective: Objective,
         assume_current_universe: bool = True,
         recorder: ResultRecorder | None = None,
+        assessors: AssessorFactory | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -75,6 +77,7 @@ class CurationRun:
         self._objective = objective
         self._assume = assume_current_universe
         self._recorder = recorder or NoRecording()
+        self._assessors = assessors
 
     async def run(
         self,
@@ -98,8 +101,9 @@ class CurationRun:
                 self._reader, self._registry, ResolverTickSizes(universe.resolver),
                 self._schedules, gate=self._gate,
             )  # fmt: skip
+            traced = _Traced(engine, progress)
             runner = WalkForwardRunner(
-                _Traced(engine, progress), BestScoreSelector(), self._objective, ConfigVariants()
+                traced, BestScoreSelector(), self._objective, ConfigVariants()
             )
             base = BacktestSpec(
                 config=config, window=FeedWindow(start, end), starting_cash=starting_cash,
@@ -107,10 +111,16 @@ class CurationRun:
             )  # fmt: skip
             result = await runner.run(base, planned.candidates, windows)
             await self._recorder.record(planned.name, result)
-            records.append(
-                self._curator.evaluate(planned.name, [c.name for c in planned.candidates], result)
+            record = self._curator.evaluate(
+                planned.name, [c.name for c in planned.candidates], result
             )
-            progress(f"{planned.name}: {'PASSED' if records[-1].verdict.passed else 'FAILED'}")
+            if self._assessors is not None:
+                progress(f"{planned.name}: assessing robustness")
+                assessor = self._assessors(traced, universe.resolver)
+                report = await assessor.assess(planned.name, result, base, planned.candidates)
+                record = replace(record, robustness=report)
+            records.append(record)
+            progress(f"{planned.name}: {'PASSED' if record.verdict.passed else 'FAILED'}")
         return records
 
 

@@ -14,11 +14,16 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from emporos.backtest.metrics.decimal_math import ZERO
 from emporos.backtest.metrics.trades import TradeAnalyzer, TradeStatistics
 from emporos.backtest.portfolio import ClosedTrade
+from emporos.backtest.robustness.report import RobustnessDocument
 from emporos.backtest.walkforward_run import WalkForwardResult
+
+if TYPE_CHECKING:
+    from emporos.backtest.robustness.assessment import RobustnessReport
 
 _HUNDRED = Decimal(100)
 
@@ -158,6 +163,7 @@ class CurationRecord:
     verdict: Verdict
     compounded_return: Decimal
     windows: tuple[tuple[str, str, str], ...]  # (test start, test end, chosen candidate)
+    robustness: RobustnessReport | None = None  # the three-way verdict and its evidence
 
 
 class StrategyCurator:
@@ -223,6 +229,8 @@ class CurationReport:
                 f"| {c.name} | {c.actual} | {c.required} | {'ok' if c.passed else 'FAIL'} |"
                 for c in record.verdict.checks
             ]
+            if record.robustness is not None:
+                lines += ["", *RobustnessDocument().markdown(record.robustness)]
             lines += ["", "Parameters chosen per test window (each on its own training data):", ""]
             lines += [f"- {start} to {end}: `{name}`" for start, end, name in record.windows]
             lines.append("")

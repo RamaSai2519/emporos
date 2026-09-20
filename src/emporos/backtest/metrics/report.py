@@ -49,6 +49,7 @@ class MetricsReport:
     exposure: ExposureStatistics
     turnover: TurnoverStatistics
     monthly: tuple[MonthlyReturn, ...]
+    daily_returns: tuple[Decimal, ...] = ()  # one per trading day, in order; not in the document
 
 
 class MetricsCalculator:
@@ -97,6 +98,7 @@ class MetricsCalculator:
             exposure=self._exposure.analyze(curve),
             turnover=self._turnover.analyze(traded_notional, days, returns.years),
             monthly=self._monthly.build(start, days),
+            daily_returns=tuple(day.ret for day in days),
         )
 
     @staticmethod

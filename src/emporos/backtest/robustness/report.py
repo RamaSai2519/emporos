@@ -1,0 +1,107 @@
+"""A robustness report as a JSON-able document and as Markdown: every number a reviewer needs to
+check the verdict, nothing rounded away in the record (money and ratios are exact strings)."""
+
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import Any
+
+from emporos.backtest.robustness.assessment import RobustnessReport
+from emporos.backtest.robustness.monte_carlo import Interval
+
+
+def _s(value: Decimal | None) -> str | None:
+    return None if value is None else str(value)
+
+
+def _interval(interval: Interval | None) -> dict[str, str | None] | None:
+    if interval is None:
+        return None
+    return {"observed": _s(interval.observed), "low": _s(interval.low), "high": _s(interval.high)}
+
+
+class RobustnessDocument:
+    def of(self, report: RobustnessReport) -> dict[str, Any]:
+        mc, dsr, conc = report.monte_carlo, report.deflated_sharpe, report.concentration
+        distribution = mc.distribution
+        return {
+            "verdict": report.verdict.verdict.value,
+            "gates": [
+                {"name": g.name, "outcome": g.outcome.value, "detail": g.detail}
+                for g in report.verdict.gates
+            ],
+            "monte_carlo": {
+                "trades": mc.trade_count,
+                "resamples": mc.resamples,
+                "seed": mc.seed,
+                "confidence": _s(mc.confidence),
+                "inconclusive_reason": mc.inconclusive_reason,
+                "net_pnl": None if distribution is None else _interval(distribution.net_pnl),
+                "expectancy": None if distribution is None else _interval(distribution.expectancy),
+                "profit_factor": None
+                if distribution is None
+                else _interval(distribution.profit_factor),
+                "max_drawdown": None
+                if distribution is None
+                else _interval(distribution.max_drawdown),
+                "probability_net_positive": None
+                if distribution is None
+                else _s(distribution.probability_net_positive),
+                "probability_of_ruin": None
+                if distribution is None
+                else _s(distribution.probability_of_ruin),
+            },
+            "deflated_sharpe": {
+                "observations": dsr.observations,
+                "trial_count": dsr.trial_count,
+                "daily_sharpe": _s(dsr.daily_sharpe),
+                "annualised_sharpe": _s(dsr.annualised_sharpe),
+                "expected_max_sharpe": _s(dsr.expected_max_sharpe),
+                "probabilistic_sharpe": _s(dsr.probabilistic_sharpe),
+                "deflated_sharpe": _s(dsr.deflated_sharpe),
+                "reason": dsr.reason,
+            },
+            "concentration": {
+                "top_instrument": conc.top_instrument,
+                "top_instrument_share": _s(conc.top_instrument_share),
+                "top_month": conc.top_month,
+                "top_month_share": _s(conc.top_month_share),
+                "top_trades": conc.top_trades,
+                "top_trades_share": _s(conc.top_trades_share),
+            },
+            "cost_scenarios": [
+                {
+                    "name": c.name,
+                    "fee_multiplier": str(c.fee_multiplier),
+                    "extra_slippage_bps": str(c.extra_slippage_bps),
+                    "net_pnl": str(c.net_pnl),
+                }
+                for c in report.costs
+            ],
+            "perturbation": None
+            if report.perturbation is None
+            else {
+                "profitable_share": _s(report.perturbation.profitable_share),
+                "runs": [
+                    {"window": r.window, "candidate": r.candidate, "net_pnl": str(r.net_pnl)}
+                    for r in report.perturbation.runs
+                ],
+            },
+            "baseline_net_pnl": _s(report.baseline_net_pnl),
+        }
+
+    def markdown(self, report: RobustnessReport) -> list[str]:
+        lines = [
+            f"Classification: **{report.verdict.verdict.value.upper()}**",
+            "",
+            "| gate | outcome | evidence |",
+            "|---|---|---|",
+        ]
+        lines += [f"| {g.name} | {g.outcome.value} | {g.detail} |" for g in report.verdict.gates]
+        lines += [
+            "",
+            "Net P&L if costs were different (first-order re-pricing of the same trades):",
+            "",
+        ]
+        lines += [f"- {c.name}: {c.net_pnl:.2f}" for c in report.costs]
+        return lines

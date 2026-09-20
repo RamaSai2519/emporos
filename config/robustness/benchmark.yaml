@@ -1,0 +1,41 @@
+# The benchmark every strategy is judged under, and the thresholds of the verdict (EM-114, EM-118).
+#
+# Fixed BEFORE any result under it was seen (the commit that adds this file precedes the runs). A
+# strategy is only ever judged by these numbers; loosening one after looking at a result is what
+# this file exists to prevent. Change them only by adding a new benchmark and re-running everything.
+# Rates and money are integers or QUOTED strings; a YAML float is refused.
+
+capital: 50000                    # rupees: what production trades
+max_position_fraction: "0.10"     # of capital, per instrument
+max_daily_loss_fraction: "0.02"   # of capital
+slippage_bps: 5                   # already in every run: the marketable-limit buffer
+
+# Cost re-pricing of a run's trades: charges scaled, extra slippage per side in basis points on
+# top of the 5 already in the run (negative = better than the benchmark, down to no slippage).
+cost_scenarios:
+  - {name: no_slippage,    fee_multiplier: "1",   extra_slippage_bps: -5}
+  - {name: benchmark,      fee_multiplier: "1",   extra_slippage_bps: 0}
+  - {name: slippage_plus5, fee_multiplier: "1",   extra_slippage_bps: 5}
+  - {name: fees_x1_5,      fee_multiplier: "1.5", extra_slippage_bps: 0}
+  - {name: fees_x2,        fee_multiplier: "2",   extra_slippage_bps: 0}
+  - {name: adverse,        fee_multiplier: "1.5", extra_slippage_bps: 10}
+adverse_scenario: adverse
+
+verdict:
+  confidence: "0.95"                       # interval level for the Monte Carlo
+  monte_carlo: {seed: 20260920, resamples: 5000, min_trades: 30}
+  min_probability_net_positive: "0.95"     # to call a profit real
+  max_probability_net_positive_to_reject: "0.05"   # at or below this, a loss is demonstrated
+  min_trades_to_validate: 150
+  min_history_days: 500                    # trading days: about two years
+  min_windows: 3                           # walk-forward test windows
+  min_positive_window_share: "0.6"
+  max_window_drawdown: "0.10"              # a fraction of capital: the risk budget
+  min_deflated_sharpe: "0.95"
+  concentration:
+    max_top_instrument_share: "0.5"        # of net profit
+    max_top_month_share: "0.5"
+    top_trades: 5
+    max_top_trades_share: "0.5"
+  perturbation:
+    min_profitable_neighbour_share: "0.5"
