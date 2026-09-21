@@ -19,10 +19,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Any, Protocol
 
 from pymongo import AsyncMongoClient
 
+from emporos.backtest.engine import DEFAULT_WARMUP_BARS, DEFAULT_WARMUP_LOOKBACK
+from emporos.backtest.feed import WarmupLoader
 from emporos.broker.angelone.endpoints import EndpointGroup
 from emporos.broker.angelone.limits import ANGELONE_RATE_LIMITS
 from emporos.broker.models import MarketDataMode
@@ -53,7 +55,7 @@ from emporos.control.strategies import ConfigValidator, StrategyController
 from emporos.core.alerts import AlertSink
 from emporos.core.clock import Clock, Sleeper
 from emporos.core.ids import IdGenerator
-from emporos.domain.candles import Timeframe
+from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.fees import FeeSchedule, IntradayCharges
 from emporos.domain.marketable import MarketableLimit
 from emporos.domain.money import Money
@@ -70,6 +72,7 @@ from emporos.history.calendar import CalendarStore, StoredTradingCalendar
 from emporos.marketdata.session import SessionWindow
 from emporos.observability.alerts import EventOutbox, LifecycleEvents, OutboxAlertSink
 from emporos.observability.metrics import EmfMetricsSink, MetricsPublisher
+from emporos.persistence.candles import CandleReader
 from emporos.persistence.collections import Collection
 from emporos.persistence.instrument_ticks import InstrumentTickSizes
 from emporos.persistence.ledger_reader import PlatformLedger
@@ -254,6 +257,7 @@ class PaperWorkerComposer:
     available: Sequence[ResolvedStrategyConfig] = ()  # every loadable strategy, for START
     config_validator: ConfigValidator | None = None
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
+    warmup: WarmupSource | None = None  # history for a launched strategy; None starts it empty
 
     async def build(self) -> WorkerAssembly:
         await self.client.admin.command("ping")  # open the pool before anything fans out (H1)
@@ -377,7 +381,7 @@ class PaperWorkerComposer:
         session_date = (self.session_date or self.clock.now().date()).isoformat()
         factory = _RunFactory(
             launcher, builder, {c.name: c for c in (*self.available, *self.configs)},
-            session_date, self.clock, sink, book, alerts, run_buffers,
+            session_date, self.clock, sink, book, alerts, run_buffers, self.warmup,
         )  # fmt: skip
         runs = [await factory.launch(config.name) for config in self.configs]
 
@@ -436,7 +440,11 @@ class PaperWorkerComposer:
         always.add(Job("metrics", t.metrics, publisher.publish))
         worker = TradingWorker(
             lifecycle, t.schedule, self.clock, self.sleeper, alerts,
-            PaperVenue(broker, sorted({i for c in self.configs for i in c.instrument_ids}), health),
+            PaperVenue(
+                broker,
+                sorted({i for c in (*self.configs, *self.available) for i in c.instrument_ids}),
+                health,
+            ),
             StartupRecovery(engine, sync, reconciler, alerts),
             host,
             _SwitchView(monitor),
@@ -509,6 +517,35 @@ class _Commands:
         return await self._processor.run_once()
 
 
+class WarmupSource(Protocol):
+    """The recent closed bars a strategy needs before its first live bar (indicator history)."""
+
+    async def bars_for(self, config: ResolvedStrategyConfig) -> Sequence[Candle]: ...
+
+
+class RepositoryWarmup:
+    """Warm-up bars from the candle repository (the hot tier holds the last weeks): the same loader
+    a backtest primes its strategy with, so a live run and a replay start from the same state."""
+
+    def __init__(
+        self,
+        reader: CandleReader,
+        clock: Clock,
+        bars: int = DEFAULT_WARMUP_BARS,
+        lookback: timedelta = DEFAULT_WARMUP_LOOKBACK,
+    ) -> None:
+        self._reader = reader
+        self._clock = clock
+        self._bars = bars
+        self._lookback = lookback
+
+    async def bars_for(self, config: ResolvedStrategyConfig) -> Sequence[Candle]:
+        loader = WarmupLoader(
+            self._reader, config.instrument_ids, config.timeframe, self._bars, self._lookback
+        )
+        return await loader.load(self._clock.now())
+
+
 class _RunFactory:
     """Launches a run of a named strategy: records it, builds its runner, registers its pricing."""
 
@@ -523,10 +560,12 @@ class _RunFactory:
         book: StrategyPositionBook,
         alerts: AlertSink,
         buffers: dict[str, MarketableLimit],
+        warmup: WarmupSource | None = None,
     ) -> None:
         self._launcher, self._builder, self._configs = launcher, builder, configs
         self._session_date, self._clock, self._sink = session_date, clock, sink
         self._book, self._alerts, self._buffers = book, alerts, buffers
+        self._warmup = warmup
 
     async def launch(self, name: str) -> ManagedRun:
         config = self._configs.get(name)
@@ -540,6 +579,9 @@ class _RunFactory:
                 self._alerts,
             ),
         )  # fmt: skip
+        if self._warmup is not None:
+            for bar in await self._warmup.bars_for(config):
+                prepared.history.record(bar)  # history only: warm-up bars never produce signals
         self._buffers[started.run_id] = MarketableLimit(config.execution.limit_buffer_bps)
         return ManagedRun(started.run_id, prepared.runner, name)
 

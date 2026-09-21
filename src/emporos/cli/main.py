@@ -22,6 +22,7 @@ from emporos.cli.history_probe_commands import history_probe_depth
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
 from emporos.cli.quality_commands import history_check
+from emporos.cli.worker_commands import worker_app, worker_run
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
@@ -66,6 +67,8 @@ app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(api_app, name="api")
+app.add_typer(worker_app, name="worker")
+app.command("run")(worker_run)  # `emporos run` is `emporos worker run`
 app.command("halt")(halt)
 app.command("resume")(resume)
 app.add_typer(kill_switch_app, name="kill-switch")
@@ -77,12 +80,6 @@ def _not_implemented(feature: str, jira_ref: str) -> None:
         fg=typer.colors.YELLOW,
     )
     raise typer.Exit(code=1)
-
-
-@app.command()
-def run() -> None:
-    """Start the trading worker (market data, risk, execution, session lifecycle)."""
-    _not_implemented("run", "EM-31 onward")
 
 
 @app.command()

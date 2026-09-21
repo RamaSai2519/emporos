@@ -32,3 +32,35 @@ class MarketDataSource(Protocol):
     async def unsubscribe_market_data(self, instrument_ids: Sequence[str]) -> None: ...
 
     def on_tick(self, handler: Callable[[Tick], None]) -> None: ...
+
+
+class MarketDataOnly:
+    """Narrows any broker to the six market-data calls, and nothing else.
+
+    The Protocol above already keeps `PaperBroker` from calling an order method; this makes the
+    object it is handed unable to, too: it holds the wider broker privately and forwards exactly
+    these calls, so `place_order` is not reachable from anything built on the paper path.
+    """
+
+    def __init__(self, source: MarketDataSource) -> None:
+        self._source = source
+
+    async def get_instruments(self) -> Sequence[Instrument]:
+        return await self._source.get_instruments()
+
+    async def get_quote(self, instrument_ids: Sequence[str]) -> list[Quote]:
+        return await self._source.get_quote(instrument_ids)
+
+    async def get_historical_candles(self, request: CandleRequest) -> list[Candle]:
+        return await self._source.get_historical_candles(request)
+
+    async def subscribe_market_data(
+        self, instrument_ids: Sequence[str], mode: MarketDataMode
+    ) -> None:
+        await self._source.subscribe_market_data(instrument_ids, mode)
+
+    async def unsubscribe_market_data(self, instrument_ids: Sequence[str]) -> None:
+        await self._source.unsubscribe_market_data(instrument_ids)
+
+    def on_tick(self, handler: Callable[[Tick], None]) -> None:
+        self._source.on_tick(handler)

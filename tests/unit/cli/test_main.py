@@ -14,7 +14,7 @@ def test_help_lists_all_subcommands() -> None:
 
 
 def test_placeholder_command_exits_nonzero_with_a_message() -> None:
-    result = runner.invoke(app, ["run"])
+    result = runner.invoke(app, ["backfill"])
 
     assert result.exit_code == 1
     assert "not implemented yet" in result.output
