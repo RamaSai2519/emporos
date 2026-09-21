@@ -78,14 +78,18 @@ pipenv run lint-imports
 
 ## 4. Have the data
 
-Backtests read candles only through `CandleRepository`. Today the database holds one year of 5-minute
-bars (2025-09-22 to 2026-09-18) for 29 liquid NSE symbols. More history is EM-132; until then a
-backtest cannot span more than that.
+Backtests read candles only through `CandleRepository`, which unions the hot tier (Mongo: the last
+two weeks, only what the live pipeline needs) and the cold tier (Parquet files, one per instrument
+and month, in `~/.local/share/emporos/cold` or S3). The broker holds ten years of intraday history
+(from 2016-10-03); see `docs/data/history.md` for what is stored, the storage plan and the dataset
+checks. Nothing large is kept in Mongo.
 
-To fetch bars for other symbols or dates (read-only Angel One history, needs credentials in `.env`):
+To fetch bars for other symbols or dates (read-only Angel One history, needs credentials in `.env`;
+resumable, so re-run it to continue after an interruption):
 
 ```bash
-pipenv run emporos history fetch-bars -s SBIN-EQ -s INFY-EQ -t 5m --from 2025-09-22 --to 2026-09-18
+pipenv run emporos history fetch-bars -s SBIN-EQ -s INFY-EQ -t 5m --from 2016-10-03 --to 2025-09-19
+pipenv run emporos history check config/strategies/orb_v1.yaml -t 5m --from 2016-10-03 --to 2026-09-18
 ```
 
 ### The local cache: why the second run is fast
@@ -105,7 +109,7 @@ completely at four or more large reads at once, so do not raise it, and do not s
 backtest processes against a cold cache either), so you can do it before starting long runs. It is a derived copy: **after you fetch or repair bars for a month that is already cached,
 run `cache clear`** (or delete that month's file), or the new bars will not appear. The current
 month and any month that ended less than two days ago are never cached, and neither is an empty
-month.
+month. After a `fetch-bars` that adds bars to months already cached, run `cache clear`.
 
 ### Running the curation on several cores
 

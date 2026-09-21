@@ -1,9 +1,10 @@
 """Composition root for `emporos backtest`: read-only Mongo (candles, instrument history), the
 strategy registry, the fee schedules. No broker, no credentials, nothing that can place an order.
 
-The candle reader is a `CandleRepository`, the only allowed path to candles. With no S3 bucket
-configured its cold tier is `DisabledColdArchive`: ranges older than the hot retention read as
-empty, which the backtest then reports as missing bars rather than inventing them.
+The candle reader is a `CandleRepository`, the only allowed path to candles. With no cold tier
+configured (no S3 bucket, no local directory) it is `DisabledColdArchive`: ranges older than the
+hot retention read as empty, which the backtest then reports as missing bars rather than inventing
+them.
 """
 
 from __future__ import annotations
@@ -19,20 +20,15 @@ from emporos.backtest.costs import EarliestBeforeFirst, ScheduleSource, StrictSc
 from emporos.backtest.engine import BacktestResult
 from emporos.backtest.job import BacktestJob, BacktestRequest
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
+from emporos.cli.cold_storage import cold_archive
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
 from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
 from emporos.persistence.candle_cache import CachingCandleReader, CandleCacheFiles
-from emporos.persistence.candle_cold import (
-    ColdCandleArchive,
-    DisabledColdArchive,
-    ParquetCandleArchive,
-)
 from emporos.persistence.candle_hot import MongoCandleStore
 from emporos.persistence.candles import CandleReader, CandleRepository
 from emporos.persistence.mongo import MongoClientFactory
-from emporos.persistence.object_store import S3ClientFactory
 from emporos.persistence.records import InstrumentRecord, InstrumentVersionRecord
 from emporos.persistence.repositories import InstrumentRepository, InstrumentVersionRepository
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
@@ -84,12 +80,6 @@ def candle_cache_root(settings: Settings) -> Path:
     if settings.candle_cache_dir:
         return Path(settings.candle_cache_dir).expanduser()
     return Path.home() / ".cache" / "emporos" / "candles"
-
-
-def cold_archive(settings: Settings) -> ColdCandleArchive:
-    if settings.s3_bucket:
-        return ParquetCandleArchive(S3ClientFactory(settings).create_store())
-    return DisabledColdArchive()
 
 
 @asynccontextmanager

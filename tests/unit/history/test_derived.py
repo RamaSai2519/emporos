@@ -7,12 +7,13 @@ from decimal import Decimal
 
 import pytest
 
-from emporos.core.clock import IST
+from emporos.core.clock import IST, FixedClock
 from emporos.core.errors import ConfigurationError
 from emporos.domain.candles import Candle, Timeframe
 from emporos.history.derived import DerivedBarBackfill
 from emporos.marketdata.session import SessionWindow
-from tests.support.fakes import InMemoryCandleStore, make_instrument
+from emporos.persistence.object_coverage import ObjectCoverageStore
+from tests.support.fakes import InMemoryCandleStore, InMemoryObjectStore, make_instrument
 from tests.support.history import BrokerHistory, bar
 
 SBIN, RELIANCE = make_instrument("3045"), make_instrument("2885")
@@ -152,3 +153,66 @@ class TestConfiguration:
     async def test_the_window_must_run_forward(self) -> None:
         with pytest.raises(ConfigurationError):
             await Rig().backfill.run([SBIN], LAST, FIRST)
+
+
+class LedgerRig(Rig):
+    def __init__(self, history: BrokerHistory | None = None) -> None:
+        super().__init__(history)
+        self.ledger = ObjectCoverageStore(InMemoryObjectStore())
+        self.backfill = DerivedBarBackfill(
+            self.history, self.store, WINDOW, Timeframe.M5,
+            coverage=self.ledger, clock=FixedClock(datetime(2026, 9, 20, tzinfo=UTC)),
+        )  # fmt: skip
+
+
+async def test_a_second_run_over_the_same_days_fetches_nothing() -> None:
+    rig = LedgerRig()
+    await rig.backfill.run([SBIN], FIRST, LAST)
+    asked = len(rig.history.requests)
+
+    again = await rig.backfill.run([SBIN], FIRST, LAST)
+
+    assert len(rig.history.requests) == asked  # the broker was not asked again
+    assert again.chunks_fetched == 0 and again.chunks_skipped == 2 and again.bars_written == 0
+    assert len(await rig.stored(Timeframe.M5)) == 35 * 75  # and nothing was lost or doubled
+
+
+async def test_a_killed_run_resumes_at_the_first_chunk_that_was_not_finished() -> None:
+    rig = LedgerRig()
+    await rig.backfill.run([SBIN], FIRST, FIRST + timedelta(days=27))  # the first chunk only
+    rig.history.requests.clear()
+
+    report = await rig.backfill.run([SBIN], FIRST, LAST)
+
+    assert report.chunks_skipped == 1 and report.chunks_fetched == 1
+    assert len(rig.history.requests) == 1
+    assert len(await rig.stored(Timeframe.M5)) == 35 * 75
+
+
+async def test_a_failed_chunk_is_not_recorded_so_the_next_run_retries_it() -> None:
+    rig = LedgerRig()
+    rig.history.fail_requests = {1}
+    first = await rig.backfill.run([SBIN], FIRST, FIRST)
+    assert not first.ok
+
+    second = await rig.backfill.run([SBIN], FIRST, FIRST)
+
+    assert second.ok and second.chunks_fetched == 1 and second.chunks_skipped == 0
+
+
+async def test_a_day_the_broker_had_no_bars_for_is_recorded_empty_and_not_asked_again() -> None:
+    rig = LedgerRig(BrokerHistory(silent=lambda ts: ts.astimezone(IST).date() == FIRST))
+    await rig.backfill.run([SBIN], FIRST, FIRST)
+
+    recorded = await rig.ledger.get_days(SBIN.instrument_id, Timeframe.M5, FIRST, FIRST)
+    again = await rig.backfill.run([SBIN], FIRST, FIRST)
+
+    assert recorded[FIRST].empty and again.chunks_skipped == 1
+
+
+async def test_a_ledger_needs_a_clock() -> None:
+    with pytest.raises(ConfigurationError, match="clock"):
+        DerivedBarBackfill(
+            BrokerHistory(), InMemoryCandleStore(), WINDOW, Timeframe.M5,
+            coverage=ObjectCoverageStore(InMemoryObjectStore()),
+        )  # fmt: skip

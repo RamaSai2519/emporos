@@ -44,12 +44,9 @@ def test_the_unique_indexes_that_guarantee_idempotency_are_declared(
     assert fields in unique
 
 
-def test_ticks_is_a_seven_day_time_series_collection() -> None:
-    ticks = PLATFORM_SCHEMA.spec_for(Collection.TICKS).timeseries
-
-    assert ticks is not None
-    assert ticks.expire_after == timedelta(days=7)
-    assert ticks.meta_field == "instrument_id"
+def test_no_collection_holds_raw_ticks() -> None:
+    """Nothing ever wrote to the optional tick archive, so it is gone: raw ticks are not kept."""
+    assert "ticks" not in {collection.value for collection in Collection}
 
 
 def test_system_events_expire_after_thirty_days() -> None:

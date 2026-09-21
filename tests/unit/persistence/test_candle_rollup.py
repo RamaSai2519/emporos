@@ -17,6 +17,16 @@ from emporos.persistence.placement import RetentionPlacement
 from tests.support.fakes import InMemoryCandleStore, InMemoryObjectStore, RecordingAlertSink
 
 NOW = datetime(2026, 9, 19, 4, 0, tzinfo=UTC)
+
+# A long hot tier (the old defaults): these tests exercise WHERE a bar goes, at ages that only make
+# sense with these boundaries. The shipped defaults are pinned by one test of their own.
+LONG_HOT: dict[Timeframe, int | None] = {
+    Timeframe.M1: 90,
+    Timeframe.M5: 365,
+    Timeframe.M15: 365,
+    Timeframe.H1: 365,
+    Timeframe.D1: None,
+}
 START, END = NOW - timedelta(days=800), NOW + timedelta(days=1)
 
 
@@ -33,7 +43,7 @@ class Rig:
         self.repo = CandleRepository(self.hot, self.cold)  # reads only: unions both tiers
         self.alerts = RecordingAlertSink()
         self.rollup = CandleRollup(
-            self.hot, self.cold, RetentionPlacement(FixedClock(NOW)), self.alerts
+            self.hot, self.cold, RetentionPlacement(FixedClock(NOW), LONG_HOT), self.alerts
         )
 
     async def series(self, instrument: str, timeframe: Timeframe = Timeframe.M1) -> list[Candle]:
@@ -114,7 +124,7 @@ async def test_a_crash_between_archive_and_delete_is_finished_by_the_next_run() 
     rig = Rig()
     rig.hot = DiesOnDelete()
     rig.repo = CandleRepository(rig.hot, rig.cold)
-    rig.rollup = CandleRollup(rig.hot, rig.cold, RetentionPlacement(FixedClock(NOW)))
+    rig.rollup = CandleRollup(rig.hot, rig.cold, RetentionPlacement(FixedClock(NOW), LONG_HOT))
     await rig.seed([bar("NSE:1", 200), bar("NSE:1", 5)])
     before = await rig.series("NSE:1")
 
@@ -139,7 +149,9 @@ async def test_if_the_archive_does_not_hold_the_bars_nothing_is_deleted() -> Non
     lossy = LossyArchive(InMemoryObjectStore())
     rig.cold = lossy
     rig.repo = CandleRepository(rig.hot, lossy)
-    rig.rollup = CandleRollup(rig.hot, lossy, RetentionPlacement(FixedClock(NOW)), rig.alerts)
+    rig.rollup = CandleRollup(
+        rig.hot, lossy, RetentionPlacement(FixedClock(NOW), LONG_HOT), rig.alerts
+    )
     await rig.seed([bar("NSE:1", 300), bar("NSE:1", 200)])
 
     report = await rig.rollup.run()
@@ -162,7 +174,7 @@ async def test_one_instrument_failing_does_not_stop_the_others() -> None:
     rig = Rig()
     flaky = FailsFor(InMemoryObjectStore())
     rig.repo = CandleRepository(rig.hot, flaky)
-    rig.rollup = CandleRollup(rig.hot, flaky, RetentionPlacement(FixedClock(NOW)))
+    rig.rollup = CandleRollup(rig.hot, flaky, RetentionPlacement(FixedClock(NOW), LONG_HOT))
     await rig.seed([bar("NSE:1", 200), bar("NSE:2", 200)])
 
     report = await rig.rollup.run()
@@ -184,7 +196,7 @@ async def test_only_the_bars_that_were_archived_are_deleted() -> None:
     rig = Rig()
     rig.hot = LateWriter()
     rig.repo = CandleRepository(rig.hot, rig.cold)
-    rig.rollup = CandleRollup(rig.hot, rig.cold, RetentionPlacement(FixedClock(NOW)))
+    rig.rollup = CandleRollup(rig.hot, rig.cold, RetentionPlacement(FixedClock(NOW), LONG_HOT))
     await rig.seed([bar("NSE:1", 200)])
 
     await rig.rollup.run()

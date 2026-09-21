@@ -11,7 +11,6 @@ class Collection(StrEnum):
     INSTRUMENTS = "instruments"
     INSTRUMENT_VERSIONS = "instrument_versions"
     CANDLES = "candles"
-    TICKS = "ticks"
     STRATEGIES = "strategies"
     STRATEGY_RUNS = "strategy_runs"
     SIGNALS = "signals"

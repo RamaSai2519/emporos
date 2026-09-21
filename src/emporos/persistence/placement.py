@@ -1,8 +1,13 @@
 """Which tier a candle belongs in, by age (plan.md §7 retention tiers).
 
-    1m         -> Mongo for 90 days, then S3 Parquet forever
-    5m/15m/1h  -> Mongo for 1 year, then S3
+    1m         -> Mongo for 3 days, then Parquet forever
+    5m/15m/1h  -> Mongo for 14 days, then Parquet
     1d         -> Mongo forever (small)
+
+Mongo holds only what the live pipeline needs (restart recovery and strategy warm-up); history is
+Parquet, one file per instrument-month, in the cold tier (S3, or a local directory). A year of 5m
+bars for 29 symbols is ~570k Mongo documents and ~60 MB of index, against ~16 MB of Parquet, and a
+backtest reads it sequentially, which is what Parquet is for.
 
 `CandleRepository` uses a placement policy to route WRITES (so a year of backfilled 1m history goes
 straight to S3 instead of overflowing the hot tier) and the nightly rollup uses the same policy to
@@ -20,10 +25,10 @@ from emporos.core.errors import ConfigurationError
 from emporos.domain.candles import Timeframe
 
 DEFAULT_HOT_DAYS: Mapping[Timeframe, int | None] = {
-    Timeframe.M1: 90,
-    Timeframe.M5: 365,
-    Timeframe.M15: 365,
-    Timeframe.H1: 365,
+    Timeframe.M1: 3,
+    Timeframe.M5: 14,
+    Timeframe.M15: 14,
+    Timeframe.H1: 14,
     Timeframe.D1: None,  # never leaves the hot tier
 }
 

@@ -30,6 +30,7 @@ from emporos.persistence.placement import RetentionPlacement
 from emporos.persistence.schema import PLATFORM_SCHEMA
 from tests.support.fakes import make_instrument
 from tests.support.history import BrokerHistory
+from tests.support.retention import LONG_HOT
 
 pytestmark = pytest.mark.integration
 
@@ -59,7 +60,7 @@ async def rig(
     hot, coverage = MongoCandleStore(database), MongoCoverageStore(database)
     cold = ParquetCandleArchive(DiskCachingObjectStore(s3_object_store, tmp_path / "cache"))
     clock = FixedClock(NOW)
-    repo = CandleRepository(hot, cold, RetentionPlacement(clock))
+    repo = CandleRepository(hot, cold, RetentionPlacement(clock, LONG_HOT))
     history = BrokerHistory()
     orchestrator = BackfillOrchestrator(
         history, repo, coverage, SessionGrid(StoredTradingCalendar()), clock

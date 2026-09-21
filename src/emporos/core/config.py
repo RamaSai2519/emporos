@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     s3_secret_access_key: str | None = Field(default=None, alias="S3_SECRET_ACCESS_KEY")
     aws_region: str = Field(default="ap-south-1", alias="AWS_REGION")
 
+    # A local directory as the cold tier when no bucket is set: bars older than their hot retention
+    # are archived there as monthly Parquet files (the same layout S3 would hold).
+    cold_archive_dir: str | None = Field(default=None, alias="COLD_ARCHIVE_DIR")
+
     # Where backtests keep their local copy of closed candle months (see persistence/candle_cache);
     # unset uses ~/.cache/emporos/candles. It is derived data: deleting it only makes the next
     # backtest slower.

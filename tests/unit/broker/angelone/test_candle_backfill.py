@@ -12,7 +12,7 @@ import httpx
 import pytest
 
 from emporos.broker.angelone.api import AngelOneApi
-from emporos.broker.angelone.candle_backfill import AngelOneCandleBackfill
+from emporos.broker.angelone.candle_backfill import AngelOneCandleBackfill, BarRejections
 from emporos.broker.angelone.transport import HttpRestTransport, RestRequest
 from emporos.broker.errors import BrokerProtocolError
 from emporos.core.clock import IST
@@ -66,3 +66,21 @@ async def test_an_inconsistent_candle_from_the_broker_is_a_typed_error() -> None
 
     with pytest.raises(BrokerProtocolError):
         await backfill(server).fetch_minutes(SBIN, START, END)
+
+
+async def test_a_backfill_that_opts_in_skips_the_bad_bar_and_keeps_the_good_ones() -> None:
+    bad = ["2026-09-18T09:15:00+05:30", 100, 99, 101, 100, 10]  # high below low
+    good = ["2026-09-18T09:16:00+05:30", 100, 101, 99, 100, 10]
+    body = {"status": True, "message": "SUCCESS", "errorcode": "", "data": [bad, good]}
+    server = ScriptedHttpServer().queue(httpx.Response(200, content=json.dumps(body).encode()))
+    rejected = BarRejections()
+    tolerant = AngelOneCandleBackfill(
+        AngelOneApi(Authed(HttpRestTransport(server.client(), "k"))), rejected
+    )
+
+    candles = await tolerant.fetch(SBIN, Timeframe.M1, START, END)
+
+    assert [c.ts.astimezone(IST).minute for c in candles] == [16]  # one bad minute, not the request
+    (dropped,) = rejected.bars
+    assert dropped.instrument_id == SBIN.instrument_id and dropped.high == Decimal("99")
+    assert "h=99 l=101" in dropped.describe()

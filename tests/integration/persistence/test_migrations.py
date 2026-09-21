@@ -40,17 +40,6 @@ async def test_migrate_creates_every_declared_index_and_is_idempotent(
     assert not second.changed
 
 
-async def test_ticks_is_a_time_series_collection_with_a_seven_day_ttl(
-    database: AsyncDatabase[Mapping[str, Any]],
-) -> None:
-    await MigrationRunner(MongoSchemaStore(database), PLATFORM_SCHEMA).apply()
-
-    (info,) = [c async for c in await database.list_collections(filter={"name": "ticks"})]
-
-    assert info["type"] == "timeseries"
-    assert info["options"]["expireAfterSeconds"] == 7 * 24 * 3600
-
-
 @pytest.mark.parametrize(
     ("collection", "index"),
     _UNIQUE_INDEXES,

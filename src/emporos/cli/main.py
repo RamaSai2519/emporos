@@ -18,8 +18,10 @@ import typer
 from emporos.cli.api_commands import api_app
 from emporos.cli.backtest_commands import backtest_app
 from emporos.cli.history_composition import resolve_symbols
+from emporos.cli.history_probe_commands import history_probe_depth
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
+from emporos.cli.quality_commands import history_check
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
@@ -32,7 +34,6 @@ from emporos.instruments.downloader import MASTER_URL, InstrumentMasterDownloade
 from emporos.instruments.store import MongoInstrumentMasterStore
 from emporos.instruments.sync import InstrumentSyncService, SyncOutcome, SyncResult
 from emporos.instruments.validator import InstrumentMasterValidator
-from emporos.marketdata.session import SessionWindow
 from emporos.marketdata.timeframes import DERIVED_TIMEFRAMES
 from emporos.persistence.collections import Collection
 from emporos.persistence.migrations import MigrationReport, MigrationRunner, MongoSchemaStore
@@ -59,6 +60,8 @@ kill_switch_app.command("status")(kill_switch_status)
 history_app = typer.Typer(
     help="Historical candles: backfill, gap repair, calendar.", no_args_is_help=True
 )
+history_app.command("probe-depth")(history_probe_depth)
+history_app.command("check")(history_check)
 app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
@@ -227,13 +230,8 @@ async def _fetch_bars(
 ) -> HistoryOutcome:
     async with open_bar_fetch_runtime(Settings.default(), timeframe) as runtime:
         instruments = resolve_symbols(runtime.instruments, Exchange.NSE, symbols)
-        earliest = SessionWindow().open_at(first)
-        if runtime.hot_cutoff is not None and earliest < runtime.hot_cutoff:
-            raise ConfigurationError(
-                f"{first} is older than the hot retention for {timeframe.value} bars "
-                f"({runtime.hot_cutoff.date()}), and no S3 bucket is configured to hold them"
-            )
         report = await runtime.fetcher.run(instruments, first, last)
+        rejected = list(runtime.rejected.bars)
     full = 375 * 60 // int(timeframe.duration.total_seconds())
     short = sorted((i, d, n) for (i, d), n in report.bars_per_day.items() if n < full)
     lines = [
@@ -242,6 +240,7 @@ async def _fetch_bars(
         f"{len(report.bars_per_day)} instrument-day(s) with bars"
     ]
     lines += [f"  short day: {i} {d} has {n} of {full} bars" for i, d, n in short[:20]]
+    lines += [f"  skipped invalid bar: {bar.describe()}" for bar in rejected]
     return HistoryOutcome("\n".join(lines), report.ok)
 
 

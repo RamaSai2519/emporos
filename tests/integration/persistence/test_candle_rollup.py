@@ -25,6 +25,7 @@ from emporos.persistence.object_cache import DiskCachingObjectStore
 from emporos.persistence.object_store import S3ObjectStore
 from emporos.persistence.placement import RetentionPlacement
 from emporos.persistence.schema import PLATFORM_SCHEMA
+from tests.support.retention import LONG_HOT
 
 pytestmark = pytest.mark.integration
 
@@ -55,7 +56,7 @@ async def rig(
     instrument_id = f"it-{IdGenerator().new_ulid()}"
     hot = MongoCandleStore(database)
     cold = ParquetCandleArchive(DiskCachingObjectStore(s3_object_store, tmp_path / "cache"))
-    rollup = CandleRollup(hot, cold, RetentionPlacement(FixedClock(NOW)))
+    rollup = CandleRollup(hot, cold, RetentionPlacement(FixedClock(NOW), LONG_HOT))
     try:
         yield Rig(instrument_id, hot, cold, CandleRepository(hot, cold), rollup)
     finally:

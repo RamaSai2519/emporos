@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -31,11 +32,9 @@ async def test_writing_to_it_is_refused_loudly() -> None:
 async def test_a_repository_on_it_stores_recent_bars_and_refuses_bars_that_belong_in_cold() -> None:
     hot = InMemoryCandleStore()
     repository = CandleRepository(hot, DisabledColdArchive(), RetentionPlacement(FixedClock(NOW)))
-    recent = bar_at(minutes=0)  # 2026-01-05 is older than 5m's 365-day retention? no: 258 days
-    ancient = bar_at(minutes=0).__class__(
-        "NSE:1001", Timeframe.M5, NOW - timedelta(days=400),
-        recent.open, recent.high, recent.low, recent.close, 1,
-    )  # fmt: skip
+    template = bar_at(minutes=0)
+    recent = replace(template, ts=NOW - timedelta(days=1))
+    ancient = replace(template, ts=NOW - timedelta(days=400))
 
     await repository.upsert([recent])
     with pytest.raises(ConfigurationError):

@@ -137,12 +137,6 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("instrument_id", "timeframe", "ts", unique=True),
             IndexSpec.on("timeframe", "ts"),
         ),
-        _spec(
-            Collection.TICKS,
-            timeseries=TimeSeriesSpec(
-                time_field="ts", meta_field="instrument_id", expire_after=7 * _DAY
-            ),
-        ),
         _spec(Collection.STRATEGIES, IndexSpec.on("name", unique=True)),
         _spec(
             Collection.STRATEGY_RUNS,
