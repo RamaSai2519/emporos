@@ -15,14 +15,20 @@ START_STRATEGY command (the dashboard), which is why every loadable universe is 
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from emporos.cli.history_runtime import instrument_master
 from emporos.cli.live_feed import FeedRequest, LiveFeedOpener
 from emporos.cli.strategy_composition import build_registry
-from emporos.cli.worker_composition import PaperWorkerComposer, WorkerTuning, bar_queue_for
+from emporos.cli.worker_composition import (
+    PaperWorkerComposer,
+    WorkerTuning,
+    bar_queue_for,
+    paper_start_gate,
+)
+from emporos.control.handlers import StartGate
 from emporos.core.clock import IST, Clock, Sleeper
 from emporos.core.config import Settings
 from emporos.core.errors import ConfigurationError
@@ -50,7 +56,10 @@ class PaperWorkerOptions:
     start: Sequence[str] = ()  # strategies to run from the first bar; the rest wait for START
     account_id: str = "paper"
     starting_cash: Money = field(default_factory=lambda: Money.of(DEFAULT_PAPER_CASH))
+    # Strategy name -> the standing the operator acknowledges for it, as on the dashboard.
+    acknowledged: Mapping[str, str] = field(default_factory=dict)
     kill_switch_collection: str = Collection.KILL_SWITCH  # tests point this at a scratch one
+    verdict_collection: str = Collection.STRATEGY_VERDICTS  # ... and this
     tuning: WorkerTuning = field(default_factory=WorkerTuning)
 
 
@@ -83,6 +92,8 @@ class LivePaperWorker:
             loader = StrategyConfigLoader(StrategyConfigResolver(registry, instruments))
             available = [loader.load_file(path) for path in options.strategy_files]
             configs = self._chosen(available, options.start)
+            gate = paper_start_gate(database, available, options.verdict_collection)
+            await self._require_startable(gate, configs)
             bars = bar_queue_for(available)
             window = SessionWindow()
             request = FeedRequest(database, instruments, master, bars, window)
@@ -109,12 +120,22 @@ class LivePaperWorker:
                     window=window,
                     starting_cash=options.starting_cash,
                     warmup=feed.warmup,
+                    start_gate=gate,
                 ).build()
                 async with feed.running():
                     _LOG.info("paper worker running: %d strategies loadable", len(available))
                     return await assembly.worker.run_session()
         finally:
             await mongo.close()
+
+    async def _require_startable(
+        self, gate: StartGate, configs: Sequence[ResolvedStrategyConfig]
+    ) -> None:
+        """A strategy named at launch is held to the same rule as a dashboard START."""
+        for config in configs:
+            refusal = await gate.check(config.name, self._options.acknowledged.get(config.name))
+            if refusal is not None:
+                raise ConfigurationError(refusal)
 
     @staticmethod
     def _chosen(

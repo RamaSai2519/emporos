@@ -379,6 +379,16 @@ class InMemoryRunStore:
     async def get(self, record_id: str) -> StrategyRunRecord | None:
         return self.records.get(record_id)
 
+    async def replace(self, record: StrategyRunRecord) -> None:
+        self.records[record.id] = record
+
+    async def find(
+        self, query: dict[str, Any], *, sort: list[tuple[str, int]] | None = None, limit: int = 0
+    ) -> list[StrategyRunRecord]:
+        return [
+            r for r in self.records.values() if all(getattr(r, k) == v for k, v in query.items())
+        ]
+
 
 class InMemorySignalStore:
     def __init__(self) -> None:

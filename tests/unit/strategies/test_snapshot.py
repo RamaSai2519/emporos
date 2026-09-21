@@ -179,3 +179,33 @@ class TestCanonicalizer:
             canonical({"a": [0.5]})
         with pytest.raises(StrategyConfigError, match="cannot snapshot"):
             canonical(object())
+
+
+def test_switching_a_strategy_on_does_not_change_its_behaviour_hash() -> None:
+    """A recorded verdict is bound to this hash: `enabled: true` must not orphan it."""
+    off = ConfigSnapshotter().take(_config(changed(raw_config(), "enabled", False)))
+    on = ConfigSnapshotter().take(_config(changed(raw_config(), "enabled", True)))
+
+    assert off.content_hash != on.content_hash  # the run record still tells them apart
+    assert off.behaviour_hash == on.behaviour_hash
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        ("timeframe", "15m"),
+        ("universe.instruments", ["NSE:ALPHA-EQ"]),
+        ("parameters.threshold", "101"),
+        ("risk.max_position_value", 50001),
+        ("execution.limit_buffer_bps", 6),
+        ("session.square_off_at", "15:16"),
+    ],
+)
+def test_anything_that_changes_what_it_does_changes_the_behaviour_hash(
+    path: str, value: object
+) -> None:
+    baseline = ConfigSnapshotter().take(_config()).behaviour_hash
+
+    edited = ConfigSnapshotter().take(_config(changed(raw_config(), path, value)))
+
+    assert edited.behaviour_hash != baseline

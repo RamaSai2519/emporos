@@ -15,6 +15,7 @@ from emporos.broker.models import BrokerOrderUpdate
 from emporos.domain.order_updates import OrderUpdate
 from emporos.execution.order_updates import OrderUpdateTranslator
 from emporos.persistence.records import OrderRecord
+from emporos.session.run_status import RunStatus
 from emporos.session.updates import OrderUpdateRouter
 from emporos.strategies.runner import MarketEvent
 
@@ -59,8 +60,10 @@ class StrategyHost:
         orders: OrdersByBrokerId,
         translator: OrderUpdateTranslator,
         factory: RunFactory | None = None,
+        status: RunStatus | None = None,
     ) -> None:
         self._factory = factory
+        self._status = status
         self._stopped: set[str] = set()
         self._runs = runs
         self._events = events
@@ -83,6 +86,7 @@ class StrategyHost:
             await run.runner.end_session()
             await run.runner.shutdown()
             self._stopped.add(run.run_id)
+            await self._record_stop(run)
         return f"{name} stopped; its positions were left open"
 
     async def start_strategy(self, name: str) -> str:
@@ -114,6 +118,11 @@ class StrategyHost:
         for run in self._runs:
             if run.run_id not in self._stopped:
                 await run.runner.shutdown()
+                await self._record_stop(run)
+
+    async def _record_stop(self, run: ManagedRun) -> None:
+        if self._status is not None:
+            await self._status.stopped(run.run_id)
 
     async def _deliver_update(self, update: BrokerOrderUpdate) -> None:
         order = await self._orders.by_broker_order_id(update.order.broker_order_id)

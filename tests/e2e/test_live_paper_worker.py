@@ -61,6 +61,12 @@ class Rig:
             paths.append(path)
         return paths
 
+    async def catalogue(self) -> dict[str, dict[str, Any]]:
+        rows = self.world.mongo.database()[Collection.STRATEGIES].find(
+            {"name": {"$in": list(STRATEGIES)}}
+        )
+        return {row["name"]: row async for row in rows}
+
     async def orders(self) -> list[Mapping[str, Any]]:
         db = self.world.mongo.database()
         mine = {"account_id": self.world.account_id}
@@ -68,10 +74,17 @@ class Rig:
             o async for o in db[Collection.PAPER_ORDERS].find(mine)
         ]
 
-    def worker(self, feeds: ScriptedFeedOpener, start: tuple[str, ...] = ()) -> LivePaperWorker:
+    def worker(
+        self,
+        feeds: ScriptedFeedOpener,
+        start: tuple[str, ...] = (),
+        acknowledged: dict[str, str] | None = None,
+    ) -> LivePaperWorker:
         options = PaperWorkerOptions(
             self.files(), start, self.world.account_id,
             kill_switch_collection=self.world.kill_switch_collection,
+            verdict_collection=f"zz_verdicts_{self.world.kill_switch_collection[-12:]}",
+            acknowledged=acknowledged or {},
             tuning=WorkerTuning(schedule=SessionSchedule(poll_interval=timedelta(seconds=30))),
         )  # fmt: skip
         return LivePaperWorker(
@@ -91,6 +104,12 @@ async def rig(dev_settings: Settings, tmp_path: Path) -> AsyncIterator[Rig]:
         kill_switch_collection=f"zz_kill_switch_{suffix}",
     )
     await MigrationRunner(MongoSchemaStore(mongo.database()), PLATFORM_SCHEMA).apply()
+    catalogue_before = {
+        row["name"]: row
+        async for row in mongo.database()[Collection.STRATEGIES].find(
+            {"name": {"$in": list(STRATEGIES)}}
+        )
+    }  # the worker registers strategies here; put back what was there so the test leaves no trace
     settings = dev_settings.model_copy(update={"kill_switch_file": str(world.sentinel_path)})
     try:
         yield Rig(world, settings, tmp_path)
@@ -102,6 +121,13 @@ async def rig(dev_settings: Settings, tmp_path: Path) -> AsyncIterator[Rig]:
                 {"strategy_name": {"$in": list(STRATEGIES)}, "session_date": DAY}
             )
         ]
+        for name in STRATEGIES:
+            if name in catalogue_before:
+                await db[Collection.STRATEGIES].replace_one(
+                    {"_id": catalogue_before[name]["_id"]}, catalogue_before[name], upsert=True
+                )
+            else:
+                await db[Collection.STRATEGIES].delete_one({"name": name})
         await db[Collection.SIGNALS].delete_many({"strategy_run_id": {"$in": runs}})
         await db[Collection.RISK_EVENTS].delete_many({"strategy_run_id": {"$in": runs}})
         await db[Collection.STRATEGY_RUNS].delete_many({"_id": {"$in": runs}})
@@ -129,12 +155,17 @@ class TestALiveSession:
         assert feeds.market.subscribed == expected  # so a dashboard START has live data at once
         assert feeds.warmup.requested == []  # nothing was launched, so nothing was warmed
         assert feeds.events == ["opened", "ticks on", "ticks off", "closed"]  # brackets the session
+        catalogue = await rig.catalogue()
+        assert set(catalogue) == set(STRATEGIES)  # listed before either has ever run
+        assert all(str(row["behaviour_hash"]).startswith("sha256:") for row in catalogue.values())
 
     async def test_a_strategy_started_at_launch_is_recorded_and_warmed_up(self, rig: Rig) -> None:
         warmup = ScriptedWarmup()
         feeds = ScriptedFeedOpener(warmup)
 
-        report = await rig.worker(feeds, start=("orb_v1",)).run()
+        report = await rig.worker(
+            feeds, start=("orb_v1",), acknowledged={"orb_v1": "none"}
+        ).run()  # no verdict is on record in the scratch collection, and the operator says so
 
         assert report.failure == ""
         assert warmup.requested == ["orb_v1"]  # the other loadable strategy stays cold
@@ -145,9 +176,22 @@ class TestALiveSession:
             )
         ]
         assert len(runs) == 1
+        assert runs[0]["stopped_at"] is not None  # the session ended, so the run is no longer live
 
 
 class TestARequestThatCannotRun:
+    async def test_a_strategy_with_no_verdict_is_not_started_at_launch_unless_acknowledged(
+        self, rig: Rig
+    ) -> None:
+        feeds = ScriptedFeedOpener()
+
+        with pytest.raises(ConfigurationError, match="acknowledge its standing by sending 'none'"):
+            await rig.worker(feeds, start=("orb_v1",)).run()
+        with pytest.raises(ConfigurationError, match="acknowledge"):
+            await rig.worker(feeds, start=("orb_v1",), acknowledged={"orb_v1": "rejected"}).run()
+
+        assert feeds.events == []  # refused before any feed was opened
+
     async def test_an_unknown_strategy_fails_before_any_feed_is_opened(self, rig: Rig) -> None:
         feeds = ScriptedFeedOpener()
 

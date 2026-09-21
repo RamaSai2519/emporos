@@ -172,6 +172,9 @@ PLATFORM_SCHEMA = Schema(
         ),
         _spec(Collection.BACKTEST_RUNS, IndexSpec.on("strategy_id", "created_at")),
         _spec(Collection.BACKTEST_TRADES, IndexSpec.on("backtest_run_id")),
+        # A verdict is a fact about one configuration and is never deleted or edited; the LATEST
+        # one per strategy is the one that applies. No TTL, like the trial ledger below.
+        _spec(Collection.STRATEGY_VERDICTS, IndexSpec.on("strategy", "recorded_at")),
         # No TTL, on purpose: the number of experiments ever tried is evidence, and an expired
         # entry would make a search look smaller than it was.
         _spec(

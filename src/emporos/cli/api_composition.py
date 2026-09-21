@@ -50,6 +50,7 @@ from emporos.persistence.repositories import (
     SystemEventRepository,
     UserRepository,
 )
+from emporos.persistence.verdict_store import MongoVerdictBook
 from emporos.risk.limits import RiskLimits
 
 
@@ -96,6 +97,7 @@ class ApiComposer:
                 risk_events=RiskEventRepository(db),
                 reconciliations=ReconciliationRunRepository(db),
                 system_events=SystemEventRepository(db),
+                verdicts=MongoVerdictBook(db),
                 kill_switch=KillSwitchRepository(db, self.kill_switch_collection),
                 commands=commands,
                 results=CommandResultRepository(db),

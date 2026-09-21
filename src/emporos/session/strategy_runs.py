@@ -96,6 +96,11 @@ class StrategyRunLauncher:
         )
         return StartedRun(run_id, config, snapshot, session_date)
 
+    async def register(self, config: ResolvedStrategyConfig) -> str:
+        """Put a loadable strategy in the catalogue without starting it, so it can be listed (and
+        started) before it has ever run. Returns the catalogue id."""
+        return await self._strategy_id(config.name, self._snapshotter.take(config))
+
     async def load(self, run_id: str) -> StartedRun:
         """Reproduce a recorded run from its snapshot, verifying the snapshot's hash."""
         record = await self._runs.get(run_id)
@@ -112,10 +117,20 @@ class StrategyRunLauncher:
         existing = await self._strategies.get_by_name(name)
         if existing is not None:
             await self._strategies.replace(
-                StrategyRecord(_id=existing.id, name=name, config=dict(snapshot.document))
+                StrategyRecord(
+                    _id=existing.id,
+                    name=name,
+                    config=dict(snapshot.document),
+                    behaviour_hash=snapshot.behaviour_hash,
+                )
             )
             return existing.id
-        record = StrategyRecord(_id=self._ids.new_ulid(), name=name, config=dict(snapshot.document))
+        record = StrategyRecord(
+            _id=self._ids.new_ulid(),
+            name=name,
+            config=dict(snapshot.document),
+            behaviour_hash=snapshot.behaviour_hash,
+        )
         try:
             await self._strategies.insert(record)
         except DuplicateRecordError:  # another process registered the name first

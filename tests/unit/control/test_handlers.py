@@ -14,6 +14,7 @@ from emporos.control.handlers import (
     CancelOrderHandler,
     ClosePositionHandler,
     KillSwitchHandler,
+    OpenStartGate,
     PlaceManualOrderHandler,
     ReconcileNowHandler,
     SquareOffAllHandler,
@@ -180,7 +181,7 @@ class TestSimpleHandlers:
         strategies, session = Strategies(), Session()
         record, params = run("START_STRATEGY", {"name": "s"})
         assert (
-            await StartStrategyHandler(strategies).handle(params, record)
+            await StartStrategyHandler(strategies, OpenStartGate()).handle(params, record)
         ).message == "s started"
         record, params = run("STOP_STRATEGY", {"name": "s"})
         assert (await StopStrategyHandler(strategies).handle(params, record)).message == "s stopped"
@@ -359,3 +360,44 @@ class TestManualOrders:
         )
         assert isinstance(SignalRecord, type)
         assert CommandRecord and Money and SessionState
+
+
+class TestTheStartGate:
+    async def test_a_refused_start_is_rejected_with_its_reason_and_never_reaches_the_host(
+        self,
+    ) -> None:
+        class Strategies:
+            def __init__(self) -> None:
+                self.started: list[str] = []
+
+            async def start(self, name: str) -> str:
+                self.started.append(name)
+                return "started"
+
+        class Refuses:
+            def __init__(self) -> None:
+                self.seen: list[tuple[str, str | None]] = []
+
+            async def check(self, name: str, acknowledged: str | None) -> str | None:
+                self.seen.append((name, acknowledged))
+                return "s is not validated (standing: rejected)"
+
+        strategies, gate = Strategies(), Refuses()
+        record, params = run("START_STRATEGY", {"name": "s", "acknowledge": "rejected"})
+
+        outcome = await StartStrategyHandler(strategies, gate).handle(params, record)  # type: ignore[arg-type]
+
+        assert outcome.status.value == "REJECTED" and "not validated" in outcome.message
+        assert strategies.started == []
+        assert gate.seen == [("s", "rejected")]  # the acknowledgement reaches the gate intact
+
+    async def test_the_acknowledgement_is_optional_and_never_empty(self) -> None:
+        run("START_STRATEGY", {"name": "s"})
+        run("START_STRATEGY", {"name": "s", "acknowledge": "rejected"})
+        for bad in ({"name": "s", "acknowledge": ""}, {"name": "s", "force": True}):
+            try:
+                run("START_STRATEGY", bad)
+            except Exception as error:
+                assert "acknowledge" in str(error) or "force" in str(error)
+            else:
+                raise AssertionError(f"{bad} should not parse")

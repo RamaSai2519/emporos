@@ -42,6 +42,7 @@ from emporos.backtest.tuning import SHARPE, ParameterCandidate
 from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
 from emporos.cli.backtest_runtime import candle_cache_root, open_backtest_runtime
 from emporos.cli.strategy_composition import build_registry
+from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.core.ids import IdGenerator
@@ -207,6 +208,17 @@ async def _curate(
                 Money.of(cash or str(benchmark.capital)),
                 progress=lambda message: typer.echo(message),
             )
+            if record_trials:  # a run kept out of the ledger is exploratory, and no verdict either
+                recorded = await record_curation(
+                    runtime.database,
+                    records,
+                    {e["name"]: Path(e["file"]) for e in plan["strategies"]},
+                    benchmark_path,
+                    first.date().isoformat(),
+                    last.date().isoformat(),
+                    experiment or f"curation-{datetime.now(UTC):%Y-%m-%d}",
+                )
+                typer.echo(f"{len(recorded)} verdict(s) recorded")
     return records, criteria
 
 

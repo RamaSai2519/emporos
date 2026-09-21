@@ -26,6 +26,12 @@ _START = typer.Option(
     "-s",
     help="Strategy to run from the first bar (repeatable); others wait for START.",
 )
+_ACKNOWLEDGE = typer.Option(
+    None,
+    "--acknowledge",
+    help="NAME=STANDING (repeatable): run a strategy that is not validated, naming its standing "
+    "(rejected, inconclusive, stale, none), as the dashboard asks you to type it.",
+)
 _ACCOUNT = typer.Option("paper", help="The paper account id (the API shows this account).")
 _CASH = typer.Option(DEFAULT_PAPER_CASH, help="The paper account's starting cash, a quoted number.")
 
@@ -34,6 +40,7 @@ _CASH = typer.Option(DEFAULT_PAPER_CASH, help="The paper account's starting cash
 def worker_run(
     strategies: list[Path] | None = _FILES,
     start: list[str] | None = _START,
+    acknowledge: list[str] | None = _ACKNOWLEDGE,
     account: str = _ACCOUNT,
     cash: str = _CASH,
 ) -> None:
@@ -44,7 +51,13 @@ def worker_run(
     here can place a real order.
     """
     files = strategies or sorted(Path("config/strategies").glob("*.yaml"))
-    options = PaperWorkerOptions(files, start or (), account, Money.of(cash))
+    acknowledged = dict(item.split("=", 1) for item in acknowledge or [] if "=" in item)
+    if len(acknowledged) != len(acknowledge or []):
+        typer.secho("--acknowledge takes NAME=STANDING", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    options = PaperWorkerOptions(
+        files, start or (), account, Money.of(cash), acknowledged=acknowledged
+    )
     settings, clock, sleeper = Settings.default(), SystemClock(), AsyncioSleeper()
     feeds = AngelOneFeedOpener(settings, clock, sleeper, RandomJitter())
     try:

@@ -198,6 +198,34 @@
         "title": "ExecutionDto",
         "type": "object"
       },
+      "GateDto": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "pass",
+              "fail",
+              "unknown"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "outcome",
+          "detail"
+        ],
+        "title": "GateDto",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -801,6 +829,10 @@
             ],
             "title": "Config Hash"
           },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
           "last_run_date": {
             "anyOf": [
               {
@@ -830,6 +862,35 @@
           "signals_last_run": {
             "title": "Signals Last Run",
             "type": "integer"
+          },
+          "standing": {
+            "enum": [
+              "validated",
+              "inconclusive",
+              "rejected",
+              "stale",
+              "none"
+            ],
+            "title": "Standing",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "stopped"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -837,7 +898,11 @@
           "config_hash",
           "last_run_id",
           "last_run_date",
-          "signals_last_run"
+          "signals_last_run",
+          "enabled",
+          "status",
+          "standing",
+          "verdict"
         ],
         "title": "StrategyDto",
         "type": "object"
@@ -946,6 +1011,72 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VerdictDto": {
+        "description": "What a curation concluded, as recorded by the curation run itself.",
+        "properties": {
+          "capital": {
+            "title": "Capital",
+            "type": "string"
+          },
+          "experiment": {
+            "title": "Experiment",
+            "type": "string"
+          },
+          "first_day": {
+            "title": "First Day",
+            "type": "string"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateDto"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "last_day": {
+            "title": "Last Day",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "validated",
+              "inconclusive",
+              "rejected"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "recorded_at": {
+            "format": "date-time",
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "recorded_at",
+          "capital",
+          "first_day",
+          "last_day",
+          "experiment",
+          "source",
+          "gates",
+          "notes"
+        ],
+        "title": "VerdictDto",
         "type": "object"
       }
     }

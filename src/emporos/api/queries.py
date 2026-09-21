@@ -25,8 +25,10 @@ from emporos.api.models import (
     RiskEventDto,
     StrategyDto,
     SystemEventDto,
+    VerdictDto,
 )
 from emporos.domain.money import Money
+from emporos.domain.verdicts import RecordedVerdict, standing_of
 from emporos.persistence.records import (
     CommandRecord,
     CommandResultRecord,
@@ -45,6 +47,10 @@ from emporos.persistence.records import (
 )
 
 MAX_PAGE = 500
+
+
+class VerdictReader(Protocol):
+    async def latest_of_each(self) -> dict[str, RecordedVerdict]: ...
 
 
 class Reader(Protocol):
@@ -89,6 +95,7 @@ class QueryService:
         risk_events: Reader,
         reconciliations: Reader,
         system_events: Reader,
+        verdicts: VerdictReader,
         kill_switch: Reader,
         commands: Reader,
         results: Reader,
@@ -100,6 +107,7 @@ class QueryService:
         self._strategies, self._runs, self._signals = strategies, runs, signals
         self._risk_events, self._reconciliations = risk_events, reconciliations
         self._system_events, self._kill_switch = system_events, kill_switch
+        self._verdicts = verdicts
         self._commands, self._results = commands, results
         self._limits = risk_limits
 
@@ -199,6 +207,7 @@ class QueryService:
     async def strategies(self) -> list[StrategyDto]:
         result: list[StrategyDto] = []
         rows: list[StrategyRecord] = await self._strategies.find({}, sort=[("name", 1)])
+        verdicts = await self._verdicts.latest_of_each()
         for strategy in rows:
             runs: list[StrategyRunRecord] = await self._runs.find(
                 {"strategy_id": strategy.id}, sort=[("created_at", -1)], limit=1
@@ -210,6 +219,9 @@ class QueryService:
                     {"strategy_run_id": run.id}, limit=MAX_PAGE
                 )
                 count = len(signals)
+            verdict = verdicts.get(strategy.name)
+            # A catalogue row from before behaviour hashes existed cannot be matched to a verdict.
+            standing = standing_of(verdict, strategy.behaviour_hash or "")
             result.append(
                 StrategyDto(
                     name=strategy.name,
@@ -217,9 +229,32 @@ class QueryService:
                     last_run_id=run.id if run else None,
                     last_run_date=run.session_date if run else None,
                     signals_last_run=count,
+                    enabled=bool(strategy.config.get("enabled", False)),
+                    status="running" if run is not None and run.stopped_at is None else "stopped",
+                    standing=standing.value,
+                    verdict=None if verdict is None else self._verdict_dto(verdict),
                 )
             )
         return result
+
+    @staticmethod
+    def _verdict_dto(verdict: RecordedVerdict) -> VerdictDto:
+        return VerdictDto.model_validate(
+            {
+                "outcome": verdict.verdict.value,
+                "recorded_at": verdict.recorded_at,
+                "capital": verdict.capital,
+                "first_day": verdict.first_day,
+                "last_day": verdict.last_day,
+                "experiment": verdict.experiment,
+                "source": verdict.source,
+                "notes": list(verdict.notes),
+                "gates": [
+                    {"name": g.name, "outcome": g.outcome, "detail": g.detail}
+                    for g in verdict.gates
+                ],
+            }
+        )
 
     async def risk(self, limit: int = 50) -> RiskDto:
         rows: list[RiskEventRecord] = await self._risk_events.find(

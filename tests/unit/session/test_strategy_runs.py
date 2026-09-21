@@ -184,3 +184,27 @@ async def test_the_rng_is_seeded_from_the_config_so_a_reproduced_run_draws_the_s
 
     assert draws(first) == draws(again)
     assert draws(first) != draws(other)
+
+
+async def test_a_strategy_can_be_registered_without_ever_running() -> None:
+    """The dashboard lists the catalogue: a loadable strategy is in it before its first run."""
+    rig = Rig()
+
+    strategy_id = await rig.launcher.register(_config())
+
+    (strategy,) = rig.strategies.records.values()
+    assert strategy.id == strategy_id and strategy.name == "threshold"
+    assert not rig.runs.records  # registered, not started
+
+
+async def test_the_catalogue_entry_carries_the_behaviour_hash_and_ignores_enabled() -> None:
+    rig = Rig()
+    await rig.launcher.register(_config(changed(raw_config(), "enabled", False)))
+    (before,) = rig.strategies.records.values()
+
+    await rig.launcher.register(_config(changed(raw_config(), "enabled", True)))
+    (after,) = rig.strategies.records.values()
+
+    assert before.behaviour_hash is not None
+    assert after.behaviour_hash == before.behaviour_hash  # switching on keeps the verdict valid
+    assert after.id == before.id

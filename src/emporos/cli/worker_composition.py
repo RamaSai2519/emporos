@@ -44,6 +44,7 @@ from emporos.control.handlers import (
     PlaceManualOrderHandler,
     ReconcileNowHandler,
     SquareOffAllHandler,
+    StartGate,
     StartStrategyHandler,
     StopStrategyHandler,
     TradingModeHandler,
@@ -98,6 +99,7 @@ from emporos.persistence.repositories import (
     SystemEventRepository,
 )
 from emporos.persistence.transactions import TransactionRunner
+from emporos.persistence.verdict_store import MongoVerdictBook
 from emporos.portfolio.ledger import PortfolioValuator, PositionCalculator
 from emporos.portfolio.marks import LatestTickMarks
 from emporos.portfolio.reconciliation import (
@@ -128,6 +130,7 @@ from emporos.session.close_out import EndOfDay
 from emporos.session.halt import KillSwitchHalt
 from emporos.session.host import ManagedRun, StrategyHost
 from emporos.session.jobs import Job, JobScheduler
+from emporos.session.launch_gate import ConfigLaunchFacts, PolicyStartGate, paper_policy
 from emporos.session.lifecycle import SessionLifecycle
 from emporos.session.quoter import MarkRepriceQuoter
 from emporos.session.recovery import StartupRecovery
@@ -138,6 +141,7 @@ from emporos.session.risk_facts import (
     QuotedMarketFacts,
     VenueHealth,
 )
+from emporos.session.run_status import RunStatusBoard
 from emporos.session.signal_path import GatedExecutionSink
 from emporos.session.square_off import SquareOffService
 from emporos.session.strategy_positions import StrategyPositionBook
@@ -258,6 +262,9 @@ class PaperWorkerComposer:
     config_validator: ConfigValidator | None = None
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
     warmup: WarmupSource | None = None  # history for a launched strategy; None starts it empty
+    # May a strategy start? None means the paper rule: a strategy that is not validated needs its
+    # standing acknowledged. A test that wants no rule passes `OpenStartGate` explicitly.
+    start_gate: StartGate | None = None
 
     async def build(self) -> WorkerAssembly:
         await self.client.admin.command("ping")  # open the pool before anything fans out (H1)
@@ -374,9 +381,16 @@ class PaperWorkerComposer:
         )
 
         # --- strategies ---------------------------------------------------------------------
+        run_records = StrategyRunRepository(db)
         launcher = StrategyRunLauncher(
-            self.registry, StrategyRepository(db), StrategyRunRepository(db), self.clock, self.ids
+            self.registry, StrategyRepository(db), run_records, self.clock, self.ids
         )
+        runs_board = RunStatusBoard(run_records, self.clock)
+        await runs_board.close_open_runs()  # whatever a worker that is gone left running
+        loadable = {c.name: c for c in (*self.available, *self.configs)}
+        for config in loadable.values():
+            await launcher.register(config)  # listed before its first run, so it can be started
+        start_gate = self.start_gate or paper_start_gate(db, list(loadable.values()))
         builder = StrategyRunnerBuilder(self.registry)
         session_date = (self.session_date or self.clock.now().date()).isoformat()
         factory = _RunFactory(
@@ -419,7 +433,9 @@ class PaperWorkerComposer:
             [Job("reprice", t.reprice, repricer.run_once)], self.clock, alerts
         )
         end_of_day = EndOfDay(sync, engine, reconciler, snapshots, alerts)
-        host = StrategyHost(runs, self.bars, updates, journal, OrderUpdateTranslator(), factory)
+        host = StrategyHost(
+            runs, self.bars, updates, journal, OrderUpdateTranslator(), factory, runs_board
+        )
         results = CommandResultRepository(db)
         square_off = SquareOffService(ledger, journal, marks, sink, self.clock, alerts)
         processor = CommandProcessor(
@@ -427,7 +443,7 @@ class PaperWorkerComposer:
             results,
             self._handlers(
                 control, square_off, engine, sink, ledger, host, lifecycle, reconciler, results,
-                StrategyRepository(db),
+                StrategyRepository(db), start_gate,
             ),
             self.clock, self.ids, alerts,
         )  # fmt: skip
@@ -471,6 +487,7 @@ class PaperWorkerComposer:
         reconciler: Reconciler,
         results: CommandResultRepository,
         strategies: StrategyRepository,
+        start_gate: StartGate,
     ) -> dict[CommandType, CommandHandler]:
         controller = StrategyController(host, self.config_validator or _NoValidator(), strategies)
         jobs = BackgroundJobs(self.job_runners, results, self.clock, self.ids)
@@ -480,7 +497,7 @@ class PaperWorkerComposer:
             CommandType.CLOSE_POSITION: ClosePositionHandler(square_off),
             CommandType.CANCEL_ORDER: CancelOrderHandler(engine),
             CommandType.PLACE_MANUAL_ORDER: PlaceManualOrderHandler(sink, ledger, self.clock),
-            CommandType.START_STRATEGY: StartStrategyHandler(controller),
+            CommandType.START_STRATEGY: StartStrategyHandler(controller, start_gate),
             CommandType.STOP_STRATEGY: StopStrategyHandler(controller),
             CommandType.UPDATE_STRATEGY_CONFIG: UpdateStrategyConfigHandler(controller, lifecycle),
             CommandType.TRIGGER_BACKFILL: BackfillHandler(jobs),
@@ -488,6 +505,17 @@ class PaperWorkerComposer:
             CommandType.RECONCILE_NOW: ReconcileNowHandler(_ReconcileNow(reconciler)),
             CommandType.SET_TRADING_MODE: TradingModeHandler(),
         }
+
+
+def paper_start_gate(
+    database: Database,
+    configs: Sequence[ResolvedStrategyConfig],
+    verdicts: str = Collection.STRATEGY_VERDICTS,
+) -> StartGate:
+    """The rule for starting a strategy in paper: any may start, but one that is not validated for
+    its current config needs its standing named."""
+    book = MongoVerdictBook(database, verdicts)
+    return PolicyStartGate(paper_policy(book), ConfigLaunchFacts(configs))
 
 
 class _NoValidator:

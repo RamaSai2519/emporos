@@ -7,7 +7,7 @@ computed: nothing here does arithmetic on money.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -109,12 +109,38 @@ class ExecutionDto(_Dto):
     ts: datetime
 
 
+class GateDto(_Dto):
+    name: str
+    outcome: Literal["pass", "fail", "unknown"]
+    detail: str
+
+
+class VerdictDto(_Dto):
+    """What a curation concluded, as recorded by the curation run itself."""
+
+    outcome: Literal["validated", "inconclusive", "rejected"]
+    recorded_at: datetime
+    capital: str
+    first_day: str
+    last_day: str
+    experiment: str
+    source: str
+    gates: list[GateDto]
+    notes: list[str]  # what differs between what was judged and what would run
+
+
 class StrategyDto(_Dto):
     name: str
     config_hash: str | None
     last_run_id: str | None
     last_run_date: str | None
     signals_last_run: int
+    enabled: bool  # the strategy's own `enabled` flag in its config
+    status: Literal["running", "stopped"]  # running: its latest run has not stopped
+    # The verdict judged against the strategy's CURRENT config: `stale` is a verdict for a config
+    # that has since been edited, `none` is a strategy never curated.
+    standing: Literal["validated", "inconclusive", "rejected", "stale", "none"]
+    verdict: VerdictDto | None
 
 
 class RiskEventDto(_Dto):

@@ -98,6 +98,12 @@ class StrategyNameParams(Params):
     name: str = Field(min_length=1)
 
 
+class StartStrategyParams(StrategyNameParams):
+    # The standing (`rejected`, `stale`, ...) the operator was shown and typed back. The worker
+    # refuses a strategy that is not validated unless this names its standing.
+    acknowledge: str | None = Field(default=None, min_length=1)
+
+
 class UpdateStrategyConfigParams(Params):
     name: str = Field(min_length=1)
     config: dict[str, Any]
@@ -130,7 +136,7 @@ COMMAND_SCHEMAS: Mapping[CommandType, type[Params]] = MappingProxyType(
         CommandType.CLOSE_POSITION: ClosePositionParams,
         CommandType.CANCEL_ORDER: CancelOrderParams,
         CommandType.PLACE_MANUAL_ORDER: PlaceManualOrderParams,
-        CommandType.START_STRATEGY: StrategyNameParams,
+        CommandType.START_STRATEGY: StartStrategyParams,
         CommandType.STOP_STRATEGY: StrategyNameParams,
         CommandType.UPDATE_STRATEGY_CONFIG: UpdateStrategyConfigParams,
         CommandType.TRIGGER_BACKFILL: TriggerBackfillParams,

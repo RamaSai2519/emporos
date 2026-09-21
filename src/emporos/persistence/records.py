@@ -64,6 +64,8 @@ class InstrumentVersionRecord(Record):
 class StrategyRecord(Record):
     name: str
     config: dict[str, Any] = Field(default_factory=dict)
+    # Hash of the config's behaviour (`enabled` left out): what a recorded verdict is bound to.
+    behaviour_hash: str | None = None
 
 
 class StrategyRunRecord(Record):
@@ -75,6 +77,23 @@ class StrategyRunRecord(Record):
     config_snapshot: dict[str, Any] = Field(default_factory=dict)
     config_hash: str | None = None
     strategy_name: str | None = None
+    stopped_at: datetime | None = None  # None while the run is live; the worker is the only writer
+
+
+class StrategyVerdictRecord(Record):
+    """What a curation concluded about one configuration of a strategy, append-only."""
+
+    strategy: str
+    behaviour_hash: str
+    verdict: str
+    gates: list[dict[str, Any]] = Field(default_factory=list)
+    capital: str
+    first_day: str
+    last_day: str
+    experiment: str
+    source: str
+    recorded_at: datetime
+    notes: list[str] = Field(default_factory=list)
 
 
 class SignalRecord(Record):

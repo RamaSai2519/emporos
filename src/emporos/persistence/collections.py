@@ -13,6 +13,7 @@ class Collection(StrEnum):
     CANDLES = "candles"
     STRATEGIES = "strategies"
     STRATEGY_RUNS = "strategy_runs"
+    STRATEGY_VERDICTS = "strategy_verdicts"
     SIGNALS = "signals"
     ORDERS = "orders"
     ORDER_EVENTS = "order_events"

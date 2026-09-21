@@ -41,6 +41,16 @@ class ConfigSnapshot:
     document: dict[str, Canonical]
     content_hash: str
 
+    @property
+    def behaviour_hash(self) -> str:
+        """The hash of what the strategy DOES: the same document with `enabled` left out.
+
+        Switching a strategy on does not change its behaviour, so it must not change what a recorded
+        backtest verdict is bound to. Everything else (parameters, universe, risk, execution,
+        session) does, and editing any of it makes the verdict stale.
+        """
+        return ConfigSnapshotter.hash_of({k: v for k, v in self.document.items() if k != "enabled"})
+
 
 class Canonicalizer:
     def canonical(self, value: object) -> Canonical:

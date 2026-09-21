@@ -22,6 +22,7 @@ from emporos.control.commands import (
     SetKillSwitchParams,
     SetTradingModeParams,
     SquareOffAllParams,
+    StartStrategyParams,
     StrategyNameParams,
     TriggerBackfillParams,
     UpdateStrategyConfigParams,
@@ -67,6 +68,19 @@ class ReconcilePort(Protocol):
     async def run_now(self) -> int:
         """Reconcile immediately; returns the number of discrepancies found."""
         ...
+
+
+class StartGate(Protocol):
+    async def check(self, name: str, acknowledged: str | None) -> str | None:
+        """Why this strategy may not start now, or None if it may."""
+        ...
+
+
+class OpenStartGate:
+    """Lets every start through. For tests and deployments with no verdicts to consult."""
+
+    async def check(self, name: str, acknowledged: str | None) -> str | None:
+        return None
 
 
 class StrategyControlPort(Protocol):
@@ -196,11 +210,18 @@ def _risk_rejected(rejection: RiskRejection, signal_id: str) -> Outcome:
 
 
 class StartStrategyHandler:
-    def __init__(self, strategies: StrategyControlPort) -> None:
+    """A start is refused, with the reason, when the gate says so: the check is the worker's, so it
+    holds however the command arrived (dashboard, API client, replayed after a restart)."""
+
+    def __init__(self, strategies: StrategyControlPort, gate: StartGate) -> None:
         self._strategies = strategies
+        self._gate = gate
 
     async def handle(self, params: Params, command: CommandRecord) -> Outcome:
-        assert isinstance(params, StrategyNameParams)
+        assert isinstance(params, StartStrategyParams)
+        refusal = await self._gate.check(params.name, params.acknowledge)
+        if refusal is not None:
+            return Outcome.rejected(refusal)
         return Outcome.done(await self._strategies.start(params.name))
 
 
