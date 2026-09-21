@@ -129,6 +129,13 @@ async def _curate(
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     if plan.get("objective") != "sharpe":
         raise ValueError("the plan's objective must be sharpe (the only one pre-registered)")
+    known = {e["name"] for e in plan["strategies"]}
+    unknown = [name for name in only or () if name not in known]
+    if unknown:
+        raise ValueError(
+            f"--only names not in {plan_path}: {', '.join(unknown)} "
+            f"(available: {', '.join(sorted(known))})"
+        )
     windows = plan["windows"]
     benchmark = BenchmarkLoader(benchmark_path).load()
     scaler = BenchmarkScaler(benchmark)
