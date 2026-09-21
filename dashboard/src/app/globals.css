@@ -1311,3 +1311,52 @@ meter::-webkit-meter-optimum-value {
     scroll-behavior: auto !important;
   }
 }
+
+.snapshot-summary {
+  padding: 28px 22px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 17px;
+}
+.snapshot-summary h3 {
+  font-family: Consolas, monospace;
+  font-size: 17px;
+}
+.snapshot-summary p {
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 480px;
+  line-height: 1.7;
+}
+.verdict {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 18px 0 0;
+}
+.verdict[data-standing="rejected"] {
+  border-color: #f08c9637;
+}
+.verdict[data-standing="validated"] {
+  border-color: #63c9b037;
+}
+.verdict-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.verdict p {
+  margin: 10px 0 0;
+}
+.verdict-gates {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+}
+.verdict-note {
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+}

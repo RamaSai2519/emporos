@@ -6,6 +6,8 @@ import {
   type Resource,
 } from "./schema";
 import type { paths } from "./api.generated";
+import { WireSchema } from "./wire";
+import { ReadModelMapper } from "./read-models";
 
 export class ApiError extends Error {
   constructor(
@@ -23,7 +25,7 @@ export interface LoginGateway {
 }
 export interface CommandGateway {
   submit(input: CommandInput): Promise<Command>;
-  command(key: string): Promise<Command>;
+  command(key: string, knownId?: string): Promise<Command>;
 }
 export interface ReadGateway {
   read<K extends Resource>(
@@ -53,48 +55,145 @@ export class ApiClient implements LoginGateway, CommandGateway, ReadGateway {
         "API URL must not contain credentials, query parameters or fragments.",
       );
   }
+  private readonly mapper = new ReadModelMapper(Date.now);
+  private readonly loaders = {
+    overview: async (signal?: AbortSignal) =>
+      this.mapper.overview(
+        await this.send("/overview", WireSchema.overview, { signal }),
+      ),
+    positions: async (signal?: AbortSignal) =>
+      this.mapper.positions(
+        await this.send(
+          "/positions?open_only=true",
+          z.array(WireSchema.position),
+          { signal },
+        ),
+      ),
+    orders: async (signal?: AbortSignal) =>
+      this.mapper.orders(
+        await this.send("/orders?limit=500", z.array(WireSchema.order), {
+          signal,
+        }),
+      ),
+    strategies: async (signal?: AbortSignal) =>
+      this.mapper.strategies(
+        await this.send("/strategies", z.array(WireSchema.strategy), {
+          signal,
+        }),
+      ),
+    risk: async (signal?: AbortSignal) =>
+      this.mapper.risk(await this.send("/risk", WireSchema.risk, { signal })),
+    market: async () => ({ as_of: new Date().toISOString(), items: [] }),
+    system: async (signal?: AbortSignal) => {
+      const [events, reconciliations, commands, health] = await Promise.all([
+        this.send("/system/events", z.array(WireSchema.event), { signal }),
+        this.send(
+          "/system/reconciliations",
+          z.array(WireSchema.reconciliation),
+          { signal },
+        ),
+        this.send("/commands?limit=500", z.array(WireSchema.command), {
+          signal,
+        }),
+        this.send("/health", WireSchema.health, { signal }),
+      ]);
+      const system = this.mapper.system(events, reconciliations, commands);
+      return {
+        ...system,
+        services: [
+          {
+            name: "Control API",
+            healthy: health.status === "ok",
+            detail:
+              "HTTP service health; worker and feed health are not exposed.",
+          },
+        ],
+      };
+    },
+  };
   async login(passcode: string) {
-    return this.send(
+    const response = await this.send(
       "/auth/login",
-      ApiSchema.login,
+      WireSchema.token,
       { method: "POST", body: JSON.stringify({ passcode }) },
       false,
     );
+    const expiresIn = (Date.parse(response.expires_at) - Date.now()) / 1000;
+    if (expiresIn <= 0)
+      throw new ApiError("The API returned an expired session.", 401);
+    return {
+      access_token: response.token,
+      token_type: "bearer" as const,
+      expires_in: expiresIn,
+    };
   }
   async read<K extends Resource>(
     resource: K,
     signal?: AbortSignal,
   ): Promise<z.infer<(typeof ApiSchema.resources)[K]>> {
-    // The keyed schema validates the response before this correlated output is returned.
-    return (await this.send(
-      `/api/${resource}`,
-      ApiSchema.resources[resource] as z.ZodType,
-      { signal },
-    )) as z.infer<(typeof ApiSchema.resources)[K]>;
+    const result = await this.loaders[resource](signal);
+    return ApiSchema.resources[resource].parse(result) as z.infer<
+      (typeof ApiSchema.resources)[K]
+    >;
   }
   async submit(input: CommandInput) {
-    const body: paths["/api/commands"]["post"]["requestBody"]["content"]["application/json"] =
+    const body: paths["/commands"]["post"]["requestBody"]["content"]["application/json"] =
       ApiSchema.commandInput.parse(input);
-    return this.send("/api/commands", ApiSchema.command, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  }
-  async command(key: string) {
-    return this.send(
-      `/api/commands/${encodeURIComponent(key)}`,
-      ApiSchema.command,
+    return this.mapper.command(
+      await this.send("/commands", WireSchema.command, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
     );
   }
-  async candles(instrument: string, interval: string, signal?: AbortSignal) {
-    return this.send(
-      `/api/candles?${new URLSearchParams({ instrument_id: instrument, interval })}`,
-      ApiSchema.candles,
-      { signal },
+  async command(key: string, knownId?: string) {
+    let id = knownId;
+    if (!id) {
+      const commands = await this.send(
+        "/commands?limit=500",
+        z.array(WireSchema.command),
+      );
+      id = commands.find((command) => command.idempotency_key === key)?.id;
+    }
+    if (!id)
+      throw new ApiError(
+        "Original command not found in the latest 500 records. Delivery remains unconfirmed.",
+        404,
+      );
+    const detail = await this.send(
+      `/commands/${encodeURIComponent(id)}`,
+      WireSchema.commandDetail,
+    );
+    if (detail.command.idempotency_key !== key)
+      throw new ApiError("Command identity mismatch.", 502);
+    const result = this.mapper.command(detail.command);
+    return {
+      ...result,
+      message: detail.command.reason || detail.results.at(-1)?.message || null,
+    };
+  }
+  async orderHistory(id: string, signal?: AbortSignal) {
+    return this.mapper.orderEvents(
+      await this.send(
+        `/orders/${encodeURIComponent(id)}`,
+        WireSchema.orderDetail,
+        { signal },
+      ),
+    );
+  }
+  async candles(
+    instrument: string,
+    interval: string,
+    signal?: AbortSignal,
+  ): Promise<z.infer<typeof ApiSchema.candles>> {
+    signal?.throwIfAborted();
+    throw new ApiError(
+      `Candle data for ${instrument} (${interval}) is not exposed by this API.`,
+      501,
     );
   }
   async stream(signal: AbortSignal, lastEventId: string): Promise<Response> {
-    const response = await this.request(`${this.baseUrl}/api/events`, {
+    const response = await this.request(`${this.baseUrl}/stream`, {
       headers: {
         ...this.headers(),
         Accept: "text/event-stream",

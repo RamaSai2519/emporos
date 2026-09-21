@@ -1,859 +1,21 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Emporos frontend integration proposal — pending EM-40",
-    "version": "0.1.0"
-  },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
-      }
-    }
+    "title": "Emporos control plane",
+    "version": "1.0.0"
   },
   "paths": {
-    "/api/overview": {
+    "/health": {
       "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "session_state": {
-                      "type": "string"
-                    },
-                    "trading_mode": {
-                      "type": "string",
-                      "enum": [
-                        "paper",
-                        "live"
-                      ]
-                    },
-                    "broker_healthy": {
-                      "type": "boolean"
-                    },
-                    "feed_healthy": {
-                      "type": "boolean"
-                    },
-                    "worker_healthy": {
-                      "type": "boolean"
-                    },
-                    "stale_after_seconds": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    },
-                    "kill_switch": {
-                      "type": "boolean"
-                    },
-                    "day_pnl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "pattern": "^-?\\d+(\\.\\d+)?$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "realised_pnl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "pattern": "^-?\\d+(\\.\\d+)?$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "unrealised_pnl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "pattern": "^-?\\d+(\\.\\d+)?$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "open_positions": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "open_orders": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "equity_curve": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "value": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "at",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "severity": {
-                            "type": "string",
-                            "enum": [
-                              "info",
-                              "warning",
-                              "error"
-                            ]
-                          },
-                          "message": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "at",
-                          "severity",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "session_state",
-                    "trading_mode",
-                    "broker_healthy",
-                    "feed_healthy",
-                    "worker_healthy",
-                    "stale_after_seconds",
-                    "kill_switch",
-                    "day_pnl",
-                    "realised_pnl",
-                    "unrealised_pnl",
-                    "open_positions",
-                    "open_orders",
-                    "equity_curve",
-                    "events"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/positions": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "instrument_id": {
-                            "type": "string"
-                          },
-                          "symbol": {
-                            "type": "string"
-                          },
-                          "exchange": {
-                            "type": "string",
-                            "enum": [
-                              "NSE",
-                              "BSE"
-                            ]
-                          },
-                          "strategy_id": {
-                            "type": "string"
-                          },
-                          "quantity": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "average_price": {
-                            "type": "string",
-                            "pattern": "^-?\\d+(\\.\\d+)?$"
-                          },
-                          "last_price": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "pattern": "^-?\\d+(\\.\\d+)?$"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "unrealised_pnl": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "pattern": "^-?\\d+(\\.\\d+)?$"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "realised_pnl": {
-                            "type": "string",
-                            "pattern": "^-?\\d+(\\.\\d+)?$"
-                          },
-                          "frozen": {
-                            "type": "boolean"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "instrument_id",
-                          "symbol",
-                          "exchange",
-                          "strategy_id",
-                          "quantity",
-                          "average_price",
-                          "last_price",
-                          "unrealised_pnl",
-                          "realised_pnl",
-                          "frozen"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/orders": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "symbol": {
-                            "type": "string"
-                          },
-                          "exchange": {
-                            "type": "string",
-                            "enum": [
-                              "NSE",
-                              "BSE"
-                            ]
-                          },
-                          "side": {
-                            "type": "string",
-                            "enum": [
-                              "BUY",
-                              "SELL"
-                            ]
-                          },
-                          "order_type": {
-                            "type": "string",
-                            "enum": [
-                              "LIMIT",
-                              "STOPLOSS_LIMIT"
-                            ]
-                          },
-                          "quantity": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "filled_quantity": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "limit_price": {
-                            "type": "string",
-                            "pattern": "^-?\\d+(\\.\\d+)?$"
-                          },
-                          "state": {
-                            "type": "string"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "events": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "sequence": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991
-                                },
-                                "state": {
-                                  "type": "string"
-                                },
-                                "at": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                                },
-                                "message": {
-                                  "type": [
-                                    "string",
-                                    "null"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "sequence",
-                                "state",
-                                "at",
-                                "message"
-                              ],
-                              "additionalProperties": false
-                            }
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "symbol",
-                          "exchange",
-                          "side",
-                          "order_type",
-                          "quantity",
-                          "filled_quantity",
-                          "limit_price",
-                          "state",
-                          "created_at",
-                          "events"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/strategies": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "running",
-                              "stopped",
-                              "halted",
-                              "starting",
-                              "stopping"
-                            ]
-                          },
-                          "pnl": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "pattern": "^-?\\d+(\\.\\d+)?$"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "signals": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "config": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                          "status",
-                          "pnl",
-                          "signals",
-                          "description",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/risk": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "limits": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "used": {
-                            "type": "number",
-                            "minimum": 0
-                          },
-                          "limit": {
-                            "type": "number",
-                            "exclusiveMinimum": 0
-                          },
-                          "unit": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "used",
-                          "limit",
-                          "unit"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "severity": {
-                            "type": "string",
-                            "enum": [
-                              "info",
-                              "warning",
-                              "error"
-                            ]
-                          },
-                          "message": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "at",
-                          "severity",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "limits",
-                    "events"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/market": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "instrument_id": {
-                            "type": "string"
-                          },
-                          "symbol": {
-                            "type": "string"
-                          },
-                          "exchange": {
-                            "type": "string",
-                            "enum": [
-                              "NSE",
-                              "BSE"
-                            ]
-                          },
-                          "last_price": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "pattern": "^-?\\d+(\\.\\d+)?$"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "change_percent": {
-                            "type": [
-                              "number",
-                              "null"
-                            ]
-                          },
-                          "as_of": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          }
-                        },
-                        "required": [
-                          "instrument_id",
-                          "symbol",
-                          "exchange",
-                          "last_price",
-                          "change_percent",
-                          "as_of"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "items"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/system": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "as_of": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "services": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "healthy": {
-                            "type": "boolean"
-                          },
-                          "detail": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "healthy",
-                          "detail"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "reconciliations": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "severity": {
-                            "type": "string",
-                            "enum": [
-                              "info",
-                              "warning",
-                              "error"
-                            ]
-                          },
-                          "message": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "at",
-                          "severity",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "severity": {
-                            "type": "string",
-                            "enum": [
-                              "info",
-                              "warning",
-                              "error"
-                            ]
-                          },
-                          "message": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "at",
-                          "severity",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "commands": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "idempotency_key": {
-                            "type": "string"
-                          },
-                          "type": {
-                            "type": "string"
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "PENDING",
-                              "ACCEPTED",
-                              "EXECUTING",
-                              "DONE",
-                              "FAILED",
-                              "REJECTED",
-                              "EXPIRED"
-                            ]
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          },
-                          "message": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "idempotency_key",
-                          "type",
-                          "status",
-                          "created_at",
-                          "message"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "as_of",
-                    "services",
-                    "reconciliations",
-                    "events",
-                    "commands"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/HealthDto"
                 }
               }
             }
@@ -863,53 +25,35 @@
     },
     "/auth/login": {
       "post": {
-        "security": [],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "passcode"
-                ],
-                "properties": {
-                  "passcode": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/LoginRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "access_token": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "token_type": {
-                      "type": "string",
-                      "const": "bearer"
-                    },
-                    "expires_in": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    }
-                  },
-                  "required": [
-                    "access_token",
-                    "token_type",
-                    "expires_in"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -917,394 +61,463 @@
         }
       }
     },
-    "/api/commands": {
+    "/overview": {
+      "get": {
+        "summary": "Overview",
+        "operationId": "overview_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/positions": {
+      "get": {
+        "summary": "Positions",
+        "operationId": "positions_positions_get",
+        "parameters": [
+          {
+            "name": "open_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Open Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PositionDto"
+                  },
+                  "title": "Response Positions Positions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "summary": "Orders",
+        "operationId": "orders_orders_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "instrument_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Instrument Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderDto"
+                  },
+                  "title": "Response Orders Orders Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "summary": "Order",
+        "operationId": "order_orders__order_id__get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/executions": {
+      "get": {
+        "summary": "Executions",
+        "operationId": "executions_executions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExecutionDto"
+                  },
+                  "title": "Response Executions Executions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/strategies": {
+      "get": {
+        "summary": "Strategies",
+        "operationId": "strategies_strategies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StrategyDto"
+                  },
+                  "type": "array",
+                  "title": "Response Strategies Strategies Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risk": {
+      "get": {
+        "summary": "Risk",
+        "operationId": "risk_risk_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/events": {
+      "get": {
+        "summary": "System Events",
+        "operationId": "system_events_system_events_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SystemEventDto"
+                  },
+                  "title": "Response System Events System Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/reconciliations": {
+      "get": {
+        "summary": "Reconciliations",
+        "operationId": "reconciliations_system_reconciliations_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconciliationDto"
+                  },
+                  "title": "Response Reconciliations System Reconciliations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/commands": {
+      "get": {
+        "summary": "Commands",
+        "operationId": "commands_commands_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommandDto"
+                  },
+                  "title": "Response Commands Commands Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
+        "summary": "Submit",
+        "description": "Record the command and return at once: 202, status PENDING. The outcome is read from\n`GET /commands/{id}` or the stream \u2014 never assumed.",
+        "operationId": "submit_commands_post",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "SET_KILL_SWITCH"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "halted": {
-                            "type": "boolean",
-                            "const": true
-                          },
-                          "reason": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "halted",
-                          "reason"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "SQUARE_OFF_ALL"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "CLOSE_POSITION"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "instrument_id": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "instrument_id"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "CANCEL_ORDER"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "order_id": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "order_id"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "START_STRATEGY"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "STOP_STRATEGY"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "name"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "UPDATE_STRATEGY_CONFIG"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "config": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {}
-                          },
-                          "force": {
-                            "type": "boolean",
-                            "const": false
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "config",
-                          "force"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "PLACE_MANUAL_ORDER"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {
-                          "instrument_id": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "side": {
-                            "type": "string",
-                            "enum": [
-                              "BUY",
-                              "SELL"
-                            ]
-                          },
-                          "quantity": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
-                          },
-                          "limit_price": {
-                            "type": "string",
-                            "pattern": "^-?\\d+(\\.\\d+)?$"
-                          },
-                          "reason": {
-                            "type": "string",
-                            "minLength": 1
-                          }
-                        },
-                        "required": [
-                          "instrument_id",
-                          "side",
-                          "quantity",
-                          "limit_price",
-                          "reason"
-                        ],
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "RECONCILE_NOW"
-                      },
-                      "params": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
-                      },
-                      "idempotency_key": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "params",
-                      "idempotency_key"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
+                "$ref": "#/components/schemas/SubmitCommandRequest"
               }
             }
           }
         },
         "responses": {
           "202": {
-            "description": "Success",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "idempotency_key": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "PENDING",
-                        "ACCEPTED",
-                        "EXECUTING",
-                        "DONE",
-                        "FAILED",
-                        "REJECTED",
-                        "EXPIRED"
-                      ]
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "message": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "idempotency_key",
-                    "type",
-                    "status",
-                    "created_at",
-                    "message"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/CommandDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1312,148 +525,38 @@
         }
       }
     },
-    "/api/commands/{idempotency_key}": {
+    "/commands/{command_id}": {
       "get": {
+        "summary": "Command",
+        "operationId": "command_commands__command_id__get",
         "parameters": [
           {
-            "name": "idempotency_key",
+            "name": "command_id",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "title": "Command Id"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "idempotency_key": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "PENDING",
-                        "ACCEPTED",
-                        "EXECUTING",
-                        "DONE",
-                        "FAILED",
-                        "REJECTED",
-                        "EXPIRED"
-                      ]
-                    },
-                    "created_at": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                    },
-                    "message": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "idempotency_key",
-                    "type",
-                    "status",
-                    "created_at",
-                    "message"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/CommandDetailDto"
                 }
               }
-            }
-          }
-        }
-      }
-    },
-    "/api/candles": {
-      "get": {
-        "parameters": [
-          {
-            "name": "instrument_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           },
-          {
-            "name": "interval",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "1m",
-                "5m",
-                "15m"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
+          "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$schema": "https://json-schema.org/draft/2020-12/schema",
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "time": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "open": {
-                            "type": "number"
-                          },
-                          "high": {
-                            "type": "number"
-                          },
-                          "low": {
-                            "type": "number"
-                          },
-                          "close": {
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "time",
-                          "open",
-                          "high",
-                          "low",
-                          "close"
-                        ],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "required": [
-                    "items"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1461,20 +564,1102 @@
         }
       }
     },
-    "/api/events": {
+    "/stream": {
       "get": {
+        "summary": "Stream",
+        "operationId": "stream_stream_get",
         "responses": {
           "200": {
-            "description": "SSE invalidations; data: {\"resource\":\"orders\"}. Heartbeat every <=15 seconds.",
+            "description": "Successful Response",
             "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
+              "application/json": {
+                "schema": {}
               }
             }
           }
         }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CommandDetailDto": {
+        "properties": {
+          "command": {
+            "$ref": "#/components/schemas/CommandDto"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CommandResultDto"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "command",
+          "results"
+        ],
+        "title": "CommandDetailDto"
+      },
+      "CommandDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "params": {
+            "type": "object",
+            "title": "Params"
+          },
+          "issued_by": {
+            "type": "string",
+            "title": "Issued By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "idempotency_key",
+          "type",
+          "status",
+          "params",
+          "issued_by",
+          "created_at",
+          "updated_at",
+          "expires_at",
+          "reason",
+          "attempts"
+        ],
+        "title": "CommandDto"
+      },
+      "CommandResultDto": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "data": {
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "status",
+          "message",
+          "data"
+        ],
+        "title": "CommandResultDto"
+      },
+      "ExecutionDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "broker_trade_id": {
+            "type": "string",
+            "title": "Broker Trade Id"
+          },
+          "order_id": {
+            "type": "string",
+            "title": "Order Id"
+          },
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "fees": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fees"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "broker_trade_id",
+          "order_id",
+          "instrument_id",
+          "side",
+          "quantity",
+          "price",
+          "fees",
+          "ts"
+        ],
+        "title": "ExecutionDto"
+      },
+      "GateDto": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "unknown"
+            ],
+            "title": "Outcome"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "outcome",
+          "detail"
+        ],
+        "title": "GateDto"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthDto": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "time"
+        ],
+        "title": "HealthDto"
+      },
+      "KillSwitchDto": {
+        "properties": {
+          "halted": {
+            "type": "boolean",
+            "title": "Halted"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          },
+          "set_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Set By"
+          },
+          "changed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "halted"
+        ],
+        "title": "KillSwitchDto"
+      },
+      "LoginRequest": {
+        "properties": {
+          "passcode": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Passcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passcode"
+        ],
+        "title": "LoginRequest"
+      },
+      "OrderDetailDto": {
+        "properties": {
+          "order": {
+            "$ref": "#/components/schemas/OrderDto"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/OrderEventDto"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order",
+          "events"
+        ],
+        "title": "OrderDetailDto"
+      },
+      "OrderDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ordertag": {
+            "type": "string",
+            "title": "Ordertag"
+          },
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "side": {
+            "type": "string",
+            "title": "Side"
+          },
+          "order_type": {
+            "type": "string",
+            "title": "Order Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "filled_quantity": {
+            "type": "integer",
+            "title": "Filled Quantity"
+          },
+          "limit_price": {
+            "type": "string",
+            "title": "Limit Price"
+          },
+          "average_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Price"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "strategy_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Run Id"
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id"
+          },
+          "parent_order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Order Id"
+          },
+          "reprice_count": {
+            "type": "integer",
+            "title": "Reprice Count"
+          },
+          "status_message": {
+            "type": "string",
+            "title": "Status Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ordertag",
+          "instrument_id",
+          "side",
+          "order_type",
+          "quantity",
+          "filled_quantity",
+          "limit_price",
+          "average_price",
+          "state",
+          "strategy_run_id",
+          "signal_id",
+          "parent_order_id",
+          "reprice_count",
+          "status_message",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OrderDto"
+      },
+      "OrderEventDto": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "filled_quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filled Quantity"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "ts",
+          "state",
+          "filled_quantity",
+          "reason"
+        ],
+        "title": "OrderEventDto"
+      },
+      "OverviewDto": {
+        "properties": {
+          "session_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session State"
+          },
+          "session_state_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session State At"
+          },
+          "kill_switch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KillSwitchDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reconciliation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReconciliationDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "open_positions": {
+            "type": "integer",
+            "title": "Open Positions"
+          },
+          "realised_pnl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realised Pnl"
+          },
+          "unrealised_pnl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unrealised Pnl"
+          },
+          "fees": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fees"
+          },
+          "trades": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trades"
+          },
+          "snapshot_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot At"
+          },
+          "pending_commands": {
+            "type": "integer",
+            "title": "Pending Commands"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_state",
+          "session_state_at",
+          "kill_switch",
+          "reconciliation",
+          "open_positions",
+          "realised_pnl",
+          "unrealised_pnl",
+          "fees",
+          "trades",
+          "snapshot_at",
+          "pending_commands"
+        ],
+        "title": "OverviewDto"
+      },
+      "PositionDto": {
+        "properties": {
+          "instrument_id": {
+            "type": "string",
+            "title": "Instrument Id"
+          },
+          "net_quantity": {
+            "type": "integer",
+            "title": "Net Quantity"
+          },
+          "average_price": {
+            "type": "string",
+            "title": "Average Price"
+          },
+          "realised_pnl": {
+            "type": "string",
+            "title": "Realised Pnl"
+          },
+          "fees": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fees"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "instrument_id",
+          "net_quantity",
+          "average_price",
+          "realised_pnl",
+          "fees",
+          "updated_at"
+        ],
+        "title": "PositionDto"
+      },
+      "ReconciliationDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "trigger": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger"
+          },
+          "discrepancies": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Discrepancies",
+            "default": []
+          },
+          "healed": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Healed",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ts",
+          "status"
+        ],
+        "title": "ReconciliationDto"
+      },
+      "RiskDto": {
+        "properties": {
+          "limits": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Limits"
+          },
+          "recent_rejections": {
+            "items": {
+              "$ref": "#/components/schemas/RiskEventDto"
+            },
+            "type": "array",
+            "title": "Recent Rejections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "limits",
+          "recent_rejections"
+        ],
+        "title": "RiskDto"
+      },
+      "RiskEventDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "instrument_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrument Id"
+          },
+          "strategy_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy Run Id"
+          },
+          "signal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ts",
+          "rule",
+          "reason",
+          "instrument_id",
+          "strategy_run_id",
+          "signal_id"
+        ],
+        "title": "RiskEventDto"
+      },
+      "StrategyDto": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "config_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config Hash"
+          },
+          "last_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Id"
+          },
+          "last_run_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Date"
+          },
+          "signals_last_run": {
+            "type": "integer",
+            "title": "Signals Last Run"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "stopped"
+            ],
+            "title": "Status"
+          },
+          "standing": {
+            "type": "string",
+            "enum": [
+              "validated",
+              "inconclusive",
+              "rejected",
+              "stale",
+              "none"
+            ],
+            "title": "Standing"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "config_hash",
+          "last_run_id",
+          "last_run_date",
+          "signals_last_run",
+          "enabled",
+          "status",
+          "standing",
+          "verdict"
+        ],
+        "title": "StrategyDto"
+      },
+      "SubmitCommandRequest": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Idempotency Key"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "params": {
+            "type": "object",
+            "title": "Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "idempotency_key",
+          "type"
+        ],
+        "title": "SubmitCommandRequest",
+        "description": "`idempotency_key` is client-generated: the same key can never execute twice."
+      },
+      "SystemEventDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "data": {
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "ts",
+          "data"
+        ],
+        "title": "SystemEventDto"
+      },
+      "TokenResponse": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "expires_at"
+        ],
+        "title": "TokenResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerdictDto": {
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "validated",
+              "inconclusive",
+              "rejected"
+            ],
+            "title": "Outcome"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "capital": {
+            "type": "string",
+            "title": "Capital"
+          },
+          "first_day": {
+            "type": "string",
+            "title": "First Day"
+          },
+          "last_day": {
+            "type": "string",
+            "title": "Last Day"
+          },
+          "experiment": {
+            "type": "string",
+            "title": "Experiment"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateDto"
+            },
+            "type": "array",
+            "title": "Gates"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcome",
+          "recorded_at",
+          "capital",
+          "first_day",
+          "last_day",
+          "experiment",
+          "source",
+          "gates",
+          "notes"
+        ],
+        "title": "VerdictDto",
+        "description": "What a curation concluded, as recorded by the curation run itself."
       }
     }
   }

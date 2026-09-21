@@ -12,7 +12,7 @@ import type { CommandInput, Command } from "../src/lib/schema";
 import { ApiSchema } from "../src/lib/schema";
 import { PositionsTable } from "../src/components/views";
 import { ActionDialog } from "../src/components/action-dialog";
-import { MemoryStorage, PaperFixture } from "./fixtures";
+import { MemoryStorage, PaperFixture, ControlFixture } from "./fixtures";
 
 class GatewayFake implements CommandGateway {
   readonly calls: CommandInput[] = [];
@@ -226,9 +226,7 @@ class HttpFake {
   readonly fetch: typeof fetch = async (input, init) => {
     this.url = String(input);
     this.authorization = new Headers(init?.headers).get("Authorization");
-    return Response.json(
-      this.invalid ? {} : new PaperFixture().snapshot.overview,
-    );
+    return Response.json(this.invalid ? {} : new ControlFixture().overview);
   };
 }
 const suite = new SafetyTests();

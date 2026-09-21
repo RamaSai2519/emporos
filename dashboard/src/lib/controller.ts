@@ -17,6 +17,10 @@ export type DashboardState = Readonly<{
 }>;
 /** Composes transport, session, cache, live updates and command tracking for the view. */
 export class DashboardController {
+  /** Polls the visible view only while the SSE stream is down ("Polling · 2s"). */
+  private static readonly FALLBACK_POLL_MS = 2_000;
+  /** While live, a slow backstop for sources the SSE stream never reports (strategies, risk, mode). */
+  private static readonly BACKSTOP_REFRESH_MS = 15_000;
   private state: DashboardState = {
     authenticated: false,
     ready: false,
@@ -35,6 +39,7 @@ export class DashboardController {
   });
   private readonly subscriptions: (() => void)[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
+  private backstop: ReturnType<typeof setInterval> | null = null;
   private readonly live: LiveUpdates;
   readonly commands: CommandCoordinator;
   constructor(
@@ -42,6 +47,8 @@ export class DashboardController {
     private readonly auth: AuthSession,
     storage: Storage,
     private readonly changed: (state: DashboardState) => void,
+    /** The one resource the current page renders, plus the always-needed overview. */
+    private readonly active: Resource,
   ) {
     this.commands = new CommandCoordinator(
       api,
@@ -51,9 +58,13 @@ export class DashboardController {
     );
     this.live = new LiveUpdates(
       api,
-      (resource) => {
+      (resources) => {
+        const targets =
+          resources ?? (Object.keys(ApiSchema.resources) as Resource[]);
         void this.cache.invalidateQueries({
-          queryKey: resource ? ["read", resource] : ["read"],
+          predicate: (query) =>
+            query.queryKey[0] === "read" &&
+            targets.some((resource) => query.queryKey[1] === resource),
         });
       },
       (live) => this.update({ live }),
@@ -97,13 +108,15 @@ export class DashboardController {
     for (const unsubscribe of this.subscriptions.splice(0)) unsubscribe();
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
+    if (this.backstop) clearInterval(this.backstop);
+    this.backstop = null;
     void this.cache.cancelQueries();
   }
   private connect() {
     this.stop();
     this.update({ authenticated: true, loginError: null });
     this.commands.restore();
-    for (const resource of Object.keys(ApiSchema.resources) as Resource[])
+    for (const resource of new Set<Resource>(["overview", this.active]))
       this.observe(resource);
     this.live.start();
     this.timer = setInterval(() => {
@@ -113,14 +126,28 @@ export class DashboardController {
       }
       this.update({ now: Date.now() });
       void this.commands.resolve();
-    }, 2000);
+      if (this.state.live !== "live") this.refreshVisible();
+    }, DashboardController.FALLBACK_POLL_MS);
+    this.backstop = setInterval(
+      () => {
+        if (this.state.live === "live") this.refreshVisible();
+      },
+      DashboardController.BACKSTOP_REFRESH_MS,
+    );
+  }
+  /** Refetches only what the current page can show: its resource plus the overview. */
+  private refreshVisible() {
+    void this.cache.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] === "read" &&
+        (query.queryKey[1] === this.active ||
+          query.queryKey[1] === "overview"),
+    });
   }
   private observe<K extends Resource>(resource: K) {
     const observer = new QueryObserver(this.cache, {
       queryKey: ["read", resource],
       queryFn: ({ signal }) => this.api.read(resource, signal),
-      refetchInterval: 2000,
-      refetchIntervalInBackground: true,
     });
     this.subscriptions.push(
       observer.subscribe((result) => {

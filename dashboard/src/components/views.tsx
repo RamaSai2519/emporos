@@ -4,7 +4,9 @@ import { ArrowUpRight, CircleHelp, RefreshCw, ShieldAlert } from "lucide-react";
 import { Badge, DataTable, Empty, EventFeed, Panel } from "./primitives";
 import { Button } from "./ui/button";
 import { TradingChart } from "./chart";
+import { OrderHistory } from "./order-history";
 import { OrderTicket } from "./order-ticket";
+import { Standings, VerdictPanel } from "./verdict-panel";
 import type { Action } from "./action-dialog";
 import { Display } from "@/lib/format";
 import { ApiClient } from "@/lib/api";
@@ -24,15 +26,14 @@ export class OverviewView extends Component<ViewProps> {
       <>
         <div className="metrics">
           <Metric
-            label="Day P&L"
-            value={Display.money(data?.day_pnl)}
+            label="Fees"
+            value={Display.money(data?.fees)}
             detail="Reported by the worker"
-            tone={Display.tone(data?.day_pnl)}
           />
           <Metric
             label="Realised"
             value={Display.money(data?.realised_pnl)}
-            detail="Closed positions · net of fees"
+            detail="Latest worker snapshot"
             tone={Display.tone(data?.realised_pnl)}
           />
           <Metric
@@ -45,14 +46,20 @@ export class OverviewView extends Component<ViewProps> {
             label="Open positions"
             value={data ? String(data.open_positions) : "—"}
             detail={
-              data ? `${data.open_orders} open orders` : "Awaiting session data"
+              data
+                ? `${data.trades ?? "—"} trades in snapshot`
+                : "Awaiting session data"
             }
           />
         </div>
         <div className="content-grid">
           <div className="stack">
             <Panel
-              title="Session performance"
+              title={
+                data?.equity_curve.length
+                  ? "Session performance"
+                  : "Portfolio snapshot"
+              }
               eyebrow="Intraday"
               action={<Badge>INR</Badge>}
             >
@@ -62,9 +69,28 @@ export class OverviewView extends Component<ViewProps> {
                   label="Worker-reported session performance in INR"
                 />
               ) : (
-                <Empty title="Waiting for session performance">
-                  The worker’s equity series will appear when available.
-                </Empty>
+                <div className="snapshot-summary">
+                  <span className="eyebrow">PERSISTED PORTFOLIO</span>
+                  <h3>
+                    {data?.snapshot_at
+                      ? `${Display.date(Date.parse(data.snapshot_at))} · ${Display.time(data.snapshot_at)} IST`
+                      : "No portfolio snapshot yet"}
+                  </h3>
+                  <p>
+                    Portfolio amounts reflect this timestamp. API connectivity
+                    does not indicate a fresh market price.
+                  </p>
+                  <div className="row-actions">
+                    <Badge>{data?.trades ?? "—"} trades</Badge>
+                    <Badge>
+                      {data?.pending_commands ?? "—"} pending commands
+                    </Badge>
+                  </div>
+                  <small className="muted">
+                    Equity history and day-total P&amp;L are not published by
+                    the API.
+                  </small>
+                </div>
               )}
               <div className="panel-footer">
                 <span>India Standard Time</span>
@@ -131,7 +157,7 @@ export class Metric extends Component<{
 }
 export class Health extends Component<{
   name: string;
-  healthy: boolean | undefined;
+  healthy: boolean | null | undefined;
 }> {
   render() {
     return (
@@ -139,7 +165,7 @@ export class Health extends Component<{
         <span>{this.props.name}</span>
         <span
           className={
-            this.props.healthy === undefined
+            this.props.healthy == null
               ? "muted"
               : this.props.healthy
                 ? "positive"
@@ -147,7 +173,7 @@ export class Health extends Component<{
           }
         >
           <i className="status-dot" />
-          {this.props.healthy === undefined
+          {this.props.healthy == null
             ? "Unknown"
             : this.props.healthy
               ? "Healthy"
@@ -350,18 +376,11 @@ export class OrdersView extends Component<
             }
           >
             {selected ? (
-              <ol className="timeline">
-                {selected.events.map((event) => (
-                  <li key={event.sequence}>
-                    <span className="sequence">{event.sequence}</span>
-                    <div>
-                      <strong>{event.state}</strong>
-                      <p>{event.message}</p>
-                      <time>{Display.time(event.at)} IST</time>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <OrderHistory
+                key={selected.id}
+                id={selected.id}
+                api={this.props.api}
+              />
             ) : (
               <Empty title="Select an order’s history">
                 Inspect every persisted transition in sequence.
@@ -392,15 +411,16 @@ export class StrategyCard extends Component<
     super(props);
     this.state = {
       editing: false,
-      text: JSON.stringify(props.strategy.config, null, 2),
+      text: JSON.stringify(props.strategy.config ?? {}, null, 2),
       error: null,
     };
   }
   private review = () => {
     try {
-      const config = ApiSchema.strategy.shape.config.parse(
-        JSON.parse(this.state.text),
-      );
+      const config =
+        ApiSchema.commandInput.options[6].shape.params.shape.config.parse(
+          JSON.parse(this.state.text),
+        );
       this.props.onAction({
         title: "Update strategy config",
         description:
@@ -417,6 +437,31 @@ export class StrategyCard extends Component<
       });
     }
   };
+  /** Starting something that is not validated needs its standing typed, and the worker checks it. */
+  private startOrStop(): Action {
+    const strategy = this.props.strategy;
+    if (strategy.status === "running")
+      return {
+        title: "Stop strategy",
+        description: `Gracefully stop ${strategy.name}. Existing positions stay open.`,
+        draft: { type: "STOP_STRATEGY", params: { name: strategy.id } },
+      };
+    const standing = strategy.standing;
+    const acknowledged = Standings.needsAcknowledgement(standing);
+    return {
+      title: "Start strategy",
+      description: acknowledged
+        ? `${strategy.name} is not validated (${Standings.label(standing)}). It will trade on paper only, through every risk gate. To start it anyway, type its standing.`
+        : `Request that the worker start ${strategy.name}. Risk gates remain active.`,
+      confirmation: acknowledged ? standing : undefined,
+      draft: {
+        type: "START_STRATEGY",
+        params: acknowledged
+          ? { name: strategy.id, acknowledge: standing }
+          : { name: strategy.id },
+      },
+    };
+  }
   render() {
     const strategy = this.props.strategy;
     const running = strategy.status === "running";
@@ -440,6 +485,7 @@ export class StrategyCard extends Component<
       >
         <div className="strategy-body">
           <p className="muted">{strategy.description}</p>
+          <VerdictPanel strategy={strategy} />
           <div className="strategy-stats">
             <div>
               <small>Day P&L</small>
@@ -453,24 +499,31 @@ export class StrategyCard extends Component<
             </div>
           </div>
           <div className="row-actions">
+            {strategy.status === "unknown" && (
+              <Button
+                variant="secondary"
+                disabled={this.props.disabled}
+                onClick={() =>
+                  this.props.onAction({
+                    title: "Stop strategy",
+                    description: `Request a graceful stop of ${strategy.name}. Existing positions stay open. Current strategy status is not published.`,
+                    draft: {
+                      type: "STOP_STRATEGY",
+                      params: { name: strategy.id },
+                    },
+                  })
+                }
+              >
+                Stop strategy
+              </Button>
+            )}
             <Button
               variant={running ? "secondary" : "default"}
               disabled={
                 this.props.disabled ||
                 ["starting", "stopping"].includes(strategy.status)
               }
-              onClick={() =>
-                this.props.onAction({
-                  title: running ? "Stop strategy" : "Start strategy",
-                  description: running
-                    ? `Gracefully stop ${strategy.name}. Existing positions stay open.`
-                    : `Request that the worker start ${strategy.name}. Risk gates remain active.`,
-                  draft: {
-                    type: running ? "STOP_STRATEGY" : "START_STRATEGY",
-                    params: { name: strategy.id },
-                  },
-                })
-              }
+              onClick={() => this.props.onAction(this.startOrStop())}
             >
               {running ? "Stop strategy" : "Start strategy"}
             </Button>
@@ -479,7 +532,7 @@ export class StrategyCard extends Component<
               onClick={() =>
                 this.setState({
                   editing: !this.state.editing,
-                  text: JSON.stringify(strategy.config, null, 2),
+                  text: JSON.stringify(strategy.config ?? {}, null, 2),
                 })
               }
             >
@@ -503,7 +556,9 @@ export class StrategyCard extends Component<
                 <summary>Diff preview · current → proposed</summary>
                 <div className="diff-grid">
                   <pre aria-label="Current configuration">
-                    {JSON.stringify(strategy.config, null, 2)}
+                    {strategy.config
+                      ? JSON.stringify(strategy.config, null, 2)
+                      : "Current configuration is not published by the API."}
                   </pre>
                   <pre aria-label="Proposed configuration">
                     {this.state.text}
@@ -588,11 +643,30 @@ export class RiskView extends Component<ViewProps> {
               </div>
             ))}
           </div>
-          {!this.props.snapshot.risk?.limits.length && (
-            <Empty title="Limits unavailable">
-              Connect to the worker to inspect its configured risk limits.
-            </Empty>
+          {Object.entries(
+            this.props.snapshot.risk?.configured_limits ?? {},
+          ).map(([name, value]) => (
+            <div className="health-list" key={name}>
+              <div className="health-row">
+                <strong>{name.replaceAll("_", " ")}</strong>
+                <code>{value}</code>
+              </div>
+            </div>
+          ))}
+          {!!Object.keys(this.props.snapshot.risk?.configured_limits ?? {})
+            .length && (
+            <p className="guardrail-note">
+              Configured limits are shown as published. Current utilisation is
+              not exposed by this API.
+            </p>
           )}
+          {!this.props.snapshot.risk?.limits.length &&
+            !Object.keys(this.props.snapshot.risk?.configured_limits ?? {})
+              .length && (
+              <Empty title="Limits unavailable">
+                Connect to the worker to inspect its configured risk limits.
+              </Empty>
+            )}
         </Panel>
         <Panel title="Risk decisions">
           <EventFeed
@@ -707,7 +781,7 @@ export class MarketView extends Component<
                       : "Choose an instrument"
                 }
               >
-                Select an instrument from the watchlist to inspect its candles.
+                The current control API does not expose candle data.
               </Empty>
             )}
             <div className="panel-footer">
@@ -767,7 +841,8 @@ export class MarketView extends Component<
           </ul>
           {!items.length && (
             <Empty title="Watchlist is empty">
-              Watchlist instruments are configured on the worker.
+              The current control API has no quote or watchlist endpoint. Manual
+              orders can still reference an exact instrument ID.
             </Empty>
           )}
         </Panel>

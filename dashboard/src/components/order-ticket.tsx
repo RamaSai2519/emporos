@@ -17,15 +17,13 @@ export class OrderTicket extends Component<
   private submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
-    const instrument = this.props.market?.items.find(
-      (item) => item.instrument_id === values.get("instrument"),
-    );
+    const instrument = String(values.get("instrument") ?? "").trim();
     const quantity = Number(values.get("quantity"));
     const price = String(values.get("price"));
     const reason = String(values.get("reason") ?? "").trim();
     const side = values.get("side") === "SELL" ? "SELL" : "BUY";
     if (
-      !instrument ||
+      !/^((NSE)|(BSE)):[A-Za-z0-9_-]+$/.test(instrument) ||
       !Number.isSafeInteger(quantity) ||
       quantity < 1 ||
       !/^\d+(\.\d+)?$/.test(price) ||
@@ -42,12 +40,12 @@ export class OrderTicket extends Component<
     this.props.onAction({
       title: "Place manual order",
       confirmation: "PLACE ORDER",
-      description: `${side} ${quantity} ${instrument.symbol} at a limit of ₹${price}. Reason: ${reason}. This request must pass the same risk checks as a strategy order.`,
+      description: `${side} ${quantity} ${instrument} at a limit of ₹${price}. Reason: ${reason}. This request must pass the same risk checks as a strategy order.`,
       danger: true,
       draft: {
         type: "PLACE_MANUAL_ORDER",
         params: {
-          instrument_id: instrument.instrument_id,
+          instrument_id: instrument,
           side,
           quantity,
           limit_price: price,
@@ -63,14 +61,17 @@ export class OrderTicket extends Component<
           <label className="field" htmlFor="ticket-instrument">
             Instrument
           </label>
-          <select id="ticket-instrument" name="instrument" required>
-            <option value="">Select from watchlist</option>
-            {this.props.market?.items.map((item) => (
-              <option key={item.instrument_id} value={item.instrument_id}>
-                {item.symbol} · {item.exchange}
-              </option>
-            ))}
-          </select>
+          <input
+            id="ticket-instrument"
+            name="instrument"
+            required
+            placeholder="NSE:3045"
+            autoComplete="off"
+          />
+          <p className="small muted">
+            Use the exact instrument ID from the order book or instrument
+            master.
+          </p>
           <div className="form-grid">
             <label className="field">
               Side
@@ -120,10 +121,7 @@ export class OrderTicket extends Component<
               {this.state.error}
             </p>
           )}
-          <Button
-            disabled={this.props.disabled || !this.props.market?.items.length}
-            className="w-full"
-          >
+          <Button disabled={this.props.disabled} className="w-full">
             Review order
           </Button>
           <p className="small muted">

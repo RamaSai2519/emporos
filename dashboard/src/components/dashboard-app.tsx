@@ -56,7 +56,8 @@ export default class DashboardApp extends Component<
   };
   private controller: DashboardController | null = null;
   componentDidMount() {
-    this.setState({ path: window.location.pathname.replace(/\/$/, "") || "/" });
+    const path = window.location.pathname.replace(/\/$/, "") || "/";
+    this.setState({ path });
     try {
       const session = new AuthSession(window.sessionStorage, Date.now);
       const api = new ApiClient(
@@ -66,11 +67,16 @@ export default class DashboardApp extends Component<
         session,
         window.fetch.bind(window),
       );
+      const active =
+        path === "/" || path === "/backtests"
+          ? "overview"
+          : (path.slice(1) as Resource);
       this.controller = new DashboardController(
         api,
         session,
         window.sessionStorage,
         (data) => this.setState({ data }),
+        active,
       );
       this.controller.start();
     } catch (error) {
@@ -110,7 +116,7 @@ export default class DashboardApp extends Component<
     return (
       !overview ||
       !current ||
-      !overview.worker_healthy ||
+      overview.worker_healthy === false ||
       !!data?.errors.overview ||
       !!data?.errors[resource] ||
       data.now - Date.parse(overview.as_of) >
@@ -247,7 +253,9 @@ export default class DashboardApp extends Component<
               <strong>
                 <i className="status-dot" />
                 {overview
-                  ? `${overview.trading_mode.toUpperCase()} TRADING`
+                  ? overview.trading_mode === "unknown"
+                    ? "MODE UNAVAILABLE"
+                    : `${overview.trading_mode.toUpperCase()} TRADING`
                   : "UNAVAILABLE"}
               </strong>
               <small>Mode changes require deployment.</small>
@@ -360,12 +368,14 @@ export default class DashboardApp extends Component<
                 <span className="muted">·</span>
                 <span>
                   {overview
-                    ? `${overview.trading_mode} environment`
+                    ? overview.trading_mode === "unknown"
+                      ? "Mode not reported"
+                      : `${overview.trading_mode} environment`
                     : "Environment unavailable"}
                 </span>
               </div>
               <span>
-                Last snapshot{" "}
+                API updated{" "}
                 <strong>
                   {overview ? `${Display.time(overview.as_of)} IST` : "—"}
                 </strong>
@@ -373,8 +383,7 @@ export default class DashboardApp extends Component<
             </div>
             {(stale || data.errors.overview) && (
               <div role="alert" className="error-banner">
-                {data.errors.overview ??
-                  "Session data is unavailable or stale."}{" "}
+                {data.errors.overview ?? "API data is unavailable or stale."}{" "}
                 Order and strategy controls are paused until a fresh worker
                 snapshot arrives.
               </div>

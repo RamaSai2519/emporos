@@ -27,6 +27,10 @@ export class ApiSchema {
     message: z.string().nullable(),
   });
   static readonly overview = z.object({
+    snapshot_at: this.time.nullable().optional(),
+    fees: this.money.nullable().optional(),
+    trades: z.number().int().nullable().optional(),
+    pending_commands: z.number().int().optional(),
     as_of: this.time,
     session_state: z.string(),
     trading_mode: z.enum(["paper", "live", "unknown"]),
@@ -86,10 +90,46 @@ export class ApiSchema {
     as_of: this.time,
     items: z.array(this.order),
   });
+  static readonly gate = z.object({
+    name: z.string(),
+    outcome: z.enum(["pass", "fail", "unknown"]),
+    detail: z.string(),
+  });
+  /** What a curation concluded about a strategy: recorded by the curation run, never typed in. */
+  static readonly verdict = z.object({
+    outcome: z.enum(["validated", "inconclusive", "rejected"]),
+    recorded_at: this.time,
+    capital: z.string(),
+    first_day: z.string(),
+    last_day: z.string(),
+    experiment: z.string(),
+    source: z.string(),
+    gates: z.array(this.gate),
+    /** What differs between what was judged and what would run, e.g. position sizing. */
+    notes: z.array(z.string()),
+  });
+  /** The verdict judged against the strategy's CURRENT config: `stale` means it was edited since. */
+  static readonly standing = z.enum([
+    "validated",
+    "inconclusive",
+    "rejected",
+    "stale",
+    "none",
+  ]);
   static readonly strategy = z.object({
     id: z.string(),
     name: z.string(),
-    status: z.enum(["running", "stopped", "halted", "starting", "stopping", "unknown"]),
+    status: z.enum([
+      "running",
+      "stopped",
+      "halted",
+      "starting",
+      "stopping",
+      "unknown",
+    ]),
+    enabled: z.boolean(),
+    standing: this.standing,
+    verdict: this.verdict.nullable(),
     pnl: this.money.nullable(),
     signals: z.number().int(),
     description: z.string(),
@@ -175,7 +215,12 @@ export class ApiSchema {
     }),
     z.object({
       type: z.literal("START_STRATEGY"),
-      params: z.strictObject({ name: z.string().min(1) }),
+      // `acknowledge` names the standing the operator was shown; the worker refuses a strategy that
+      // is not validated unless it matches, so a click alone cannot start one.
+      params: z.strictObject({
+        name: z.string().min(1),
+        acknowledge: z.string().min(1).optional(),
+      }),
       idempotency_key: z.string().uuid(),
     }),
     z.object({

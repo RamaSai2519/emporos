@@ -1,12 +1,12 @@
 import { test, expect, type Page, type Route } from "@playwright/test";
-import { PaperFixture } from "../fixtures";
+import { ControlFixture } from "../fixtures";
 import type { Command, CommandInput } from "../../src/lib/schema";
 
 /** Browser interception is a UI contract test, not a replacement for paper-worker acceptance. */
 class BrowserApiFixture {
-  readonly data = new PaperFixture();
+  readonly data = new ControlFixture();
   readonly submissions: CommandInput[] = [];
-  command: Command | null = null;
+  command: ReturnType<ControlFixture["command"]> | null = null;
   expire = false;
   ambiguous = false;
   async install(page: Page) {
@@ -17,9 +17,8 @@ class BrowserApiFixture {
     if (path === "/auth/login")
       return route.fulfill({
         json: {
-          access_token: "browser-test-token",
-          token_type: "bearer",
-          expires_in: 43200,
+          token: "browser-test-token",
+          expires_at: new Date(Date.now() + 43200_000).toISOString(),
         },
       });
     expect(route.request().headers().authorization).toBe(
@@ -27,46 +26,48 @@ class BrowserApiFixture {
     );
     if (this.expire)
       return route.fulfill({ status: 401, json: { detail: "Expired" } });
-    if (path === "/api/events") return route.fulfill({ status: 503 });
-    if (path === "/api/commands" && route.request().method() === "POST") {
+    if (path === "/stream") return route.fulfill({ status: 503 });
+    if (path === "/commands" && route.request().method() === "POST") {
       const input = route.request().postDataJSON() as CommandInput;
       this.submissions.push(input);
       this.command = this.data.command(input);
       if (this.ambiguous) return route.abort("connectionreset");
       return route.fulfill({ status: 202, json: this.command });
     }
-    if (path.startsWith("/api/commands/"))
+    if (path.startsWith("/commands/"))
       return this.command
-        ? route.fulfill({ json: this.command })
+        ? route.fulfill({
+            json: {
+              command: this.command,
+              results: [
+                {
+                  ts: new Date().toISOString(),
+                  status: this.command.status,
+                  message: this.command.reason,
+                  data: {},
+                },
+              ],
+            },
+          })
         : route.fulfill({ status: 404 });
-    if (path === "/api/candles")
-      return route.fulfill({
-        json: {
-          items: [
-            {
-              time: 1758253500,
-              open: 1420,
-              high: 1435,
-              low: 1418,
-              close: 1432,
-            },
-            {
-              time: 1758253800,
-              open: 1432,
-              high: 1437,
-              low: 1425,
-              close: 1428,
-            },
-          ],
-        },
-      });
-    const key = path.slice(5) as keyof typeof this.data.snapshot;
-    const snapshot = this.data.snapshot[key];
-    if (snapshot)
-      return route.fulfill({
-        json: { ...snapshot, as_of: new Date().toISOString() },
-      });
-    return route.fulfill({ status: 404 });
+    if (path === "/commands")
+      return route.fulfill({ json: this.command ? [this.command] : [] });
+    if (path === "/orders/order-1")
+      return route.fulfill({ json: this.data.orderDetail() });
+    const responses: Record<string, unknown> = {
+      "/overview": this.data.overview,
+      "/positions": this.data.positions,
+      "/orders": this.data.orders,
+      "/strategies": this.data.strategies,
+      "/risk": this.data.risk,
+      "/system/events": this.data.events,
+      "/system/reconciliations": [],
+      "/health": { status: "ok", time: new Date().toISOString() },
+    };
+    if (path in responses) return route.fulfill({ json: responses[path] });
+    throw new Error(
+      `Dashboard called an endpoint absent from the API contract: ${path}`,
+    );
   };
   async login(page: Page) {
     await page.goto("/");
@@ -78,14 +79,14 @@ class BrowserApiFixture {
     await expect(
       page.getByRole("heading", { name: "Session overview" }),
     ).toBeVisible();
-    await expect(page.getByText("₹4,280.50", { exact: true })).toBeVisible();
+    await expect(page.getByText("₹3,150.00", { exact: true })).toBeVisible();
   }
   finish(status: Command["status"]) {
     if (this.command)
       this.command = {
         ...this.command,
         status,
-        message:
+        reason:
           status === "REJECTED"
             ? "Risk rejected: instrument exposure limit exceeded."
             : "Worker reported completion.",
@@ -114,12 +115,12 @@ class BrowserTests {
       await expect(
         page.getByRole("heading", { name: heading, exact: true }).first(),
       ).toBeVisible();
-      if (route === "market") {
-        await page.getByRole("button", { name: /RELIANCE.*NSE/ }).click();
+      if (route === "market")
         await expect(
-          page.getByRole("img", { name: "RELIANCE candlestick chart" }),
+          page.getByText(
+            "The current control API does not expose candle data.",
+          ),
         ).toBeVisible();
-      }
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
@@ -172,7 +173,6 @@ class BrowserTests {
       .getByRole("button", { name: "Start strategy", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("ACCEPTED");
-    api.data.snapshot.strategies.items[0]!.status = "running";
     api.finish("DONE");
     await expect(
       page.getByRole("button", { name: "Stop strategy", exact: true }),
@@ -205,9 +205,7 @@ class BrowserTests {
     await expect(page.getByRole("status")).toContainText("ACCEPTED");
     api.finish("DONE");
     await expect(page.getByRole("status")).toContainText("DONE");
-    await page
-      .getByLabel("Instrument", { exact: true })
-      .selectOption("nse-reliance");
+    await page.getByLabel("Instrument", { exact: true }).fill("NSE:3045");
     await page.getByLabel("Quantity", { exact: true }).fill("10");
     await page.getByLabel("Limit price · ₹").fill("1425");
     await page

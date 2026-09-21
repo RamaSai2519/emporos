@@ -1,9 +1,9 @@
 name: Dashboard
 on:
   push:
-    paths: ['dashboard/**', '.github/workflows/dashboard.yml']
+    paths: ['dashboard/**', 'src/emporos/api/**', 'docs/api/openapi.json', '.github/workflows/dashboard.yml']
   pull_request:
-    paths: ['dashboard/**', '.github/workflows/dashboard.yml']
+    paths: ['dashboard/**', 'src/emporos/api/**', 'docs/api/openapi.json', '.github/workflows/dashboard.yml']
 permissions:
   contents: read
 jobs:

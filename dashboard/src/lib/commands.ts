@@ -15,6 +15,7 @@ export type CommandState = Readonly<{
 }>;
 /** Persists intent before HTTP and resolves ambiguous outcomes without generating a new key. */
 export class CommandCoordinator {
+  private knownId: string | undefined;
   private current: CommandState = {
     input: null,
     result: null,
@@ -39,6 +40,7 @@ export class CommandCoordinator {
     );
   }
   restore() {
+    this.knownId = this.storage.getItem("emporos.command.id") ?? undefined;
     const value = this.storage.getItem("emporos.command");
     if (!value) return;
     try {
@@ -67,6 +69,8 @@ export class CommandCoordinator {
     // Storage failure must fail closed: a reload must never erase an uncertain submission.
     try {
       this.storage.setItem("emporos.command", JSON.stringify(input));
+      this.knownId = undefined;
+      this.storage.removeItem("emporos.command.id");
     } catch {
       this.update({
         ...this.current,
@@ -114,7 +118,10 @@ export class CommandCoordinator {
     this.update({ ...this.current, busy: true });
     try {
       this.accept(
-        await this.gateway.command(this.current.input.idempotency_key),
+        await this.gateway.command(
+          this.current.input.idempotency_key,
+          this.knownId,
+        ),
       );
     } catch (error) {
       this.update({
@@ -133,6 +140,8 @@ export class CommandCoordinator {
   private accept(result: Command) {
     if (result.idempotency_key !== this.current.input?.idempotency_key)
       throw new Error("Command identity mismatch");
+    this.knownId = result.id;
+    this.storage.setItem("emporos.command.id", result.id);
     if (this.terminal(result)) this.storage.removeItem("emporos.command");
     this.update({
       ...this.current,

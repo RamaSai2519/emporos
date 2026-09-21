@@ -1,11 +1,22 @@
 import { ApiClient, ApiError } from "./api";
 import { ApiSchema, type Resource } from "./schema";
 
+/** Which read models each worker change-kind can refresh; unknown kinds force a full resync. */
+const KIND_RESOURCES: Readonly<Record<string, readonly Resource[]>> = {
+  order: ["orders", "overview"],
+  position: ["positions", "overview"],
+  command: ["system", "overview"],
+};
+
 /** Parses incremental SSE frames, including CRLF, comments, and chunk boundaries. */
 export class SseDecoder {
   private buffer = "";
   constructor(
-    private readonly event: (data: string, id: string | undefined) => void,
+    private readonly event: (
+      data: string,
+      id: string | undefined,
+      kind: string,
+    ) => void,
   ) {}
   push(chunk: string) {
     this.buffer += chunk;
@@ -17,12 +28,14 @@ export class SseDecoder {
       this.buffer = this.buffer.slice(boundary.index + boundary[0].length);
       const data: string[] = [];
       let id: string | undefined;
+      let kind = "message";
       for (const line of frame.split(/\r?\n/)) {
+        if (line.startsWith("event:")) kind = line.slice(6).trim() || "message";
         if (line.startsWith("data:"))
           data.push(line.slice(5).replace(/^ /, ""));
         if (line.startsWith("id:")) id = line.slice(3).trim();
       }
-      if (data.length) this.event(data.join("\n"), id);
+      if (data.length) this.event(data.join("\n"), id, kind);
     }
   }
 }
@@ -37,7 +50,7 @@ export class LiveUpdates {
   private lastId = "";
   constructor(
     private readonly api: ApiClient,
-    private readonly invalidate: (resource?: Resource) => void,
+    private readonly invalidate: (resources?: readonly Resource[]) => void,
     private readonly status: (value: LiveStatus) => void,
     private readonly unauthorized: () => void,
   ) {}
@@ -71,22 +84,9 @@ export class LiveUpdates {
       this.status("live");
       this.invalidate();
       const text = new TextDecoder();
-      const parser = new SseDecoder((data, id) => {
+      const parser = new SseDecoder((data, id, kind) => {
         if (id !== undefined) this.lastId = id;
-        try {
-          const message: unknown = JSON.parse(data);
-          if (
-            typeof message === "object" &&
-            message &&
-            "resource" in message &&
-            typeof message.resource === "string" &&
-            Object.hasOwn(ApiSchema.resources, message.resource)
-          )
-            this.invalidate(message.resource as Resource);
-          else this.invalidate();
-        } catch {
-          this.invalidate();
-        }
+        this.invalidate(this.targets(kind, data));
       });
       while (!this.stopped && generation === this.generation) {
         const chunk = await reader.read();
@@ -113,5 +113,27 @@ export class LiveUpdates {
       this.status("polling");
       this.retry = setTimeout(() => void this.connect(), 10_000);
     }
+  }
+  /** Which read models a change-frame can refresh; unknown kinds (or a future `resource` field) fall back to a full resync. */
+  private targets(
+    kind: string,
+    data: string,
+  ): readonly Resource[] | undefined {
+    let resource: Resource | undefined;
+    try {
+      const message: unknown = JSON.parse(data);
+      if (
+        typeof message === "object" &&
+        message &&
+        "resource" in message &&
+        typeof message.resource === "string" &&
+        Object.hasOwn(ApiSchema.resources, message.resource)
+      )
+        resource = message.resource as Resource;
+    } catch {
+      /* A non-JSON frame carries no resource field; the kind mapping still applies. */
+    }
+    if (resource) return [resource];
+    return KIND_RESOURCES[kind];
   }
 }

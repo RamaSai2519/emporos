@@ -14,7 +14,9 @@
     "contract:check": "tsx scripts/contract.ts check",
     "contract:verify": "tsx scripts/contract.ts verify",
     "check:boundaries": "tsx scripts/boundaries.ts",
-    "format": "prettier --write src scripts tests *.ts *.mjs *.json README.md"
+    "format": "prettier --write src scripts tests *.ts *.mjs *.json README.md",
+    "test:paper": "tsx scripts/paper-acceptance.ts",
+    "contract:export": "cd .. && pipenv run python dashboard/scripts/export_openapi.py"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
