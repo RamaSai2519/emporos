@@ -111,7 +111,18 @@ class LiveBrowserServer:
 
                 registry = StrategyRegistry()
                 registry.register(EnterOnce)
-                config = strategy_config()
+                # A wide reprice margin: real wall-clock pacing (needed so the session stays alive
+                # for a human/browser) leaves much less headroom against poll_interval than the
+                # deterministic proof has, and this session is about the composition, not a race
+                # against the repricer (see tests/e2e/test_live_worker.py's identical override).
+                base = strategy_config()
+                config = base.model_copy(
+                    update={
+                        "execution": base.execution.model_copy(
+                            update={"reprice_after_seconds": 3600}
+                        )
+                    }
+                )
                 bars = bar_queue_for([config])
                 clock = FixedClock(at(9, 30))  # close to the entry bar: paced steps add real time
                 tape = _normal_browser_tape(clock, harness, bars.on_candle)

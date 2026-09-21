@@ -102,6 +102,11 @@ class LiveTape:
         self.clock.advance(timedelta(seconds=seconds))
         self._release()
         for held in await self.harness.broker.get_order_book():
+            if held.status.is_terminal:
+                continue  # already CANCELLED/FILLED/REJECTED: FakeSmartApi never zeroes out
+                # quantity on cancel, so a blind remaining>0 check here would "fill" an order
+                # the repricer (or anything else) had already legitimately cancelled, corrupting
+                # the emulator's own state (EM-145's real root cause — a test-harness bug).
             remaining = held.quantity - held.filled_quantity
             if remaining:
                 self.harness.fill(held.broker_order_id or "", remaining, Money.of(FILL_PRICE))
@@ -174,7 +179,16 @@ async def _run(
 
     registry = StrategyRegistry()
     registry.register(EnterOnce)
-    config = strategy_config()
+    # reprice_after_seconds=60 (the shared default) leaves almost no margin against poll_interval
+    # (30s): any real-world latency between the entry filling at the emulator and our own sync
+    # picking it up can push the repricer into cancelling an order the exchange already completed
+    # underneath it (FakeSmartApi now refuses that specific case, but the race is still not this
+    # proof's concern) — a long reprice window keeps this session about proving the composition,
+    # not about racing the repricer.
+    base = strategy_config()
+    config = base.model_copy(
+        update={"execution": base.execution.model_copy(update={"reprice_after_seconds": 3600})}
+    )
     bars = bar_queue_for([config])
     clock = FixedClock(at(9, 0))
     tape = _normal_tape(clock, harness, bars.on_candle)

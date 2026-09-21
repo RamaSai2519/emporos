@@ -10,6 +10,7 @@ order books come out, and the adapter must round-trip them through its mapping."
 
 from __future__ import annotations
 
+import secrets
 from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -27,6 +28,13 @@ class FakeSmartApi:
         self._tokens = tokens  # symboltoken -> tradingsymbol
         self._now = now or (lambda: datetime(2026, 9, 21, 4, 30, tzinfo=UTC))
         self._ids = count(1)
+        # Real exchange trade ids never collide across sessions or accounts; ours must not either,
+        # since `executions.broker_trade_id` is uniqued GLOBALLY (persistence/schema.py), not per
+        # account. A plain per-instance "F1", "F2", ... looks unique here but collides with every
+        # other FakeSmartApi's own first fill once they share one database (EM-145's actual root
+        # cause: a stale "F1" execution from an earlier, unrelated test/account permanently
+        # short-circuits `has_execution()` for a same-named fill that was never really applied).
+        self._fill_prefix = secrets.token_hex(4)
         self.orders: dict[str, dict[str, Any]] = {}
         self.trades: list[dict[str, Any]] = []
         self.requests: list[RestRequest] = []
@@ -43,7 +51,7 @@ class FakeSmartApi:
         self.trades.append(
             {
                 "orderid": order_id,
-                "fillid": f"F{len(self.trades) + 1}",
+                "fillid": f"F{self._fill_prefix}-{len(self.trades) + 1}",
                 "exchange": row["exchange"],
                 "symboltoken": row["symboltoken"],
                 "transactiontype": row["transactiontype"],
@@ -131,7 +139,11 @@ class FakeSmartApi:
 
     def _cancelOrder(self, body: dict[str, Any]) -> Any:
         row = self._row(body["orderid"])
-        row["orderstatus"] = "cancelled"
+        # A cancel cannot retroactively un-fill an order the exchange already completed — a real
+        # cancel request racing a fill either arrives too late (order stays "complete") or in time
+        # (order becomes "cancelled"), never both facts on the same order.
+        if int(row["filledshares"]) < int(row["quantity"]):
+            row["orderstatus"] = "cancelled"
         return {"orderid": row["orderid"]}
 
     def _getOrderBook(self, body: dict[str, Any]) -> Any:

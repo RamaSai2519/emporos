@@ -56,8 +56,11 @@ class LiveAcceptance {
     await expect(card.getByLabel("Backtest verdict: no verdict")).toBeVisible();
     await this.confirm(page, "Stop strategy", undefined, card);
     await this.outcome(page, "DONE");
+    // Unlike paper, live has no typed-standing escape: a strategy with no recorded verdict is
+    // refused even from the dashboard, with no acknowledgement able to get it started. Proving
+    // that refusal here — not a restart — is the live-specific case paper.spec.ts cannot cover.
     await this.confirm(page, "Start strategy", "none", card);
-    await this.outcome(page, "DONE");
+    await this.outcome(page, "REJECTED");
     await page.goto("/orders");
     await page.getByLabel("Instrument", { exact: true }).fill("NSE:3045");
     await page.getByLabel("Quantity", { exact: true }).fill("10");
