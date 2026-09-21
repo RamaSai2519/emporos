@@ -266,7 +266,8 @@ async def cleanup(world: WorkerWorld) -> None:
         await db[Collection.STRATEGIES].delete_one({"_id": strategy["_id"]})
     day = {"$gte": at(0, 0), "$lt": at(0, 0) + timedelta(days=1)}
     await db[Collection.SYSTEM_EVENTS].delete_many(
-        {"type": {"$in": ["session_state", "alert"]}, "ts": day}
+        {"type": "session_state", "account_id": world.account_id, "ts": day}
     )
+    await db[Collection.SYSTEM_EVENTS].delete_many({"type": "alert", "ts": day})
     await db[Collection.RECONCILIATION_RUNS].delete_many({"ts": day})
     await db.drop_collection(world.kill_switch_collection)

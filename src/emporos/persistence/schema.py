@@ -186,6 +186,7 @@ PLATFORM_SCHEMA = Schema(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),
             IndexSpec.on("type", "ts"),
+            IndexSpec.on("type", "account_id", "ts"),
             IndexSpec.on("ts", expire_after=30 * _DAY),
         ),
         _spec(Collection.MARKET_CALENDAR, IndexSpec.on("date", unique=True)),

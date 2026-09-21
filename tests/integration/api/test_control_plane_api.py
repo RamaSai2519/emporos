@@ -266,6 +266,7 @@ class TestReads:
                 {
                     "_id": f"evt-{world.suffix}",
                     "type": "session_state",
+                    "account_id": world.account,
                     "ts": now + timedelta(days=3650),
                     "to": "TRADING",
                 }

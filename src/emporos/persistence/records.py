@@ -257,6 +257,9 @@ class TrialRecord(Record):
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None
+    # Which worker session raised this event. Unset only for genuinely account-agnostic events;
+    # a `session_state` event always carries the account whose session transitioned.
+    account_id: str | None = None
     ts: datetime
 
 

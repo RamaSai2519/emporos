@@ -113,7 +113,7 @@ class QueryService:
 
     async def overview(self) -> OverviewDto:
         state = await self._system_events.find(
-            {"type": "session_state"}, sort=[("ts", -1)], limit=1
+            {"type": "session_state", "account_id": self._account}, sort=[("ts", -1)], limit=1
         )
         switch: KillSwitchRecord | None = await self._kill_switch.get("kill_switch")
         recon = await self._reconciliations.find({}, sort=[("ts", -1)], limit=1)

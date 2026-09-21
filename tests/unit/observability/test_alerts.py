@@ -57,11 +57,13 @@ def test_a_full_outbox_drops_the_oldest_rather_than_growing_without_bound() -> N
 
 async def test_every_session_state_change_is_recorded() -> None:
     outbox = EventOutbox()
-    lifecycle = SessionLifecycle(FixedClock(NOW), (LifecycleEvents(outbox, IdGenerator()),))
+    lifecycle = SessionLifecycle(
+        FixedClock(NOW), (LifecycleEvents(outbox, IdGenerator(), "acct-1"),)
+    )
     lifecycle.transition(SessionState.AUTHENTICATING, "go")
     store = Store()
     await outbox.drain(store)
     doc = store.records[0].model_dump()
-    assert (doc["type"], doc["from"], doc["to"], doc["reason"]) == (
-        "session_state", "STARTING", "AUTHENTICATING", "go",
+    assert (doc["type"], doc["from"], doc["to"], doc["reason"], doc["account_id"]) == (
+        "session_state", "STARTING", "AUTHENTICATING", "go", "acct-1",
     )  # fmt: skip

@@ -123,6 +123,12 @@ class VenueHealth:
     def set(self, *, session: bool, feed: bool) -> None:
         self._session, self._feed = session, feed
 
+    def set_session(self, ok: bool) -> None:
+        self._session = ok
+
+    def set_feed(self, ok: bool) -> None:
+        self._feed = ok
+
     def session_ok(self) -> bool:
         return self._session
 

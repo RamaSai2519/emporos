@@ -104,7 +104,9 @@ class TestAnOrdinarySession:
     async def test_the_lifecycle_and_reconciliations_are_recorded(self, world: WorkerWorld) -> None:
         assembly, _ = await world.build()
         await assembly.worker.run_session()
-        events = await rows(world, Collection.SYSTEM_EVENTS, type="session_state")
+        events = await rows(
+            world, Collection.SYSTEM_EVENTS, type="session_state", account_id=world.account_id
+        )
         path = [e["to"] for e in sorted(events, key=lambda e: e["ts"])]
         assert path[:6] == [
             "AUTHENTICATING",
@@ -185,7 +187,9 @@ class TestFaults:
         assert report.final_state is SessionState.SHUTTING_DOWN
         orders = await rows(world, Collection.ORDERS, account_id=world.account_id)
         assert [o["side"] for o in orders] == ["BUY"]
-        events = await rows(world, Collection.SYSTEM_EVENTS, type="session_state")
+        events = await rows(
+            world, Collection.SYSTEM_EVENTS, type="session_state", account_id=world.account_id
+        )
         assert "HALTED" in {e["to"] for e in events}
 
     async def test_a_dirty_start_halts_before_any_strategy_runs_and_an_operator_resume_recovers(
@@ -203,7 +207,10 @@ class TestFaults:
         report = await assembly.worker.run_session()
 
         events = sorted(
-            await rows(world, Collection.SYSTEM_EVENTS, type="session_state"), key=lambda e: e["ts"]
+            await rows(
+                world, Collection.SYSTEM_EVENTS, type="session_state", account_id=world.account_id
+            ),
+            key=lambda e: e["ts"],
         )
         path = [e["to"] for e in events]
         assert path[:4] == ["AUTHENTICATING", "RECOVERING", "HALTED", "TRADING"]

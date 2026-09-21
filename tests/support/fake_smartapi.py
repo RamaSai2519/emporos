@@ -89,6 +89,13 @@ class FakeSmartApi:
                         "lowerCircuit": 90,
                         "upperCircuit": 110,
                         "exchTradeTime": "18-Sep-2026 15:59:57",
+                        # A tight, valid top of book (~10bps, well under the configured 20bps
+                        # cap): enough for AbnormalSpreadGuard to see a real spread rather than
+                        # block every entry for a market this double never quotes depth for.
+                        "depth": {
+                            "buy": [{"price": 100.45, "quantity": 50}],
+                            "sell": [{"price": 100.55, "quantity": 50}],
+                        },
                     }
                 )
         return {"fetched": fetched, "unfetched": []}
@@ -135,15 +142,20 @@ class FakeSmartApi:
 
     def _getPosition(self, body: dict[str, Any]) -> Any:
         net: dict[tuple[str, str], int] = {}
+        cost: dict[tuple[str, str], Decimal] = {}  # signed, so a reversal nets out correctly
         for t in self.trades:
             key = (t["exchange"], t["symboltoken"])
             signed = int(t["fillsize"]) * (1 if t["transactiontype"] == "BUY" else -1)
             net[key] = net.get(key, 0) + signed
+            cost[key] = cost.get(key, Decimal(0)) + signed * Decimal(t["fillprice"])
         rows = [
-            {"exchange": e, "symboltoken": tok, "netqty": str(q), "avgnetprice": "100.5"}
+            {
+                "exchange": e, "symboltoken": tok, "netqty": str(q),
+                "avgnetprice": str(abs(cost[(e, tok)] / q)),
+            }
             for (e, tok), q in net.items()
             if q != 0
-        ]
+        ]  # fmt: skip
         return rows or None
 
     def _getHolding(self, body: dict[str, Any]) -> Any:

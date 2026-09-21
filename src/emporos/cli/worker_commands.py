@@ -16,6 +16,8 @@ from emporos.cli.live_launch import (
     MonitorSwitchView,
 )
 from emporos.cli.live_paper_worker import DEFAULT_PAPER_CASH, LivePaperWorker, PaperWorkerOptions
+from emporos.cli.live_venue import AngelOneLiveVenueOpener
+from emporos.cli.live_worker import LiveWorker, LiveWorkerOptions
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
@@ -52,6 +54,9 @@ _ACKNOWLEDGE = typer.Option(
 )
 _ACCOUNT = typer.Option("paper", help="The paper account id (the API shows this account).")
 _CASH = typer.Option(DEFAULT_PAPER_CASH, help="The paper account's starting cash, a quoted number.")
+_LIVE_START = typer.Option(
+    None, "--start", "-s", help="Strategy to take live (repeatable); every one must clear the gate."
+)
 
 
 async def _run_live_check(files: list[Path], start: list[str]) -> LiveLaunchReport:
@@ -86,12 +91,12 @@ def worker_run_live(
     strategies: list[Path] | None = _FILES,
     start: list[str] | None = _CHECK,
 ) -> None:
-    """Check whether a strategy may go live, and say why not. It never starts anything.
+    """Check whether a strategy may go live, and say why not. It never starts anything, whatever
+    the answer — use `emporos worker live` to actually start one once every condition holds.
 
     Live trading needs LIVE_TRADING_ENABLED=true, the strategy `enabled: true` in its config, a
-    VALIDATED verdict recorded for exactly that config, and the kill switch clear. Live order
-    routing itself is not built yet (docs/live-trading.md), so even when every condition holds this
-    command stops and says so: it logs in to nothing and places no order.
+    VALIDATED verdict recorded for exactly that config, and the kill switch clear. This command
+    logs in to nothing and places no order, by design, regardless of the outcome.
     """
     files = strategies or sorted(Path("config/strategies").glob("*.yaml"))
     try:
@@ -139,4 +144,35 @@ def worker_run(
         f"session {report.final_state.value}" + (f": {report.failure}" if report.failure else "")
     )
     if report.failure:
+        raise typer.Exit(code=2)
+
+
+@worker_app.command("live")
+def worker_live(
+    strategies: list[Path] | None = _FILES,
+    start: list[str] | None = _LIVE_START,
+) -> None:
+    """Run one live trading day, behind the full live gate (see `run-live`). Refused, this prints
+    every reason and starts nothing — it logs in to Angel One only once every condition holds for
+    every strategy named. There is no acknowledgement path; the operator's own flags and a
+    validated verdict are the only way past it.
+    """
+    files = strategies or sorted(Path("config/strategies").glob("*.yaml"))
+    settings, clock, sleeper = Settings.default(), SystemClock(), AsyncioSleeper()
+    venues = AngelOneLiveVenueOpener(settings, clock, sleeper, RandomJitter())
+    options = LiveWorkerOptions(files, list(start or ()), settings.angelone_client_code or "live")
+    try:
+        outcome = asyncio.run(LiveWorker(settings, options, venues, clock, sleeper).run())
+    except (EmporosError, ValueError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"live worker failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    if isinstance(outcome, LiveLaunchReport):
+        for line in outcome.lines():
+            typer.echo(line)
+        raise typer.Exit(code=1)
+    typer.echo(
+        f"session {outcome.final_state.value}" + (f": {outcome.failure}" if outcome.failure else "")
+    )
+    if outcome.failure:
         raise typer.Exit(code=2)

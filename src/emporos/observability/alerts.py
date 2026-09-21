@@ -69,11 +69,14 @@ class OutboxAlertSink:
 
 
 class LifecycleEvents:
-    """Records every session state change as a `session_state` system event."""
+    """Records every session state change as a `session_state` system event, tagged with the
+    account whose session it is — the dashboard and any other reader must be able to tell one
+    worker's session apart from another's in the shared `system_events` collection."""
 
-    def __init__(self, outbox: EventOutbox, ids: IdGenerator) -> None:
+    def __init__(self, outbox: EventOutbox, ids: IdGenerator, account_id: str) -> None:
         self._outbox = outbox
         self._ids = ids
+        self._account_id = account_id
 
     def __call__(self, change: StateChange) -> None:
         self._outbox.push(
@@ -81,6 +84,7 @@ class LifecycleEvents:
                 {
                     "_id": self._ids.new_ulid(),
                     "type": "session_state",
+                    "account_id": self._account_id,
                     "ts": change.at,
                     "from": change.previous.value,
                     "to": change.current.value,
