@@ -78,6 +78,9 @@ class StrategyRunRecord(Record):
     config_hash: str | None = None
     strategy_name: str | None = None
     stopped_at: datetime | None = None  # None while the run is live; the worker is the only writer
+    # Which worker's run this is. Unset only for rows written before this field existed; a worker
+    # boot's own close_open_runs() only closes what it started (session/run_status.py).
+    account_id: str | None = None
 
 
 class StrategyVerdictRecord(Record):

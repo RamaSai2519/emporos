@@ -16,13 +16,16 @@ from tests.support.strategies import InMemoryRunStore
 NOW = datetime(2026, 9, 21, 4, 0, tzinfo=UTC)
 
 
-def run_record(run_id: str, stopped_at: datetime | None = None) -> StrategyRunRecord:
+def run_record(
+    run_id: str, stopped_at: datetime | None = None, account_id: str = "acct-1"
+) -> StrategyRunRecord:
     return StrategyRunRecord(
         _id=run_id,
         strategy_id="s1",
         session_date="2026-09-21",
         created_at=NOW - timedelta(hours=1),
         stopped_at=stopped_at,
+        account_id=account_id,
     )
 
 
@@ -48,12 +51,23 @@ class TestBoard:
         await store.insert(run_record("open-2"))
         await store.insert(run_record("done", stopped_at=earlier))
 
-        closed = await RunStatusBoard(store, FixedClock(NOW)).close_open_runs()
+        closed = await RunStatusBoard(store, FixedClock(NOW)).close_open_runs("acct-1")
 
         assert closed == 2
         assert store.records["open-1"].stopped_at == NOW
         assert store.records["open-2"].stopped_at == NOW
         assert store.records["done"].stopped_at == earlier  # an earlier stop is not overwritten
+
+    async def test_a_new_worker_never_closes_another_accounts_open_runs(self) -> None:
+        store = InMemoryRunStore()
+        await store.insert(run_record("mine", account_id="acct-1"))
+        await store.insert(run_record("theirs", account_id="acct-2"))
+
+        closed = await RunStatusBoard(store, FixedClock(NOW)).close_open_runs("acct-1")
+
+        assert closed == 1
+        assert store.records["mine"].stopped_at == NOW
+        assert store.records["theirs"].stopped_at is None
 
 
 class Runner:

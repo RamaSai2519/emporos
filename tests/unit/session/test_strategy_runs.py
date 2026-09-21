@@ -50,8 +50,9 @@ class Rig:
         self.strategies = InMemoryStrategyStore(race_winner)
         self.runs = InMemoryRunStore()
         self.launcher = StrategyRunLauncher(
-            threshold_registry(), self.strategies, self.runs, FixedClock(NOW), IdGenerator()
-        )
+            threshold_registry(), self.strategies, self.runs, FixedClock(NOW), IdGenerator(),
+            "acct-1",
+        )  # fmt: skip
         self.builder = StrategyRunnerBuilder(threshold_registry())
 
     def build(self, started: StartedRun, sink: ListSignalSink | None = None) -> PreparedRun:

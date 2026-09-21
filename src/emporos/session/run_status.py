@@ -46,9 +46,11 @@ class RunStatusBoard:
         if record is not None and record.stopped_at is None:
             await self._runs.replace(record.model_copy(update={"stopped_at": self._clock.now()}))
 
-    async def close_open_runs(self) -> int:
-        """Called once as a worker starts: any run still open belongs to a worker that is gone."""
-        open_runs = await self._runs.find({"stopped_at": None})
+    async def close_open_runs(self, account_id: str) -> int:
+        """Called once as a worker starts: any run of ITS OWN account still open belongs to a
+        worker that is gone. Scoped by account so one worker's boot never closes another worker's
+        (or a test's) live runs in a database they happen to share."""
+        open_runs = await self._runs.find({"stopped_at": None, "account_id": account_id})
         for record in open_runs:
             await self._runs.replace(record.model_copy(update={"stopped_at": self._clock.now()}))
         return len(open_runs)

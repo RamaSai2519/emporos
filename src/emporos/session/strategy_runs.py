@@ -69,6 +69,7 @@ class StrategyRunLauncher:
         runs: StrategyRunStore,
         clock: Clock,
         ids: IdGenerator,
+        account_id: str,
         snapshotter: ConfigSnapshotter | None = None,
     ) -> None:
         self._registry = registry
@@ -76,6 +77,7 @@ class StrategyRunLauncher:
         self._runs = runs
         self._clock = clock
         self._ids = ids
+        self._account_id = account_id
         self._snapshotter = snapshotter or ConfigSnapshotter()
 
     async def start(self, config: ResolvedStrategyConfig, session_date: str) -> StartedRun:
@@ -92,6 +94,7 @@ class StrategyRunLauncher:
                 config_snapshot=dict(snapshot.document),
                 config_hash=snapshot.content_hash,
                 strategy_name=config.name,
+                account_id=self._account_id,
             )
         )
         return StartedRun(run_id, config, snapshot, session_date)

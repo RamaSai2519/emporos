@@ -51,7 +51,7 @@ class Scratch:
         self.runs = StrategyRunRepository(database)
         self.signals = SignalRepository(database)
         self.launcher = StrategyRunLauncher(
-            self.registry, self.strategies, self.runs, SystemClock(), IdGenerator()
+            self.registry, self.strategies, self.runs, SystemClock(), IdGenerator(), "acct-1"
         )
         self.run_ids: list[str] = []
 

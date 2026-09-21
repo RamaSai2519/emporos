@@ -583,10 +583,11 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
     # --- strategies ---------------------------------------------------------------------
     run_records = StrategyRunRepository(db)
     launcher = StrategyRunLauncher(
-        common.registry, StrategyRepository(db), run_records, common.clock, common.ids
-    )
+        common.registry, StrategyRepository(db), run_records, common.clock, common.ids,
+        common.account_id,
+    )  # fmt: skip
     runs_board = RunStatusBoard(run_records, common.clock)
-    await runs_board.close_open_runs()  # whatever a worker that is gone left running
+    await runs_board.close_open_runs(common.account_id)  # what THIS account's dead worker left
     loadable = {c.name: c for c in (*common.available, *common.configs)}
     for config in loadable.values():
         await launcher.register(config)  # listed before its first run, so it can be started

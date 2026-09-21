@@ -246,8 +246,9 @@ async def test_a_config_snapshot_reproduces_a_run_exactly_after_the_yaml_changes
     registry = build_registry()
     loader = StrategyConfigLoader(StrategyConfigResolver(registry, INSTRUMENT_MASTER), tmp_path)
     launcher = StrategyRunLauncher(
-        registry, InMemoryStrategyStore(), InMemoryRunStore(), FixedClock(T0), IdGenerator()
-    )
+        registry, InMemoryStrategyStore(), InMemoryRunStore(), FixedClock(T0), IdGenerator(),
+        "acct-1",
+    )  # fmt: skip
     bars = closes_to_bars(SERIES)
 
     _write_yaml(
