@@ -30,9 +30,9 @@ deliberately not started.**
 
 ## Still open (needs a live session, credentials or a decision)
 
-1. **No live-market-data worker command.** The worker is composed for paper mode and driven in
-   virtual time; wiring it to the live tick pipeline and running it in an open market is EM-99
-   G1/H14. Nothing here has run on live NSE ticks.
+1. **The paper worker has never run on live NSE ticks.** `emporos worker run` (EM-138) wires it to
+   the live tick pipeline and is tested with a scripted feed; the open-market smoke test is
+   outstanding (EM-99 G1/H14).
 2. **Nothing has touched a real broker order endpoint** (EM-99 D1/F1): the AngelOne path is verified
    only against a SmartAPI emulator written from the documentation.
 3. **The dashboard (EM-41)** — not started, by instruction.
@@ -42,5 +42,9 @@ deliberately not started.**
 6. **Backfill from the command bus** has no runner in a paper worker (the command is REJECTED with
    that reason).
 7. Live-mode composition (real broker, `TradingMode.LIVE`) does not exist yet; paper is the only mode.
+   The gate in front of it is built (EM-140: `emporos worker run-live`, `session/launch_gate.py`) and
+   refuses by default; the composition is EM-142. See `docs/live-trading.md`.
+8. The dashboard now shows each strategy's recorded verdict and its running status, and starts a
+   strategy that is not validated only with its standing typed (EM-139).
 
 See `docs/strategies/` for the strategy curation result and its caveats.

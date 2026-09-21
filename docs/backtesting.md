@@ -147,6 +147,13 @@ schedule is dated from one point only.
 
 ## 6. Judge it properly: `backtest curate`
 
+The verdict a curation reaches is **recorded** (unless you pass `--no-record`, which keeps an
+exploratory run out of the ledger and out of the verdicts). The dashboard shows it beside the
+strategy, and it decides what the strategy may do: paper accepts anything but asks you to type the
+standing of one that is not validated; live accepts only `validated`. A verdict is bound to the
+config's behaviour, so editing a strategy's parameters makes its verdict `stale` until it is curated
+again. See `emporos backtest verdicts list`, and `docs/paper-trading.md`.
+
 `curate` is the honest path. It runs a walk-forward (tune on a training window, then run the chosen
 parameters ONCE on the next unseen window), under the platform's own risk rules, at the ₹50,000
 benchmark capital, with dated charges, then classifies the strategy **validated / inconclusive /
@@ -211,9 +218,11 @@ nothing can edit or delete an entry.
 
 ## What exists and what does not
 
-- **Paper trading on live data is not wired yet.** The worker (`emporos run`) is composed for paper
-  mode and has been exercised in virtual time, not on live ticks (EM-99 G1/H14). A strategy can be
-  backtested and unit-tested today; running it on a live market in paper mode cannot be done yet.
+- **Paper trading on live data is wired, and not yet run on a live market.** `emporos worker run`
+  puts a strategy on live ticks with simulated fills and starts it from the dashboard
+  (`docs/paper-trading.md`); it is tested with a scripted feed, and its first real morning is the
+  smoke test (EM-138). **Live trading does not exist**: the gate is built, the worker behind it is
+  not (`docs/live-trading.md`).
 - **No dashboard for any of this**: backtests are run from the command line.
 - **Not testable yet**: a NIFTY market-direction filter (no index bars are stored), a
   cross-sectional strategy such as relative-strength ranking (a strategy sees one instrument at a

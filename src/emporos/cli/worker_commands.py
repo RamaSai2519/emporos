@@ -8,12 +8,27 @@ from pathlib import Path
 import typer
 
 from emporos.broker.backoff import RandomJitter
+from emporos.cli.history_runtime import instrument_master
 from emporos.cli.live_feed import AngelOneFeedOpener
+from emporos.cli.live_launch import (
+    LiveLaunchCheck,
+    LiveLaunchReport,
+    MonitorSwitchView,
+)
 from emporos.cli.live_paper_worker import DEFAULT_PAPER_CASH, LivePaperWorker, PaperWorkerOptions
+from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.domain.money import Money
+from emporos.instruments.cache import InstrumentCache
+from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.repositories import KillSwitchRepository
+from emporos.persistence.verdict_store import MongoVerdictBook
+from emporos.risk.kill_switch import FileSentinelKillSwitch, KillSwitchMonitor, MongoKillSwitch
+from emporos.session.launch_gate import ConfigLaunchFacts, live_policy
+from emporos.session.strategy_files import StrategyConfigLoader
+from emporos.strategies.resolution import StrategyConfigResolver
 
 worker_app = typer.Typer(help="The trading worker process.", no_args_is_help=True)
 
@@ -26,6 +41,9 @@ _START = typer.Option(
     "-s",
     help="Strategy to run from the first bar (repeatable); others wait for START.",
 )
+_CHECK = typer.Option(
+    None, "--start", "-s", help="Strategy to check for live trading (repeatable)."
+)
 _ACKNOWLEDGE = typer.Option(
     None,
     "--acknowledge",
@@ -34,6 +52,57 @@ _ACKNOWLEDGE = typer.Option(
 )
 _ACCOUNT = typer.Option("paper", help="The paper account id (the API shows this account).")
 _CASH = typer.Option(DEFAULT_PAPER_CASH, help="The paper account's starting cash, a quoted number.")
+
+
+async def _run_live_check(files: list[Path], start: list[str]) -> LiveLaunchReport:
+    settings = Settings.default()
+    clock, sleeper = SystemClock(), AsyncioSleeper()
+    mongo = MongoClientFactory(settings)
+    try:
+        database = mongo.database()
+        master = instrument_master(mongo, database)
+        instruments = InstrumentCache()
+        await instruments.load_from(master)
+        loader = StrategyConfigLoader(StrategyConfigResolver(build_registry(), instruments))
+        configs = [loader.load_file(path) for path in files]
+        monitor = KillSwitchMonitor(
+            [
+                FileSentinelKillSwitch(settings.kill_switch_path),
+                MongoKillSwitch(KillSwitchRepository(database)),
+            ],
+            clock,
+            sleeper,
+        )
+        policy = live_policy(
+            MongoVerdictBook(database), settings.live_trading_enabled, MonitorSwitchView(monitor)
+        )
+        return await LiveLaunchCheck(policy, ConfigLaunchFacts(configs)).run(start)
+    finally:
+        await mongo.close()
+
+
+@worker_app.command("run-live")
+def worker_run_live(
+    strategies: list[Path] | None = _FILES,
+    start: list[str] | None = _CHECK,
+) -> None:
+    """Check whether a strategy may go live, and say why not. It never starts anything.
+
+    Live trading needs LIVE_TRADING_ENABLED=true, the strategy `enabled: true` in its config, a
+    VALIDATED verdict recorded for exactly that config, and the kill switch clear. Live order
+    routing itself is not built yet (docs/live-trading.md), so even when every condition holds this
+    command stops and says so: it logs in to nothing and places no order.
+    """
+    files = strategies or sorted(Path("config/strategies").glob("*.yaml"))
+    try:
+        report = asyncio.run(_run_live_check(files, list(start or [])))
+    except (EmporosError, ValueError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"live check failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for line in report.lines():
+        typer.echo(line)
+    raise typer.Exit(code=report.exit_code)
 
 
 @worker_app.command("run")
