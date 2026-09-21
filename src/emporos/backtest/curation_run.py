@@ -9,9 +9,10 @@ from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Protocol
 
+from emporos.backtest.batch import BatchBacktester, RunProgress
 from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.curation import CurationRecord, StrategyCurator
-from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
+from emporos.backtest.engine import BacktestEngine, BacktestSpec
 from emporos.backtest.feed import FeedWindow
 from emporos.backtest.job import ResolverTickSizes
 from emporos.backtest.pricing import GateContext, SignalGate
@@ -67,7 +68,9 @@ class CurationRun:
         assume_current_universe: bool = True,
         recorder: ResultRecorder | None = None,
         assessors: AssessorFactory | None = None,
+        batch: BatchBacktester | None = None,
     ) -> None:
+        """`batch` runs the independent backtests of a strategy (default: one after another)."""
         self._reader = reader
         self._registry = registry
         self._instruments = instruments
@@ -78,6 +81,7 @@ class CurationRun:
         self._assume = assume_current_universe
         self._recorder = recorder or NoRecording()
         self._assessors = assessors
+        self._batch = batch
 
     async def run(
         self,
@@ -101,38 +105,38 @@ class CurationRun:
                 self._reader, self._registry, ResolverTickSizes(universe.resolver),
                 self._schedules, gate=self._gate,
             )  # fmt: skip
-            traced = _Traced(engine, progress)
             runner = WalkForwardRunner(
-                traced, BestScoreSelector(), self._objective, ConfigVariants()
+                engine, BestScoreSelector(), self._objective, ConfigVariants(), batch=self._batch
             )
+            run_log = _RunLog(progress)
             base = BacktestSpec(
                 config=config, window=FeedWindow(start, end), starting_cash=starting_cash,
                 assumptions=("universe resolved from earliest recorded definitions",),
             )  # fmt: skip
-            result = await runner.run(base, planned.candidates, windows)
+            result = await runner.run(base, planned.candidates, windows, run_log)
             await self._recorder.record(planned.name, result)
             record = self._curator.evaluate(
                 planned.name, [c.name for c in planned.candidates], result
             )
             if self._assessors is not None:
                 progress(f"{planned.name}: assessing robustness")
-                assessor = self._assessors(traced, universe.resolver)
-                report = await assessor.assess(planned.name, result, base, planned.candidates)
+                assessor = self._assessors(engine, universe.resolver)
+                report = await assessor.assess(
+                    planned.name, result, base, planned.candidates, run_log
+                )
                 record = replace(record, robustness=report)
             records.append(record)
             progress(f"{planned.name}: {'PASSED' if record.verdict.passed else 'FAILED'}")
         return records
 
 
-class _Traced:
-    """Reports each backtest as it starts, so a long run is visibly alive."""
+class _RunLog:
+    """Reports each backtest as it completes, so a long run is visibly alive."""
 
-    def __init__(self, engine: BacktestEngine, progress: Progress) -> None:
-        self._engine = engine
+    def __init__(self, progress: Progress) -> None:
         self._progress = progress
-        self._n = 0
 
-    async def run(self, spec: BacktestSpec) -> BacktestResult:
-        self._n += 1
-        self._progress(f"  run {self._n}: {spec.window.start.date()} .. {spec.window.end.date()}")
-        return await self._engine.run(spec)
+    def __call__(self, run: RunProgress) -> None:
+        outcome = run.outcome
+        state = "FAILED" if outcome.failed else "done"
+        self._progress(f"  [{run.done}/{run.total}] {outcome.label}: {state}")

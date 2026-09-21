@@ -16,8 +16,11 @@ written: bars stored later for an already-cached month do not appear until the f
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import os
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -27,6 +30,19 @@ from emporos.persistence.candle_cold import ParquetCandleCodec
 from emporos.persistence.candles import CandleReader
 
 FINAL_AFTER = timedelta(days=2)  # a month is final this long after it ends
+
+
+def utc_months(start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
+    """The UTC calendar months that overlap `[start, end)`, each as (first instant, next month)."""
+    months: list[tuple[datetime, datetime]] = []
+    cursor = datetime(start.year, start.month, 1, tzinfo=UTC)
+    while cursor < end:
+        following = datetime(
+            cursor.year + (cursor.month == 12), cursor.month % 12 + 1, 1, tzinfo=UTC
+        )
+        months.append((cursor, following))
+        cursor = following
+    return months
 
 
 class CandleCacheFiles:
@@ -92,7 +108,7 @@ class CachingCandleReader:
         if start >= end:
             return []
         found: list[Candle] = []
-        for month_start, month_end in self._months(start, end):
+        for month_start, month_end in utc_months(start, end):
             bars = await self._month(instrument_id, timeframe, month_start, month_end)
             found.extend(c for c in bars if start <= c.ts < end)
         return found
@@ -125,14 +141,115 @@ class CachingCandleReader:
     def _is_final(self, month_end: datetime) -> bool:
         return month_end + self._final_after <= self._clock.now()
 
-    @staticmethod
-    def _months(start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
-        months: list[tuple[datetime, datetime]] = []
-        cursor = datetime(start.year, start.month, 1, tzinfo=UTC)
-        while cursor < end:
-            following = datetime(
-                cursor.year + (cursor.month == 12), cursor.month % 12 + 1, 1, tzinfo=UTC
-            )
-            months.append((cursor, following))
-            cursor = following
-        return months
+
+class FileCandleReader:
+    """Reads bars ONLY from month files (the cache, and any snapshot beside it); it has no source
+    to fall back on, so it can never reach the database. A month with no file reads as empty.
+
+    Meant for backtest worker processes, whose files were put in place beforehand by a
+    `CandlePrefetcher`. A file that is there is complete for its month, so serving from the first
+    layer that has one is safe.
+    """
+
+    def __init__(
+        self, layers: Sequence[CandleCacheFiles], codec: ParquetCandleCodec | None = None
+    ) -> None:
+        self._layers = tuple(layers)
+        self._codec = codec or ParquetCandleCodec()
+        self._memory: dict[tuple[str, str, str], list[Candle]] = {}
+
+    async def get_range(
+        self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
+    ) -> list[Candle]:
+        """Bars with `start <= ts < end`, oldest first, one per timestamp."""
+        if start >= end:
+            return []
+        found: list[Candle] = []
+        for month_start, _ in utc_months(start, end):
+            bars = self._month(instrument_id, timeframe.value, f"{month_start:%Y-%m}")
+            found.extend(c for c in bars if start <= c.ts < end)
+        return found
+
+    def _month(self, instrument_id: str, timeframe: str, month: str) -> list[Candle]:
+        key = (instrument_id, timeframe, month)
+        if key not in self._memory:
+            self._memory[key] = self._read(key)
+        return self._memory[key]
+
+    def _read(self, key: tuple[str, str, str]) -> list[Candle]:
+        for layer in self._layers:
+            path = layer.path(*key)
+            if path.is_file():
+                return self._codec.decode(path.read_bytes())
+        return []
+
+
+@dataclass(frozen=True)
+class CandleNeed:
+    """Bars of one instrument and timeframe over `[start, end)` that a run will read."""
+
+    instrument_id: str
+    timeframe: Timeframe
+    start: datetime
+    end: datetime
+
+
+class CandlePrefetcher:
+    """Makes every month a set of runs will read available as a FILE, before any worker starts.
+
+    A month already in the cache (or in the snapshot) is left alone. Any other is read once, here,
+    through the caching reader: a closed month lands in the cache; a month too recent to cache is
+    written to the SNAPSHOT instead (a run-scoped directory the caller owns and removes), which
+    also freezes that month for the whole batch. A month the source has nothing for is remembered
+    as empty and not asked about again.
+
+    Reads are made a few at a time, because the shared Atlas stalls under many large ones.
+    """
+
+    def __init__(
+        self,
+        reader: CandleReader,
+        cache: CandleCacheFiles,
+        snapshot: CandleCacheFiles,
+        concurrency: int = 2,
+        codec: ParquetCandleCodec | None = None,
+    ) -> None:
+        if concurrency < 1:
+            raise ValueError("prefetch needs at least one read at a time")
+        self._reader = reader
+        self._cache = cache
+        self._snapshot = snapshot
+        self._codec = codec or ParquetCandleCodec()
+        self._concurrency = concurrency
+        self._empty: set[tuple[str, str, str]] = set()
+
+    async def ensure(self, needs: Iterable[CandleNeed]) -> None:
+        months = sorted(
+            {
+                (need.instrument_id, need.timeframe, start, end)
+                for need in needs
+                for start, end in utc_months(need.start, need.end)
+            },
+            key=lambda m: (m[0], m[1].value, m[2]),
+        )
+        gate = asyncio.Semaphore(self._concurrency)
+
+        async def one(month: tuple[str, Timeframe, datetime, datetime]) -> None:
+            async with gate:
+                await self._ensure_month(*month)
+
+        await asyncio.gather(*(one(m) for m in months))
+
+    async def _ensure_month(
+        self, instrument_id: str, timeframe: Timeframe, start: datetime, end: datetime
+    ) -> None:
+        key = (instrument_id, timeframe.value, f"{start:%Y-%m}")
+        if key in self._empty or self._cache.path(*key).is_file():
+            return
+        if self._snapshot.path(*key).is_file():
+            return
+        bars = await self._reader.get_range(instrument_id, timeframe, start, end)
+        if not bars:
+            self._empty.add(key)
+        elif not self._cache.path(*key).is_file():  # too recent to have been cached by the read
+            self._snapshot.write(self._snapshot.path(*key), self._codec.encode(bars))

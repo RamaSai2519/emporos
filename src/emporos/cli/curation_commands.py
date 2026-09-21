@@ -12,6 +12,7 @@ from typing import Any
 import typer
 import yaml
 
+from emporos.backtest.batch import Backtester
 from emporos.backtest.costs import EarliestBeforeFirst, ScheduleSource, StrictSchedules
 from emporos.backtest.curation import (
     CurationRecord,
@@ -20,6 +21,7 @@ from emporos.backtest.curation import (
     StrategyCurator,
 )
 from emporos.backtest.curation_run import CurationRun, PlannedStrategy, WindowPlan
+from emporos.backtest.parallel import default_workers
 from emporos.backtest.risk_gate import RiskGateFactory
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
 from emporos.backtest.robustness.benchmark import (
@@ -37,8 +39,8 @@ from emporos.backtest.robustness.recording import (
 from emporos.backtest.robustness.report import RobustnessDocument
 from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger, TrialStatistics
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
-from emporos.backtest.walkforward_run import Backtester
-from emporos.cli.backtest_runtime import open_backtest_runtime
+from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
+from emporos.cli.backtest_runtime import candle_cache_root, open_backtest_runtime
 from emporos.cli.strategy_composition import build_registry
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
@@ -71,6 +73,12 @@ _JSON = typer.Option(
 )
 _RECORD = typer.Option(
     True, "--record/--no-record", help="Append every backtest tried to the trial ledger."
+)
+_WORKERS = typer.Option(
+    None,
+    min=1,
+    help="Backtests run at once, in separate processes (default: one fewer than the CPU cores). "
+    "1 runs them one after another in this process.",
 )
 _EXPERIMENT = typer.Option(None, help="Ledger experiment name (default: curation-<today>).")
 
@@ -115,6 +123,7 @@ async def _curate(
     only: list[str] | None,
     record_trials: bool,
     experiment: str | None,
+    workers: int,
 ) -> tuple[list[CurationRecord], SelectionCriteria]:
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     if plan.get("objective") != "sharpe":
@@ -142,7 +151,8 @@ async def _curate(
         return StrictSchedules(library)
 
     criteria = SelectionCriteria()
-    async with open_backtest_runtime(Settings.default()) as runtime:
+    settings = Settings.default()
+    async with open_backtest_runtime(settings) as runtime:
         ledger: TrialLedger = InMemoryTrialLedger()
         if record_trials:
             ledger = MongoTrialLedger(runtime.database)
@@ -150,36 +160,53 @@ async def _curate(
         async def trial_statistics() -> TrialStatistics:
             return TrialStatistics.of(await ledger.all())
 
-        def assessor(backtester: Backtester, resolver: InstrumentResolver) -> RobustnessAssessor:
-            baseline = HoldBaseline(
-                backtester, load(f"config/strategies/{_BASELINE}.yaml", resolver)
-            )
-            return RobustnessAssessor(
-                benchmark, trial_statistics, PerturbationRunner(backtester), baseline
-            )
-
-        run = CurationRun(
-            runtime.reader, registry, runtime.instruments,
-            schedules,
-            RiskGateFactory(scaler.limits(RiskLimitsLoader().load())), StrategyCurator(criteria),
-            SHARPE, recorder=_recorder(
-                ledger, experiment, first, last, assume_fees,
-                runtime.cache.fingerprint if runtime.cache else None,
-            ),
-            assessors=assessor,
-        )  # fmt: skip
-        records = await run.run(
-            [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
-            WindowPlan(
-                first.date(),
-                last.date(),
-                timedelta(days=windows["train_days"]),
-                timedelta(days=windows["test_days"]),
-                timedelta(days=windows["embargo_days"]),
-            ),
-            Money.of(cash or str(benchmark.capital)),
-            progress=lambda message: typer.echo(message),
+        window_plan = WindowPlan(
+            first.date(),
+            last.date(),
+            timedelta(days=windows["train_days"]),
+            timedelta(days=windows["test_days"]),
+            timedelta(days=windows["embargo_days"]),
         )
+        limits = scaler.limits(RiskLimitsLoader().load())
+        cache_root = candle_cache_root(settings)
+        if runtime.cache is None:
+            raise ValueError("the backtest runtime has no candle cache")
+
+        def recipe(snapshot: Path) -> CurationRecipe:
+            return CurationRecipe(
+                cache_root, snapshot, runtime.eras, window_plan.bounds()[0], True, assume_fees,
+                limits,
+            )  # fmt: skip
+
+        with curation_batch(workers, runtime.cache, cache_root, recipe) as batch:
+
+            def assessor(
+                backtester: Backtester, resolver: InstrumentResolver
+            ) -> RobustnessAssessor:
+                baseline = HoldBaseline(
+                    backtester, load(f"config/strategies/{_BASELINE}.yaml", resolver), batch
+                )
+                return RobustnessAssessor(
+                    benchmark, trial_statistics, PerturbationRunner(backtester, batch=batch),
+                    baseline,
+                )  # fmt: skip
+
+            run = CurationRun(
+                runtime.reader, registry, runtime.instruments,
+                schedules,
+                RiskGateFactory(limits), StrategyCurator(criteria),
+                SHARPE, recorder=_recorder(
+                    ledger, experiment, first, last, assume_fees,
+                    runtime.cache.fingerprint if runtime.cache else None,
+                ),
+                assessors=assessor, batch=batch,
+            )  # fmt: skip
+            records = await run.run(
+                [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
+                window_plan,
+                Money.of(cash or str(benchmark.capital)),
+                progress=lambda message: typer.echo(message),
+            )
     return records, criteria
 
 
@@ -211,6 +238,7 @@ def backtest_curate(
     only: list[str] | None = _ONLY,
     record_trials: bool = _RECORD,
     experiment: str | None = _EXPERIMENT,
+    workers: int | None = _WORKERS,
 ) -> None:  # fmt: skip
     """Walk-forward every strategy in PLAN at the benchmark capital; classify each, failures too."""
     try:
@@ -225,6 +253,7 @@ def backtest_curate(
                 only,
                 record_trials,
                 experiment,
+                workers or default_workers(),
             )
         )
     except (EmporosError, ValueError, LookupError) as error:

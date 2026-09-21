@@ -7,10 +7,18 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
+
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
-from emporos.persistence.candle_cache import CachingCandleReader, CandleCacheFiles
+from emporos.persistence.candle_cache import (
+    CachingCandleReader,
+    CandleCacheFiles,
+    CandleNeed,
+    CandlePrefetcher,
+    FileCandleReader,
+)
 
 INSTRUMENT = "NSE:1333"
 NOW = datetime(2026, 9, 20, 12, 0, tzinfo=UTC)
@@ -222,3 +230,132 @@ class TestCacheFiles:
         assert target.read_bytes() == b"bytes"
         assert [p.name for p in target.parent.iterdir()] == ["2026-01.parquet"]
         assert files.size() == 5 and files.clear() == 1
+
+
+# --- what worker processes read (EM-131) -------------------------------------------------
+
+SEPTEMBER = (datetime(2026, 9, 1, tzinfo=UTC), datetime(2026, 10, 1, tzinfo=UTC))
+
+
+def september_bars() -> list[Candle]:
+    return [candle(datetime(2026, 9, 18, 4, 0, tzinfo=UTC), "310")]
+
+
+def prefetcher(
+    source: CountingSource, cache_root: Path, snapshot_root: Path, now: datetime = NOW
+) -> CandlePrefetcher:
+    cache = CandleCacheFiles(cache_root)
+    return CandlePrefetcher(
+        CachingCandleReader(source, cache, FixedClock(now)), cache, CandleCacheFiles(snapshot_root)
+    )
+
+
+def need(start: datetime, end: datetime, instrument: str = INSTRUMENT) -> CandleNeed:
+    return CandleNeed(instrument, Timeframe.M5, start, end)
+
+
+async def test_a_file_reader_serves_the_cache_and_has_nothing_to_ask(tmp_path: Path) -> None:
+    await reader(CountingSource(march_bars()), tmp_path).get_range(INSTRUMENT, Timeframe.M5, *MARCH)
+
+    served = FileCandleReader([CandleCacheFiles(tmp_path)])
+
+    assert await served.get_range(INSTRUMENT, Timeframe.M5, *MARCH) == march_bars()
+
+
+async def test_a_month_with_no_file_reads_as_empty_not_as_an_error(tmp_path: Path) -> None:
+    served = FileCandleReader([CandleCacheFiles(tmp_path)])
+
+    assert await served.get_range(INSTRUMENT, Timeframe.M5, *MARCH) == []
+
+
+async def test_a_file_reader_slices_and_joins_months_like_the_caching_reader(
+    tmp_path: Path,
+) -> None:
+    march = march_bars()
+    april = [candle(datetime(2026, 4, 1, 3, 45, tzinfo=UTC), "200")]
+    source = CountingSource([*march, *april])
+    await reader(source, tmp_path).get_range(
+        INSTRUMENT, Timeframe.M5, datetime(2026, 3, 1, tzinfo=UTC), datetime(2026, 5, 1, tzinfo=UTC)
+    )
+    served = FileCandleReader([CandleCacheFiles(tmp_path)])
+
+    got = await served.get_range(
+        INSTRUMENT, Timeframe.M5, march[4].ts, datetime(2026, 4, 2, tzinfo=UTC)
+    )
+
+    assert got == [march[4], march[5], april[0]]
+
+
+async def test_the_first_layer_with_a_file_wins(tmp_path: Path) -> None:
+    cache, snapshot = tmp_path / "cache", tmp_path / "snapshot"
+    await reader(CountingSource(march_bars()), cache).get_range(INSTRUMENT, Timeframe.M5, *MARCH)
+    other = [candle(march_bars()[0].ts, "999")]
+    await reader(CountingSource(other), snapshot).get_range(INSTRUMENT, Timeframe.M5, *MARCH)
+
+    served = FileCandleReader([CandleCacheFiles(cache), CandleCacheFiles(snapshot)])
+
+    assert await served.get_range(INSTRUMENT, Timeframe.M5, *MARCH) == march_bars()
+
+
+async def test_prefetch_puts_a_closed_month_in_the_cache_where_workers_will_look(
+    tmp_path: Path,
+) -> None:
+    source = CountingSource(march_bars())
+    fetch = prefetcher(source, tmp_path / "cache", tmp_path / "snapshot")
+
+    await fetch.ensure([need(*MARCH)])
+
+    workers = FileCandleReader(
+        [CandleCacheFiles(tmp_path / "cache"), CandleCacheFiles(tmp_path / "snapshot")]
+    )
+    assert await workers.get_range(INSTRUMENT, Timeframe.M5, *MARCH) == march_bars()
+    assert not list((tmp_path / "snapshot").rglob("*.parquet"))
+
+
+async def test_prefetch_snapshots_a_month_too_recent_to_cache(tmp_path: Path) -> None:
+    source = CountingSource(september_bars())
+    fetch = prefetcher(source, tmp_path / "cache", tmp_path / "snapshot")
+
+    await fetch.ensure([need(*SEPTEMBER)])
+
+    assert not list((tmp_path / "cache").rglob("*.parquet"))  # the cache stays clean of open months
+    workers = FileCandleReader(
+        [CandleCacheFiles(tmp_path / "cache"), CandleCacheFiles(tmp_path / "snapshot")]
+    )
+    assert await workers.get_range(INSTRUMENT, Timeframe.M5, *SEPTEMBER) == september_bars()
+
+
+async def test_a_second_prefetch_asks_the_source_for_nothing(tmp_path: Path) -> None:
+    source = CountingSource([*march_bars(), *september_bars()])
+    fetch = prefetcher(source, tmp_path / "cache", tmp_path / "snapshot")
+    await fetch.ensure([need(*MARCH), need(*SEPTEMBER)])
+    asked = len(source.requests)
+
+    await fetch.ensure([need(*MARCH), need(*SEPTEMBER)])
+
+    assert asked == 2 and len(source.requests) == asked  # the open month is frozen for the run
+
+
+async def test_an_empty_month_is_asked_about_once_per_prefetcher(tmp_path: Path) -> None:
+    source = CountingSource([])
+    fetch = prefetcher(source, tmp_path / "cache", tmp_path / "snapshot")
+
+    await fetch.ensure([need(*MARCH)])
+    await fetch.ensure([need(*MARCH)])
+
+    assert len(source.requests) == 1 and not list(tmp_path.rglob("*.parquet"))
+
+
+async def test_overlapping_needs_read_each_month_once(tmp_path: Path) -> None:
+    source = CountingSource(march_bars())
+    fetch = prefetcher(source, tmp_path / "cache", tmp_path / "snapshot")
+
+    await fetch.ensure([need(*MARCH), need(*MARCH), need(march_bars()[1].ts, march_bars()[3].ts)])
+
+    assert len(source.requests) == 1
+
+
+def test_prefetch_needs_at_least_one_read_at_a_time(tmp_path: Path) -> None:
+    cache = CandleCacheFiles(tmp_path)
+    with pytest.raises(ValueError, match="at least one"):
+        CandlePrefetcher(CountingSource([]), cache, cache, concurrency=0)

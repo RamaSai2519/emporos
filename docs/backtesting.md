@@ -1,7 +1,7 @@
 # Creating a strategy and backtesting it
 
 How to add a new intraday strategy to Emporos, run it over history, and read the result. Everything
-here is a command or a file in this repository; there is no dashboard for it yet (EM-131 to EM-136).
+here is a command or a file in this repository; there is no dashboard for it (running backtests from the dashboard was dropped).
 
 Run every command from the repository root. If your shell has another project's virtualenv active,
 prefix them with `PIPENV_IGNORE_VIRTUALENVS=1 PIPENV_VERBOSITY=-1` (the project's own environment
@@ -107,6 +107,24 @@ run `cache clear`** (or delete that month's file), or the new bars will not appe
 month and any month that ended less than two days ago are never cached, and neither is an empty
 month.
 
+### Running the curation on several cores
+
+`backtest curate` runs its independent backtests (every candidate on every training window, then
+the test windows, the neighbouring parameter sets and the always-long baseline) in a pool of worker
+processes. Each worker reads only files (the cache and, for a month too recent to cache, a snapshot
+the parent writes first), never Atlas, and the result is identical to running them one after another
+(the same run ids and metrics, in the same order).
+
+```bash
+pipenv run emporos backtest curate --only orb_v1 --from 2025-09-22 --to 2026-09-18 --workers 4
+```
+
+`--workers` defaults to one fewer than the CPU cores, held back by available memory (each worker
+needs about 750 MB and 2 GiB is left free for the machine). `--workers 1` runs everything in this
+process. Progress is printed as each run completes (`[12/30] orb_v1 w1 train r6_t15_s10: done`); a run
+that fails is named by strategy, window and candidate in the error, and the runs that completed are
+kept in it.
+
 ## 5. A quick look: `backtest run`
 
 ```bash
@@ -192,7 +210,7 @@ nothing can edit or delete an entry.
 - **Paper trading on live data is not wired yet.** The worker (`emporos run`) is composed for paper
   mode and has been exercised in virtual time, not on live ticks (EM-99 G1/H14). A strategy can be
   backtested and unit-tested today; running it on a live market in paper mode cannot be done yet.
-- **No dashboard for any of this** (EM-131 to EM-136 are the plan for it).
+- **No dashboard for any of this**: backtests are run from the command line.
 - **Not testable yet**: a NIFTY market-direction filter (no index bars are stored), a
   cross-sectional strategy such as relative-strength ranking (a strategy sees one instrument at a
   time), and long and short results reported separately (EM-119, EM-127).

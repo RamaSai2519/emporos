@@ -17,6 +17,15 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import Protocol
 
+from emporos.backtest.batch import (
+    Backtester,
+    BatchBacktester,
+    BatchItem,
+    BatchResults,
+    ProgressSink,
+    SerialBatch,
+    ignore_progress,
+)
 from emporos.backtest.engine import BacktestSpec
 from emporos.backtest.metrics.decimal_math import ZERO
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
@@ -28,7 +37,7 @@ from emporos.backtest.robustness.perturbation import PerturbationReport, Perturb
 from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.robustness.verdict import Evidence, VerdictPolicy, VerdictReport
 from emporos.backtest.tuning import ParameterCandidate
-from emporos.backtest.walkforward_run import Backtester, WalkForwardResult
+from emporos.backtest.walkforward_run import WalkForwardResult
 from emporos.core.clock import IST
 from emporos.domain.instruments import InstrumentResolver
 from emporos.strategies.config import ResolvedStrategyConfig
@@ -48,19 +57,31 @@ class HoldBaseline:
     """The always-long baseline: the same universe, sizing, risk rules and charges as the strategy,
     on the strategy's own test windows, with no view at all."""
 
-    def __init__(self, backtester: Backtester, config: ResolvedStrategyConfig) -> None:
-        self._backtester = backtester
+    def __init__(
+        self,
+        backtester: Backtester,
+        config: ResolvedStrategyConfig,
+        batch: BatchBacktester | None = None,
+    ) -> None:
+        self._batch = batch or SerialBatch(backtester)
         self._config = config
 
-    async def net_pnl(self, base: BacktestSpec, result: WalkForwardResult) -> Decimal:
+    async def net_pnl(
+        self,
+        base: BacktestSpec,
+        result: WalkForwardResult,
+        progress: ProgressSink = ignore_progress,
+    ) -> Decimal:
         config = self._config.model_copy(update={"universe": base.config.universe})
-        total = ZERO
-        for outcome in result.outcomes:
-            run = await self._backtester.run(
-                replace(base, config=config, window=outcome.window.test)
+        items = [
+            BatchItem(
+                f"{base.config.name} w{index} always-long baseline",
+                replace(base, config=config, window=outcome.window.test),
             )
-            total += run.metrics.trades.net_pnl.amount
-        return total
+            for index, outcome in enumerate(result.outcomes)
+        ]
+        runs = BatchResults(await self._batch.run_many(items, progress)).results()
+        return sum((run.metrics.trades.net_pnl.amount for run in runs), ZERO)
 
 
 @dataclass(frozen=True)
@@ -97,6 +118,7 @@ class RobustnessAssessor:
         result: WalkForwardResult,
         base: BacktestSpec,
         candidates: Sequence[ParameterCandidate],
+        progress: ProgressSink = ignore_progress,
     ) -> RobustnessReport:
         thresholds = self._benchmark.verdict
         trades = tuple(t for o in result.outcomes for t in o.test.trades)
@@ -105,8 +127,10 @@ class RobustnessAssessor:
         monte_carlo = MonteCarlo(self._monte_carlo_config()).run(trades)
         deflated = DeflatedSharpe().evaluate(returns, await self._trial_statistics())
         concentration = ConcentrationCheck(thresholds.concentration.top_trades).measure(trades)
-        perturbation = await self._perturb(base, result, candidates)
-        baseline = None if self._baseline is None else await self._baseline.net_pnl(base, result)
+        perturbation = await self._perturb(base, result, candidates, progress)
+        baseline = (
+            None if self._baseline is None else await self._baseline.net_pnl(base, result, progress)
+        )
         evidence = Evidence(
             trade_count=len(trades),
             net_pnl=sum((t.net_pnl.amount for t in trades), ZERO),
@@ -147,10 +171,11 @@ class RobustnessAssessor:
         base: BacktestSpec,
         result: WalkForwardResult,
         candidates: Sequence[ParameterCandidate],
+        progress: ProgressSink,
     ) -> PerturbationReport | None:
         if self._perturbation is None:
             return None
-        return await self._perturbation.evaluate(base, result.outcomes, candidates)
+        return await self._perturbation.evaluate(base, result.outcomes, candidates, progress)
 
     @staticmethod
     def _weekdays(base: BacktestSpec) -> int:

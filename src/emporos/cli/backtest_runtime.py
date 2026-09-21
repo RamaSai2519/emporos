@@ -47,6 +47,7 @@ class BacktestRuntime:
     instruments: AsOfInstruments
     database: AsyncDatabase  # type: ignore[type-arg]
     cache: CachingCandleReader | None = None
+    eras: tuple[InstrumentEra, ...] = ()
 
 
 class InstrumentErasReader:
@@ -101,7 +102,7 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
             repository, CandleCacheFiles(candle_cache_root(settings)), SystemClock()
         )
         eras = await InstrumentErasReader(database).read()
-        yield BacktestRuntime(reader, AsOfInstruments(eras), database, reader)
+        yield BacktestRuntime(reader, AsOfInstruments(eras), database, reader, tuple(eras))
     finally:
         await mongo.close()
 

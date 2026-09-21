@@ -14,10 +14,19 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from decimal import Decimal
 
+from emporos.backtest.batch import (
+    Backtester,
+    BatchBacktester,
+    BatchItem,
+    BatchResults,
+    ProgressSink,
+    SerialBatch,
+    ignore_progress,
+)
 from emporos.backtest.engine import BacktestSpec
 from emporos.backtest.metrics.decimal_math import ZERO, DecimalMath
 from emporos.backtest.tuning import ConfigVariants, ParameterCandidate
-from emporos.backtest.walkforward_run import Backtester, WindowOutcome
+from emporos.backtest.walkforward_run import WindowOutcome
 
 
 class NeighbourSelector:
@@ -60,8 +69,9 @@ class PerturbationRunner:
         backtester: Backtester,
         variants: ConfigVariants | None = None,
         neighbours: NeighbourSelector | None = None,
+        batch: BatchBacktester | None = None,
     ) -> None:
-        self._backtester = backtester
+        self._batch = batch or SerialBatch(backtester)
         self._variants = variants or ConfigVariants()
         self._neighbours = neighbours or NeighbourSelector()
 
@@ -70,17 +80,28 @@ class PerturbationRunner:
         base: BacktestSpec,
         outcomes: Sequence[WindowOutcome],
         candidates: Sequence[ParameterCandidate],
+        progress: ProgressSink = ignore_progress,
     ) -> PerturbationReport:
-        runs: list[NeighbourRun] = []
-        for index, outcome in enumerate(outcomes):
-            for neighbour in self._neighbours.of(outcome.chosen, candidates):
-                spec = replace(
+        wanted = [
+            (index, neighbour)
+            for index, outcome in enumerate(outcomes)
+            for neighbour in self._neighbours.of(outcome.chosen, candidates)
+        ]
+        items = [
+            BatchItem(
+                f"{base.config.name} w{index} neighbour {neighbour.name}",
+                replace(
                     base,
                     config=self._variants.apply(base.config, neighbour),
-                    window=outcome.window.test,
-                )
-                result = await self._backtester.run(spec)
-                runs.append(
-                    NeighbourRun(index, neighbour.name, result.metrics.trades.net_pnl.amount)
-                )
-        return PerturbationReport(tuple(runs))
+                    window=outcomes[index].window.test,
+                ),
+            )
+            for index, neighbour in wanted
+        ]
+        results = BatchResults(await self._batch.run_many(items, progress)).results()
+        return PerturbationReport(
+            tuple(
+                NeighbourRun(index, neighbour.name, result.metrics.trades.net_pnl.amount)
+                for (index, neighbour), result in zip(wanted, results, strict=True)
+            )
+        )

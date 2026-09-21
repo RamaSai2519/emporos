@@ -104,14 +104,17 @@ class TestSelectionSeesOnlyTraining:
         result = await runner(backtester).run(base_spec(), CANDIDATES, plan)
 
         assert len(result.outcomes) == len(plan) == 5
-        per_window = len(CANDIDATES) + 1  # every candidate on train, then the chosen one on test
+        trained = len(plan) * len(CANDIDATES)
+        training, testing = backtester.runs[:trained], backtester.runs[trained:]
+        # every candidate is tried on every training window before ANY test window is run ...
         for index, window in enumerate(plan):
-            block = backtester.runs[index * per_window : (index + 1) * per_window]
-            assert [w for w, _, _ in block[:-1]] == [window.train] * len(CANDIDATES)
-            assert [(b, s) for _, b, s in block[:-1]] == [
+            block = training[index * len(CANDIDATES) : (index + 1) * len(CANDIDATES)]
+            assert [w for w, _, _ in block] == [window.train] * len(CANDIDATES)
+            assert [(b, s) for _, b, s in block] == [
                 (c.overrides["buy_at"], c.overrides["sell_at"]) for c in CANDIDATES
             ]
-            assert block[-1][0] == window.test  # the test window, once, last
+        # ... and then each test window is run once, in order
+        assert [w for w, _, _ in testing] == [window.test for window in plan]
 
     async def test_no_training_run_touches_any_bar_of_its_own_test_window(self) -> None:
         backtester = RecordingBacktester()
