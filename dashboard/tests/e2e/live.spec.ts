@@ -1,7 +1,13 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 
-/** Browser requests are forwarded unchanged to the real isolated API, never fulfilled by fixtures. */
-class PaperAcceptance {
+/**
+ * The same acceptance flow paper.spec.ts proves, run against live_server.py instead: a real
+ * LiveWorkerComposer session over the Angel One emulator (AngelOneBroker/FakeSmartApi), never a
+ * real broker. Confirms the dashboard drives a LIVE-mode session exactly as it drives paper —
+ * strategy control, manual orders through risk, cancel, the kill switch — with no code path here
+ * that can reach a real order endpoint.
+ */
+class LiveAcceptance {
   private async confirm(
     page: Page,
     action: string,
@@ -27,14 +33,14 @@ class PaperAcceptance {
     ).toBeVisible({ timeout: 60_000 });
   }
   readonly workflow = async ({ page }: { page: Page }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(300_000);
     await page.route("http://127.0.0.1:8000/**", (route) =>
-      route.continue({ url: route.request().url().replace(":8000", ":8011") }),
+      route.continue({ url: route.request().url().replace(":8000", ":8012") }),
     );
     await page.goto("/");
     await page
       .getByLabel("Passcode", { exact: true })
-      .fill("dashboard-paper-acceptance");
+      .fill("dashboard-live-acceptance");
     await page.getByRole("button", { name: "Unlock workspace" }).click();
     await expect(
       page.getByRole("heading", { name: "Session overview" }),
@@ -44,15 +50,12 @@ class PaperAcceptance {
       timeout: 120_000,
     });
     await page.goto("/strategies");
-    // The test strategy has never been through a curation: the page says so beside its controls.
-    // (scoped to its card: the shared database may hold other strategies too)
     const card = page.locator("section.panel").filter({
       hasText: "enter_once_test",
     });
     await expect(card.getByLabel("Backtest verdict: no verdict")).toBeVisible();
     await this.confirm(page, "Stop strategy", undefined, card);
     await this.outcome(page, "DONE");
-    // ... so starting it again needs its standing typed, and the worker checks it.
     await this.confirm(page, "Start strategy", "none", card);
     await this.outcome(page, "DONE");
     await page.goto("/orders");
@@ -61,7 +64,7 @@ class PaperAcceptance {
     await page.getByLabel("Limit price · ₹").fill("99");
     await page
       .getByLabel("Reason", { exact: true })
-      .fill("Browser acceptance resting limit order");
+      .fill("Browser acceptance resting limit order (live/emulator)");
     await page.getByRole("button", { name: "Review order" }).click();
     await page.getByRole("dialog").getByRole("textbox").fill("PLACE ORDER");
     await page
@@ -96,20 +99,17 @@ class PaperAcceptance {
     await this.outcome(page, "REJECTED");
     await this.confirm(page, "Kill switch", "HALT");
     await this.outcome(page, "DONE");
-    // The overview refetch that flips this button rides the same SSE "command" event the DONE
-    // status above already waited on, but is a separate, slightly later render: give it the same
-    // generous timeout every other command-driven assertion in this file already gets.
     await expect(
       page.getByRole("button", { name: "Kill switch active" }),
     ).toBeVisible({ timeout: 60_000 });
     await page.screenshot({
-      path: "test-results/real-paper-workflow.png",
+      path: "test-results/real-live-workflow.png",
       fullPage: true,
     });
   };
 }
-const suite = new PaperAcceptance();
+const suite = new LiveAcceptance();
 test(
-  "real paper worker: browser controls reach risk and execution",
+  "real live worker (emulator): browser controls reach risk and execution",
   suite.workflow,
 );

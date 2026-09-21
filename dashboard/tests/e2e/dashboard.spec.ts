@@ -91,6 +91,13 @@ class BrowserApiFixture {
             ? "Risk rejected: instrument exposure limit exceeded."
             : "Worker reported completion.",
       };
+    // The real worker updates the strategy catalogue as a side effect of the command actually
+    // taking hold; this fixture must too, or a start/stop test can never see its own outcome.
+    const strategy = this.data.strategies[0];
+    if (strategy && status === "DONE" && this.command?.type === "START_STRATEGY")
+      strategy.status = "running";
+    if (strategy && status === "DONE" && this.command?.type === "STOP_STRATEGY")
+      strategy.status = "stopped";
   }
 }
 class BrowserTests {

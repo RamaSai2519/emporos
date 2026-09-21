@@ -16,6 +16,7 @@
     "check:boundaries": "tsx scripts/boundaries.ts",
     "format": "prettier --write src scripts tests *.ts *.mjs *.json README.md",
     "test:paper": "tsx scripts/paper-acceptance.ts",
+    "test:live": "tsx scripts/live-acceptance.ts",
     "contract:export": "cd .. && pipenv run python dashboard/scripts/export_openapi.py"
   },
   "dependencies": {
