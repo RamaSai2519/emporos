@@ -30,8 +30,9 @@ class Environment:
     Embodies the fail-safe rule that only `ENV=main` selects production.
     """
 
-    def __init__(self, env: str | None) -> None:
+    def __init__(self, env: str | None, db_name_override: str | None = None) -> None:
         self._env = env
+        self._override = db_name_override
 
     @property
     def profile(self) -> str:
@@ -43,7 +44,9 @@ class Environment:
 
     @property
     def db_name(self) -> str:
-        return "emporos" if self._env == PRODUCTION_ENV_VALUE else "emporos_dev"
+        if self._env == PRODUCTION_ENV_VALUE:
+            return "emporos"  # production never takes an override
+        return self._override or "emporos_dev"
 
 
 class YamlConfigLoader:
@@ -88,6 +91,9 @@ class Settings(BaseSettings):
 
     env: str | None = Field(default=None, alias="ENV")
     mongo_url: str | None = Field(default=None, alias="MONGO_URL")
+    # A non-production database name override (smoke testing, an isolated rig); ignored under
+    # ENV=main so it can never point production at the wrong database.
+    mongo_db_name: str | None = Field(default=None, alias="MONGO_DB_NAME")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
     # Overrides the upstream instrument-master URL (tests / mirrors); unset uses Angel One's.
@@ -149,7 +155,7 @@ class Settings(BaseSettings):
 
     @property
     def db_name(self) -> str:
-        return Environment(self.env).db_name
+        return Environment(self.env, self.mongo_db_name).db_name
 
     @property
     def yaml_config(self) -> dict[str, Any]:

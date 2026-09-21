@@ -35,6 +35,19 @@ def test_environment_profile(env: str | None, expected_profile: str) -> None:
     assert Environment(env).profile == expected_profile
 
 
+@pytest.mark.parametrize("env", [None, "", "local", "dev", "staging", "ci"])
+def test_environment_db_name_override_applies_outside_production(env: str | None) -> None:
+    assert Environment(env, db_name_override="emporos_smoke").db_name == "emporos_smoke"
+
+
+def test_environment_db_name_override_ignored_under_production() -> None:
+    assert Environment("main", db_name_override="emporos_smoke").db_name == "emporos"
+
+
+def test_environment_db_name_unset_override_keeps_default() -> None:
+    assert Environment("dev", db_name_override=None).db_name == "emporos_dev"
+
+
 def test_yaml_config_loader_merges_base_and_profile_overlay() -> None:
     config = YamlConfigLoader().load("production")
     assert config["log_level"] == "WARNING"
@@ -66,6 +79,20 @@ def test_settings_reads_mongo_url_from_environment(monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("MONGO_URL", "mongodb+srv://example/")
     settings = Settings(_env_file=None)
     assert settings.mongo_url == "mongodb+srv://example/"
+
+
+def test_settings_mongo_db_name_overrides_db_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ENV", raising=False)
+    monkeypatch.setenv("MONGO_DB_NAME", "emporos_smoke")
+    settings = Settings(_env_file=None)
+    assert settings.db_name == "emporos_smoke"
+
+
+def test_settings_mongo_db_name_ignored_under_production(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ENV", "main")
+    monkeypatch.setenv("MONGO_DB_NAME", "emporos_smoke")
+    settings = Settings(_env_file=None)
+    assert settings.db_name == "emporos"
 
 
 def test_settings_default_is_cached_and_loads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
