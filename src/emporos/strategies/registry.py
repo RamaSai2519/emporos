@@ -11,8 +11,18 @@ from collections.abc import Iterable
 
 from emporos.strategies.base import Strategy
 from emporos.strategies.config import ResolvedStrategyConfig, StrategyParameters
+from emporos.strategies.metadata import StrategyMetadata
 
 _NAME = re.compile(r"^[a-z][a-z0-9_]*$")
+
+# Registered without explicit metadata (legacy call sites, or a strategy still being wired up):
+# research-stage, no declared regime/timeframe applicability beyond "whatever its config says".
+_UNKNOWN_METADATA = StrategyMetadata(
+    version="unknown",
+    supported_timeframes=frozenset(),
+    supported_regimes=frozenset(),
+    description="no metadata declared at registration",
+)
 
 
 class UnknownStrategyError(LookupError):
@@ -26,18 +36,25 @@ class DuplicateStrategyError(ValueError):
 class StrategyRegistry:
     def __init__(self) -> None:
         self._classes: dict[str, type[Strategy]] = {}
+        self._metadata: dict[str, StrategyMetadata] = {}
 
-    def register(self, strategy: type[Strategy]) -> None:
+    def register(self, strategy: type[Strategy], metadata: StrategyMetadata | None = None) -> None:
         name = self._name_of(strategy)
         if name in self._classes:
             raise DuplicateStrategyError(
                 f"'{name}' is already registered to {self._classes[name].__name__}"
             )
         self._classes[name] = strategy
+        self._metadata[name] = metadata if metadata is not None else _UNKNOWN_METADATA
 
-    def register_all(self, strategies: Iterable[type[Strategy]]) -> None:
-        for strategy in strategies:
-            self.register(strategy)
+    def register_all(
+        self, strategies: Iterable[type[Strategy] | tuple[type[Strategy], StrategyMetadata]]
+    ) -> None:
+        for entry in strategies:
+            if isinstance(entry, tuple):
+                self.register(entry[0], entry[1])
+            else:
+                self.register(entry)
 
     def names(self) -> tuple[str, ...]:
         return tuple(sorted(self._classes))
@@ -51,6 +68,10 @@ class StrategyRegistry:
 
     def parameters_model(self, name: str) -> type[StrategyParameters]:
         return self.get(name).parameters_model
+
+    def metadata(self, name: str) -> StrategyMetadata:
+        self.get(name)  # raises UnknownStrategyError with the same message for a bad name
+        return self._metadata[name]
 
     def create(self, config: ResolvedStrategyConfig) -> Strategy:
         strategy = self.get(config.name)
