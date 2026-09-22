@@ -1,0 +1,364 @@
+[
+  {
+    "strategy": "gap_go_v1",
+    "passed": false,
+    "candidates": [
+      "g50_t15",
+      "g50_t25",
+      "g100_t15",
+      "g100_t25",
+      "g150_t15",
+      "g150_t25"
+    ],
+    "out_of_sample": {
+      "trades": 151,
+      "net_pnl": "-2791.94",
+      "gross_pnl": "-781.40",
+      "charges": "2010.54",
+      "win_rate": "0.2980132450331125827814569536423841",
+      "profit_factor": "0.4018647139729290834536628004130479",
+      "net_at_double_costs": "-4802.48",
+      "window_nets": [
+        "-699.59",
+        "-742.37",
+        "-732.43",
+        "-146.21",
+        "-471.34"
+      ],
+      "window_max_drawdowns": [
+        "0.01531698639970327932668215116096757",
+        "0.0148474",
+        "0.0146486",
+        "0.007633612138492059536033656002950882",
+        "0.01058361614481227094968884240499004"
+      ],
+      "instrument_nets": {
+        "NSE:10604": "78.77",
+        "NSE:11483": "-163.79",
+        "NSE:11723": "-216.12",
+        "NSE:1333": "-37.70",
+        "NSE:13538": "-48.06",
+        "NSE:1394": "29.83",
+        "NSE:14977": "-10.68",
+        "NSE:1594": "-329.63",
+        "NSE:1660": "-75.37",
+        "NSE:16675": "-190.50",
+        "NSE:17963": "-92.95",
+        "NSE:1922": "-244.32",
+        "NSE:2031": "-242.21",
+        "NSE:20374": "-63.79",
+        "NSE:236": "-82.91",
+        "NSE:2475": "-334.02",
+        "NSE:25": "53.54",
+        "NSE:3045": "92.33",
+        "NSE:317": "-73.57",
+        "NSE:3351": "-172.56",
+        "NSE:3499": "-306.32",
+        "NSE:3506": "-224.31",
+        "NSE:3787": "34.42",
+        "NSE:4963": "-70.23",
+        "NSE:5900": "97.99",
+        "NSE:7229": "-199.78"
+      },
+      "compounded_return": "-0.0546558911567205694458595728"
+    },
+    "windows": [
+      [
+        "2026-01-30",
+        "2026-03-13",
+        "g50_t25"
+      ],
+      [
+        "2026-03-13",
+        "2026-04-24",
+        "g100_t15"
+      ],
+      [
+        "2026-04-24",
+        "2026-06-05",
+        "g100_t25"
+      ],
+      [
+        "2026-06-05",
+        "2026-07-17",
+        "g150_t15"
+      ],
+      [
+        "2026-07-17",
+        "2026-08-28",
+        "g50_t25"
+      ]
+    ],
+    "checks": [
+      {
+        "name": "net profit is positive",
+        "passed": false,
+        "actual": "-2791.94",
+        "required": "> 0"
+      },
+      {
+        "name": "enough trades to mean something",
+        "passed": true,
+        "actual": "151",
+        "required": ">= 150"
+      },
+      {
+        "name": "profit factor",
+        "passed": false,
+        "actual": "0.402",
+        "required": ">= 1.2"
+      },
+      {
+        "name": "profitable in most out-of-sample windows",
+        "passed": false,
+        "actual": "0 of 5",
+        "required": ">= 60% of windows"
+      },
+      {
+        "name": "no window's drawdown is too deep",
+        "passed": true,
+        "actual": "1.5%",
+        "required": "<= 10%"
+      },
+      {
+        "name": "profitable across instruments, not a few",
+        "passed": false,
+        "actual": "6 of 26",
+        "required": ">= 50% of instruments"
+      },
+      {
+        "name": "still profitable without its best window",
+        "passed": false,
+        "actual": "-2645.73",
+        "required": "> 0"
+      },
+      {
+        "name": "still profitable if charges were twice as high",
+        "passed": false,
+        "actual": "-4802.48",
+        "required": "> 0"
+      }
+    ],
+    "robustness": {
+      "verdict": "rejected",
+      "gates": [
+        {
+          "name": "profit after costs is real",
+          "outcome": "fail",
+          "detail": "net -2791.94, 95% interval -4063.39 to -1541.42, P(net > 0) 0.000"
+        },
+        {
+          "name": "profit survives adverse costs",
+          "outcome": "unknown",
+          "detail": "net -2791.94 as run, -5091.90 under adverse costs"
+        },
+        {
+          "name": "profitable in most walk-forward windows",
+          "outcome": "fail",
+          "detail": "0 of 5 windows"
+        },
+        {
+          "name": "enough trades",
+          "outcome": "pass",
+          "detail": "151 trades, 150 needed to validate"
+        },
+        {
+          "name": "enough history",
+          "outcome": "unknown",
+          "detail": "260 trading days, 500 needed"
+        },
+        {
+          "name": "drawdown within the risk budget",
+          "outcome": "pass",
+          "detail": "worst window 1.5%, budget 10.0%"
+        },
+        {
+          "name": "profit is not concentrated",
+          "outcome": "unknown",
+          "detail": "no profit to attribute"
+        },
+        {
+          "name": "survives parameter changes",
+          "outcome": "fail",
+          "detail": "0% of neighbouring parameter sets profit, 50% needed"
+        },
+        {
+          "name": "beats the luck of the search (Deflated Sharpe)",
+          "outcome": "unknown",
+          "detail": "DSR 0.000 over 353 trials, 0.95 needed"
+        },
+        {
+          "name": "beats the always-long baseline",
+          "outcome": "pass",
+          "detail": "strategy net -2791.94, baseline -3062.66"
+        }
+      ],
+      "monte_carlo": {
+        "trades": 151,
+        "resamples": 5000,
+        "seed": 20260920,
+        "confidence": "0.95",
+        "inconclusive_reason": null,
+        "net_pnl": {
+          "observed": "-2791.94",
+          "low": "-4063.39",
+          "high": "-1541.42"
+        },
+        "expectancy": {
+          "observed": "-0.004294427303012787991430304167127738",
+          "low": "-0.006214685876620378584171830740545205",
+          "high": "-0.002362386228113570940367335822580411"
+        },
+        "profit_factor": {
+          "observed": "0.4018647139729290834536628004130479",
+          "low": "0.2506197774634331296574453502107243",
+          "high": "0.6128552601280675710765220884714690"
+        },
+        "max_drawdown": {
+          "observed": "0.0558388",
+          "low": "0.0558388",
+          "high": "0.06219663646003104443136763257117915"
+        },
+        "probability_net_positive": "0",
+        "probability_of_ruin": "0"
+      },
+      "deflated_sharpe": {
+        "observations": 142,
+        "trial_count": 353,
+        "daily_sharpe": "-0.2840936248244639959200173788262972",
+        "annualised_sharpe": "-4.509846482066505222377047468938742",
+        "expected_max_sharpe": "0.1916117872977756437794889144201728",
+        "probabilistic_sharpe": "0.000018022634",
+        "deflated_sharpe": "2E-12",
+        "reason": null
+      },
+      "concentration": {
+        "top_instrument": null,
+        "top_instrument_share": null,
+        "top_month": null,
+        "top_month_share": null,
+        "top_trades": 5,
+        "top_trades_share": null
+      },
+      "cost_scenarios": [
+        {
+          "name": "no_slippage",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "-5",
+          "net_pnl": "-2144.597150"
+        },
+        {
+          "name": "benchmark",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-2791.94"
+        },
+        {
+          "name": "slippage_plus5",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "5",
+          "net_pnl": "-3439.282850"
+        },
+        {
+          "name": "fees_x1_5",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-3797.210"
+        },
+        {
+          "name": "fees_x2",
+          "fee_multiplier": "2",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-4802.48"
+        },
+        {
+          "name": "adverse",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "10",
+          "net_pnl": "-5091.89570"
+        }
+      ],
+      "perturbation": {
+        "profitable_share": "0",
+        "runs": [
+          {
+            "window": 0,
+            "candidate": "g50_t15",
+            "net_pnl": "-723.25"
+          },
+          {
+            "window": 0,
+            "candidate": "g100_t25",
+            "net_pnl": "-818.86"
+          },
+          {
+            "window": 0,
+            "candidate": "g150_t25",
+            "net_pnl": "-745.59"
+          },
+          {
+            "window": 1,
+            "candidate": "g50_t15",
+            "net_pnl": "-582.54"
+          },
+          {
+            "window": 1,
+            "candidate": "g100_t25",
+            "net_pnl": "-728.14"
+          },
+          {
+            "window": 1,
+            "candidate": "g150_t15",
+            "net_pnl": "-606.98"
+          },
+          {
+            "window": 2,
+            "candidate": "g50_t25",
+            "net_pnl": "-856.32"
+          },
+          {
+            "window": 2,
+            "candidate": "g100_t15",
+            "net_pnl": "-766.17"
+          },
+          {
+            "window": 2,
+            "candidate": "g150_t25",
+            "net_pnl": "-389.93"
+          },
+          {
+            "window": 3,
+            "candidate": "g50_t15",
+            "net_pnl": "-466.57"
+          },
+          {
+            "window": 3,
+            "candidate": "g100_t15",
+            "net_pnl": "-366.71"
+          },
+          {
+            "window": 3,
+            "candidate": "g150_t25",
+            "net_pnl": "-139.81"
+          },
+          {
+            "window": 4,
+            "candidate": "g50_t15",
+            "net_pnl": "-546.31"
+          },
+          {
+            "window": 4,
+            "candidate": "g100_t25",
+            "net_pnl": "-488.72"
+          },
+          {
+            "window": 4,
+            "candidate": "g150_t25",
+            "net_pnl": "-169.94"
+          }
+        ]
+      },
+      "baseline_net_pnl": "-3062.66"
+    }
+  }
+]
