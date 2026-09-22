@@ -1,0 +1,28 @@
+# EM-171: curation plan for liquidity_thrust_v1, fixed BEFORE any result was seen.
+#
+# Same rules as config/curation/plan.yaml and the plans after it (same walk-forward shape): each
+# candidate is tuned ONLY on the training window of each walk-forward step, from this small
+# pre-declared grid, and the chosen parameters are then run once on the following, unseen test
+# window. Nothing in this file may be changed after looking at a result: a new grid means a new plan
+# file and a fresh run. Run over the extended range docs/strategies/em171-hypothesis.md declares
+# (2022-08-01 to 2026-09-18, EM-132's already-fetched history), not the one-year range the eleven
+# earlier strategies used.
+#
+# Grid varies two axes: how rare the volume surge must be (vol_surge_mult) and how far the fixed
+# ATR target reaches (target_atr_mult). Everything else (close_location_min, min_range_bps,
+# stop_atr_mult, atr_period, vol_window) is held fixed at the hypothesis doc's declared values.
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: liquidity_thrust_v1
+    file: config/strategies/liquidity_thrust_v1.yaml
+    candidates:
+      - {name: surge25_t3, overrides: {vol_surge_mult: "2.5", target_atr_mult: "3.0"}}
+      - {name: surge25_t4, overrides: {vol_surge_mult: "2.5", target_atr_mult: "4.0"}}
+      - {name: surge25_t5, overrides: {vol_surge_mult: "2.5", target_atr_mult: "5.0"}}
+      - {name: surge40_t3, overrides: {vol_surge_mult: "4.0", target_atr_mult: "3.0"}}
+      - {name: surge40_t4, overrides: {vol_surge_mult: "4.0", target_atr_mult: "4.0"}}
+      - {name: surge40_t5, overrides: {vol_surge_mult: "4.0", target_atr_mult: "5.0"}}
