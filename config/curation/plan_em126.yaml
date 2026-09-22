@@ -1,0 +1,25 @@
+# EM-126: curation plan for regime_selector_v1, fixed BEFORE any result was seen.
+#
+# Same rules as config/curation/plan.yaml/plan_em114.yaml (same windows/objective): each candidate
+# is tuned ONLY on the training window of each walk-forward step, from this small pre-declared
+# grid, and the chosen parameters are then run once on the following, unseen test window. Nothing
+# in this file may be changed after looking at a result: a new grid means a new plan file and a
+# fresh run.
+#
+# Grid varies regime-classification strictness (how readily a day counts as trending/ranging vs.
+# an extreme-vol sit-out) and each sub-rule's reward multiple, holding the ATR periods fixed.
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: regime_selector_v1
+    file: config/strategies/regime_selector_v1.yaml
+    candidates:
+      - {name: base, overrides: {}}
+      - {name: wide_trend, overrides: {regime_trend_threshold: "0.3"}}
+      - {name: narrow_extremes, overrides: {regime_high_vol_percentile: "0.7", regime_low_vol_percentile: "0.3"}}
+      - {name: tight_breakout, overrides: {breakout_lookback: 5, trend_target_atr_mult: "1.5"}}
+      - {name: wide_reversion, overrides: {reversion_atr_mult: "1.5"}}
+      - {name: conservative, overrides: {trend_target_atr_mult: "3.0", reversion_target_atr_mult: "1.5"}}

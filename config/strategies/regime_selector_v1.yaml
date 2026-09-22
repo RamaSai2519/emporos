@@ -1,0 +1,49 @@
+# regime_selector_v1 — CANDIDATE, not enabled. It becomes enabled only if it passes strategy
+# curation (docs/strategies/): walk-forward out-of-sample, net of charges, under the platform's
+# risk rules. EM-126.
+# Market-regime selector (5m): routes to a channel-breakout entry in a TRENDING daily-bar regime,
+# a VWAP mean-reversion entry in a RANGING one, and sits out HIGH_VOL/LOW_VOL entirely. The regime
+# read shares the exact classifier EM-119's report breakdowns use (src/emporos/strategies/regime.py).
+# See src/emporos/strategies/builtin/regime_selector_v1.py for what it does.
+#
+# Rates and money are integers or QUOTED strings; times are quoted "HH:MM" (IST). No secrets here.
+name: regime_selector_v1
+enabled: false
+timeframe: 5m
+
+universe:
+  type: static
+  instruments: ["NSE:ADANIENT-EQ", "NSE:ASIANPAINT-EQ", "NSE:AXISBANK-EQ", "NSE:BAJAJFINSV-EQ", "NSE:BAJFINANCE-EQ", "NSE:BHARTIARTL-EQ", "NSE:COALINDIA-EQ", "NSE:HCLTECH-EQ", "NSE:HDFCBANK-EQ", "NSE:HINDUNILVR-EQ", "NSE:ICICIBANK-EQ", "NSE:INFY-EQ", "NSE:ITC-EQ", "NSE:JSWSTEEL-EQ", "NSE:KOTAKBANK-EQ", "NSE:LT-EQ", "NSE:M&M-EQ", "NSE:MARUTI-EQ", "NSE:NESTLEIND-EQ", "NSE:NTPC-EQ", "NSE:ONGC-EQ", "NSE:POWERGRID-EQ", "NSE:SBIN-EQ", "NSE:SUNPHARMA-EQ", "NSE:TATASTEEL-EQ", "NSE:TECHM-EQ", "NSE:TITAN-EQ", "NSE:ULTRACEMCO-EQ", "NSE:WIPRO-EQ"]
+
+parameters:
+  regime_trend_period: 20
+  regime_atr_period: 14
+  regime_vol_window: 60
+  regime_trend_threshold: "0.4"
+  regime_high_vol_percentile: "0.8"
+  regime_low_vol_percentile: "0.2"
+  breakout_lookback: 10
+  breakout_buffer_bps: 5
+  trend_stop_atr_mult: "1.0"
+  trend_target_atr_mult: "2.0"
+  reversion_atr_mult: "2.0"
+  reversion_target_atr_mult: "1.0"
+  reversion_stop_atr_mult: "1.0"
+  atr_period: 14
+  allow_short: true
+  max_entries: 1
+
+risk:                    # sized to fit config/risk.yaml (max_position_value 25000 per instrument)
+  max_position_value: 25000
+  max_open_positions: 3
+  stop_loss_pct: "1.0"
+  target_pct: "2.0"
+
+execution:
+  limit_buffer_bps: 5
+  reprice_after_seconds: 30
+  max_reprices: 3
+
+session:
+  no_new_entries_after: "14:45"
+  square_off_at: "15:15"

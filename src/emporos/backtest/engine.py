@@ -27,7 +27,7 @@ from emporos.backtest.clock import BarClock
 from emporos.backtest.costs import BacktestCosts, CostSummary, ScheduleSource
 from emporos.backtest.feed import ClosedBarFeed, FeedWindow, WarmupLoader
 from emporos.backtest.flow import EventSettler, OrderEventQueue, OrderFlow, RunCounters
-from emporos.backtest.metrics.breakdown import RegimeTimeline, build_regime_timeline
+from emporos.backtest.metrics.breakdown import build_regime_timeline
 from emporos.backtest.metrics.decimal_math import CONTEXT
 from emporos.backtest.metrics.report import MetricsCalculator, MetricsReport, MetricsSettings
 from emporos.backtest.portfolio import BacktestPortfolio, ClosedTrade
@@ -43,7 +43,7 @@ from emporos.backtest.session import BacktestSession
 from emporos.backtest.settings import FillModelFactory, FillSettings
 from emporos.backtest.square_off import ForcedClosePricing, SessionSquareOff
 from emporos.core.clock import IST
-from emporos.domain.candles import Timeframe
+from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.persistence.candles import CandleReader
 from emporos.session.strategy_runs import RunEnvironment, StartedRun, StrategyRunnerBuilder
@@ -144,6 +144,10 @@ class BacktestEngine:
         )  # fmt: skip
         for bar in await warmup.load(spec.window.start):
             prepared.history.record(bar)
+        daily_bars = await self._daily_bars(config.instrument_ids, spec.window)
+        for bars in daily_bars.values():
+            for bar in bars:
+                prepared.history.record(bar)  # look-ahead safe: bars() still gates on closes_at
 
         session = BacktestSession(
             broker, portfolio, flow, queue,
@@ -154,7 +158,9 @@ class BacktestEngine:
         )  # fmt: skip
         feed = ClosedBarFeed(self._reader, config.instrument_ids, config.timeframe, spec.window)
         report = await BarReplay(prepared.runner, clock, session).run(feed)
-        regime_timelines = await self._regime_timelines(config.instrument_ids, spec.window)
+        regime_timelines = {
+            instrument_id: build_regime_timeline(bars) for instrument_id, bars in daily_bars.items()
+        }
 
         return BacktestResult(
             run_id=run_id,
@@ -176,12 +182,15 @@ class BacktestEngine:
             open_positions_at_end=len(portfolio.open_positions()),
         )
 
-    async def _regime_timelines(
+    async def _daily_bars(
         self, instrument_ids: Sequence[str], window: FeedWindow
-    ) -> dict[str, RegimeTimeline]:
-        """One daily-bar `RegimeTimeline` per traded instrument, fetched with enough lookback for
-        the classifier's own warm-up. Reads through the same `CandleReader` everything else in
-        this engine does — never a second path to candle data."""
+    ) -> dict[str, list[Candle]]:
+        """Every daily bar per traded instrument across the run, with enough lookback before the
+        window for the regime classifier's own warm-up. Reads through the same `CandleReader`
+        everything else in this engine does — never a second path to candle data. Recording all of
+        it (not just a warm-up prefix) into the strategy's `BarHistory` is look-ahead safe: `bars()`
+        still gates on each candle's `closes_at` against the replay clock, so a strategy reading
+        `Timeframe.D1` sees a day's bar exactly when that day has actually closed, never sooner."""
         start = window.start - REGIME_WARMUP_LOOKBACK
         bars_by_instrument = await asyncio.gather(
             *(
@@ -189,7 +198,4 @@ class BacktestEngine:
                 for instrument_id in instrument_ids
             )
         )
-        return {
-            instrument_id: build_regime_timeline(bars)
-            for instrument_id, bars in zip(instrument_ids, bars_by_instrument, strict=True)
-        }
+        return dict(zip(instrument_ids, bars_by_instrument, strict=True))
