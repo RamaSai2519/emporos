@@ -71,6 +71,7 @@ class Evidence:
     perturbation: PerturbationReport | None
     baseline_net_pnl: Decimal | None  # the simple always-long baseline; None when not measured
     direction: DirectionStats = field(default_factory=lambda: DirectionStats(0, _ZERO, 0, _ZERO))
+    regimes_covered: frozenset[str] = frozenset()  # distinct regimes traded across all windows
 
 
 class Gate(Protocol):
@@ -253,6 +254,31 @@ class BeatsBaseline(_GateBase):
         return self._result(GateOutcome.UNKNOWN if thin else GateOutcome.FAIL, detail)
 
 
+class RegimeDiversity(_GateBase):
+    """EM-166: a strategy that only ever traded in one market regime has not shown a repeatable
+    edge, only a fit to that regime's conditions — this is what keeps a strategy from graduating
+    on evidence from a single lucky stretch. `min_regimes` defaults to 1 (no requirement) so
+    existing benchmark files are unaffected until one opts in."""
+
+    name = "evidence spans enough distinct regimes"
+
+    def __init__(self, t: VerdictThresholds) -> None:
+        self._min = t.min_regimes
+
+    def assess(self, e: Evidence) -> GateResult:
+        count = len(e.regimes_covered)
+        if self._min <= 1:
+            # Not opted in: never blocks, and never needs regime data populated at all — the
+            # backward-compatible no-op every existing benchmark file gets by default.
+            return self._result(GateOutcome.PASS, f"{count} regime(s); diversity not required")
+        detail = (
+            f"{count} distinct regime(s) traded ({sorted(e.regimes_covered)}), {self._min} needed"
+        )
+        if count == 0:
+            return self._result(GateOutcome.UNKNOWN, "no regime data available")
+        return self._result(GateOutcome.PASS if count >= self._min else GateOutcome.FAIL, detail)
+
+
 @dataclass(frozen=True)
 class VerdictReport:
     verdict: Verdict
@@ -282,6 +308,7 @@ class VerdictPolicy:
                 ParameterStability(thresholds),
                 BeatsLuck(thresholds),
                 BeatsBaseline(),
+                RegimeDiversity(thresholds),
             ]
         )
 

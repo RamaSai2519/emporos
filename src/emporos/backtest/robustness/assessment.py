@@ -152,6 +152,12 @@ class RobustnessAssessor:
             perturbation=perturbation,
             baseline_net_pnl=baseline,
             direction=self._directions(trades),
+            regimes_covered=frozenset(
+                regime
+                for o in result.outcomes
+                for regime, stats in o.test.metrics.by_regime.items()
+                if stats.count > 0
+            ),
         )
         return RobustnessReport(
             strategy, self._policy.classify(evidence), evidence, monte_carlo, deflated,

@@ -62,6 +62,10 @@ class VerdictThresholds(_Frozen):
     min_deflated_sharpe: ExactDecimal = Field(gt=0, lt=1)
     concentration: ConcentrationLimits
     perturbation: PerturbationLimits
+    # Default 1: no regime-diversity requirement unless a benchmark file opts in — existing
+    # config files stay valid. EM-166 sets this >1 for a strategy graduating toward live capital,
+    # so a result that only ever traded one regime cannot validate on that alone.
+    min_regimes: PositiveInt = 1
 
     @model_validator(mode="after")
     def _reject_below_validate(self) -> VerdictThresholds:

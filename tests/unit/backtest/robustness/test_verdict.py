@@ -29,6 +29,7 @@ from emporos.backtest.robustness.verdict import (
     NotConcentrated,
     ParameterStability,
     ProfitAfterCosts,
+    RegimeDiversity,
     SurvivesAdverseCosts,
     VerdictPolicy,
     WalkForwardWindows,
@@ -163,6 +164,30 @@ class TestSimpleGates:
         assert gate.assess(thin).outcome is UNKNOWN
 
 
+class TestRegimeDiversityGate:
+    def test_default_threshold_never_blocks_even_with_no_regime_data(self) -> None:
+        gate = RegimeDiversity(T)  # the real config file: min_regimes defaults to 1
+
+        assert gate.assess(evidence()).outcome is PASS
+        assert gate.assess(evidence(regimes_covered=frozenset())).outcome is PASS
+
+    def test_an_opted_in_threshold_requires_the_configured_diversity(self) -> None:
+        strict = T.model_copy(update={"min_regimes": 2})
+        gate = RegimeDiversity(strict)
+
+        assert gate.assess(evidence(regimes_covered=frozenset({"trending"}))).outcome is FAIL
+        assert (
+            gate.assess(evidence(regimes_covered=frozenset({"trending", "ranging"}))).outcome
+            is PASS
+        )
+
+    def test_an_opted_in_threshold_with_no_regime_data_is_unknown_not_rejected(self) -> None:
+        strict = T.model_copy(update={"min_regimes": 2})
+        gate = RegimeDiversity(strict)
+
+        assert gate.assess(evidence(regimes_covered=frozenset())).outcome is UNKNOWN
+
+
 class TestConcentrationGate:
     gate = NotConcentrated(T)
 
@@ -190,7 +215,7 @@ class TestClassification:
         report = self.policy.classify(evidence())
 
         assert report.verdict is Verdict.VALIDATED
-        assert len(report.gates) == 10 and all(g.outcome is PASS for g in report.gates)
+        assert len(report.gates) == 11 and all(g.outcome is PASS for g in report.gates)
 
     def test_one_fail_rejects_however_much_else_passes(self) -> None:
         assert (
