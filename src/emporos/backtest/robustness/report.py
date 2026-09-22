@@ -8,6 +8,7 @@ from typing import Any
 
 from emporos.backtest.robustness.assessment import RobustnessReport
 from emporos.backtest.robustness.monte_carlo import Interval
+from emporos.backtest.robustness.verdict import DirectionStats
 
 
 def _s(value: Decimal | None) -> str | None:
@@ -88,9 +89,24 @@ class RobustnessDocument:
                 ],
             },
             "baseline_net_pnl": _s(report.baseline_net_pnl),
+            "direction": self._direction(report.evidence.direction),
+        }
+
+    @staticmethod
+    def _direction(direction: DirectionStats) -> dict[str, Any]:
+        return {
+            "long": {
+                "trades": direction.long_count,
+                "net_pnl": _s(direction.long_net_pnl),
+            },
+            "short": {
+                "trades": direction.short_count,
+                "net_pnl": _s(direction.short_net_pnl),
+            },
         }
 
     def markdown(self, report: RobustnessReport) -> list[str]:
+        direction = report.evidence.direction
         lines = [
             f"Classification: **{report.verdict.verdict.value.upper()}**",
             "",
@@ -99,6 +115,13 @@ class RobustnessDocument:
         ]
         lines += [f"| {g.name} | {g.outcome.value} | {g.detail} |" for g in report.verdict.gates]
         lines += [
+            "",
+            f"By direction (out-of-sample, {report.evidence.trade_count} trades total):",
+            "",
+            "| side | trades | net P&L |",
+            "|---|---|---|",
+            f"| long | {direction.long_count} | {direction.long_net_pnl:.2f} |",
+            f"| short | {direction.short_count} | {direction.short_net_pnl:.2f} |",
             "",
             "Net P&L if costs were different (first-order re-pricing of the same trades):",
             "",

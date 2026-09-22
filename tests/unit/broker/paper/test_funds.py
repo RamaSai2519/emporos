@@ -58,6 +58,13 @@ def test_an_order_needs_notional_over_leverage_as_margin() -> None:
     assert funds.margin_required(order(qty=10, price="100.00")) == Money.of("200")
 
 
+def test_a_sell_to_open_a_short_needs_margin_like_a_buy() -> None:
+    _, _, funds = rig(leverage="5")
+
+    short = order(side=OrderSide.SELL, qty=10, price="100.00")
+    assert funds.margin_required(short) == Money.of("200")
+
+
 def test_only_the_quantity_that_opens_a_position_needs_margin() -> None:
     account, _, funds = rig()
     fill(account, OrderSide.BUY, 10, "100.00")

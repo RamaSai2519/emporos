@@ -54,6 +54,35 @@ class TestTradeGrouper:
         assert groups["NSE:2"].count == 1
 
 
+class TestCrossTab:
+    """EM-127: direction is never merged back together — its own dimension first, then the
+    other dimension nesting inside each side."""
+
+    def test_group_cross_nests_the_inner_dimension_inside_each_side(self) -> None:
+        trades = [
+            trade("10", 0, direction=TradeDirection.LONG, instrument_id="NSE:1"),
+            trade("20", 10, direction=TradeDirection.LONG, instrument_id="NSE:2"),
+            trade("5", 20, direction=TradeDirection.SHORT, instrument_id="NSE:1"),
+        ]
+
+        cross = TradeGrouper().group_cross(trades, direction_key, instrument_key)
+
+        assert list(cross) == ["LONG", "SHORT"]
+        assert list(cross["LONG"]) == ["NSE:1", "NSE:2"]
+        assert cross["LONG"]["NSE:1"].count == 1
+        assert cross["LONG"]["NSE:2"].count == 1
+        assert cross["SHORT"]["NSE:1"].count == 1 and cross["SHORT"]["NSE:1"].net_pnl.amount == 5
+
+    def test_a_side_with_no_trades_of_a_dimension_has_no_inner_groups(self) -> None:
+        trades = [trade("10", 0, direction=TradeDirection.LONG, instrument_id="NSE:1")]
+        cross = TradeGrouper().group_cross(trades, direction_key, instrument_key)
+        assert cross == {"LONG": {"NSE:1": cross["LONG"]["NSE:1"]}}
+        assert "SHORT" not in cross
+
+    def test_group_cross_of_no_trades_is_empty(self) -> None:
+        assert TradeGrouper().group_cross([], direction_key, instrument_key) == {}
+
+
 class TestTimeOfDayKey:
     def test_t0_is_the_session_open_hour(self) -> None:
         # T0 is 09:15 IST exactly (tests/support/strategies.py)

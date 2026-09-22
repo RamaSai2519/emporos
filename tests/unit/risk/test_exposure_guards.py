@@ -11,7 +11,7 @@ import pytest
 
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
-from emporos.domain.signals import SignalKind
+from emporos.domain.signals import Signal, SignalKind
 from emporos.risk.rules.exposure import (
     AbnormalSpreadGuard,
     DuplicateOrderGuard,
@@ -319,6 +319,90 @@ class TestAbnormalSpreadGuard:
     def test_the_cap_must_be_positive(self) -> None:
         with pytest.raises(ValueError, match="positive"):
             AbnormalSpreadGuard(Decimal(0))
+
+
+class TestShortsFlowThroughTheGuards:
+    """EM-127: the guards are direction-neutral, but they must be proven so for SELL-to-open
+    entries and BUY-to-cover exits — a short entry is an ENTRY that deploys exposure, a cover is an
+    EXIT that must never be stranded."""
+
+    def short_entry(self, **kw: Any) -> Signal:
+        return make_signal(side=OrderSide.SELL, **kw)
+
+    def cover(self, **kw: Any) -> Signal:
+        return make_signal(kind=EXIT, side=OrderSide.BUY, **kw)
+
+    def short_held(self, quantity: int) -> RiskSnapshot:
+        positions = {INSTRUMENT: long_position(INSTRUMENT, -quantity, "100")}
+        return healthy(account=account(positions=positions))
+
+    def held(self, *instruments: str) -> RiskSnapshot:
+        positions = {i: long_position(i, 1, "100") for i in instruments}
+        return healthy(account=account(positions=positions))
+
+    def test_a_short_entry_is_measured_exactly_like_a_long_entry(self) -> None:
+        guard = MaxPositionValueGuard(Decimal("25000"))
+        assert guard.evaluate(self.short_entry(quantity=250, price="100"), healthy()).allowed
+        verdict = guard.evaluate(self.short_entry(quantity=250, price="100.004"), healthy())
+        assert not verdict.allowed  # -250 x 100.004 = 25001.00
+
+    def test_a_cover_that_only_reduces_the_short_is_never_blocked(self) -> None:
+        guard = MaxPositionValueGuard(Decimal("25000"))
+        over = self.short_held(900)
+        assert guard.evaluate(self.cover(quantity=400, price="100"), over).allowed
+
+    def test_a_short_entry_opens_a_position_and_counts_against_the_cap(self) -> None:
+        guard = MaxOpenPositionsGuard(2)
+        held = self.held(OTHER)
+        assert guard.evaluate(self.short_entry(), held).allowed
+        blocked = self.held(OTHER, "NSE:3003")
+        assert not guard.evaluate(self.short_entry(), blocked).allowed
+
+    def test_adding_to_an_open_short_is_not_a_new_position(self) -> None:
+        guard = MaxOpenPositionsGuard(2)
+        assert guard.evaluate(self.short_entry(), self.held(INSTRUMENT, OTHER)).allowed
+
+    def test_a_short_entry_deploys_capital_like_a_long_entry(self) -> None:
+        guard = MaxCapitalDeployedGuard(Decimal("60000"))
+        # -500 @ 100 on OTHER (50,000) + a fresh -100 short entry on INSTRUMENT (10,000)
+        held = healthy(account=account(positions={OTHER: long_position(OTHER, -500, "100")}))
+        assert guard.evaluate(self.short_entry(quantity=100, price="100"), held).allowed
+        verdict = guard.evaluate(self.short_entry(quantity=101, price="100"), held)
+        assert not verdict.allowed and verdict.details["deployed"] == "60100"
+
+    def test_a_short_cover_is_allowed_after_the_loss_caps_are_breached(self) -> None:
+        daily = account(daily_pnl=Money.of("-9000"))
+        verdict = MaxDailyLossGuard(Decimal("2000")).evaluate(self.cover(), healthy(account=daily))
+        assert verdict.allowed
+        strategy = account(strategy_pnl={RUN_ID: Money.of("-9000")})
+        assert MaxStrategyLossGuard(Decimal("1000")).evaluate(
+            self.cover(), healthy(account=strategy)
+        ).allowed
+
+    def test_a_short_entry_is_blocked_after_the_daily_loss_cap_is_breached(self) -> None:
+        pnl = account(daily_pnl=Money.of("-2000.01"))
+        assert not MaxDailyLossGuard(Decimal("2000")).evaluate(
+            self.short_entry(), healthy(account=pnl)
+        ).allowed
+
+    def test_a_working_sell_blocks_a_second_short_entry_but_not_a_cover(self) -> None:
+        guard = DuplicateOrderGuard(timedelta(seconds=5))
+        flow = OrderFlowFacts(working=(working(OrderSide.SELL, seconds_ago=1),))
+        assert not guard.evaluate(self.short_entry(), healthy(flow=flow)).allowed
+        assert guard.evaluate(self.cover(), healthy(flow=flow)).allowed
+
+    def test_an_open_short_is_checked_for_spread_but_a_cover_never_is(self) -> None:
+        guard = AbnormalSpreadGuard(Decimal("20"))
+        wide = {
+            INSTRUMENT: calm_market(bid=Money.of("99.89"), ask=Money.of("100.11")),
+        }
+        assert not guard.evaluate(self.short_entry(), healthy(markets=wide)).allowed
+        assert guard.evaluate(self.cover(), healthy(markets=wide)).allowed
+
+    def test_a_short_exit_is_not_frozen_by_the_sanity_guards(self) -> None:
+        over = self.short_held(900)
+        assert MaxOrderQuantityGuard(500).evaluate(self.cover(quantity=400), over).allowed
+        assert PriceSanityGuard(Decimal("2")).evaluate(self.cover(price="100"), over).allowed
 
 
 class TestOrderRateGuard:

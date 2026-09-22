@@ -28,6 +28,7 @@ from emporos.backtest.batch import (
 )
 from emporos.backtest.engine import BacktestSpec
 from emporos.backtest.metrics.decimal_math import ZERO
+from emporos.backtest.portfolio import ClosedTrade, TradeDirection
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
 from emporos.backtest.robustness.concentration import ConcentrationCheck, ConcentrationReport
 from emporos.backtest.robustness.cost_sensitivity import CostSensitivity, ScenarioOutcome
@@ -35,7 +36,12 @@ from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpe, Deflated
 from emporos.backtest.robustness.monte_carlo import MonteCarlo, MonteCarloConfig, MonteCarloReport
 from emporos.backtest.robustness.perturbation import PerturbationReport, PerturbationRunner
 from emporos.backtest.robustness.trials import TrialStatistics
-from emporos.backtest.robustness.verdict import Evidence, VerdictPolicy, VerdictReport
+from emporos.backtest.robustness.verdict import (
+    DirectionStats,
+    Evidence,
+    VerdictPolicy,
+    VerdictReport,
+)
 from emporos.backtest.tuning import ParameterCandidate
 from emporos.backtest.walkforward_run import WalkForwardResult
 from emporos.core.clock import IST
@@ -145,6 +151,7 @@ class RobustnessAssessor:
             concentration=concentration,
             perturbation=perturbation,
             baseline_net_pnl=baseline,
+            direction=self._directions(trades),
         )
         return RobustnessReport(
             strategy, self._policy.classify(evidence), evidence, monte_carlo, deflated,
@@ -165,6 +172,14 @@ class RobustnessAssessor:
     def _adverse(self, costs: Sequence[ScenarioOutcome]) -> Decimal:
         name = self._benchmark.adverse_scenario
         return next(c.net_pnl for c in costs if c.name == name)
+
+    @staticmethod
+    def _directions(trades: Sequence[ClosedTrade]) -> DirectionStats:
+        long = tuple(t for t in trades if t.direction is TradeDirection.LONG)
+        short = tuple(t for t in trades if t.direction is TradeDirection.SHORT)
+        long_net = sum((t.net_pnl.amount for t in long), ZERO)
+        short_net = sum((t.net_pnl.amount for t in short), ZERO)
+        return DirectionStats(len(long), long_net, len(short), short_net)
 
     async def _perturb(
         self,

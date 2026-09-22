@@ -105,6 +105,77 @@ class BuyThenSell(Strategy):
         )  # fmt: skip
 
 
+class SellThenBuyParameters(StrategyParameters):
+    """The mirror of `BuyThenSell`: enter by SELLing short on one bar's close, cover by BUYing on
+    a later one's (0 = never). Same counting, same close-as-limit, opposite order sides."""
+
+    sell_at: NonNegativeInt = 2
+    buy_at: NonNegativeInt = 0
+    quantity: PositiveInt = 10
+    fail_at: NonNegativeInt = 0  # raise on this bar (0 = never)
+
+
+class SellThenBuy(Strategy):
+    """Sells short on the `sell_at`-th bar of the session, covers on the `buy_at`-th, reporting
+    what it was told like `BuyThenSell` does, so a short round trip is as inspectable as a long."""
+
+    name = "sell_then_buy"
+    parameters_model = SellThenBuyParameters
+    updates: ClassVar[list[OrderUpdate]] = []
+    positions_seen_at_update: ClassVar[list[int]] = []
+    history_at_start: ClassVar[list[int]] = []
+
+    def __init__(self, config: ResolvedStrategyConfig) -> None:
+        super().__init__(config)
+        assert isinstance(config.parameters, SellThenBuyParameters)
+        self._p = config.parameters
+        self._seen = 0
+        self._outbox: deque[Signal] = deque()
+        self._ctx: StrategyContext | None = None
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.updates.clear()
+        cls.positions_seen_at_update.clear()
+        cls.history_at_start.clear()
+
+    def initialize(self, ctx: StrategyContext) -> None:
+        self._ctx = ctx
+        self.history_at_start.append(
+            len(ctx.history.bars(INSTRUMENT, self._config.timeframe, 10_000))
+        )
+
+    def on_market_data(self, event: Candle | object) -> None:
+        if not isinstance(event, Candle):
+            return
+        self._seen += 1
+        if self._seen == self._p.fail_at:
+            raise RuntimeError("the strategy blew up")
+        if self._seen == self._p.sell_at:
+            self._emit(event, SignalKind.ENTRY, OrderSide.SELL)
+        elif self._seen == self._p.buy_at:
+            self._emit(event, SignalKind.EXIT, OrderSide.BUY)
+
+    def generate_signal(self) -> Signal | None:
+        return self._outbox.popleft() if self._outbox else None
+
+    def on_order_update(self, update: OrderUpdate) -> None:
+        assert self._ctx is not None
+        self.updates.append(update)
+        self.positions_seen_at_update.append(
+            self._ctx.positions.position(update.instrument_id).net_quantity
+        )
+
+    def _emit(self, bar: Candle, kind: SignalKind, side: OrderSide) -> None:
+        assert self._ctx is not None
+        self._outbox.append(
+            Signal(
+                self._ctx.run_id, bar.instrument_id, kind, side, OrderType.LIMIT,
+                self._p.quantity, bar.close, bar.closes_at, f"{kind.value} on bar {self._seen}",
+            )
+        )  # fmt: skip
+
+
 class FixedSchedule:
     """The same schedule on every day. The rates are the shipped Angel One intraday ones."""
 
@@ -160,6 +231,7 @@ class HalveSize:
 def registry() -> StrategyRegistry:
     found = StrategyRegistry()
     found.register(BuyThenSell)
+    found.register(SellThenBuy)
     return found
 
 
@@ -174,6 +246,25 @@ def config(
     base = make_config(
         name="buy_then_sell",
         parameters=BuyThenSellParameters(buy_at=buy_at, sell_at=sell_at, fail_at=fail_at),
+        timeframe=timeframe,
+    )
+    session = SessionSettings.model_validate(
+        {"no_new_entries_after": no_new_entries_after, "square_off_at": square_off_at}
+    )
+    return base.model_copy(update={"session": session})
+
+
+def short_config(
+    sell_at: int = 2,
+    buy_at: int = 0,
+    fail_at: int = 0,
+    square_off_at: str = "15:15",
+    no_new_entries_after: str = "15:00",
+    timeframe: Timeframe = Timeframe.M5,
+) -> ResolvedStrategyConfig:
+    base = make_config(
+        name="sell_then_buy",
+        parameters=SellThenBuyParameters(sell_at=sell_at, buy_at=buy_at, fail_at=fail_at),
         timeframe=timeframe,
     )
     session = SessionSettings.model_validate(
@@ -238,6 +329,7 @@ async def run(
     progress: BacktestProgressSink | None = None,
 ) -> BacktestResult:
     BuyThenSell.reset()
+    SellThenBuy.reset()
     return await engine(candles, gate, progress=progress).run(spec(strategy, days, fills))
 
 
@@ -262,5 +354,18 @@ DOWN_DAY = [
     ("98", "98.5", "96", "97"),
     ("97", "97.5", "95", "96"),  # bar 5: SELL signal at 96 -> limit 95.95
     ("96", "96.5", "94", "95"),  # bar 6: the sell fills at 95.95
+    ("95", "95.5", "93", "94"),
+]
+
+
+# The same falling session, but for the SHORT rig `sell_at=2, buy_at=5` (see test_engine): the
+# SELL-to-open signal is answered on bar 3 at 98.95, the BUY-to-cover on bar 6 at 96.05.
+SHORT_WORKED_DAY = [
+    ("100", "101", "99", "100"),
+    ("100", "100.5", "98", "99"),  # bar 2: SELL signal at 99 -> limit 98.95
+    ("99", "99.2", "97", "98"),  # bar 3: the sell fills here, at 98.95
+    ("98", "98.5", "96", "97"),
+    ("97", "97.5", "95", "96"),  # bar 5: BUY signal at 96 -> limit 96.05
+    ("96", "96.5", "94", "95"),  # bar 6: the buy fills here, at 96.05
     ("95", "95.5", "93", "94"),
 ]

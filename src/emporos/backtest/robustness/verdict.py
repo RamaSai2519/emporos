@@ -16,7 +16,7 @@ classes, so a new check is a new class, not an edit to an existing one.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum
 from typing import Protocol
@@ -45,6 +45,17 @@ class GateResult:
 
 
 @dataclass(frozen=True)
+class DirectionStats:
+    """The long side and the short side apart, so a verdict never hides that one direction carried
+    the strategy: whichever side has no trades has a zero count and net."""
+
+    long_count: int
+    long_net_pnl: Decimal
+    short_count: int
+    short_net_pnl: Decimal
+
+
+@dataclass(frozen=True)
 class Evidence:
     """Everything the gates may look at, gathered from out-of-sample results only."""
 
@@ -59,6 +70,7 @@ class Evidence:
     concentration: ConcentrationReport
     perturbation: PerturbationReport | None
     baseline_net_pnl: Decimal | None  # the simple always-long baseline; None when not measured
+    direction: DirectionStats = field(default_factory=lambda: DirectionStats(0, _ZERO, 0, _ZERO))
 
 
 class Gate(Protocol):

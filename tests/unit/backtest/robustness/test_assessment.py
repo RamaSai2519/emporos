@@ -48,6 +48,22 @@ async def test_evidence_is_the_out_of_sample_trades_and_days() -> None:
     )
 
 
+async def test_direction_stats_split_the_same_trades_without_losing_one() -> None:
+    result = await walk()
+    report = await RobustnessAssessor(BenchmarkLoader().load(), stats).assess(
+        "s", result, base_spec(), CANDIDATES
+    )
+
+    long_ = [t for o in result.outcomes for t in o.test.trades if t.direction.value == "LONG"]
+    short = [t for o in result.outcomes for t in o.test.trades if t.direction.value == "SHORT"]
+    direction = report.evidence.direction
+    assert direction.long_count + direction.short_count == report.evidence.trade_count
+    assert direction.long_count == len(long_) and direction.short_count == len(short)
+    assert direction.long_net_pnl == sum((t.net_pnl.amount for t in long_), D(0))
+    assert direction.short_net_pnl == sum((t.net_pnl.amount for t in short), D(0))
+    assert direction.long_net_pnl + direction.short_net_pnl == report.evidence.net_pnl
+
+
 async def test_without_a_perturbation_or_baseline_those_gates_are_unknown_not_passed() -> None:
     report = await RobustnessAssessor(BenchmarkLoader().load(), stats).assess(
         "s", await walk(), base_spec(), CANDIDATES

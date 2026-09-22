@@ -44,8 +44,11 @@ def trade(
     direction: TradeDirection = TradeDirection.LONG,
     instrument_id: str = INSTRUMENT,
 ) -> ClosedTrade:
-    """A LONG trade of `quantity` @ `price` (notional 1,000 by default) that netted `net`."""
+    """A trade of `quantity` @ `price` (notional 1,000 by default) that netted `net`. The exit
+    price is chosen so the gross agrees with `direction`: a profitable LONG covered above entry, a
+    profitable SHORT covered below it."""
     gross = Decimal(net) + Decimal(fees)
+    sign = 1 if direction is TradeDirection.LONG else -1
     return ClosedTrade(
         instrument_id=instrument_id,
         direction=direction,
@@ -53,7 +56,7 @@ def trade(
         opened_at=T0 + timedelta(minutes=minute),
         closed_at=T0 + timedelta(minutes=minute + 1),
         entry_price=Money.of(price),
-        exit_price=Money(Decimal(price) + gross / quantity),
+        exit_price=Money(Decimal(price) + sign * gross / quantity),
         gross_pnl=Money(gross),
         fees=Money.of(fees),
     )

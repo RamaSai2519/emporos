@@ -59,6 +59,9 @@ class MetricsDocument:
                 "by_instrument": self._grouped(report.by_instrument),
                 "by_time_of_day": self._grouped(report.by_time_of_day),
                 "by_regime": self._grouped(report.by_regime),
+                "by_direction_instrument": self._crossed(report.by_direction_instrument),
+                "by_direction_time_of_day": self._crossed(report.by_direction_time_of_day),
+                "by_direction_regime": self._crossed(report.by_direction_regime),
                 "regime_classifier_version": MarketRegimeClassifier.VERSION
                 if report.by_regime
                 else None,
@@ -131,3 +134,8 @@ class MetricsDocument:
 
     def _grouped(self, groups: dict[str, TradeStatistics]) -> dict[str, dict[str, Any]]:
         return {name: self._trade_stats(stats) for name, stats in groups.items()}
+
+    def _crossed(
+        self, cross: dict[str, dict[str, TradeStatistics]]
+    ) -> dict[str, dict[str, dict[str, Any]]]:
+        return {outer: self._grouped(inner) for outer, inner in cross.items()}

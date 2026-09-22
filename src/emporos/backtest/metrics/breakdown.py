@@ -29,6 +29,19 @@ class TradeGrouper:
             buckets.setdefault(key(closed), []).append(closed)
         return {name: self._analyzer.analyze(buckets[name]) for name in sorted(buckets)}
 
+    def group_cross(
+        self, trades: Sequence[ClosedTrade], outer: TradeKey, inner: TradeKey
+    ) -> dict[str, dict[str, TradeStatistics]]:
+        """Two-level split: bucket by `outer` first (e.g. direction), then by `inner` inside each
+        (e.g. instrument). Nested so the outer side is never merged back together."""
+        outer_buckets: dict[str, list[ClosedTrade]] = {}
+        for closed in trades:
+            outer_buckets.setdefault(outer(closed), []).append(closed)
+        return {
+            outer_name: self.group(outer_buckets[outer_name], inner)
+            for outer_name in sorted(outer_buckets)
+        }
+
 
 def direction_key(trade: ClosedTrade) -> str:
     return trade.direction.value

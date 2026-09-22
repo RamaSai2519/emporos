@@ -61,6 +61,9 @@ class MetricsReport:
     by_instrument: dict[str, TradeStatistics]
     by_time_of_day: dict[str, TradeStatistics]
     by_regime: dict[str, TradeStatistics]
+    by_direction_instrument: dict[str, dict[str, TradeStatistics]]
+    by_direction_time_of_day: dict[str, dict[str, TradeStatistics]]
+    by_direction_regime: dict[str, dict[str, TradeStatistics]]
     daily_returns: tuple[Decimal, ...] = ()  # one per trading day, in order; not in the document
 
 
@@ -106,6 +109,13 @@ class MetricsCalculator:
             if regime_timelines
             else {}
         )
+        by_direction_regime = (
+            self._grouper.group_cross(
+                closed_trades, direction_key, regime_key_factory(regime_timelines)
+            )
+            if regime_timelines
+            else {}
+        )
         return MetricsReport(
             settings=self._settings,
             starting_cash=starting_cash,
@@ -122,6 +132,13 @@ class MetricsCalculator:
             by_instrument=self._grouper.group(closed_trades, instrument_key),
             by_time_of_day=self._grouper.group(closed_trades, time_of_day_key),
             by_regime=by_regime,
+            by_direction_instrument=self._grouper.group_cross(
+                closed_trades, direction_key, instrument_key
+            ),
+            by_direction_time_of_day=self._grouper.group_cross(
+                closed_trades, direction_key, time_of_day_key
+            ),
+            by_direction_regime=by_direction_regime,
             daily_returns=tuple(day.ret for day in days),
         )
 

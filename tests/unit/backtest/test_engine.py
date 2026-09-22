@@ -13,14 +13,17 @@ from emporos.backtest.settings import FillSettings
 from emporos.domain.money import Money
 from emporos.domain.order_updates import OrderUpdateStatus as S
 from tests.support.backtest_engine import (
+    SHORT_WORKED_DAY,
     WORKED_DAY,
     BuyThenSell,
     HalveSize,
     RefuseAll,
+    SellThenBuy,
     bars,
     config,
     engine,
     run,
+    short_config,
     spec,
 )
 from tests.support.strategies import INSTRUMENT, T0
@@ -111,6 +114,69 @@ class TestAWorkedDay:
         result = await self.result()
         assert not result.runner.halted and result.runner.unclosed_bars_skipped == 0
         assert result.alerts == () and result.risk_gate == "none"
+
+
+class TestAWorkedShortDay:
+    """EM-127: the mirror of `TestAWorkedDay` traded short. sell_at=2, buy_at=5. Bar 2 closes at
+    99: SELL 10 short, priced 99 * 0.9995 = 98.9505 - the tick below, 98.95. Bar 3's high of 99.2
+    trades through it, so the short opens at 98.95. Bar 5 closes at 96: BUY 10 to cover, priced
+    96 * 1.0005 = 96.048 - the tick above, 96.05. Bar 6's low of 94 trades through it: covered at
+    96.05.
+
+    gross = (98.95 - 96.05) * 10 = 29.00 (a falling day makes the short money)
+    fees: the same schedule as the long worked day, charged per side (STT on the sell-to-open)."""
+
+    async def result(self):  # type: ignore[no-untyped-def]
+        return await run(bars(SHORT_WORKED_DAY), short_config(sell_at=2, buy_at=5))
+
+    async def test_the_short_round_trip(self) -> None:
+        result = await self.result()
+
+        (trade,) = result.trades
+        assert (trade.direction, trade.quantity) == (TradeDirection.SHORT, 10)
+        assert (trade.entry_price, trade.exit_price) == (Money.of("98.95"), Money.of("96.05"))
+        assert (trade.gross_pnl, trade.fees, trade.net_pnl) == (
+            Money.of("29.00"), Money.of("12.16"), Money.of("16.84"),
+        )  # fmt: skip
+
+    async def test_the_short_opens_and_covers_on_the_bar_after_the_prompt(self) -> None:
+        (trade,) = (await self.result()).trades
+
+        assert trade.opened_at == T0 + 15 * MIN  # bar 3
+        assert trade.closed_at == T0 + 30 * MIN  # bar 6
+
+    async def test_the_account_and_orders(self) -> None:
+        result = await self.result()
+
+        assert result.metrics.ending_equity == Money.of("100016.84")
+        assert result.open_positions_at_end == 0
+        assert result.metrics.trades.count == 1 and result.metrics.trades.wins == 1
+        assert result.metrics.turnover.traded_notional == Money.of("1950.00")  # 989.50 + 960.50
+        c = result.counters
+        assert (c.signals, c.orders, c.fills) == (2, 2, 2)
+        assert (c.gate_rejections, c.exchange_rejections, c.forced_square_offs) == (0, 0, 0)
+        assert abs(result.metrics.ending_equity.amount - Decimal(100_000_00) / 100) >= Decimal(0)
+
+    async def test_the_strategy_is_told_and_sees_the_booked_fill(self) -> None:
+        await self.result()
+
+        assert [u.status for u in SellThenBuy.updates] == [S.WORKING, S.FILLED, S.WORKING, S.FILLED]
+        # its position at each update: 0 on the sell ack, -10 once the short is open, -10 on the
+        # buy ack, 0 after the cover fills
+        assert SellThenBuy.positions_seen_at_update == [0, -10, -10, 0]
+
+    async def test_the_report_reports_shorts_from_their_own_direction(self) -> None:
+        result = await self.result()
+
+        assert result.metrics.by_direction == {"SHORT": result.metrics.trades}
+        assert result.metrics.by_direction_instrument == {
+            "SHORT": {INSTRUMENT: result.metrics.trades}
+        }
+        assert result.metrics.by_direction_time_of_day == {
+            "SHORT": {"09:15-10:00": result.metrics.trades}
+        }
+        # no regime timelines in the rig, so the trade lands in the causal "unknown" bucket
+        assert result.metrics.by_direction_regime == {"SHORT": {"unknown": result.metrics.trades}}
 
 
 class TestUnfilledAndRefusedOrders:

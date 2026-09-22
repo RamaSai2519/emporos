@@ -72,20 +72,32 @@ class BacktestSummary:
             ("by regime", breakdowns["by_regime"]),
             ("by time of day", breakdowns["by_time_of_day"]),
             ("by instrument", breakdowns["by_instrument"]),
+            ("by direction and instrument", breakdowns["by_direction_instrument"]),
+            ("by direction and time of day", breakdowns["by_direction_time_of_day"]),
+            ("by direction and regime", breakdowns["by_direction_regime"]),
         ]
         lines: list[str] = []
         for title, groups in sections:
             lines.append(f"  {title}")
-            if not groups:
-                lines.append("    (no trades)")
-                continue
-            for name in sorted(groups):
-                stats = groups[name]
-                lines.append(
-                    f"    {name:<16} count {stats['count']:>4}  "
-                    f"net {stats['net_pnl']:>12}  win rate {self.percent(stats['win_rate']):>7}"
-                )
+            self._group_lines(lines, groups)
         return lines
+
+    def _group_lines(self, lines: list[str], groups: dict[str, Any]) -> None:
+        if not groups:
+            lines.append("    (no trades)")
+            return
+        first = next(iter(groups.values()))
+        if "net_pnl" not in first:  # a nested cross-tab, not a trade-stats block
+            for outer in sorted(groups):
+                lines.append(f"    {outer}")
+                self._group_lines(lines, groups[outer])
+            return
+        for name in sorted(groups):
+            stats = groups[name]
+            lines.append(
+                f"    {name:<16} count {stats['count']:>4}  "
+                f"net {stats['net_pnl']:>12}  win rate {self.percent(stats['win_rate']):>7}"
+            )
 
     @staticmethod
     def _activity(activity: dict[str, Any]) -> str:

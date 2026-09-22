@@ -44,3 +44,16 @@ def test_percent_and_plain_round_half_even_and_show_missing_as_n_a() -> None:
     assert BacktestSummary.percent("0.00015") == "0.02%"  # 0.015% -> 0.02 (even)
     assert BacktestSummary.percent(None) == "n/a" and BacktestSummary.plain(None) == "n/a"
     assert BacktestSummary.plain("4.582575694") == "4.58"
+
+
+async def test_the_direction_cross_tabs_are_rendered_not_just_the_flat_sections() -> None:
+    text = await summary_of_the_worked_day()
+
+    for title in (
+        "by direction and instrument",
+        "by direction and time of day",
+        "by direction and regime",
+    ):
+        assert title in text
+    # the worked day is a single LONG trade, so only the LONG side carries it
+    assert "LONG" in text and "SHORT" not in text
