@@ -8,12 +8,14 @@ from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.signals import Signal, SignalKind
 from emporos.opportunity.allocator import AllocationConstraints, PortfolioAllocator
+from emporos.opportunity.deployment_gate import DeploymentGate
 from emporos.opportunity.pipeline import OpportunityPipeline, StrategyRun
 from emporos.opportunity.runner import OpportunityRunner
 from emporos.opportunity.scanner import OpportunityScanner
 from emporos.risk.snapshot import AccountFacts
 from emporos.session.signal_path import Submission
 from emporos.strategies.config import RiskSettings
+from emporos.strategies.metadata import DeploymentStatus, StrategyMetadata
 from emporos.strategies.regime import MarketRegime
 from emporos.strategies.registry import StrategyRegistry
 from tests.support.records import RecordFactory
@@ -129,6 +131,52 @@ async def test_no_signals_means_nothing_is_submitted() -> None:
     pipeline = _pipeline(None)
     sink = _RecordingSink([])
     runner = OpportunityRunner(pipeline, sink)
+
+    outcome = await runner.on_bars([bar_at(INSTRUMENT)])
+
+    assert outcome.submissions == ()
+    assert sink.signals == []
+
+
+async def test_a_deployment_gate_can_scale_down_or_drop_an_entry_before_submission() -> None:
+    entry = make_signal(instrument_id=INSTRUMENT, price="100")
+    pipeline = _pipeline(entry)
+    registry = StrategyRegistry()
+    registry.register(
+        ScriptedStrategy,
+        StrategyMetadata(
+            version="v1",
+            supported_timeframes=frozenset(),
+            supported_regimes=frozenset(),
+            deployment_status=DeploymentStatus.LIVE_CONSERVATIVE,
+        ),
+    )
+    gate = DeploymentGate(registry, conservative_fraction=Decimal("0.5"))
+    sink = _RecordingSink([Submission(signal_id="s1")])
+    runner = OpportunityRunner(pipeline, sink, deployment_gate=gate)
+
+    outcome = await runner.on_bars([bar_at(INSTRUMENT)])
+
+    unscaled_quantity = outcome.pipeline.allocations[0].quantity
+    assert sink.signals[0].quantity == unscaled_quantity // 2
+
+
+async def test_a_deployment_gate_can_drop_an_ineligible_strategys_entry() -> None:
+    entry = make_signal(instrument_id=INSTRUMENT, price="100", quantity=100)
+    pipeline = _pipeline(entry)
+    registry = StrategyRegistry()
+    registry.register(
+        ScriptedStrategy,
+        StrategyMetadata(
+            version="v1",
+            supported_timeframes=frozenset(),
+            supported_regimes=frozenset(),
+            deployment_status=DeploymentStatus.PAPER,
+        ),
+    )
+    gate = DeploymentGate(registry)
+    sink = _RecordingSink([])
+    runner = OpportunityRunner(pipeline, sink, deployment_gate=gate)
 
     outcome = await runner.on_bars([bar_at(INSTRUMENT)])
 
