@@ -73,6 +73,7 @@ from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.domain.order_updates import OrderUpdate
 from emporos.opportunity.allocator import AllocationConstraints, PortfolioAllocator
+from emporos.opportunity.jev_experiment import JevRunSummary
 from emporos.opportunity.jev_filter import JevMetaDecisionFilter
 from emporos.opportunity.pipeline import OpportunityPipeline, RegimeSource, StrategyRun
 from emporos.opportunity.scanner import OpportunityScanner
@@ -140,6 +141,7 @@ class MultiStrategyBacktestResult:
     trades: tuple[ClosedTrade, ...]
     metrics: MetricsReport
     open_positions_at_end: int
+    jev: JevRunSummary = field(default_factory=JevRunSummary)  # zero when no jev_filter is set
 
 
 class _TimelineRegimeSource:
@@ -254,7 +256,8 @@ class MultiStrategyBacktestEngine:
         )  # fmt: skip
 
         feed = ClosedBarFeed(self._reader, instrument_ids, timeframe, spec.window)
-        await _MultiStrategyReplay(session, pipeline, flow, clock).run(feed)
+        replay = _MultiStrategyReplay(session, pipeline, flow, clock)
+        await replay.run(feed)
 
         return MultiStrategyBacktestResult(
             strategies=tuple(p.identity for p in prepared),
@@ -272,6 +275,7 @@ class MultiStrategyBacktestEngine:
                 regime_timelines,
             ),
             open_positions_at_end=len(portfolio.open_positions()),
+            jev=replay.jev_summary,
         )
 
     async def _prepare(
@@ -343,6 +347,11 @@ class _MultiStrategyReplay:
         self._pipeline = pipeline
         self._flow = flow
         self._clock = clock
+        self._jev = JevRunSummary()
+
+    @property
+    def jev_summary(self) -> JevRunSummary:
+        return self._jev
 
     async def run(self, feed: ClosedBarFeed) -> None:
         day: date | None = None
@@ -372,6 +381,7 @@ class _MultiStrategyReplay:
         if not batch:
             return
         outcome = await self._pipeline.on_bars(batch)
+        self._jev = self._jev.add(outcome)
         for signal in (*outcome.exits, *outcome.approved_signals):
             await self._flow.submit(signal)
 

@@ -11,7 +11,7 @@ from emporos.domain.money import Money
 from emporos.jev.config import JevConfig
 from emporos.jev.models import CONFIRM, CONFIRMATION, JevDecision, JevRequest
 from emporos.opportunity.allocator import AllocationConstraints, PortfolioAllocator
-from emporos.opportunity.jev_experiment import JevOnOffExperiment
+from emporos.opportunity.jev_experiment import JevOnOffExperiment, JevRunSummary
 from emporos.opportunity.jev_filter import JevMetaDecisionFilter
 from emporos.opportunity.pipeline import OpportunityPipeline, StrategyRun
 from emporos.opportunity.scanner import OpportunityScanner
@@ -145,3 +145,22 @@ async def test_an_empty_batch_in_the_sequence_is_refused() -> None:
 
     with pytest.raises(ValueError, match="empty"):
         await experiment.run([[]])
+
+
+class TestJevRunSummary:
+    async def test_add_accumulates_reviews_latency_and_tokens_across_bar_batches(self) -> None:
+        provider = _AlwaysConfirms()
+        treatment = _build_side(
+            JevMetaDecisionFilter(provider, JevConfig(enabled=True, mode=CONFIRMATION))
+        )
+        summary = JevRunSummary()
+
+        summary = summary.add(await treatment.on_bars([bar_at(INSTRUMENT)]))
+
+        assert summary.reviews == 1
+        assert summary.rejections == 0
+        assert summary.latency_ms == 42
+        assert summary.tokens == 100
+
+    def test_zero_is_the_default(self) -> None:
+        assert JevRunSummary() == JevRunSummary(0, 0, 0, 0)

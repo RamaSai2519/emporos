@@ -8,11 +8,13 @@ the honest, currently-reachable half of EM-162: it needs no broker, no fills, no
 works today.
 
 What this does NOT report: net P&L, drawdown, Sharpe/Sortino, turnover, or regime/strategy P&L
-attribution. Those require running each side through actual fills under the realistic cost model
-— which needs a multi-strategy backtest engine sharing one broker/portfolio per side (EM-158's
-remaining, deliberately-not-rushed piece; see that ticket). `DecisionComparisonReport` is the
-seam a future `execute()` step plugs into: give it a `fill_and_account` callback per side and it
-can extend into the full P&L comparison without changing how the two pipelines are driven.
+attribution. Those need each side run through actual fills under the realistic cost model —
+`emporos.backtest.jev_pnl.JevOnOffBacktestExperiment` is that other half, built on top of
+`MultiStrategyBacktestEngine` (EM-158). It lives in `emporos.backtest`, not here: opportunity
+selection must never depend on any one runtime that consumes it. `JevRunSummary` below is the
+seam between the two — the same per-bar Jev cost this module reports, in a shape a caller
+driving `OpportunityPipeline` directly (rather than through this module's own batch loop) can
+accumulate over a whole run.
 """
 
 from __future__ import annotations
@@ -47,6 +49,27 @@ class SideOutcome:
             jev_rejections=len(outcome.jev.rejected),
             jev_latency_ms=sum(review.decision.latency_ms for review in outcome.jev.reviews),
             jev_tokens=sum(review.decision.tokens_used or 0 for review in outcome.jev.reviews),
+        )
+
+
+@dataclass(frozen=True)
+class JevRunSummary:
+    """Jev's own cost accumulated over a run: how many candidates it reviewed, how many it
+    rejected, and what that cost in latency and tokens. `add` returns a new summary rather than
+    mutating in place, so a caller folding this over a run of bar-batches (a `reduce`, not a
+    loop with a mutable accumulator) never needs to reason about shared state."""
+
+    reviews: int = 0
+    rejections: int = 0
+    latency_ms: int = 0
+    tokens: int = 0
+
+    def add(self, outcome: BarOutcome) -> JevRunSummary:
+        return JevRunSummary(
+            reviews=self.reviews + len(outcome.jev.reviews),
+            rejections=self.rejections + len(outcome.jev.rejected),
+            latency_ms=self.latency_ms + sum(r.decision.latency_ms for r in outcome.jev.reviews),
+            tokens=self.tokens + sum(r.decision.tokens_used or 0 for r in outcome.jev.reviews),
         )
 
 

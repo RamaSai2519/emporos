@@ -16,6 +16,7 @@ from emporos.backtest.multi_engine import (
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.opportunity.allocator import AllocationConstraints
+from emporos.opportunity.jev_experiment import JevRunSummary
 from emporos.strategies.config import ResolvedStrategyConfig, SessionSettings
 from tests.support.backtest import InMemoryCandles
 from tests.support.backtest_engine import (
@@ -140,6 +141,7 @@ class TestPerStrategyAttribution:
         assert result.metrics.by_strategy[long_id].count == 1
         assert result.metrics.by_strategy[short_id].count == 1
         assert result.alerts == ()  # neither strategy faulted
+        assert result.jev == JevRunSummary()  # no jev_filter configured: nothing to report
 
 
 class TestIsolation:
