@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -10,7 +11,10 @@ from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.signals import Signal, SignalKind
+from emporos.jev.config import JevConfig
+from emporos.jev.models import CONFIRMATION, REJECT, JevDecision, JevRequest
 from emporos.opportunity.allocator import AllocationConstraints, PortfolioAllocator
+from emporos.opportunity.jev_filter import JevMetaDecisionFilter
 from emporos.opportunity.pipeline import OpportunityPipeline, StrategyRun
 from emporos.opportunity.scanner import OpportunityScanner
 from emporos.risk.snapshot import AccountFacts
@@ -106,57 +110,57 @@ def _pipeline(
     )
 
 
-def test_on_bars_rejects_an_empty_batch() -> None:
+async def test_on_bars_rejects_an_empty_batch() -> None:
     pipeline = _pipeline([])
     with pytest.raises(ValueError, match="at least one"):
-        pipeline.on_bars([])
+        await pipeline.on_bars([])
 
 
-def test_a_strategy_with_no_signal_produces_no_outcome() -> None:
+async def test_a_strategy_with_no_signal_produces_no_outcome() -> None:
     run = _strategy_run("alpha", INSTRUMENT)
     pipeline = _pipeline([run])
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
 
     assert outcome.exits == ()
     assert outcome.allocations == ()
 
 
-def test_exit_signals_always_pass_through_unranked() -> None:
+async def test_exit_signals_always_pass_through_unranked() -> None:
     exit_signal = make_signal(instrument_id=INSTRUMENT, kind=SignalKind.EXIT)
     run = _strategy_run("alpha", INSTRUMENT, signals=[exit_signal])
     pipeline = _pipeline([run])
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
 
     assert outcome.exits == (exit_signal,)
     assert outcome.allocations == ()
 
 
-def test_an_entry_signal_with_a_classified_regime_is_allocated() -> None:
+async def test_an_entry_signal_with_a_classified_regime_is_allocated() -> None:
     entry = make_signal(instrument_id=INSTRUMENT, price="100", side=OrderSide.BUY)
     run = _strategy_run("alpha", INSTRUMENT, signals=[entry])
     pipeline = _pipeline([run])
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
 
     assert len(outcome.allocations) == 1
     assert outcome.allocations[0].candidate.strategy_name == "alpha"
     assert outcome.approved_signals[0].instrument_id == INSTRUMENT
 
 
-def test_an_entry_with_no_classified_regime_is_rejected_not_allocated() -> None:
+async def test_an_entry_with_no_classified_regime_is_rejected_not_allocated() -> None:
     entry = make_signal(instrument_id=INSTRUMENT, price="100")
     run = _strategy_run("alpha", INSTRUMENT, signals=[entry])
     pipeline = _pipeline([run], regime=None)
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
 
     assert outcome.allocations == ()
     assert len(outcome.scan.rejected) == 1
 
 
-def test_no_regime_source_for_an_instrument_is_treated_as_unclassified() -> None:
+async def test_no_regime_source_for_an_instrument_is_treated_as_unclassified() -> None:
     entry = make_signal(instrument_id=INSTRUMENT, price="100")
     run = _strategy_run("alpha", INSTRUMENT, signals=[entry])
     pipeline = OpportunityPipeline(
@@ -168,22 +172,24 @@ def test_no_regime_source_for_an_instrument_is_treated_as_unclassified() -> None
         constraints=_constraints(),
     )
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
 
     assert outcome.allocations == ()
 
 
-def test_a_bar_for_an_instrument_with_no_strategy_runs_is_a_no_op() -> None:
+async def test_a_bar_for_an_instrument_with_no_strategy_runs_is_a_no_op() -> None:
     run = _strategy_run("alpha", INSTRUMENT)
     pipeline = _pipeline([run])
 
-    outcome = pipeline.on_bars([bar_at(OTHER_INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(OTHER_INSTRUMENT)])
 
     assert outcome.exits == ()
     assert outcome.allocations == ()
 
 
-def test_a_multi_instrument_batch_ranks_across_the_whole_universe_not_per_instrument() -> None:
+async def test_a_multi_instrument_batch_ranks_across_the_whole_universe_not_per_instrument() -> (
+    None
+):
     """Two instruments close in the same batch and capital only stretches to one share total. If
     the pipeline evaluated each instrument's bar in isolation (calling the allocator once per
     candle with the full budget every time), both would be allocated; a single shared scan+
@@ -202,8 +208,55 @@ def test_a_multi_instrument_batch_ranks_across_the_whole_universe_not_per_instru
         ),
     )
 
-    outcome = pipeline.on_bars([bar_at(INSTRUMENT), bar_at(OTHER_INSTRUMENT)])
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT), bar_at(OTHER_INSTRUMENT)])
 
+    assert len(outcome.allocations) == 1
+
+
+class _RejectingProvider:
+    async def decide(self, request: JevRequest) -> JevDecision:
+        return JevDecision(
+            decision=REJECT,
+            confidence=None,
+            provider="test",
+            model=None,
+            config_version=None,
+            requested_at=datetime.now(UTC),
+            latency_ms=0,
+        )
+
+
+async def test_an_enabled_jev_filter_can_reject_what_the_scan_ranked() -> None:
+    entry = make_signal(instrument_id=INSTRUMENT, price="100")
+    run = _strategy_run("alpha", INSTRUMENT, signals=[entry])
+    registry = _registry_for([run])
+    pipeline = OpportunityPipeline(
+        runs=[run],
+        regimes={INSTRUMENT: _FixedRegime(MarketRegime.TRENDING)},
+        scanner=OpportunityScanner(registry),
+        allocator=PortfolioAllocator(),
+        account=lambda: AccountFacts(),
+        constraints=_constraints(),
+        jev_filter=JevMetaDecisionFilter(
+            _RejectingProvider(), JevConfig(enabled=True, mode=CONFIRMATION)
+        ),
+    )
+
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
+
+    assert outcome.allocations == ()
+    assert len(outcome.jev.rejected) == 1
+    assert len(outcome.scan.candidates) == 1  # the scan still ranked it; Jev is what dropped it
+
+
+async def test_jev_disabled_by_default_leaves_allocations_unaffected() -> None:
+    entry = make_signal(instrument_id=INSTRUMENT, price="100")
+    run = _strategy_run("alpha", INSTRUMENT, signals=[entry])
+    pipeline = _pipeline([run])
+
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
+
+    assert outcome.jev.reviews == ()
     assert len(outcome.allocations) == 1
 
 

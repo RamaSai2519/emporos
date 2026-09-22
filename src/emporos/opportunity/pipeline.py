@@ -22,12 +22,17 @@ from typing import Protocol
 
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.signals import Signal, SignalKind
+from emporos.jev.config import JevConfig
+from emporos.jev.null_provider import NullJevProvider
 from emporos.opportunity.allocator import Allocation, AllocationConstraints, PortfolioAllocator
+from emporos.opportunity.jev_filter import JevFilterResult, JevMetaDecisionFilter
 from emporos.opportunity.scanner import OpportunityScanner, ScanResult, StrategySignal
 from emporos.risk.snapshot import AccountFacts
 from emporos.strategies.base import Strategy
 from emporos.strategies.config import RiskSettings
 from emporos.strategies.regime import MarketRegime
+
+_JEV_DISABLED = JevMetaDecisionFilter(NullJevProvider(), JevConfig(enabled=False))
 
 AccountFactsProvider = Callable[[], AccountFacts]
 
@@ -55,6 +60,7 @@ class StrategyRun:
 class BarOutcome:
     exits: tuple[Signal, ...]
     scan: ScanResult
+    jev: JevFilterResult
     allocations: tuple[Allocation, ...]
 
     @property
@@ -71,6 +77,7 @@ class OpportunityPipeline:
         allocator: PortfolioAllocator,
         account: AccountFactsProvider,
         constraints: AllocationConstraints,
+        jev_filter: JevMetaDecisionFilter | None = None,
     ) -> None:
         self._by_instrument: dict[str, list[StrategyRun]] = {}
         for run in runs:
@@ -80,8 +87,11 @@ class OpportunityPipeline:
         self._allocator = allocator
         self._account = account
         self._constraints = constraints
+        # Disabled by default: EM-152 is explicit that the pipeline is fully functional with Jev
+        # absent, so a caller that never mentions Jev gets exactly the pre-Jev ranking untouched.
+        self._jev_filter = jev_filter or _JEV_DISABLED
 
-    def on_bars(self, candles: Sequence[Candle]) -> BarOutcome:
+    async def on_bars(self, candles: Sequence[Candle]) -> BarOutcome:
         """One evaluation tick: every instrument whose bar just closed at the same timestamp,
         delivered together so ranking and allocation see the whole universe snapshot at once,
         not one instrument greedily ahead of the next. A single-instrument runtime (or a test)
@@ -115,7 +125,8 @@ class OpportunityPipeline:
                         )
 
         scan = self._scanner.scan(entries, regimes=regimes, ts=ts)
+        jev_result = await self._jev_filter.apply(scan.candidates)
         allocations = self._allocator.allocate(
-            scan.candidates, account=self._account(), constraints=self._constraints
+            jev_result.candidates, account=self._account(), constraints=self._constraints
         )
-        return BarOutcome(exits=tuple(exits), scan=scan, allocations=allocations)
+        return BarOutcome(exits=tuple(exits), scan=scan, jev=jev_result, allocations=allocations)
