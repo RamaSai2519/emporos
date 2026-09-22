@@ -29,6 +29,7 @@ class Collection(StrEnum):
     PAPER_POSITIONS = "paper_positions"
     PAPER_PORTFOLIO_SNAPSHOTS = "paper_portfolio_snapshots"
     RISK_EVENTS = "risk_events"
+    OPPORTUNITY_SCANS = "opportunity_scans"
     RECONCILIATION_RUNS = "reconciliation_runs"
     BACKTEST_RUNS = "backtest_runs"
     BACKTEST_TRADES = "backtest_trades"

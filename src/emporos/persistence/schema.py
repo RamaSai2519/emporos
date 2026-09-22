@@ -166,6 +166,10 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("ts", expire_after=2 * _YEAR),
         ),
         _spec(
+            Collection.OPPORTUNITY_SCANS,
+            IndexSpec.on("ts", expire_after=2 * _YEAR),
+        ),
+        _spec(
             Collection.RECONCILIATION_RUNS,
             IndexSpec.on("status"),
             IndexSpec.on("ts", expire_after=_YEAR),

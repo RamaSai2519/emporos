@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Protocol
 
 from emporos.domain.candles import Candle, Timeframe
@@ -58,6 +59,7 @@ class StrategyRun:
 
 @dataclass(frozen=True)
 class BarOutcome:
+    ts: datetime
     exits: tuple[Signal, ...]
     scan: ScanResult
     jev: JevFilterResult
@@ -129,4 +131,6 @@ class OpportunityPipeline:
         allocations = self._allocator.allocate(
             jev_result.candidates, account=self._account(), constraints=self._constraints
         )
-        return BarOutcome(exits=tuple(exits), scan=scan, jev=jev_result, allocations=allocations)
+        return BarOutcome(
+            ts=ts, exits=tuple(exits), scan=scan, jev=jev_result, allocations=allocations
+        )

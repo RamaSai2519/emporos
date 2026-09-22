@@ -3,11 +3,13 @@ from __future__ import annotations
 from decimal import Decimal
 
 from emporos.core.clock import FixedClock
+from emporos.core.ids import IdGenerator
 from emporos.domain.candles import Timeframe
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.signals import Signal, SignalKind
 from emporos.opportunity.allocator import AllocationConstraints, PortfolioAllocator
+from emporos.opportunity.audit import OpportunityAuditLog
 from emporos.opportunity.deployment_gate import DeploymentGate
 from emporos.opportunity.pipeline import OpportunityPipeline, StrategyRun
 from emporos.opportunity.runner import OpportunityRunner
@@ -182,3 +184,24 @@ async def test_a_deployment_gate_can_drop_an_ineligible_strategys_entry() -> Non
 
     assert outcome.submissions == ()
     assert sink.signals == []
+
+
+async def test_an_audit_log_records_the_full_pipeline_outcome_before_the_deployment_gate() -> None:
+    entry = make_signal(instrument_id=INSTRUMENT, price="100")
+    pipeline = _pipeline(entry)
+    sink = _RecordingSink([Submission(signal_id="s1")])
+
+    class _FakeStore:
+        def __init__(self) -> None:
+            self.inserted: list[object] = []
+
+        async def insert(self, record: object) -> None:
+            self.inserted.append(record)
+
+    store = _FakeStore()
+    audit_log = OpportunityAuditLog(store, IdGenerator())
+    runner = OpportunityRunner(pipeline, sink, audit_log=audit_log)
+
+    await runner.on_bars([bar_at(INSTRUMENT)])
+
+    assert len(store.inserted) == 1

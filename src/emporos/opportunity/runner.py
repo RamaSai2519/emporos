@@ -20,6 +20,11 @@ strategy's deployment stage before they reach the sink — conservative sizing f
 proving itself live, none at all for one that has not reached live yet. Left unset (the default)
 for paper/backtest roots that want to see a strategy's true, unthrottled behavior; a live
 composition root supplies one.
+
+An optional `audit_log` (`OpportunityAuditLog`, EM-165) persists the FULL pipeline outcome —
+every candidate, rejection, Jev review and allocation the tick produced — before the deployment
+gate or execution ever touch it, so an audit record always reflects what the pipeline actually
+decided, not what a downstream policy let through.
 """
 
 from __future__ import annotations
@@ -30,6 +35,7 @@ from typing import Protocol
 
 from emporos.domain.candles import Candle
 from emporos.domain.signals import Signal
+from emporos.opportunity.audit import OpportunityAuditLog
 from emporos.opportunity.deployment_gate import DeploymentGate
 from emporos.opportunity.pipeline import BarOutcome, OpportunityPipeline
 from emporos.session.signal_path import Submission
@@ -59,13 +65,17 @@ class OpportunityRunner:
         pipeline: OpportunityPipeline,
         sink: GatedSignalSink,
         deployment_gate: DeploymentGate | None = None,
+        audit_log: OpportunityAuditLog | None = None,
     ) -> None:
         self._pipeline = pipeline
         self._sink = sink
         self._deployment_gate = deployment_gate
+        self._audit_log = audit_log
 
     async def on_bars(self, candles: Sequence[Candle]) -> RunOutcome:
         outcome = await self._pipeline.on_bars(candles)
+        if self._audit_log is not None:
+            await self._audit_log.record(outcome)
         allocations = outcome.allocations
         if self._deployment_gate is not None:
             allocations = self._deployment_gate.apply(allocations)

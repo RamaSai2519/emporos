@@ -221,6 +221,22 @@ class RiskEventRecord(Record):
     snapshot: dict[str, Any] = Field(default_factory=dict)  # the state the rules judged
 
 
+class OpportunityScanRecord(Record):
+    """One opportunity-selection tick's full decision trail (EM-152 / EM-165): every strategy
+    evaluated, every candidate ranked, every rejection (scan-level and Jev-level) with its
+    reason, and what was ultimately sized and sent on. One document per bar-batch evaluated,
+    so a live result can always be checked against what the pipeline actually saw and decided."""
+
+    ts: datetime
+    instrument_ids: list[str] = Field(default_factory=list)  # the universe this tick covered
+    regimes: dict[str, str] = Field(default_factory=dict)  # instrument_id -> regime, "" if none
+    candidates: list[dict[str, Any]] = Field(default_factory=list)  # ranked, pre-Jev
+    rejected: list[dict[str, Any]] = Field(default_factory=list)  # scan-level: strategy ineligible
+    jev_reviews: list[dict[str, Any]] = Field(default_factory=list)  # every Jev request/response
+    jev_rejected: list[dict[str, Any]] = Field(default_factory=list)  # Jev-level rejections
+    allocations: list[dict[str, Any]] = Field(default_factory=list)  # final sizing decisions
+
+
 class ReconciliationRunRecord(Record):
     status: str  # CLEAN, HEALED or FAILED
     ts: datetime
