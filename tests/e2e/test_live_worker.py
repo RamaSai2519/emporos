@@ -25,12 +25,14 @@ from typing import Any
 
 import pytest
 
+from emporos.broker.models import BrokerOrder
 from emporos.cli.live_venue import LiveVenue
 from emporos.cli.worker_composition import LiveWorkerComposer, WorkerTuning, bar_queue_for
 from emporos.core.clock import FixedClock
 from emporos.core.ids import IdGenerator
 from emporos.domain.candles import Candle
 from emporos.domain.money import Money
+from emporos.domain.orders import OrderSide
 from emporos.marketdata.session import SessionWindow
 from emporos.persistence.collections import Collection
 from emporos.persistence.migrations import MigrationRunner, MongoSchemaStore
@@ -108,8 +110,23 @@ class LiveTape:
                 # the repricer (or anything else) had already legitimately cancelled, corrupting
                 # the emulator's own state (EM-145's real root cause — a test-harness bug).
             remaining = held.quantity - held.filled_quantity
-            if remaining:
+            if remaining and self._marketable(held):
                 self.harness.fill(held.broker_order_id or "", remaining, Money.of(FILL_PRICE))
+
+    @staticmethod
+    def _marketable(held: BrokerOrder) -> bool:
+        """A resting limit order only fills when the tape's price would actually cross it — a
+        BUY at or above FILL_PRICE, a SELL at or below it — exactly like a real exchange's
+        price-time priority. Blindly filling every held order regardless of its limit price (the
+        original behaviour) force-filled a deliberately-unmarketable manual test order (a resting
+        BUY well below the tape price, meant to stay open until the test cancels it) within one
+        poll cycle, leaving it FILLED by the time the test tried to cancel it."""
+        if held.price is None:
+            return True  # not expected for a limit-only platform, but never silently skip a fill
+        fill = Money.of(FILL_PRICE).amount
+        if held.side is OrderSide.BUY:
+            return held.price.amount >= fill
+        return held.price.amount <= fill
 
 
 def _normal_tape(
