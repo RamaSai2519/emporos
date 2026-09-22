@@ -20,6 +20,7 @@ from emporos.backtest.metrics.breakdown import (
     direction_key,
     instrument_key,
     regime_key_factory,
+    strategy_key,
     time_of_day_key,
 )
 from emporos.backtest.metrics.decimal_math import ZERO, DecimalMath
@@ -61,6 +62,7 @@ class MetricsReport:
     by_instrument: dict[str, TradeStatistics]
     by_time_of_day: dict[str, TradeStatistics]
     by_regime: dict[str, TradeStatistics]
+    by_strategy: dict[str, TradeStatistics]
     by_direction_instrument: dict[str, dict[str, TradeStatistics]]
     by_direction_time_of_day: dict[str, dict[str, TradeStatistics]]
     by_direction_regime: dict[str, dict[str, TradeStatistics]]
@@ -132,6 +134,7 @@ class MetricsCalculator:
             by_instrument=self._grouper.group(closed_trades, instrument_key),
             by_time_of_day=self._grouper.group(closed_trades, time_of_day_key),
             by_regime=by_regime,
+            by_strategy=self._grouper.group(closed_trades, strategy_key),
             by_direction_instrument=self._grouper.group_cross(
                 closed_trades, direction_key, instrument_key
             ),

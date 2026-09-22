@@ -59,6 +59,7 @@ class MetricsDocument:
                 "by_instrument": self._grouped(report.by_instrument),
                 "by_time_of_day": self._grouped(report.by_time_of_day),
                 "by_regime": self._grouped(report.by_regime),
+                "by_strategy": self._grouped(report.by_strategy),
                 "by_direction_instrument": self._crossed(report.by_direction_instrument),
                 "by_direction_time_of_day": self._crossed(report.by_direction_time_of_day),
                 "by_direction_regime": self._crossed(report.by_direction_regime),

@@ -51,6 +51,10 @@ def instrument_key(trade: ClosedTrade) -> str:
     return trade.instrument_id
 
 
+def strategy_key(trade: ClosedTrade) -> str:
+    return trade.strategy_run_id
+
+
 _SESSION_HOURS = (
     "09:15-10:00", "10:00-11:00", "11:00-12:00", "12:00-13:00",
     "13:00-14:00", "14:00-15:00", "15:00-15:30",

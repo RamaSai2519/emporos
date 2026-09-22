@@ -332,6 +332,27 @@
           "max_consecutive_losses": 12
         }
       },
+      "by_strategy": {
+        "bt-cc1930a4acb88673-20250922": {
+          "count": 223,
+          "wins": 53,
+          "losses": 170,
+          "breakeven": 0,
+          "win_rate": "0.23766816",
+          "gross_pnl": "-14015.76",
+          "fees": "14400.78",
+          "net_pnl": "-28416.54",
+          "gross_profit": "14765.46",
+          "gross_loss": "43182.00",
+          "profit_factor": "0.34193553",
+          "average_trade": "-127.43",
+          "average_win": "278.59",
+          "average_loss": "-254.01",
+          "expectancy": "-0.00260801",
+          "max_consecutive_wins": 5,
+          "max_consecutive_losses": 12
+        }
+      },
       "by_direction_instrument": {
         "LONG": {
           "NSE:11536": {
