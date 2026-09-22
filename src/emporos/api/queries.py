@@ -7,7 +7,7 @@ is what the worker has PERSISTED. Nothing here computes P&L: it reports the work
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, ClassVar, Protocol
 
 from emporos.api.models import (
     CommandDetailDto,
@@ -111,9 +111,14 @@ class QueryService:
         self._commands, self._results = commands, results
         self._limits = risk_limits
 
+    _UNHEALTHY_STATES: ClassVar[set[str]] = {"HALTED", "FAILED"}
+
     async def overview(self) -> OverviewDto:
         state = await self._system_events.find(
             {"type": "session_state", "account_id": self._account}, sort=[("ts", -1)], limit=1
+        )
+        health = await self._system_events.find(
+            {"type": "worker_health", "account_id": self._account}, sort=[("ts", -1)], limit=1
         )
         switch: KillSwitchRecord | None = await self._kill_switch.get("kill_switch")
         recon = await self._reconciliations.find({}, sort=[("ts", -1)], limit=1)
@@ -124,8 +129,10 @@ class QueryService:
             {"account_id": self._account, "net_quantity": {"$ne": 0}}
         )
         latest = snap[0] if snap else None
+        session_state = state[0].model_dump().get("to") if state else None
+        latest_health = health[0].model_dump() if health else None
         return OverviewDto(
-            session_state=state[0].model_dump().get("to") if state else None,
+            session_state=session_state,
             session_state_at=state[0].ts if state else None,
             kill_switch=None if switch is None else self._switch(switch),
             reconciliation=self._reconciliation(recon[0]) if recon else None,
@@ -138,6 +145,12 @@ class QueryService:
             pending_commands=await self._commands.count(
                 {"status": {"$in": ["PENDING", "ACCEPTED", "EXECUTING"]}}
             ),
+            trading_mode=latest_health.get("trading_mode") if latest_health else None,
+            broker_healthy=latest_health.get("broker_healthy") if latest_health else None,
+            feed_healthy=latest_health.get("feed_healthy") if latest_health else None,
+            worker_healthy=None
+            if session_state is None
+            else session_state not in self._UNHEALTHY_STATES,
         )
 
     async def positions(self, open_only: bool = False) -> list[PositionDto]:

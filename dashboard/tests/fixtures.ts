@@ -233,6 +233,10 @@ export class ControlFixture {
       trades: 1,
       snapshot_at: this.now,
       pending_commands: 0,
+      trading_mode: "paper",
+      broker_healthy: true,
+      feed_healthy: true,
+      worker_healthy: true,
     };
   readonly positions: import("../src/lib/api.generated").components["schemas"]["PositionDto"][] =
     [

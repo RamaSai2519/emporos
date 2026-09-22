@@ -451,6 +451,14 @@ export interface components {
             snapshot_at: string | null;
             /** Pending Commands */
             pending_commands: number;
+            /** Trading Mode */
+            trading_mode: string | null;
+            /** Broker Healthy */
+            broker_healthy: boolean | null;
+            /** Feed Healthy */
+            feed_healthy: boolean | null;
+            /** Worker Healthy */
+            worker_healthy: boolean | null;
         };
         /** PositionDto */
         PositionDto: {

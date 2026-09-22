@@ -53,6 +53,10 @@ class OverviewDto(_Dto):
     trades: int | None
     snapshot_at: datetime | None
     pending_commands: int
+    trading_mode: str | None
+    broker_healthy: bool | None
+    feed_healthy: bool | None
+    worker_healthy: bool | None
 
 
 class PositionDto(_Dto):

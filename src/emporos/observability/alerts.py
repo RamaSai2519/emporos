@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import logging
 from collections import deque
+from collections.abc import Callable
 from typing import Protocol
 
 from emporos.core.clock import Clock
 from emporos.core.ids import IdGenerator
+from emporos.domain.trading_mode import TradingMode
 from emporos.persistence.records import SystemEventRecord
 from emporos.session.lifecycle import StateChange
 
@@ -89,6 +91,48 @@ class LifecycleEvents:
                     "from": change.previous.value,
                     "to": change.current.value,
                     "reason": change.reason,
+                }
+            )
+        )
+
+
+class WorkerHealthReports:
+    """Periodically records the worker's trading mode and venue health as a `worker_health`
+    system event — the only way the read-only API, which never talks to the worker process
+    directly, can see whether a running session is paper or live, or whether its broker/feed
+    connections are healthy. `trading_mode` is fixed for the session; the two health callables are
+    read fresh on every report, so this always shows the venue's current state, not its state at
+    construction."""
+
+    def __init__(
+        self,
+        outbox: EventOutbox,
+        ids: IdGenerator,
+        account_id: str,
+        clock: Clock,
+        trading_mode: TradingMode,
+        broker_healthy: Callable[[], bool],
+        feed_healthy: Callable[[], bool],
+    ) -> None:
+        self._outbox = outbox
+        self._ids = ids
+        self._account_id = account_id
+        self._clock = clock
+        self._trading_mode = trading_mode
+        self._broker_healthy = broker_healthy
+        self._feed_healthy = feed_healthy
+
+    async def report(self) -> None:
+        self._outbox.push(
+            SystemEventRecord.model_validate(
+                {
+                    "_id": self._ids.new_ulid(),
+                    "type": "worker_health",
+                    "account_id": self._account_id,
+                    "ts": self._clock.now(),
+                    "trading_mode": self._trading_mode.value.lower(),
+                    "broker_healthy": self._broker_healthy(),
+                    "feed_healthy": self._feed_healthy(),
                 }
             )
         )

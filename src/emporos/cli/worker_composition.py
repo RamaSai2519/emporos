@@ -72,7 +72,12 @@ from emporos.execution.repricing import RepriceCoordinator, RepricePolicy
 from emporos.execution.state import OrderStateMachine
 from emporos.history.calendar import CalendarStore, StoredTradingCalendar
 from emporos.marketdata.session import SessionWindow
-from emporos.observability.alerts import EventOutbox, LifecycleEvents, OutboxAlertSink
+from emporos.observability.alerts import (
+    EventOutbox,
+    LifecycleEvents,
+    OutboxAlertSink,
+    WorkerHealthReports,
+)
 from emporos.observability.metrics import EmfMetricsSink, MetricsPublisher
 from emporos.persistence.candles import CandleReader
 from emporos.persistence.collections import Collection
@@ -617,6 +622,10 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
     updates = OrderUpdateRouter()
     broker.on_order_update(updates.on_update)
     t = common.tuning
+    health_reports = WorkerHealthReports(
+        outbox, common.ids, common.account_id, common.clock,
+        seam.trading_mode, seam.health.session_ok, seam.health.order_feed_ok,
+    )  # fmt: skip
     always = JobScheduler(
         [
             Job("kill_switch", t.kill_switch, prelude.monitor.refresh),
@@ -626,6 +635,7 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
             Job("snapshot", t.snapshot.interval, _Intraday(snapshots)),
             *seam.extra_jobs,
             Job("events", t.events, _Drain(outbox, SystemEventRepository(db))),
+            Job("worker_health", t.metrics, health_reports.report),
         ],
         common.clock, alerts,
     )  # fmt: skip

@@ -29,6 +29,10 @@ export class WireSchema {
     trades: z.number().int().nullable(),
     snapshot_at: ApiSchema.time.nullable(),
     pending_commands: z.number().int(),
+    trading_mode: z.enum(["paper", "live"]).nullable(),
+    broker_healthy: z.boolean().nullable(),
+    feed_healthy: z.boolean().nullable(),
+    worker_healthy: z.boolean().nullable(),
   });
   static readonly position = z.object({
     instrument_id: z.string(),

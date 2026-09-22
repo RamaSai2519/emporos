@@ -8,7 +8,9 @@ import {
   type Order,
 } from "./schema";
 
-/** Maps persisted API facts into display models; absent worker metrics stay explicitly unknown. */
+/** Maps persisted API facts into display models; a worker that has not yet reported its mode or
+ * health (no session has run, or none has reported since startup) stays explicitly unknown rather
+ * than guessing. */
 export class ReadModelMapper {
   constructor(private readonly now: () => number) {}
   overview(
@@ -21,10 +23,10 @@ export class ReadModelMapper {
       trades: raw.trades,
       pending_commands: raw.pending_commands,
       session_state: raw.session_state ?? "UNKNOWN",
-      trading_mode: "unknown",
-      broker_healthy: null,
-      feed_healthy: null,
-      worker_healthy: null,
+      trading_mode: raw.trading_mode ?? "unknown",
+      broker_healthy: raw.broker_healthy,
+      feed_healthy: raw.feed_healthy,
+      worker_healthy: raw.worker_healthy,
       stale_after_seconds: 30,
       kill_switch: raw.kill_switch?.halted ?? false,
       day_pnl: null,

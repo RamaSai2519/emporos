@@ -50,6 +50,22 @@ def state_event(account_id: str, to: str, ts: datetime) -> SystemEventRecord:
     )
 
 
+def health_event(
+    account_id: str, ts: datetime, mode: str = "paper", broker: bool = True, feed: bool = True
+) -> SystemEventRecord:
+    return SystemEventRecord.model_validate(
+        {
+            "_id": f"health-{account_id}-{ts.isoformat()}",
+            "type": "worker_health",
+            "account_id": account_id,
+            "ts": ts,
+            "trading_mode": mode,
+            "broker_healthy": broker,
+            "feed_healthy": feed,
+        }
+    )
+
+
 def service(account_id: str, system_events: list[SystemEventRecord]) -> QueryService:
     none = Rows([])
     return QueryService(
@@ -86,3 +102,48 @@ async def test_overview_has_no_session_state_when_this_account_never_ran() -> No
     overview = await service("paper", events).overview()
 
     assert overview.session_state is None
+
+
+async def test_overview_reports_trading_mode_and_health_from_the_latest_report() -> None:
+    events = [health_event("paper", NOW, mode="live", broker=True, feed=False)]
+
+    overview = await service("paper", events).overview()
+
+    assert (overview.trading_mode, overview.broker_healthy, overview.feed_healthy) == (
+        "live", True, False,
+    )  # fmt: skip
+
+
+async def test_overview_never_shows_another_accounts_health_report() -> None:
+    events = [health_event("live", NOW, mode="live")]
+
+    overview = await service("paper", events).overview()
+
+    assert (overview.trading_mode, overview.broker_healthy, overview.feed_healthy) == (
+        None, None, None,
+    )  # fmt: skip
+
+
+async def test_overview_shows_the_most_recent_health_report_not_the_first() -> None:
+    events = [
+        health_event("paper", NOW, mode="paper", broker=True),
+        health_event(
+            "paper", datetime(2026, 9, 21, 5, 0, tzinfo=UTC), mode="paper", broker=False
+        ),
+    ]
+
+    overview = await service("paper", events).overview()
+
+    assert overview.broker_healthy is False
+
+
+async def test_worker_healthy_follows_session_state() -> None:
+    trading = await service("paper", [state_event("paper", "TRADING", NOW)]).overview()
+    halted = await service("paper", [state_event("paper", "HALTED", NOW)]).overview()
+    failed = await service("paper", [state_event("paper", "FAILED", NOW)]).overview()
+    unknown = await service("paper", []).overview()
+
+    assert trading.worker_healthy is True
+    assert halted.worker_healthy is False
+    assert failed.worker_healthy is False
+    assert unknown.worker_healthy is None

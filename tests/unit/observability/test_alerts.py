@@ -4,7 +4,13 @@ import pytest
 
 from emporos.core.clock import FixedClock
 from emporos.core.ids import IdGenerator
-from emporos.observability.alerts import EventOutbox, LifecycleEvents, OutboxAlertSink
+from emporos.domain.trading_mode import TradingMode
+from emporos.observability.alerts import (
+    EventOutbox,
+    LifecycleEvents,
+    OutboxAlertSink,
+    WorkerHealthReports,
+)
 from emporos.persistence.records import SystemEventRecord
 from emporos.session.lifecycle import SessionLifecycle, SessionState
 from tests.support.records import NOW
@@ -67,3 +73,38 @@ async def test_every_session_state_change_is_recorded() -> None:
     assert (doc["type"], doc["from"], doc["to"], doc["reason"], doc["account_id"]) == (
         "session_state", "STARTING", "AUTHENTICATING", "go", "acct-1",
     )  # fmt: skip
+
+
+class TestWorkerHealthReports:
+    async def test_reports_trading_mode_and_current_health(self) -> None:
+        outbox = EventOutbox()
+        healthy = {"broker": True, "feed": False}
+        reporter = WorkerHealthReports(
+            outbox, IdGenerator(), "acct-1", FixedClock(NOW),
+            TradingMode.LIVE, lambda: healthy["broker"], lambda: healthy["feed"],
+        )  # fmt: skip
+
+        await reporter.report()
+
+        store = Store()
+        await outbox.drain(store)
+        doc = store.records[0].model_dump()
+        assert (doc["type"], doc["account_id"], doc["ts"]) == ("worker_health", "acct-1", NOW)
+        assert (doc["trading_mode"], doc["broker_healthy"], doc["feed_healthy"]) == (
+            "live", True, False,
+        )  # fmt: skip
+
+    async def test_reads_health_fresh_on_every_call_not_once_at_construction(self) -> None:
+        outbox = EventOutbox()
+        healthy = {"broker": False, "feed": False}
+        reporter = WorkerHealthReports(
+            outbox, IdGenerator(), "acct-1", FixedClock(NOW),
+            TradingMode.PAPER, lambda: healthy["broker"], lambda: healthy["feed"],
+        )  # fmt: skip
+
+        healthy["broker"] = True
+        await reporter.report()
+
+        store = Store()
+        await outbox.drain(store)
+        assert store.records[0].model_dump()["broker_healthy"] is True

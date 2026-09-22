@@ -1188,6 +1188,50 @@
           "pending_commands": {
             "type": "integer",
             "title": "Pending Commands"
+          },
+          "trading_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trading Mode"
+          },
+          "broker_healthy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Broker Healthy"
+          },
+          "feed_healthy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feed Healthy"
+          },
+          "worker_healthy": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Healthy"
           }
         },
         "type": "object",
@@ -1202,7 +1246,11 @@
           "fees",
           "trades",
           "snapshot_at",
-          "pending_commands"
+          "pending_commands",
+          "trading_mode",
+          "broker_healthy",
+          "feed_healthy",
+          "worker_healthy"
         ],
         "title": "OverviewDto"
       },
