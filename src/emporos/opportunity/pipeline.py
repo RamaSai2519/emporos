@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+from emporos.core.alerts import AlertSink, LogAlertSink
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.signals import Signal, SignalKind
 from emporos.jev.config import JevConfig
@@ -36,6 +37,10 @@ from emporos.strategies.regime import MarketRegime
 _JEV_DISABLED = JevMetaDecisionFilter(NullJevProvider(), JevConfig(enabled=False))
 
 AccountFactsProvider = Callable[[], AccountFacts]
+
+# A strategy that never stops returning signals is broken, not prolific (mirrors
+# `strategies.runner.MAX_SIGNALS_PER_EVENT`, which this pipeline does not otherwise reuse).
+MAX_SIGNALS_PER_EVENT = 100
 
 
 class RegimeSource(Protocol):
@@ -80,6 +85,7 @@ class OpportunityPipeline:
         account: AccountFactsProvider,
         constraints: AllocationConstraints,
         jev_filter: JevMetaDecisionFilter | None = None,
+        alerts: AlertSink | None = None,
     ) -> None:
         self._by_instrument: dict[str, list[StrategyRun]] = {}
         for run in runs:
@@ -92,6 +98,12 @@ class OpportunityPipeline:
         # Disabled by default: EM-152 is explicit that the pipeline is fully functional with Jev
         # absent, so a caller that never mentions Jev gets exactly the pre-Jev ranking untouched.
         self._jev_filter = jev_filter or _JEV_DISABLED
+        self._alerts: AlertSink = alerts or LogAlertSink()
+        # id(strategy), not strategy_name: one strategy can own several StrategyRun entries (one
+        # per instrument it watches), and a handler that raises halts all of them together, the
+        # same isolation guarantee `StrategyRunner` gives the single-strategy engine (AGENTS.md:
+        # "a strategy handler that raises is isolated... must never kill the session").
+        self._halted: set[int] = set()
 
     async def on_bars(self, candles: Sequence[Candle]) -> BarOutcome:
         """One evaluation tick: every instrument whose bar just closed at the same timestamp,
@@ -111,8 +123,9 @@ class OpportunityPipeline:
                 classifier.update(candle) if classifier is not None else None
             )
             for run in self._by_instrument.get(candle.instrument_id, ()):
-                run.strategy.on_market_data(candle)
-                while (signal := run.strategy.generate_signal()) is not None:
+                if id(run.strategy) in self._halted:
+                    continue
+                for signal in self._drive(run, candle):
                     if signal.kind is SignalKind.EXIT:
                         exits.append(signal)
                     else:
@@ -133,4 +146,34 @@ class OpportunityPipeline:
         )
         return BarOutcome(
             ts=ts, exits=tuple(exits), scan=scan, jev=jev_result, allocations=allocations
+        )
+
+    def _drive(self, run: StrategyRun, candle: Candle) -> list[Signal]:
+        """`on_market_data` then drain `generate_signal`, isolated exactly like
+        `StrategyRunner`: a fault halts this strategy (every `StrategyRun` sharing it) and never
+        propagates, but signals already pulled before the fault are still returned."""
+        try:
+            run.strategy.on_market_data(candle)
+        except Exception as error:
+            self._halt(run, "on_market_data", error)
+            return []
+        pulled: list[Signal] = []
+        for _ in range(MAX_SIGNALS_PER_EVENT):
+            try:
+                signal = run.strategy.generate_signal()
+            except Exception as error:
+                self._halt(run, "generate_signal", error)
+                return pulled
+            if signal is None:
+                return pulled
+            pulled.append(signal)
+        self._halt(
+            run, "generate_signal", f"returned more than {MAX_SIGNALS_PER_EVENT} signals at once"
+        )
+        return pulled
+
+    def _halt(self, run: StrategyRun, what: str, error: object) -> None:
+        self._halted.add(id(run.strategy))
+        self._alerts.raise_alert(
+            "strategy_halted", f"{run.strategy_name} ({run.instrument_id}): {what}: {error!r}"
         )

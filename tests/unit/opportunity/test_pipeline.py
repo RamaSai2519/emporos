@@ -6,6 +6,7 @@ from decimal import Decimal
 
 import pytest
 
+from emporos.core.alerts import AlertSink
 from emporos.core.clock import FixedClock
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
@@ -68,12 +69,13 @@ def _strategy_run(
     strategy_name: str,
     instrument_id: str,
     signals: Iterable[Signal] = (),
+    fail_in: str | None = None,
 ) -> StrategyRun:
     class _Named(ScriptedStrategy):
         name = strategy_name
 
     config = make_config(name=strategy_name, instruments=(instrument_id,))
-    strategy = _Named(config)
+    strategy = _Named(config, fail_in=fail_in)
     context: StrategyContext = make_context(FixedClock(T0), config=config)
     strategy.initialize(context)
     strategy._outbox = list(signals)
@@ -92,6 +94,7 @@ def _pipeline(
     regime: MarketRegime | None = MarketRegime.TRENDING,
     account: AccountFacts | None = None,
     constraints: AllocationConstraints | None = None,
+    alerts: AlertSink | None = None,
 ) -> OpportunityPipeline:
     account = account if account is not None else AccountFacts()
     registry = StrategyRegistry()
@@ -107,6 +110,7 @@ def _pipeline(
         allocator=PortfolioAllocator(),
         account=lambda: account,
         constraints=constraints or _constraints(),
+        alerts=alerts,
     )
 
 
@@ -258,6 +262,60 @@ async def test_jev_disabled_by_default_leaves_allocations_unaffected() -> None:
 
     assert outcome.jev.reviews == ()
     assert len(outcome.allocations) == 1
+
+
+class _Alerts:
+    """An `AlertSink` that remembers what it was told (mirrors `backtest.alerts.CollectedAlerts`,
+    kept local so opportunity tests do not reach into the backtest package for a test double)."""
+
+    def __init__(self) -> None:
+        self.alerts: list[tuple[str, str]] = []
+
+    def raise_alert(self, name: str, message: str) -> None:
+        self.alerts.append((name, message))
+
+
+async def test_a_strategy_that_raises_in_on_market_data_is_isolated_not_propagated() -> None:
+    """AGENTS.md: 'a strategy handler that raises is isolated... must never kill the session.'
+    `OpportunityPipeline` drives raw `Strategy` objects with no `StrategyRunner` wrapping it, so
+    it must give the same guarantee itself."""
+    bad = _strategy_run("alpha", INSTRUMENT, fail_in="on_market_data")
+    good = _strategy_run(
+        "beta", OTHER_INSTRUMENT, signals=[make_signal(instrument_id=OTHER_INSTRUMENT, price="100")]
+    )
+    alerts = _Alerts()
+    pipeline = _pipeline([bad, good], alerts=alerts)
+
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT), bar_at(OTHER_INSTRUMENT)])
+
+    assert len(outcome.allocations) == 1
+    assert outcome.allocations[0].candidate.strategy_name == "beta"
+    assert len(alerts.alerts) == 1
+    assert alerts.alerts[0][0] == "strategy_halted"
+    assert "alpha" in alerts.alerts[0][1]
+
+
+async def test_a_halted_strategy_stays_halted_on_later_ticks() -> None:
+    bad = _strategy_run("alpha", INSTRUMENT, fail_in="on_market_data")
+    alerts = _Alerts()
+    pipeline = _pipeline([bad], alerts=alerts)
+
+    await pipeline.on_bars([bar_at(INSTRUMENT)])
+    await pipeline.on_bars([bar_at(INSTRUMENT, minutes=5)])
+
+    assert len(alerts.alerts) == 1  # the second tick skipped the halted strategy, not re-raised
+
+
+async def test_a_fault_in_generate_signal_halts_that_strategy_without_propagating() -> None:
+    run = _strategy_run("alpha", INSTRUMENT, fail_in="generate_signal")
+    alerts = _Alerts()
+    pipeline = _pipeline([run], alerts=alerts)
+
+    outcome = await pipeline.on_bars([bar_at(INSTRUMENT)])
+
+    assert outcome.exits == () and outcome.allocations == ()
+    assert len(alerts.alerts) == 1
+    assert alerts.alerts[0][0] == "strategy_halted"
 
 
 def _registry_for(runs: list[StrategyRun]) -> StrategyRegistry:
