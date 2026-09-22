@@ -171,3 +171,12 @@ name = "the SmartAPI SDK is a dev-only test oracle, never imported by production
 type = "forbidden"
 source_modules = ["emporos"]
 forbidden_modules = ["SmartApi", "smartapi"]
+
+[[tool.importlinter.contracts]]
+name = "opportunity selection is an orchestration layer: nothing it composes imports it back"
+type = "forbidden"
+source_modules = [
+    "emporos.domain", "emporos.core", "emporos.strategies", "emporos.risk",
+    "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
+]
+forbidden_modules = ["emporos.opportunity"]
