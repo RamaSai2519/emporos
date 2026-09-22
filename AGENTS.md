@@ -137,12 +137,15 @@ code task. It binds you as tightly as the code review process would.
 ```bash
 pipenv run lint            # ruff check src tests
 pipenv run typecheck       # mypy --strict on the whole package
-pipenv run test            # pytest suite, writes .coverage
+pipenv run test            # fast, DB-free pytest suite (unit/contract/regression/failure), writes .coverage
 pipenv run coverage-gate   # plan.md §18: domain/risk/execution ≥90%, elsewhere ≥70%
 pipenv run lint-imports    # import-linter architecture contracts
 ```
 
-All five must pass. Never claim a task is complete until they do.
+All five must pass. Never claim a task is complete until they do. The live-Atlas
+`integration`-marked suite runs against the shared `emporos_dev` database only when
+invoked explicitly (`pipenv run test-db`, needs `MONGO_URL`) and is exercised by CI's
+`db-backed` job — the default gate never touches Atlas.
 
 ## If there is a conflict
 

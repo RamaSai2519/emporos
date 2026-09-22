@@ -14,7 +14,6 @@ jobs:
       # by the test itself (a read-only ping, never a write) to prove the
       # resolution end to end — CI never sets ENV=main globally.
       PIPENV_VENV_IN_PROJECT: 1
-      MONGO_URL: ${{ secrets.MONGO_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -43,7 +42,32 @@ jobs:
       - name: no hardcoded instrument tokens in strategies (plan.md §8)
         run: pipenv run check-tokens
 
-      - name: pytest with coverage (unit + integration)
+      - name: pytest with coverage (fast, DB-free gate)
+        run: pipenv run test
+
+      - name: coverage gates (plan.md §18)
+        run: pipenv run coverage-gate
+
+  db-backed:
+    runs-on: ubuntu-latest
+    env:
+      PIPENV_VENV_IN_PROJECT: 1
+      MONGO_URL: ${{ secrets.MONGO_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies (locked, deterministic)
+        run: pipenv install --deploy --dev
+
+      - name: pytest with coverage (unit + integration, live Atlas)
+        if: ${{ env.MONGO_URL != '' }}
         run: pipenv run pytest -q --cov=emporos --cov-branch
 
       - name: coverage gates (plan.md §18)

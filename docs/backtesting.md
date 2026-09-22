@@ -71,7 +71,8 @@ Then the definition of done (all five must pass):
 ```bash
 pipenv run lint            # ruff
 pipenv run typecheck       # mypy --strict
-pipenv run test            # the full suite (about 15 minutes, it includes live Atlas checks)
+pipenv run test            # fast, DB-free gate (unit, contract, regression, failure — a few minutes)
+pipenv run test-db         # full suite incl. live Atlas checks (~15 minutes, needs MONGO_URL)
 pipenv run coverage-gate
 pipenv run lint-imports
 ```
