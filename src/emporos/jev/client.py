@@ -139,6 +139,7 @@ class VercelGatewayJevClient:
                 confidence = Decimal(str(confidence_raw))
             except InvalidOperation:
                 confidence = None
+        tokens_used = self._token_count(body)
         return JevDecision(
             decision=decision,
             confidence=confidence,
@@ -147,7 +148,18 @@ class VercelGatewayJevClient:
             config_version=None,
             requested_at=started,
             latency_ms=latency_ms,
+            tokens_used=tokens_used,
         )
+
+    @staticmethod
+    def _token_count(body: dict[str, Any]) -> int | None:
+        """The OpenAI-compatible `usage.total_tokens` field, when the gateway sends one — the
+        cost proxy EM-160 asks for, since the gateway bills per token, not per request."""
+        usage = body.get("usage")
+        if not isinstance(usage, dict):
+            return None
+        total = usage.get("total_tokens")
+        return total if isinstance(total, int) else None
 
 
 class _MalformedResponse(ValueError):

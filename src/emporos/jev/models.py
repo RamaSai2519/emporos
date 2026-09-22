@@ -72,6 +72,7 @@ class JevDecision:
     requested_at: datetime
     latency_ms: int
     error: str | None = None
+    tokens_used: int | None = None  # cost proxy: the gateway bills per token, not per request
 
     def __post_init__(self) -> None:
         if self.requested_at.tzinfo is None:
@@ -80,6 +81,8 @@ class JevDecision:
             raise ValueError("confidence must be between 0 and 1")
         if self.latency_ms < 0:
             raise ValueError("latency_ms cannot be negative")
+        if self.tokens_used is not None and self.tokens_used < 0:
+            raise ValueError("tokens_used cannot be negative")
 
     @property
     def ok(self) -> bool:

@@ -26,8 +26,10 @@ class _FixedClientFactory:
         return self._server.client()
 
 
-def _chat_reply(decision: str = CONFIRM, confidence: str = "0.8") -> httpx.Response:
-    body = {
+def _chat_reply(
+    decision: str = CONFIRM, confidence: str = "0.8", usage: dict[str, int] | None = None
+) -> httpx.Response:
+    body: dict[str, object] = {
         "choices": [
             {
                 "message": {
@@ -38,6 +40,8 @@ def _chat_reply(decision: str = CONFIRM, confidence: str = "0.8") -> httpx.Respo
             }
         ]
     }
+    if usage is not None:
+        body["usage"] = usage
     return httpx.Response(200, content=json.dumps(body))
 
 
@@ -100,6 +104,24 @@ async def test_sends_the_bearer_token_and_json_payload() -> None:
     context = json.loads(body["messages"][1]["content"])
     assert context["symbol"] == "NSE:RELIANCE-EQ"
     assert context["entry"] == "100"
+
+
+async def test_token_usage_is_captured_as_a_cost_proxy() -> None:
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(
+        _chat_reply(usage={"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120})
+    )
+
+    decision = await _client(server).decide(_request())
+
+    assert decision.tokens_used == 120
+
+
+async def test_missing_usage_leaves_tokens_used_as_none() -> None:
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(_chat_reply())
+
+    decision = await _client(server).decide(_request())
+
+    assert decision.tokens_used is None
 
 
 async def test_a_non_numeric_confidence_is_treated_as_no_confidence() -> None:

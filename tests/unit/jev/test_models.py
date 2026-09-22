@@ -72,6 +72,15 @@ def test_latency_cannot_be_negative() -> None:
         _decision(latency_ms=-1)
 
 
+def test_tokens_used_cannot_be_negative() -> None:
+    with pytest.raises(ValueError, match="tokens_used"):
+        _decision(tokens_used=-1)
+
+
+def test_tokens_used_defaults_to_none() -> None:
+    assert _decision().tokens_used is None
+
+
 def test_ok_is_true_without_an_error() -> None:
     assert _decision().ok is True
 
