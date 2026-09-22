@@ -15,7 +15,9 @@ from emporos.backtest.metrics.decimal_math import CONTEXT
 from emporos.backtest.metrics.drawdown import DrawdownPeriod
 from emporos.backtest.metrics.monthly import MonthlyReturn
 from emporos.backtest.metrics.report import MetricsReport
+from emporos.backtest.metrics.trades import TradeStatistics
 from emporos.domain.money import Money
+from emporos.strategies.regime import MarketRegimeClassifier
 
 _PAISA = Decimal("0.01")
 _PRICE = Decimal("0.0001")
@@ -51,24 +53,15 @@ class MetricsDocument:
                 "longest_days": report.drawdown.longest_days,
                 "worst_periods": [self._period(p) for p in report.drawdown.periods],
             },
-            "trades": {
-                "count": trades.count,
-                "wins": trades.wins,
-                "losses": trades.losses,
-                "breakeven": trades.breakeven,
-                "win_rate": self.ratio(trades.win_rate),
-                "gross_pnl": self.money(trades.gross_pnl),
-                "fees": self.money(trades.fees),
-                "net_pnl": self.money(trades.net_pnl),
-                "gross_profit": self.money(trades.gross_profit),
-                "gross_loss": self.money(trades.gross_loss),
-                "profit_factor": self.ratio(trades.profit_factor),
-                "average_trade": self.money(trades.average_trade),
-                "average_win": self.money(trades.average_win),
-                "average_loss": self.money(trades.average_loss),
-                "expectancy": self.ratio(trades.expectancy),
-                "max_consecutive_wins": trades.max_consecutive_wins,
-                "max_consecutive_losses": trades.max_consecutive_losses,
+            "trades": self._trade_stats(trades),
+            "breakdowns": {
+                "by_direction": self._grouped(report.by_direction),
+                "by_instrument": self._grouped(report.by_instrument),
+                "by_time_of_day": self._grouped(report.by_time_of_day),
+                "by_regime": self._grouped(report.by_regime),
+                "regime_classifier_version": MarketRegimeClassifier.VERSION
+                if report.by_regime
+                else None,
             },
             "exposure": {
                 "time_in_market": self.ratio(report.exposure.time_in_market),
@@ -114,3 +107,27 @@ class MetricsDocument:
 
     def _month(self, month: MonthlyReturn) -> dict[str, Any]:
         return {"month": month.month, "return": self.ratio(month.ret), "pnl": self.money(month.pnl)}
+
+    def _trade_stats(self, trades: TradeStatistics) -> dict[str, Any]:
+        return {
+            "count": trades.count,
+            "wins": trades.wins,
+            "losses": trades.losses,
+            "breakeven": trades.breakeven,
+            "win_rate": self.ratio(trades.win_rate),
+            "gross_pnl": self.money(trades.gross_pnl),
+            "fees": self.money(trades.fees),
+            "net_pnl": self.money(trades.net_pnl),
+            "gross_profit": self.money(trades.gross_profit),
+            "gross_loss": self.money(trades.gross_loss),
+            "profit_factor": self.ratio(trades.profit_factor),
+            "average_trade": self.money(trades.average_trade),
+            "average_win": self.money(trades.average_win),
+            "average_loss": self.money(trades.average_loss),
+            "expectancy": self.ratio(trades.expectancy),
+            "max_consecutive_wins": trades.max_consecutive_wins,
+            "max_consecutive_losses": trades.max_consecutive_losses,
+        }
+
+    def _grouped(self, groups: dict[str, TradeStatistics]) -> dict[str, dict[str, Any]]:
+        return {name: self._trade_stats(stats) for name, stats in groups.items()}

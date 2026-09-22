@@ -36,13 +36,19 @@ def curve(equities: list[str], step: timedelta = timedelta(days=1)) -> list[Equi
 
 
 def trade(
-    net: str, minute: int, fees: str = "0", quantity: int = 10, price: str = "100"
+    net: str,
+    minute: int,
+    fees: str = "0",
+    quantity: int = 10,
+    price: str = "100",
+    direction: TradeDirection = TradeDirection.LONG,
+    instrument_id: str = INSTRUMENT,
 ) -> ClosedTrade:
     """A LONG trade of `quantity` @ `price` (notional 1,000 by default) that netted `net`."""
     gross = Decimal(net) + Decimal(fees)
     return ClosedTrade(
-        instrument_id=INSTRUMENT,
-        direction=TradeDirection.LONG,
+        instrument_id=instrument_id,
+        direction=direction,
         quantity=quantity,
         opened_at=T0 + timedelta(minutes=minute),
         closed_at=T0 + timedelta(minutes=minute + 1),

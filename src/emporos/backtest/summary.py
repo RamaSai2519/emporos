@@ -27,6 +27,9 @@ class BacktestSummary:
             "RESULT",
             *self._result(doc["metrics"]),
             "",
+            "BREAKDOWNS",
+            *self._breakdowns(doc["metrics"]["breakdowns"]),
+            "",
             "MONTHLY RETURNS",
             *[
                 f"  {m['month']}  {self.percent(m['return']):>8}  {m['pnl']:>12}"
@@ -62,6 +65,27 @@ class BacktestSummary:
             f"  time in market {self.percent(exposure['time_in_market'])}  "
             f"turnover {self.plain(turnover['annualised_turnover'])}x a year",
         ]
+
+    def _breakdowns(self, breakdowns: dict[str, Any]) -> list[str]:
+        sections = [
+            ("by direction", breakdowns["by_direction"]),
+            ("by regime", breakdowns["by_regime"]),
+            ("by time of day", breakdowns["by_time_of_day"]),
+            ("by instrument", breakdowns["by_instrument"]),
+        ]
+        lines: list[str] = []
+        for title, groups in sections:
+            lines.append(f"  {title}")
+            if not groups:
+                lines.append("    (no trades)")
+                continue
+            for name in sorted(groups):
+                stats = groups[name]
+                lines.append(
+                    f"    {name:<16} count {stats['count']:>4}  "
+                    f"net {stats['net_pnl']:>12}  win rate {self.percent(stats['win_rate']):>7}"
+                )
+        return lines
 
     @staticmethod
     def _activity(activity: dict[str, Any]) -> str:

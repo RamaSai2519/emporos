@@ -15,7 +15,8 @@ per run, here, and never shared between runs.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import timedelta
 from decimal import localcontext
@@ -26,6 +27,7 @@ from emporos.backtest.clock import BarClock
 from emporos.backtest.costs import BacktestCosts, CostSummary, ScheduleSource
 from emporos.backtest.feed import ClosedBarFeed, FeedWindow, WarmupLoader
 from emporos.backtest.flow import EventSettler, OrderEventQueue, OrderFlow, RunCounters
+from emporos.backtest.metrics.breakdown import RegimeTimeline, build_regime_timeline
 from emporos.backtest.metrics.decimal_math import CONTEXT
 from emporos.backtest.metrics.report import MetricsCalculator, MetricsReport, MetricsSettings
 from emporos.backtest.portfolio import BacktestPortfolio, ClosedTrade
@@ -41,6 +43,7 @@ from emporos.backtest.session import BacktestSession
 from emporos.backtest.settings import FillModelFactory, FillSettings
 from emporos.backtest.square_off import ForcedClosePricing, SessionSquareOff
 from emporos.core.clock import IST
+from emporos.domain.candles import Timeframe
 from emporos.domain.money import Money
 from emporos.persistence.candles import CandleReader
 from emporos.session.strategy_runs import RunEnvironment, StartedRun, StrategyRunnerBuilder
@@ -51,6 +54,9 @@ from emporos.strategies.snapshot import ConfigSnapshotter
 
 DEFAULT_WARMUP_BARS = 300
 DEFAULT_WARMUP_LOOKBACK = timedelta(days=30)
+# Covers the regime classifier's own warm-up (a trailing 60 trading-day volatility window) with
+# room for weekends and holidays; the classifier itself has no opinion about calendar days.
+REGIME_WARMUP_LOOKBACK = timedelta(days=120)
 
 
 @dataclass(frozen=True)
@@ -148,6 +154,7 @@ class BacktestEngine:
         )  # fmt: skip
         feed = ClosedBarFeed(self._reader, config.instrument_ids, config.timeframe, spec.window)
         report = await BarReplay(prepared.runner, clock, session).run(feed)
+        regime_timelines = await self._regime_timelines(config.instrument_ids, spec.window)
 
         return BacktestResult(
             run_id=run_id,
@@ -164,6 +171,25 @@ class BacktestEngine:
                 portfolio.equity_curve,
                 portfolio.closed_trades,
                 portfolio.traded_notional,
+                regime_timelines,
             ),
             open_positions_at_end=len(portfolio.open_positions()),
         )
+
+    async def _regime_timelines(
+        self, instrument_ids: Sequence[str], window: FeedWindow
+    ) -> dict[str, RegimeTimeline]:
+        """One daily-bar `RegimeTimeline` per traded instrument, fetched with enough lookback for
+        the classifier's own warm-up. Reads through the same `CandleReader` everything else in
+        this engine does — never a second path to candle data."""
+        start = window.start - REGIME_WARMUP_LOOKBACK
+        bars_by_instrument = await asyncio.gather(
+            *(
+                self._reader.get_range(instrument_id, Timeframe.D1, start, window.end)
+                for instrument_id in instrument_ids
+            )
+        )
+        return {
+            instrument_id: build_regime_timeline(bars)
+            for instrument_id, bars in zip(instrument_ids, bars_by_instrument, strict=True)
+        }

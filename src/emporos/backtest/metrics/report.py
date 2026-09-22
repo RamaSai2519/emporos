@@ -10,10 +10,18 @@ the others. Nothing here rounds: rendering to a fixed number of places is `Metri
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from emporos.backtest.metrics.breakdown import (
+    RegimeTimeline,
+    TradeGrouper,
+    direction_key,
+    instrument_key,
+    regime_key_factory,
+    time_of_day_key,
+)
 from emporos.backtest.metrics.decimal_math import ZERO, DecimalMath
 from emporos.backtest.metrics.drawdown import DrawdownAnalyzer, DrawdownReport
 from emporos.backtest.metrics.equity import DailySeries
@@ -49,6 +57,10 @@ class MetricsReport:
     exposure: ExposureStatistics
     turnover: TurnoverStatistics
     monthly: tuple[MonthlyReturn, ...]
+    by_direction: dict[str, TradeStatistics]
+    by_instrument: dict[str, TradeStatistics]
+    by_time_of_day: dict[str, TradeStatistics]
+    by_regime: dict[str, TradeStatistics]
     daily_returns: tuple[Decimal, ...] = ()  # one per trading day, in order; not in the document
 
 
@@ -63,6 +75,7 @@ class MetricsCalculator:
         exposure: ExposureAnalyzer | None = None,
         turnover: TurnoverAnalyzer | None = None,
         monthly: MonthlyTable | None = None,
+        grouper: TradeGrouper | None = None,
     ) -> None:
         self._settings = settings or MetricsSettings()
         self._daily = daily or DailySeries()
@@ -74,6 +87,7 @@ class MetricsCalculator:
         self._exposure = exposure or ExposureAnalyzer()
         self._turnover = turnover or TurnoverAnalyzer()
         self._monthly = monthly or MonthlyTable()
+        self._grouper = grouper or TradeGrouper(self._trades)
 
     def calculate(
         self,
@@ -81,11 +95,17 @@ class MetricsCalculator:
         curve: Sequence[EquityPoint],
         closed_trades: Sequence[ClosedTrade],
         traded_notional: Money,
+        regime_timelines: Mapping[str, RegimeTimeline] | None = None,
     ) -> MetricsReport:
         start = starting_cash.amount
         days = self._daily.build(start, curve)
         returns = self._ratios.calculate(start, days)
         drawdown = self._drawdowns.analyze(start, curve)
+        by_regime = (
+            self._grouper.group(closed_trades, regime_key_factory(regime_timelines))
+            if regime_timelines
+            else {}
+        )
         return MetricsReport(
             settings=self._settings,
             starting_cash=starting_cash,
@@ -98,6 +118,10 @@ class MetricsCalculator:
             exposure=self._exposure.analyze(curve),
             turnover=self._turnover.analyze(traded_notional, days, returns.years),
             monthly=self._monthly.build(start, days),
+            by_direction=self._grouper.group(closed_trades, direction_key),
+            by_instrument=self._grouper.group(closed_trades, instrument_key),
+            by_time_of_day=self._grouper.group(closed_trades, time_of_day_key),
+            by_regime=by_regime,
             daily_returns=tuple(day.ret for day in days),
         )
 
