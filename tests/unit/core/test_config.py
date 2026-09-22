@@ -95,6 +95,20 @@ def test_settings_mongo_db_name_ignored_under_production(monkeypatch: pytest.Mon
     assert settings.db_name == "emporos"
 
 
+def test_settings_reads_vercel_gateway_key_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("VERCEL_GATEWAY_KEY", "vck_test")
+    settings = Settings(_env_file=None)
+    assert settings.vercel_gateway_key == "vck_test"
+
+
+def test_vercel_gateway_key_defaults_to_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("VERCEL_GATEWAY_KEY", raising=False)
+    settings = Settings(_env_file=None)
+    assert settings.vercel_gateway_key is None
+
+
 def test_settings_default_is_cached_and_loads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ENV", "staging")
     first = Settings.default()

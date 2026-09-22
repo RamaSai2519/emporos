@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+import pytest
+
+from emporos.core.errors import ConfigurationError
+from emporos.jev.config import JevConfig, JevCredentialsMissing, require_credentials
+
+
+def test_disabled_by_default() -> None:
+    assert JevConfig().enabled is False
+
+
+def test_fail_closed_by_default() -> None:
+    assert JevConfig().fail_open is False
+
+
+def test_unknown_mode_is_refused() -> None:
+    with pytest.raises(ConfigurationError, match="mode"):
+        JevConfig(mode="nonsense")
+
+
+def test_confidence_threshold_out_of_range_is_refused() -> None:
+    with pytest.raises(ConfigurationError, match="confidence_threshold"):
+        JevConfig(confidence_threshold=1.5)
+
+
+def test_max_concurrency_must_be_at_least_one() -> None:
+    with pytest.raises(ConfigurationError, match="max_concurrency"):
+        JevConfig(max_concurrency=0)
+
+
+def test_timeout_must_be_positive() -> None:
+    with pytest.raises(ConfigurationError, match="timeout_seconds"):
+        JevConfig(timeout_seconds=0)
+
+
+def test_max_retries_cannot_be_negative() -> None:
+    with pytest.raises(ConfigurationError, match="max_retries"):
+        JevConfig(max_retries=-1)
+
+
+def test_base_url_cannot_be_empty() -> None:
+    with pytest.raises(ConfigurationError, match="base_url"):
+        JevConfig(base_url="")
+
+
+def test_model_cannot_be_empty() -> None:
+    with pytest.raises(ConfigurationError, match="model"):
+        JevConfig(model="")
+
+
+def test_require_credentials_returns_the_key_when_present() -> None:
+    assert require_credentials(JevConfig(enabled=True), "vck_test") == "vck_test"
+
+
+def test_require_credentials_raises_an_actionable_error_when_missing() -> None:
+    with pytest.raises(JevCredentialsMissing, match="VERCEL_GATEWAY_KEY"):
+        require_credentials(JevConfig(enabled=True), None)
+
+
+def test_require_credentials_raises_for_an_empty_string_key() -> None:
+    with pytest.raises(JevCredentialsMissing):
+        require_credentials(JevConfig(enabled=True), "")

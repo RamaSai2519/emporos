@@ -139,6 +139,12 @@ class Settings(BaseSettings):
     # The account whose books the API shows (the paper account id, or the live client code).
     api_account_id: str | None = Field(default=None, alias="API_ACCOUNT_ID")
 
+    # Jev (EM-152/EM-160): the optional AI decision-provider's Vercel Gateway API key. Read from
+    # the root .env locally; production uses secure deployment environment configuration. Jev
+    # stays disabled (see config/settings.*.yaml) even when this happens to be set — the key
+    # alone never turns Jev on.
+    vercel_gateway_key: str | None = Field(default=None, alias="VERCEL_GATEWAY_KEY")
+
     @property
     def live_trading_enabled(self) -> bool:
         return self.live_trading_flag == "true"

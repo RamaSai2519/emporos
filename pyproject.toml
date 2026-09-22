@@ -180,3 +180,12 @@ source_modules = [
     "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
 ]
 forbidden_modules = ["emporos.opportunity"]
+
+[[tool.importlinter.contracts]]
+name = "jev is an optional external provider: the deterministic trading core never imports it"
+type = "forbidden"
+source_modules = [
+    "emporos.domain", "emporos.core", "emporos.strategies", "emporos.risk",
+    "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
+]
+forbidden_modules = ["emporos.jev"]
