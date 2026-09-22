@@ -439,6 +439,8 @@ export interface components {
             reconciliation: components["schemas"]["ReconciliationDto"] | null;
             /** Open Positions */
             open_positions: number;
+            /** Cash */
+            cash: string | null;
             /** Realised Pnl */
             realised_pnl: string | null;
             /** Unrealised Pnl */

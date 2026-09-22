@@ -26,6 +26,11 @@ export class OverviewView extends Component<ViewProps> {
       <>
         <div className="metrics">
           <Metric
+            label="Available cash"
+            value={Display.money(data?.cash)}
+            detail="Cash in the trading account"
+          />
+          <Metric
             label="Fees"
             value={Display.money(data?.fees)}
             detail="Reported by the worker"

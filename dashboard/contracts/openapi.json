@@ -1129,6 +1129,17 @@
             "type": "integer",
             "title": "Open Positions"
           },
+          "cash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cash"
+          },
           "realised_pnl": {
             "anyOf": [
               {
@@ -1241,6 +1252,7 @@
           "kill_switch",
           "reconciliation",
           "open_positions",
+          "cash",
           "realised_pnl",
           "unrealised_pnl",
           "fees",

@@ -117,6 +117,63 @@ class SafetyTests {
     expect(second.pending).toBe(false);
     expect(storage.getItem("emporos.command")).toBeNull();
   };
+  readonly abandonUnrecorded = async () => {
+    const storage = new MemoryStorage();
+    const gateway = new GatewayFake();
+    gateway.ambiguous = true;
+    const coordinator = new CommandCoordinator(
+      gateway,
+      storage,
+      () => crypto.randomUUID(),
+      () => {},
+    );
+    await coordinator.submit({ type: "SQUARE_OFF_ALL", params: {} });
+    await coordinator.resolve();
+    expect(coordinator.state.unresolved).toBe(true);
+    expect(coordinator.state.result).toBeNull();
+    expect(storage.getItem("emporos.command")).not.toBeNull();
+    expect(coordinator.discard()).toBe(true);
+    expect(coordinator.state.input).toBeNull();
+    expect(coordinator.pending).toBe(false);
+    expect(storage.getItem("emporos.command")).toBeNull();
+    expect(storage.getItem("emporos.command.id")).toBeNull();
+    await coordinator.submit({ type: "SQUARE_OFF_ALL", params: {} });
+    expect(gateway.calls).toHaveLength(2);
+  };
+  readonly abandonNeverForRecorded = async () => {
+    const storage = new MemoryStorage();
+    const gateway = new GatewayFake();
+    const coordinator = new CommandCoordinator(
+      gateway,
+      storage,
+      () => crypto.randomUUID(),
+      () => {},
+    );
+    await coordinator.submit({ type: "SQUARE_OFF_ALL", params: {} });
+    expect(coordinator.state.result).not.toBeNull();
+    expect(coordinator.discard()).toBe(false);
+    expect(coordinator.state.input).not.toBeNull();
+    expect(storage.getItem("emporos.command")).not.toBeNull();
+  };
+  readonly abandonKeepsIntentWhenStorageUnavailable = async () => {
+    const gateway = new GatewayFake();
+    gateway.ambiguous = true;
+    const storage = new RemoveBlockingStorage();
+    const coordinator = new CommandCoordinator(
+      gateway,
+      storage,
+      () => crypto.randomUUID(),
+      () => {},
+    );
+    await coordinator.submit({ type: "SQUARE_OFF_ALL", params: {} });
+    await coordinator.resolve();
+    storage.enabled = true;
+    expect(coordinator.state.unresolved).toBe(true);
+    expect(coordinator.discard()).toBe(false);
+    expect(coordinator.state.input).not.toBeNull();
+    expect(storage.getItem("emporos.command")).not.toBeNull();
+    expect(coordinator.state.error).toContain("Cannot abandon");
+  };
   readonly tokenExpiry = () => {
     let now = 1000;
     const storage = new MemoryStorage();
@@ -219,6 +276,13 @@ class UnavailableStorage implements Storage {
     throw new Error("Storage unavailable");
   }
 }
+class RemoveBlockingStorage extends MemoryStorage {
+  enabled = false;
+  override removeItem(key: string) {
+    if (this.enabled) throw new Error("Storage unavailable");
+    super.removeItem(key);
+  }
+}
 class HttpFake {
   authorization: string | null = null;
   url = "";
@@ -245,6 +309,18 @@ test(
 test(
   "ambiguous delivery survives reload and resolves without resubmitting",
   suite.restart,
+);
+test(
+  "an unrecorded intent can be abandoned only deliberately, and re-issues with a fresh key",
+  suite.abandonUnrecorded,
+);
+test(
+  "a recorded command is never abandoned from the browser",
+  suite.abandonNeverForRecorded,
+);
+test(
+  "abandon fails closed when the browser intent cannot be cleared",
+  suite.abandonKeepsIntentWhenStorageUnavailable,
 );
 test("expired sessions are cleared from session storage", suite.tokenExpiry);
 test(

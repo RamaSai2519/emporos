@@ -30,6 +30,7 @@ export class ReadModelMapper {
       stale_after_seconds: 30,
       kill_switch: raw.kill_switch?.halted ?? false,
       day_pnl: null,
+      cash: raw.cash,
       realised_pnl: raw.realised_pnl,
       unrealised_pnl: raw.unrealised_pnl,
       open_positions: raw.open_positions,

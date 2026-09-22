@@ -7,7 +7,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from emporos.api.queries import QueryService
-from emporos.persistence.records import SystemEventRecord
+from emporos.domain.money import Money
+from emporos.persistence.records import PortfolioSnapshotRecord, SystemEventRecord
 
 NOW = datetime(2026, 9, 21, 4, 0, tzinfo=UTC)
 
@@ -66,11 +67,29 @@ def health_event(
     )
 
 
-def service(account_id: str, system_events: list[SystemEventRecord]) -> QueryService:
+def snapshot(account_id: str, ts: datetime, cash: str = "90000") -> PortfolioSnapshotRecord:
+    return PortfolioSnapshotRecord(
+        _id=f"snap-{account_id}-{ts.isoformat()}",
+        account_id=account_id,
+        ts=ts,
+        kind="INTRADAY",
+        cash=Money.of(cash),
+        realised_pnl=Money.of("-2.5"),
+        unrealised_pnl=Money.of("4.5"),
+        fees=Money.of("2.5"),
+        trades=3,
+    )
+
+
+def service(
+    account_id: str,
+    system_events: list[SystemEventRecord],
+    snapshots: list[PortfolioSnapshotRecord] | None = None,
+) -> QueryService:
     none = Rows([])
     return QueryService(
         account_id,
-        orders=none, events=none, executions=none, positions=none, snapshots=none,
+        orders=none, events=none, executions=none, positions=none, snapshots=Rows(snapshots or []),
         strategies=none, runs=none, signals=none, risk_events=none,
         reconciliations=none, system_events=Rows(system_events), verdicts=Verdicts(),
         kill_switch=none, commands=none, results=none, risk_limits={},
@@ -147,3 +166,23 @@ async def test_worker_healthy_follows_session_state() -> None:
     assert halted.worker_healthy is False
     assert failed.worker_healthy is False
     assert unknown.worker_healthy is None
+
+
+async def test_overview_reports_cash_from_the_latest_own_take_snapshot() -> None:
+    later = datetime(2026, 9, 22, 4, 30, tzinfo=UTC)
+    snapshots = [
+        snapshot("paper", NOW, cash="90000"),
+        snapshot("paper", later, cash="89400.50"),
+    ]
+
+    overview = await service("paper", [], snapshots).overview()
+
+    assert overview.cash == "89400.50"
+
+
+async def test_overview_reports_none_when_this_account_has_no_take_snapshot() -> None:
+    snapshots = [snapshot("live", NOW, cash="90000")]
+
+    overview = await service("paper", [], snapshots).overview()
+
+    assert overview.cash is None

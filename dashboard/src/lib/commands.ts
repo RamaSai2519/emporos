@@ -134,6 +134,34 @@ export class CommandCoordinator {
       });
     }
   }
+  /** Abandons an intention that was never durably recorded, after the operator has audited it.
+   * Backend restart safety forbids retrying the same key blindly, so the browser intent is cleared
+   * and any re-issue gets a fresh key. Never available while an outcome has been confirmed: a
+   * recorded command may still be executing and is not ours to forget. */
+  discard(): boolean {
+    if (this.current.busy || this.current.result || !this.current.input)
+      return false;
+    try {
+      this.storage.removeItem("emporos.command");
+      this.storage.removeItem("emporos.command.id");
+    } catch {
+      this.update({
+        ...this.current,
+        error:
+          "Browser storage is unavailable. Cannot abandon the command; keep it and retry after auditing.",
+      });
+      return false;
+    }
+    this.knownId = undefined;
+    this.update({
+      input: null,
+      result: null,
+      unresolved: false,
+      busy: false,
+      error: null,
+    });
+    return true;
+  }
   private terminal(command: Command) {
     return ["DONE", "FAILED", "REJECTED", "EXPIRED"].includes(command.status);
   }

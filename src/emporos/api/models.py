@@ -47,6 +47,7 @@ class OverviewDto(_Dto):
     kill_switch: KillSwitchDto | None
     reconciliation: ReconciliationDto | None
     open_positions: int
+    cash: str | None
     realised_pnl: str | None
     unrealised_pnl: str | None
     fees: str | None

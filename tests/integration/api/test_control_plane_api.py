@@ -231,8 +231,8 @@ class TestReads:
         await PortfolioSnapshotRepository(world.db).insert(
             PortfolioSnapshotRecord(
                 _id=f"snap-{world.suffix}", account_id=world.account, ts=now, kind="INTRADAY",
-                realised_pnl=Money.of("-2.5"), unrealised_pnl=Money.of("4.5"),
-                fees=Money.of("2.5"), trades=1,
+                cash=Money.of("90000"), realised_pnl=Money.of("-2.5"),
+                unrealised_pnl=Money.of("4.5"), fees=Money.of("2.5"), trades=1,
             )
         )  # fmt: skip
         await KillSwitchRepository(world.db, world.switch).save(
@@ -300,6 +300,7 @@ class TestReads:
                 "4.5",
                 1,
             )
+            assert overview["cash"] == "90000"
             assert overview["reconciliation"]["status"] == "CLEAN"
 
             (position,) = (await client.get("/positions", headers=headers)).json()

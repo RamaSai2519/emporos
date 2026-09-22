@@ -23,6 +23,7 @@ export class WireSchema {
       .nullable(),
     reconciliation: this.reconciliation.nullable(),
     open_positions: z.number().int(),
+    cash: ApiSchema.money.nullable(),
     realised_pnl: ApiSchema.money.nullable(),
     unrealised_pnl: ApiSchema.money.nullable(),
     fees: ApiSchema.money.nullable(),

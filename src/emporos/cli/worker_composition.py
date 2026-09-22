@@ -363,7 +363,7 @@ class PaperWorkerComposer:
     ids: IdGenerator
     kill_switch_sentinel: FileSentinelKillSwitch
     window: SessionWindow
-    starting_cash: Money = field(default_factory=lambda: Money.of("1000000"))
+    starting_cash: Money = field(default_factory=lambda: Money.of("50000"))
     tuning: WorkerTuning = field(default_factory=WorkerTuning)
     session_date: date | None = None
     kill_switch_collection: str = Collection.KILL_SWITCH

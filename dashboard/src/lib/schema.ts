@@ -40,6 +40,7 @@ export class ApiSchema {
     stale_after_seconds: z.number().positive(),
     kill_switch: z.boolean(),
     day_pnl: this.money.nullable(),
+    cash: this.money.nullable(),
     realised_pnl: this.money.nullable(),
     unrealised_pnl: this.money.nullable(),
     open_positions: z.number().int().nonnegative(),

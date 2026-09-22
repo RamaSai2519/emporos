@@ -732,6 +732,18 @@ td strong {
   color: var(--muted);
   font-size: 9px;
 }
+.command-discard {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #4a6081;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 460px;
+}
+.command-discard .field input {
+  margin-top: 4px;
+}
 .row-actions {
   display: flex;
   gap: 7px;

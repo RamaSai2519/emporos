@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { ApiClient, AuthSession } from "@/lib/api";
+import { type CommandState } from "@/lib/commands";
 import { DashboardController, type DashboardState } from "@/lib/controller";
 import { ViewRegistry } from "./views";
 import { ActionDialog, type Action } from "./action-dialog";
@@ -45,6 +46,8 @@ export default class DashboardApp extends Component<
     path: string;
     menu: boolean;
     bootError: string | null;
+    discardArmed: boolean;
+    discardType: string;
   }
 > {
   state = {
@@ -53,6 +56,8 @@ export default class DashboardApp extends Component<
     path: "/",
     menu: false,
     bootError: null as string | null,
+    discardArmed: false,
+    discardType: "",
   };
   private controller: DashboardController | null = null;
   componentDidMount() {
@@ -129,6 +134,21 @@ export default class DashboardApp extends Component<
   private signOut = () => {
     this.setState({ action: null });
     this.controller?.logout();
+  };
+  /** An intent that never produced a durable outcome is the only one an operator may abandon:
+   * a recorded command may still be executing and is not ours to forget. */
+  private discardVisible(command: CommandState | null) {
+    return (
+      !!command?.input && command.unresolved && !command.result && !command.busy
+    );
+  }
+  private armDiscard = () =>
+    this.setState({ discardArmed: true, discardType: "" });
+  private cancelDiscard = () =>
+    this.setState({ discardArmed: false, discardType: "" });
+  private confirmDiscard = () => {
+    this.controller?.commands.discard();
+    this.setState({ discardArmed: false, discardType: "" });
   };
   render() {
     const { data, path } = this.state;
@@ -414,6 +434,63 @@ export default class DashboardApp extends Component<
                   </p>
                   {command.input && (
                     <code>{command.input.idempotency_key}</code>
+                  )}
+                  {this.discardVisible(command) && command.input && (
+                    <div className="command-discard">
+                      <span className="eyebrow">AFTER AUDIT</span>
+                      <p>
+                        No durable outcome was ever recorded. Review the system
+                        audit first; abandoning clears this unconfirmed intent
+                        so the next submission gets a fresh idempotency key.
+                      </p>
+                      {!this.state.discardArmed ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={this.armDiscard}
+                        >
+                          Reviewed · Abandon
+                        </Button>
+                      ) : (
+                        <>
+                          <label className="field">
+                            Type <strong>{command.input.type}</strong> to
+                            confirm
+                            <input
+                              autoComplete="off"
+                              value={this.state.discardType}
+                              onChange={(event) =>
+                                this.setState({
+                                  discardType: event.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <div className="row-actions">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={this.cancelDiscard}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              disabled={
+                                this.state.discardType !== command.input.type
+                              }
+                              onClick={this.confirmDiscard}
+                            >
+                              Confirm abandon
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
                 <Badge

@@ -137,6 +137,7 @@ class QueryService:
             kill_switch=None if switch is None else self._switch(switch),
             reconciliation=self._reconciliation(recon[0]) if recon else None,
             open_positions=open_positions,
+            cash=_m(latest.cash) if latest else None,
             realised_pnl=_m(latest.realised_pnl) if latest else None,
             unrealised_pnl=_m(latest.unrealised_pnl) if latest else None,
             fees=_m(latest.fees) if latest else None,
