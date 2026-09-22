@@ -7,6 +7,7 @@ settings and never touches a float.
 """
 
 from emporos.strategies.indicators.atr import AverageTrueRange
+from emporos.strategies.indicators.efficiency_ratio import EfficiencyRatio
 from emporos.strategies.indicators.moving_average import (
     ExponentialMovingAverage,
     SimpleMovingAverage,
@@ -15,6 +16,7 @@ from emporos.strategies.indicators.rsi import RelativeStrengthIndex
 
 __all__ = [
     "AverageTrueRange",
+    "EfficiencyRatio",
     "ExponentialMovingAverage",
     "RelativeStrengthIndex",
     "SimpleMovingAverage",

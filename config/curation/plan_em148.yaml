@@ -1,0 +1,25 @@
+# EM-148: curation plan for squeeze_breakout_v1, fixed BEFORE any result was seen.
+#
+# Same rules as config/curation/plan.yaml/plan_em114.yaml (same windows/objective): each candidate
+# is tuned ONLY on the training window of each walk-forward step, from this small pre-declared
+# grid, and the chosen parameters are then run once on the following, unseen test window. Nothing
+# in this file may be changed after looking at a result: a new grid means a new plan file and a
+# fresh run.
+#
+# Grid varies two axes: squeeze strictness (percentile threshold + how many bars it must hold) and
+# reward multiple (target_atr_mult, stop held fixed at 1.0 ATR).
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: squeeze_breakout_v1
+    file: config/strategies/squeeze_breakout_v1.yaml
+    candidates:
+      - {name: tight_r15, overrides: {squeeze_percentile: "0.15", min_squeeze_bars: 4, target_atr_mult: "1.5"}}
+      - {name: tight_r20, overrides: {squeeze_percentile: "0.15", min_squeeze_bars: 4, target_atr_mult: "2.0"}}
+      - {name: tight_r30, overrides: {squeeze_percentile: "0.15", min_squeeze_bars: 4, target_atr_mult: "3.0"}}
+      - {name: loose_r15, overrides: {squeeze_percentile: "0.25", min_squeeze_bars: 2, target_atr_mult: "1.5"}}
+      - {name: loose_r20, overrides: {squeeze_percentile: "0.25", min_squeeze_bars: 2, target_atr_mult: "2.0"}}
+      - {name: loose_r30, overrides: {squeeze_percentile: "0.25", min_squeeze_bars: 2, target_atr_mult: "3.0"}}
