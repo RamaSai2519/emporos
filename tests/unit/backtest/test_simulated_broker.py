@@ -232,9 +232,13 @@ class TestStopLimit:
         with pytest.raises(ValueError, match="wrong side"):
             stop_order(BUY, trigger="102", limit="101")
         with pytest.raises(ValueError, match="needs a positive trigger"):
-            SimOrderRequest(INSTRUMENT, SELL, OrderType.STOPLOSS_LIMIT, 1, Money.of("1"), "x")
+            SimOrderRequest(
+                INSTRUMENT, SELL, OrderType.STOPLOSS_LIMIT, 1, Money.of("1"), "x", "run-1"
+            )
         with pytest.raises(ValueError, match="only stop-loss"):
-            SimOrderRequest(INSTRUMENT, SELL, OrderType.LIMIT, 1, Money.of("1"), "x", Money.of("1"))
+            SimOrderRequest(
+                INSTRUMENT, SELL, OrderType.LIMIT, 1, Money.of("1"), "x", "run-1", Money.of("1")
+            )
 
 
 class TestRejection:
@@ -345,7 +349,7 @@ class TestForcedSquareOff:
         rig = BrokerRig()
         rig.clock.set(T0 + timedelta(hours=6))
 
-        event = rig.broker.square_off(INSTRUMENT, SELL, 10, Money.of("99.5"))
+        event = rig.broker.square_off(INSTRUMENT, SELL, 10, Money.of("99.5"), "run-1")
 
         assert event.fill.reason is FillReason.FORCED_SQUARE_OFF
         assert (event.fill.quantity, event.fill.price) == (10, Money.of("99.5"))
@@ -357,7 +361,7 @@ class TestNoMarketOrders:
     def test_a_market_order_is_unrepresentable(self) -> None:
         for forbidden in ("MARKET", "IOC"):
             with pytest.raises(TypeError):
-                SimOrderRequest(INSTRUMENT, BUY, forbidden, 1, Money.of("1"), "x")  # type: ignore[arg-type]
+                SimOrderRequest(INSTRUMENT, BUY, forbidden, 1, Money.of("1"), "x", "run-1")  # type: ignore[arg-type]
         assert {t.value for t in OrderType} == {"LIMIT", "STOPLOSS_LIMIT"}
 
     def test_requests_are_validated(self) -> None:
@@ -366,10 +370,11 @@ class TestNoMarketOrders:
             {"tag": ""},
             {"instrument_id": ""},
             {"limit_price": Money.zero()},
+            {"strategy_run_id": ""},
         ):
             base = {
                 "instrument_id": INSTRUMENT, "side": BUY, "order_type": OrderType.LIMIT,
-                "quantity": 1, "limit_price": Money.of("1"), "tag": "t",
+                "quantity": 1, "limit_price": Money.of("1"), "tag": "t", "strategy_run_id": "run-1",
             } | kwargs  # fmt: skip
             with pytest.raises(ValueError):
                 SimOrderRequest(**base)  # type: ignore[arg-type]

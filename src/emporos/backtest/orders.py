@@ -28,11 +28,14 @@ class SimOrderRequest:
     quantity: int
     limit_price: Money
     tag: str  # the client tag: unique per order, so a resend is refused, never duplicated
+    strategy_run_id: str  # EM-158: which strategy's signal this order came from
     trigger_price: Money | None = None
 
     def __post_init__(self) -> None:
         if not self.instrument_id or not self.tag:
             raise ValueError("an order needs an instrument and a tag")
+        if not self.strategy_run_id:
+            raise ValueError("an order needs a strategy_run_id")
         if not isinstance(self.side, OrderSide) or not isinstance(self.order_type, OrderType):
             raise TypeError("side and order_type must be OrderSide / OrderType members")
         if self.quantity <= 0:
@@ -69,11 +72,14 @@ class Fill:
     quantity: int
     price: Money
     ts: datetime
+    strategy_run_id: str  # EM-158: which strategy's order this fill settles
     reason: FillReason = FillReason.MATCHED
 
     def __post_init__(self) -> None:
         if self.ts.tzinfo is None or self.ts.utcoffset() != UTC.utcoffset(None):
             raise ValueError("a fill ts must be timezone-aware UTC")
+        if not self.strategy_run_id:
+            raise ValueError("a fill needs a strategy_run_id")
         if self.quantity <= 0:
             raise ValueError("a fill has a positive quantity")
 

@@ -84,5 +84,6 @@ class MarketableLimitPricing:
             quantity=signal.quantity,
             limit_price=prices.limit,
             tag=tag,
+            strategy_run_id=signal.strategy_run_id,
             trigger_price=prices.trigger,
         )

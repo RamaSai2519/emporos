@@ -164,8 +164,11 @@ def limit_order(
     quantity: int = 10,
     tag: str = "t1",
     instrument_id: str = INSTRUMENT,
+    strategy_run_id: str = "run-1",
 ) -> SimOrderRequest:
-    return SimOrderRequest(instrument_id, side, OrderType.LIMIT, quantity, Money.of(price), tag)
+    return SimOrderRequest(
+        instrument_id, side, OrderType.LIMIT, quantity, Money.of(price), tag, strategy_run_id
+    )
 
 
 def stop_order(
@@ -174,6 +177,7 @@ def stop_order(
     limit: str = "97",
     quantity: int = 10,
     tag: str = "s1",
+    strategy_run_id: str = "run-1",
 ) -> SimOrderRequest:
     return SimOrderRequest(
         INSTRUMENT,
@@ -182,6 +186,7 @@ def stop_order(
         quantity,
         Money.of(limit),
         tag,
+        strategy_run_id,
         Money.of(trigger),
     )
 

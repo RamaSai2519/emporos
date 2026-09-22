@@ -74,7 +74,7 @@ class TestSettlement:
     async def test_forced_square_offs_are_counted_separately(self) -> None:
         rig, portfolio, queue, counters, receiver, settler = self.build()
         rig.clock.set(T0)
-        queue.push(rig.broker.square_off(INSTRUMENT, OrderSide.BUY, 5, Money.of("100")))
+        queue.push(rig.broker.square_off(INSTRUMENT, OrderSide.BUY, 5, Money.of("100"), "run-1"))
 
         await settler.settle()
 
@@ -260,7 +260,7 @@ class TestForcedClosePricing:
     def test_the_broker_records_the_reason(self) -> None:
         rig = BrokerRig()
         rig.clock.set(T0)
-        event = rig.broker.square_off(INSTRUMENT, OrderSide.SELL, 1, Money.of("1"))
+        event = rig.broker.square_off(INSTRUMENT, OrderSide.SELL, 1, Money.of("1"), "run-1")
         assert event.fill is not None and event.fill.reason is FillReason.FORCED_SQUARE_OFF
         assert isinstance(rig.broker, SimulatedBroker)
 

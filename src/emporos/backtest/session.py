@@ -16,6 +16,7 @@ strategy is told of both BEFORE its `on_session_end`, and what it sends there ca
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date, datetime
 
 from emporos.backtest.broker import SimulatedBroker
@@ -43,8 +44,12 @@ class BacktestSession:
         square_off: SessionSquareOff,
         forced: ForcedClosePricing,
         counters: RunCounters,
+        instrument_owner: Callable[[str], str],
         progress: BacktestProgressSink | None = None,
     ) -> None:
+        """`instrument_owner` resolves an instrument to the strategy_run_id whose position it
+        is, for the broker's own forced square-off (EM-158): a single-strategy run passes a
+        constant function; a multi-strategy run passes a real ownership lookup."""
         self._broker = broker
         self._portfolio = portfolio
         self._flow = flow
@@ -53,6 +58,7 @@ class BacktestSession:
         self._square_off = square_off
         self._forced = forced
         self._counters = counters
+        self._instrument_owner = instrument_owner
         self._progress: BacktestProgressSink = progress or NullBacktestProgressSink()
         self._bars = 0  # bars replayed this run, warm-up bars excluded
         self._pending: datetime | None = None  # the moment whose equity point is not yet recorded
@@ -81,7 +87,10 @@ class BacktestSession:
             last = self._portfolio.last_price(position.instrument_id)
             price = self._forced.price(side, last)
             quantity = abs(position.net_quantity)
-            self._queue.push(self._broker.square_off(position.instrument_id, side, quantity, price))
+            owner = self._instrument_owner(position.instrument_id)
+            self._queue.push(
+                self._broker.square_off(position.instrument_id, side, quantity, price, owner)
+            )
         await self._settler.settle()
 
     async def session_closed(self, day: date) -> None:

@@ -145,13 +145,14 @@ class SimulatedBroker:
         return events
 
     def square_off(
-        self, instrument_id: str, side: OrderSide, quantity: int, price: Money
+        self, instrument_id: str, side: OrderSide, quantity: int, price: Money, strategy_run_id: str
     ) -> SimEvent:
         """The broker's own end-of-day square-off: it closes a position at `price` whether or not
         our orders did. Not an order type we can place, and recorded as `FORCED_SQUARE_OFF`."""
         request = SimOrderRequest(
-            instrument_id, side, OrderType.LIMIT, quantity, price, f"SQUAREOFF-{self._fills + 1}"
-        )
+            instrument_id, side, OrderType.LIMIT, quantity, price,
+            f"SQUAREOFF-{self._fills + 1}", strategy_run_id,
+        )  # fmt: skip
         order = _Order(self._next_order_id(), request, self._clock.now(), OrderUpdateStatus.WORKING)
         self._orders[order.order_id] = order
         self._tags.add(request.tag)
@@ -192,7 +193,8 @@ class SimulatedBroker:
             self._close(order)
         fill = Fill(
             self._fills, order.order_id, order.request.tag, order.request.instrument_id,
-            order.request.side, quantity, price, self._clock.now(), reason,
+            order.request.side, quantity, price, self._clock.now(),
+            order.request.strategy_run_id, reason,
         )  # fmt: skip
         return self._event(order, fill=fill)
 

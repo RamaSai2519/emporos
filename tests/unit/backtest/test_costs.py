@@ -31,7 +31,7 @@ gst_percent: "18"
 
 
 def fill(side: OrderSide, quantity: int, price: str, when: datetime, sequence: int = 1) -> Fill:
-    return Fill(sequence, "SIM-1", "t", INSTRUMENT, side, quantity, Money.of(price), when)
+    return Fill(sequence, "SIM-1", "t", INSTRUMENT, side, quantity, Money.of(price), when, "run-1")
 
 
 MON_1015_IST = datetime(2026, 9, 21, 4, 45, tzinfo=UTC)  # Monday 21 Sep 2026, 10:15 IST

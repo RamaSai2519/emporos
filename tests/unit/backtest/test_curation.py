@@ -23,7 +23,7 @@ def trade(n: int, net: str, fees: str = "10", symbol: str = "NSE:1") -> ClosedTr
     gross = Decimal(net) + Decimal(fees)
     return ClosedTrade(
         symbol, TradeDirection.LONG, 10, T0 + timedelta(minutes=n), T0 + timedelta(minutes=n + 3),
-        Money.of("100"), Money.of("101"), Money(gross), Money.of(fees),
+        Money.of("100"), Money.of("101"), Money(gross), Money.of(fees), "run-1",
     )  # fmt: skip
 
 

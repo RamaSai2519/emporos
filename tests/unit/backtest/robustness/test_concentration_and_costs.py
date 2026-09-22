@@ -23,7 +23,7 @@ def trade(
     opened = T0 + timedelta(days=day)
     return ClosedTrade(
         symbol, TradeDirection.LONG, qty, opened, opened + timedelta(minutes=30),
-        Money.of(entry), Money.of(exit_), Money(gross), Money.of(fees),
+        Money.of(entry), Money.of(exit_), Money(gross), Money.of(fees), "run-1",
     )  # fmt: skip
 
 
@@ -58,7 +58,7 @@ class TestConcentration:
         late = ClosedTrade(
             "NSE:1", TradeDirection.LONG, 1, datetime(2026, 3, 31, 18, 0, tzinfo=UTC),
             datetime(2026, 3, 31, 19, 0, tzinfo=UTC), Money.of("1"), Money.of("2"),
-            Money.of("50"), Money.of("0"),
+            Money.of("50"), Money.of("0"), "run-1",
         )  # fmt: skip
 
         assert ConcentrationCheck(1).measure([late]).top_month == "2026-04"  # already April in IST

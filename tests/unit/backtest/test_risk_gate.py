@@ -90,7 +90,7 @@ def test_a_realised_loss_beyond_the_cap_stops_entries_but_never_exits() -> None:
 def test_a_working_order_on_the_same_side_blocks_a_duplicate() -> None:
     ctx = context()
     ctx.broker.submit(
-        SimOrderRequest(ID, OrderSide.BUY, OrderType.LIMIT, 10, Money.of("100"), "t1")
+        SimOrderRequest(ID, OrderSide.BUY, OrderType.LIMIT, 10, Money.of("100"), "t1", "run-1")
     )
     verdict = gate(ctx).review(signal())
     assert isinstance(verdict, GateRejection) and verdict.reason.startswith("DuplicateOrderGuard")
@@ -113,7 +113,7 @@ def test_the_gates_own_order_rate_is_remembered_and_forgotten() -> None:
 
 
 def _fill(instrument: str) -> Fill:
-    return Fill(1, "o1", "t", instrument, OrderSide.BUY, 100, Money.of("100"), NOW)
+    return Fill(1, "o1", "t", instrument, OrderSide.BUY, 100, Money.of("100"), NOW, "run-1")
 
 
 def test_a_signal_for_an_instrument_with_no_price_is_refused_not_a_crash() -> None:

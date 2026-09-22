@@ -158,6 +158,7 @@ class BacktestEngine:
             square_off,
             ForcedClosePricing(spec.fills.forced_close_penalty_bps),
             counters,
+            lambda _instrument_id: run_id,
             self._progress,
         )  # fmt: skip
         feed = ClosedBarFeed(self._reader, config.instrument_ids, config.timeframe, spec.window)

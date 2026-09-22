@@ -46,6 +46,7 @@ class ClosedTrade:
     exit_price: Money  # average
     gross_pnl: Money
     fees: Money
+    strategy_run_id: str  # EM-158: whichever strategy's fill opened this round trip
 
     @property
     def net_pnl(self) -> Money:
@@ -72,6 +73,7 @@ class _Cycle:
     opened_at: datetime
     base_gross: Money
     base_fees: Money
+    strategy_run_id: str  # EM-158: whichever strategy's fill opened this round trip
     entry_quantity: int = 0
     entry_turnover: Decimal = Decimal(0)
     exit_quantity: int = 0
@@ -143,7 +145,7 @@ class BacktestPortfolio:
         cycle = self._cycles.get(fill.instrument_id)
         if cycle is None:
             direction = TradeDirection.LONG if signed > 0 else TradeDirection.SHORT
-            cycle = _Cycle(direction, fill.ts, base_gross, base_fees)
+            cycle = _Cycle(direction, fill.ts, base_gross, base_fees, fill.strategy_run_id)
             self._cycles[fill.instrument_id] = cycle
         if (signed > 0) == (cycle.direction is TradeDirection.LONG):
             cycle.entry_quantity += fill.quantity
@@ -169,12 +171,15 @@ class BacktestPortfolio:
                 exit_price=Money(cycle.exit_turnover / cycle.exit_quantity),
                 gross_pnl=state.gross_realised - cycle.base_gross,
                 fees=state.fees - cycle.base_fees,
+                strategy_run_id=cycle.strategy_run_id,
             )
         )
         del self._cycles[fill.instrument_id]
         if now_held != 0:  # flipped: the remainder opens the next round trip at this fill
             direction = TradeDirection.LONG if now_held > 0 else TradeDirection.SHORT
-            opened = _Cycle(direction, fill.ts, state.gross_realised, state.fees)
+            opened = _Cycle(
+                direction, fill.ts, state.gross_realised, state.fees, fill.strategy_run_id
+            )
             opened.entry_quantity = abs(now_held)
             opened.entry_turnover = fill.price.amount * abs(now_held)
             self._cycles[fill.instrument_id] = opened
