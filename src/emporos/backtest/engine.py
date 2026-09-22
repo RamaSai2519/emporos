@@ -131,7 +131,7 @@ class BacktestEngine:
         portfolio = BacktestPortfolio(spec.starting_cash)
         costs = BacktestCosts(self._schedules())
         gate = self._gate(GateContext(clock.view(), portfolio, broker))
-        square_off = SessionSquareOff(config.session.square_off_at, run_id, clock)
+        square_off = SessionSquareOff(config.session.square_off_at, lambda _id: run_id, clock)
         flow = OrderFlow(
             broker, gate, MarketableLimitPricing(config.execution.limit_buffer_bps, self._ticks),
             square_off, queue, counters,

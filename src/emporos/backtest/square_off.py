@@ -14,6 +14,7 @@ session, and flags it as such:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, time
 from decimal import ROUND_DOWN, ROUND_UP, Decimal
@@ -37,9 +38,14 @@ class SquareOffPlan:
 
 
 class SessionSquareOff:
-    def __init__(self, square_off_at: time, run_id: str, clock: Clock) -> None:
+    def __init__(
+        self, square_off_at: time, instrument_owner: Callable[[str], str], clock: Clock
+    ) -> None:
+        """`instrument_owner` resolves an instrument to the strategy_run_id whose position it is
+        (EM-158), the same seam `BacktestSession` uses for the broker's own forced square-off: a
+        single-strategy run passes a constant function, a multi-strategy run a real lookup."""
         self._at = square_off_at
-        self._run_id = run_id
+        self._owner = instrument_owner
         self._clock = clock
         self._planned: set[tuple[date, str]] = set()
 
@@ -61,7 +67,7 @@ class SessionSquareOff:
         self._planned.add(key)
         side = OrderSide.SELL if position.is_long else OrderSide.BUY
         exit_signal = Signal(
-            strategy_run_id=self._run_id,
+            strategy_run_id=self._owner(bar.instrument_id),
             instrument_id=bar.instrument_id,
             kind=SignalKind.EXIT,
             side=side,

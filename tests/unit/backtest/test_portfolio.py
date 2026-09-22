@@ -36,11 +36,14 @@ class Book:
         price: str,
         fee: str = "0",
         instrument: str = INSTRUMENT,
+        strategy_run_id: str = "run-1",
     ) -> None:
         self._n += 1
         when: datetime = T0 + timedelta(minutes=5 * self._n)
-        fill = Fill(self._n, f"SIM-{self._n}", f"t{self._n}", instrument, side, quantity,
-                    money(price), when, FillReason.MATCHED)  # fmt: skip
+        fill = Fill(
+            self._n, f"SIM-{self._n}", f"t{self._n}", instrument, side, quantity,
+            money(price), when, strategy_run_id, FillReason.MATCHED,
+        )  # fmt: skip
         self.portfolio.apply(fill, money(fee))
 
 
@@ -237,6 +240,46 @@ class TestAsAPositionView:
         book.fill(BUY, 7, "100")
         held = book.portfolio.position(INSTRUMENT)
         assert (held.net_quantity, held.average_price, held.is_long) == (7, money("100"), True)
+
+
+class TestOwnership:
+    """EM-158: which strategy's fill opened the round trip currently open in an instrument, for
+    a multi-strategy run's forced square-off (`BacktestSession`/`SessionSquareOff`)."""
+
+    def test_an_instrument_never_traded_has_no_owner(self) -> None:
+        with pytest.raises(LookupError, match=INSTRUMENT):
+            BacktestPortfolio(money("1000")).owner(INSTRUMENT)
+
+    def test_the_strategy_whose_fill_opened_the_position_owns_it(self) -> None:
+        book = Book()
+        book.fill(BUY, 10, "100", strategy_run_id="alpha")
+        assert book.portfolio.owner(INSTRUMENT) == "alpha"
+
+    def test_scaling_in_from_a_different_strategy_does_not_change_the_owner(self) -> None:
+        book = Book()
+        book.fill(BUY, 10, "100", strategy_run_id="alpha")
+        book.fill(BUY, 5, "100", strategy_run_id="beta")
+        assert book.portfolio.owner(INSTRUMENT) == "alpha"
+
+    def test_a_flat_instrument_has_no_owner_again(self) -> None:
+        book = Book()
+        book.fill(BUY, 10, "100", strategy_run_id="alpha")
+        book.fill(SELL, 10, "101", strategy_run_id="alpha")
+        with pytest.raises(LookupError, match=INSTRUMENT):
+            book.portfolio.owner(INSTRUMENT)
+
+    def test_a_flip_hands_ownership_to_whichever_strategy_placed_the_flipping_fill(self) -> None:
+        book = Book()
+        book.fill(BUY, 10, "100", strategy_run_id="alpha")
+        book.fill(SELL, 25, "110", strategy_run_id="beta")  # closes the long, opens a short
+        assert book.portfolio.owner(INSTRUMENT) == "beta"
+
+    def test_each_instrument_has_its_own_owner(self) -> None:
+        book = Book()
+        book.fill(BUY, 10, "100", strategy_run_id="alpha")
+        book.fill(BUY, 5, "100", instrument=OTHER_INSTRUMENT, strategy_run_id="beta")
+        assert book.portfolio.owner(INSTRUMENT) == "alpha"
+        assert book.portfolio.owner(OTHER_INSTRUMENT) == "beta"
 
     def test_starting_cash_must_be_positive(self) -> None:
         for cash in ("0", "-1"):

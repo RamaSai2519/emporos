@@ -157,7 +157,7 @@ class TestSessionSquareOff:
         return replace(base, ts=opened)
 
     def policy(self, clock: BarClock | None = None) -> SessionSquareOff:
-        return SessionSquareOff(time(15, 15), "run-1", clock or BarClock(T0))
+        return SessionSquareOff(time(15, 15), lambda _id: "run-1", clock or BarClock(T0))
 
     def test_nothing_before_the_square_off_time(self) -> None:
         plan = self.policy().plan(self.bar("15:10"), Position(INSTRUMENT, 10, Money.of("100")), ())
@@ -199,6 +199,20 @@ class TestSessionSquareOff:
             policy.plan(self.bar("15:15", other), Position(other, 1, Money.of("1")), ()) is not None
         )
 
+    def test_the_exit_signal_is_tagged_to_whichever_strategy_owns_that_instrument(self) -> None:
+        """EM-158: a multi-strategy run passes a real ownership lookup, not a constant."""
+        other = "NSE:1002"
+        owners = {INSTRUMENT: "alpha", other: "beta"}
+        policy = SessionSquareOff(
+            time(15, 15), lambda instrument_id: owners[instrument_id], BarClock(T0)
+        )
+
+        mine = policy.plan(self.bar("15:15"), Position(INSTRUMENT, 1, Money.of("1")), ())
+        theirs = policy.plan(self.bar("15:15", other), Position(other, 1, Money.of("1")), ())
+
+        assert mine is not None and mine.exit.strategy_run_id == "alpha"
+        assert theirs is not None and theirs.exit.strategy_run_id == "beta"
+
     def test_resting_orders_of_that_instrument_are_cancelled_first(self) -> None:
         rig = BrokerRig()
         rig.clock.set(T0)
@@ -219,7 +233,7 @@ class TestTheSessionOwnsTheInstrumentAfterSquareOff:
         self,
     ) -> None:
         clock = BarClock(T0)
-        policy = SessionSquareOff(time(15, 15), "run-1", clock)
+        policy = SessionSquareOff(time(15, 15), lambda _id: "run-1", clock)
         signal = make_signal(price="100")
         clock.set(T0 + timedelta(hours=6))  # 15:15 IST on the fixture day
         held = Position(INSTRUMENT, 10, Money.of("100"))
@@ -234,7 +248,7 @@ class TestTheSessionOwnsTheInstrumentAfterSquareOff:
 
     def test_the_day_is_the_clocks_not_the_signals(self) -> None:
         clock = BarClock(T0 + timedelta(hours=6))
-        policy = SessionSquareOff(time(15, 15), "run-1", clock)
+        policy = SessionSquareOff(time(15, 15), lambda _id: "run-1", clock)
         policy.plan(TestSessionSquareOff().bar("15:15"), Position(INSTRUMENT, 1, Money.of("1")), ())
 
         old = make_signal(ts=T0 - timedelta(days=30))  # a strategy cannot dodge it by back-dating

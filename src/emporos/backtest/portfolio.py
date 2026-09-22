@@ -109,6 +109,16 @@ class BacktestPortfolio:
             if s.net_quantity != 0
         )
 
+    def owner(self, instrument_id: str) -> str:
+        """Which strategy's fill opened the round trip currently open in this instrument
+        (EM-158): a multi-strategy run's own `instrument_owner` resolver reads this rather than
+        duplicating what `_Cycle` already tracks. Only ever called for an instrument
+        `open_positions()` just listed, so a cycle is always there to answer from."""
+        cycle = self._cycles.get(instrument_id)
+        if cycle is None:
+            raise LookupError(f"{instrument_id} has no open round trip")
+        return cycle.strategy_run_id
+
     # --- booking -----------------------------------------------------------------------------
     def apply(self, fill: Fill, charges: Money) -> None:
         """Book one fill and the charges on it; it also marks the instrument at the fill price."""
