@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 
+from emporos.domain.candles import Timeframe
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.opportunity.models import OpportunityCandidate, RejectedCandidate
@@ -21,6 +22,7 @@ def _candidate(
     return OpportunityCandidate(
         strategy_name="momentum_v1",
         instrument_id="NSE:1001",
+        timeframe=Timeframe.M5,
         signal=make_signal(side=side, price=entry),
         entry=Money.of(entry),
         stop=Money.of(stop),
@@ -63,6 +65,7 @@ def test_generated_at_must_be_timezone_aware() -> None:
         OpportunityCandidate(
             strategy_name="momentum_v1",
             instrument_id="NSE:1001",
+            timeframe=Timeframe.M5,
             signal=make_signal(),
             entry=Money.of("100"),
             stop=Money.of("98"),

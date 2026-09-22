@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from emporos.domain.candles import Timeframe
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.signals import Signal
@@ -40,6 +41,7 @@ class OpportunityCandidate:
 
     strategy_name: str
     instrument_id: str
+    timeframe: Timeframe
     signal: Signal
     entry: Money
     stop: Money

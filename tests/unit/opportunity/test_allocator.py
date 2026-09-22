@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 
+from emporos.domain.candles import Timeframe
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.domain.positions import Position
@@ -33,6 +34,7 @@ def _candidate(
     return OpportunityCandidate(
         strategy_name=strategy_name,
         instrument_id=instrument_id,
+        timeframe=Timeframe.M5,
         signal=make_signal(instrument_id=instrument_id, price=entry, side=side),
         entry=Money.of(entry),
         stop=Money.of(stop),

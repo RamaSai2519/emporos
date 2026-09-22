@@ -125,6 +125,7 @@ class OpportunityScanner:
         return OpportunityCandidate(
             strategy_name=entry.strategy_name,
             instrument_id=entry.instrument_id,
+            timeframe=entry.timeframe,
             signal=signal,
             entry=signal.limit_price,
             stop=Money(stop),
