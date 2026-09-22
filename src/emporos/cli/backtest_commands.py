@@ -24,6 +24,7 @@ from emporos.backtest.summary import BacktestSummary
 from emporos.cli.backtest_runtime import run_backtest
 from emporos.cli.cache_commands import cache_app
 from emporos.cli.curation_commands import backtest_curate
+from emporos.cli.progress import ConsoleBacktestProgressSink
 from emporos.cli.trial_commands import trials_app
 from emporos.cli.verdict_commands import verdicts_app
 from emporos.core.config import Settings
@@ -71,6 +72,7 @@ def backtest_run(
     assume_earliest_fees: bool = _FEES,
 ) -> None:
     """Run STRATEGY over the trading days FROM..TO and print a full metrics report."""
+    progress: ConsoleBacktestProgressSink | None = None
     try:
         request = BacktestRequest(
             first_day=_day(first),
@@ -79,13 +81,18 @@ def backtest_run(
             fills=_fills(fills),
             assume_current_universe=assume_current_universe,
         )
+        progress = ConsoleBacktestProgressSink(request.first_day, request.last_day)
         result = asyncio.run(
-            run_backtest(Settings.default(), strategy, request, assume_earliest_fees)
+            run_backtest(Settings.default(), strategy, request, assume_earliest_fees, progress)
         )
     except (EmporosError, ValidationError, ValueError, InvalidOperation, LookupError) as error:
+        if progress is not None:
+            progress.close()
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"backtest failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
+    assert progress is not None
+    progress.close()
     document: dict[str, Any] = BacktestDocument().render(result)
     if report is not None:
         report.parent.mkdir(parents=True, exist_ok=True)

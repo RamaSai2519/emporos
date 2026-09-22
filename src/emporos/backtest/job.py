@@ -19,6 +19,7 @@ from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
 from emporos.backtest.metrics.report import MetricsSettings
+from emporos.backtest.progress import BacktestProgressSink
 from emporos.backtest.settings import FillSettings
 from emporos.backtest.universe import AsOfInstruments
 from emporos.core.clock import IST
@@ -64,6 +65,7 @@ class BacktestJob:
         config_for: Callable[[InstrumentResolver], ResolvedStrategyConfig],
         schedules: Callable[[], ScheduleSource],
         session: SessionWindow | None = None,
+        progress: BacktestProgressSink | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -71,6 +73,7 @@ class BacktestJob:
         self._config_for = config_for
         self._schedules = schedules
         self._session = session or SessionWindow()
+        self._progress = progress
 
     async def run(self, request: BacktestRequest) -> BacktestResult:
         moment = self._session.open_at(request.first_day)
@@ -79,8 +82,9 @@ class BacktestJob:
         )
         config = self._config_for(universe.resolver)
         engine = BacktestEngine(
-            self._reader, self._registry, ResolverTickSizes(universe.resolver), self._schedules
-        )
+            self._reader, self._registry, ResolverTickSizes(universe.resolver), self._schedules,
+            progress=self._progress,
+        )  # fmt: skip
         spec = BacktestSpec(
             config=config,
             window=self._window(request),

@@ -19,6 +19,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from emporos.backtest.costs import EarliestBeforeFirst, ScheduleSource, StrictSchedules
 from emporos.backtest.engine import BacktestResult
 from emporos.backtest.job import BacktestJob, BacktestRequest
+from emporos.backtest.progress import BacktestProgressSink
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
 from emporos.cli.cold_storage import cold_archive
 from emporos.cli.strategy_composition import build_registry
@@ -98,7 +99,11 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
 
 
 async def run_backtest(
-    settings: Settings, strategy_file: Path, request: BacktestRequest, assume_earliest_fees: bool
+    settings: Settings,
+    strategy_file: Path,
+    request: BacktestRequest,
+    assume_earliest_fees: bool,
+    progress: BacktestProgressSink | None = None,
 ) -> BacktestResult:
     registry = build_registry()
     library = FeeScheduleLibrary.from_directory()
@@ -114,5 +119,7 @@ async def run_backtest(
         )
 
     async with open_backtest_runtime(settings) as runtime:
-        job = BacktestJob(runtime.reader, registry, runtime.instruments, config_for, schedules)
+        job = BacktestJob(
+            runtime.reader, registry, runtime.instruments, config_for, schedules, progress=progress
+        )
         return await job.run(request)

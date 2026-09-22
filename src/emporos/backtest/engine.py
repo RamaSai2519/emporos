@@ -38,6 +38,7 @@ from emporos.backtest.pricing import (
     SignalGate,
     TickSizes,
 )
+from emporos.backtest.progress import BacktestProgressSink, NullBacktestProgressSink
 from emporos.backtest.replay import BarReplay
 from emporos.backtest.session import BacktestSession
 from emporos.backtest.settings import FillModelFactory, FillSettings
@@ -97,6 +98,7 @@ class BacktestEngine:
         fill_models: FillModelFactory | None = None,
         snapshotter: ConfigSnapshotter | None = None,
         metrics: Callable[[MetricsSettings], MetricsCalculator] = MetricsCalculator,
+        progress: BacktestProgressSink | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -106,6 +108,7 @@ class BacktestEngine:
         self._fill_models = fill_models or FillModelFactory()
         self._snapshotter = snapshotter or ConfigSnapshotter()
         self._metrics = metrics
+        self._progress: BacktestProgressSink = progress or NullBacktestProgressSink()
 
     async def run(self, spec: BacktestSpec) -> BacktestResult:
         """One run, under the backtest's own decimal context: prices, charges and averages must
@@ -155,6 +158,7 @@ class BacktestEngine:
             square_off,
             ForcedClosePricing(spec.fills.forced_close_penalty_bps),
             counters,
+            self._progress,
         )  # fmt: skip
         feed = ClosedBarFeed(self._reader, config.instrument_ids, config.timeframe, spec.window)
         report = await BarReplay(prepared.runner, clock, session).run(feed)
