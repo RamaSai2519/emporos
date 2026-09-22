@@ -1,0 +1,26 @@
+# EM-125: curation plan for relative_strength_v1, fixed BEFORE any result was seen.
+#
+# Same rules as config/curation/plan.yaml/plan_em114.yaml (same windows/objective): each candidate
+# is tuned ONLY on the training window of each walk-forward step, from this small pre-declared
+# grid, and the chosen parameters are then run once on the following, unseen test window. Nothing
+# in this file may be changed after looking at a result: a new grid means a new plan file and a
+# fresh run.
+#
+# Grid varies two axes: rebalance speed (`lookback`/`rebalance_every_bars`, held together since a
+# faster read only makes sense re-ranked more often) and how much separation a name needs before it
+# qualifies for a band (`min_abs_roc_bps`).
+objective: sharpe
+windows:
+  train_days: 130
+  test_days: 42
+  embargo_days: 1
+strategies:
+  - name: relative_strength_v1
+    file: config/strategies/relative_strength_v1.yaml
+    candidates:
+      - {name: fast_t20, overrides: {lookback: 6, rebalance_every_bars: 3, min_abs_roc_bps: "20"}}
+      - {name: fast_t40, overrides: {lookback: 6, rebalance_every_bars: 3, min_abs_roc_bps: "40"}}
+      - {name: fast_t60, overrides: {lookback: 6, rebalance_every_bars: 3, min_abs_roc_bps: "60"}}
+      - {name: slow_t20, overrides: {lookback: 18, rebalance_every_bars: 9, min_abs_roc_bps: "20"}}
+      - {name: slow_t40, overrides: {lookback: 18, rebalance_every_bars: 9, min_abs_roc_bps: "40"}}
+      - {name: slow_t60, overrides: {lookback: 18, rebalance_every_bars: 9, min_abs_roc_bps: "60"}}
