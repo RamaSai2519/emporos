@@ -1,0 +1,974 @@
+[
+  {
+    "strategy": "liquidity_thrust_v1",
+    "passed": false,
+    "candidates": [
+      "surge25_t3",
+      "surge25_t4",
+      "surge25_t5",
+      "surge40_t3",
+      "surge40_t4",
+      "surge40_t5"
+    ],
+    "out_of_sample": {
+      "trades": 1134,
+      "net_pnl": "-18574.98",
+      "gross_pnl": "-3455.09",
+      "charges": "15119.89",
+      "win_rate": "0.2407407407407407407407407407407407",
+      "profit_factor": "0.3199241389662835782097235392540576",
+      "net_at_double_costs": "-33694.87",
+      "window_nets": [
+        "-624.19",
+        "-638.44",
+        "-634.31",
+        "-584.73",
+        "-602.80",
+        "-616.08",
+        "-610.71",
+        "-550.15",
+        "-528.73",
+        "-719.43",
+        "-334.03",
+        "-631.58",
+        "-420.13",
+        "-693.57",
+        "-609.52",
+        "-528.92",
+        "-569.23",
+        "-661.88",
+        "-610.69",
+        "-396.06",
+        "-628.30",
+        "-632.79",
+        "-621.36",
+        "-623.18",
+        "-503.48",
+        "-660.84",
+        "-663.34",
+        "-521.54",
+        "-646.30",
+        "-613.24",
+        "-353.49",
+        "-541.94"
+      ],
+      "window_max_drawdowns": [
+        "0.0126154",
+        "0.0133484",
+        "0.0126862",
+        "0.01176911260890928823966672912862370",
+        "0.01265650231529183950321414515691556",
+        "0.01418636507183012613340604911748936",
+        "0.0122142",
+        "0.01335023977956441625373237069012819",
+        "0.01307537078441849486685999159607194",
+        "0.01536170091992719891302044962226341",
+        "0.01065539090151407704406775339396441",
+        "0.01292140627511762546516342801753405",
+        "0.01097682950815617111781455228331698",
+        "0.01441583669181144335868866038400388",
+        "0.01329826870389926190872887921441805",
+        "0.0105784",
+        "0.01198511544683141586543698739905885",
+        "0.01511266895349940332639294577010840",
+        "0.0122138",
+        "0.009807509741183389963784214008764668",
+        "0.01330678707121325388382038246691098",
+        "0.01393118140996435210698482582627629",
+        "0.01299610904274776019102589267546186",
+        "0.01262789871765338247715580127466790",
+        "0.01016264471139712866990502892728084",
+        "0.01379451917066982161849588511050227",
+        "0.01329383574890048012684452446002980",
+        "0.01046899589675838512633412350283279",
+        "0.0130268",
+        "0.01724559587100656452965082369534724",
+        "0.0074146",
+        "0.01204923727449129326748867287798989"
+      ],
+      "instrument_nets": {
+        "NSE:10604": "-659.88",
+        "NSE:11483": "-564.24",
+        "NSE:11630": "-726.96",
+        "NSE:11723": "-1018.89",
+        "NSE:1333": "-518.20",
+        "NSE:13538": "-594.49",
+        "NSE:1394": "-222.07",
+        "NSE:14977": "-603.01",
+        "NSE:1594": "-502.46",
+        "NSE:1660": "-511.34",
+        "NSE:16675": "-1679.26",
+        "NSE:17963": "-659.08",
+        "NSE:1922": "-601.19",
+        "NSE:2031": "-529.21",
+        "NSE:20374": "-1145.58",
+        "NSE:236": "-773.78",
+        "NSE:2475": "-542.00",
+        "NSE:25": "-983.71",
+        "NSE:3045": "-776.72",
+        "NSE:317": "-1385.09",
+        "NSE:3351": "-473.74",
+        "NSE:3499": "-686.01",
+        "NSE:3506": "-272.47",
+        "NSE:3787": "-15.19",
+        "NSE:4963": "-458.40",
+        "NSE:5900": "-597.93",
+        "NSE:7229": "-1074.08"
+      },
+      "compounded_return": "-0.3118360417400766932776727894"
+    },
+    "windows": [
+      [
+        "2022-12-09",
+        "2023-01-20",
+        "surge25_t5"
+      ],
+      [
+        "2023-01-20",
+        "2023-03-03",
+        "surge25_t5"
+      ],
+      [
+        "2023-03-03",
+        "2023-04-14",
+        "surge40_t3"
+      ],
+      [
+        "2023-04-14",
+        "2023-05-26",
+        "surge25_t4"
+      ],
+      [
+        "2023-05-26",
+        "2023-07-07",
+        "surge25_t3"
+      ],
+      [
+        "2023-07-07",
+        "2023-08-18",
+        "surge25_t5"
+      ],
+      [
+        "2023-08-18",
+        "2023-09-29",
+        "surge40_t5"
+      ],
+      [
+        "2023-09-29",
+        "2023-11-10",
+        "surge40_t5"
+      ],
+      [
+        "2023-11-10",
+        "2023-12-22",
+        "surge40_t4"
+      ],
+      [
+        "2023-12-22",
+        "2024-02-02",
+        "surge25_t5"
+      ],
+      [
+        "2024-02-02",
+        "2024-03-15",
+        "surge40_t5"
+      ],
+      [
+        "2024-03-15",
+        "2024-04-26",
+        "surge25_t5"
+      ],
+      [
+        "2024-04-26",
+        "2024-06-07",
+        "surge40_t5"
+      ],
+      [
+        "2024-06-07",
+        "2024-07-19",
+        "surge25_t4"
+      ],
+      [
+        "2024-07-19",
+        "2024-08-30",
+        "surge25_t5"
+      ],
+      [
+        "2024-08-30",
+        "2024-10-11",
+        "surge40_t3"
+      ],
+      [
+        "2024-10-11",
+        "2024-11-22",
+        "surge25_t4"
+      ],
+      [
+        "2024-11-22",
+        "2025-01-03",
+        "surge40_t3"
+      ],
+      [
+        "2025-01-03",
+        "2025-02-14",
+        "surge25_t4"
+      ],
+      [
+        "2025-02-14",
+        "2025-03-28",
+        "surge40_t5"
+      ],
+      [
+        "2025-03-28",
+        "2025-05-09",
+        "surge25_t5"
+      ],
+      [
+        "2025-05-09",
+        "2025-06-20",
+        "surge25_t5"
+      ],
+      [
+        "2025-06-20",
+        "2025-08-01",
+        "surge25_t3"
+      ],
+      [
+        "2025-08-01",
+        "2025-09-12",
+        "surge25_t3"
+      ],
+      [
+        "2025-09-12",
+        "2025-10-24",
+        "surge25_t3"
+      ],
+      [
+        "2025-10-24",
+        "2025-12-05",
+        "surge25_t4"
+      ],
+      [
+        "2025-12-05",
+        "2026-01-16",
+        "surge40_t5"
+      ],
+      [
+        "2026-01-16",
+        "2026-02-27",
+        "surge40_t3"
+      ],
+      [
+        "2026-02-27",
+        "2026-04-10",
+        "surge25_t5"
+      ],
+      [
+        "2026-04-10",
+        "2026-05-22",
+        "surge25_t5"
+      ],
+      [
+        "2026-05-22",
+        "2026-07-03",
+        "surge40_t5"
+      ],
+      [
+        "2026-07-03",
+        "2026-08-14",
+        "surge40_t5"
+      ]
+    ],
+    "checks": [
+      {
+        "name": "net profit is positive",
+        "passed": false,
+        "actual": "-18574.98",
+        "required": "> 0"
+      },
+      {
+        "name": "enough trades to mean something",
+        "passed": true,
+        "actual": "1134",
+        "required": ">= 150"
+      },
+      {
+        "name": "profit factor",
+        "passed": false,
+        "actual": "0.320",
+        "required": ">= 1.2"
+      },
+      {
+        "name": "profitable in most out-of-sample windows",
+        "passed": false,
+        "actual": "0 of 32",
+        "required": ">= 60% of windows"
+      },
+      {
+        "name": "no window's drawdown is too deep",
+        "passed": true,
+        "actual": "1.7%",
+        "required": "<= 10%"
+      },
+      {
+        "name": "profitable across instruments, not a few",
+        "passed": false,
+        "actual": "0 of 27",
+        "required": ">= 50% of instruments"
+      },
+      {
+        "name": "still profitable without its best window",
+        "passed": false,
+        "actual": "-18240.95",
+        "required": "> 0"
+      },
+      {
+        "name": "still profitable if charges were twice as high",
+        "passed": false,
+        "actual": "-33694.87",
+        "required": "> 0"
+      }
+    ],
+    "robustness": {
+      "verdict": "rejected",
+      "gates": [
+        {
+          "name": "profit after costs is real",
+          "outcome": "fail",
+          "detail": "net -18574.98, 95% interval -20686.15 to -16440.76, P(net > 0) 0.000"
+        },
+        {
+          "name": "profit survives adverse costs",
+          "outcome": "unknown",
+          "detail": "net -18574.98 as run, -35976.90 under adverse costs"
+        },
+        {
+          "name": "profitable in most walk-forward windows",
+          "outcome": "fail",
+          "detail": "0 of 32 windows"
+        },
+        {
+          "name": "enough trades",
+          "outcome": "pass",
+          "detail": "1134 trades, 150 needed to validate"
+        },
+        {
+          "name": "enough history",
+          "outcome": "pass",
+          "detail": "1080 trading days, 500 needed"
+        },
+        {
+          "name": "drawdown within the risk budget",
+          "outcome": "pass",
+          "detail": "worst window 1.7%, budget 10.0%"
+        },
+        {
+          "name": "profit is not concentrated",
+          "outcome": "unknown",
+          "detail": "no profit to attribute"
+        },
+        {
+          "name": "survives parameter changes",
+          "outcome": "fail",
+          "detail": "0% of neighbouring parameter sets profit, 50% needed"
+        },
+        {
+          "name": "beats the luck of the search (Deflated Sharpe)",
+          "outcome": "unknown",
+          "detail": "DSR 0.000 over 717 trials, 0.95 needed"
+        },
+        {
+          "name": "beats the always-long baseline",
+          "outcome": "pass",
+          "detail": "strategy net -18574.98, baseline -21066.37"
+        },
+        {
+          "name": "evidence spans enough distinct regimes",
+          "outcome": "pass",
+          "detail": "5 regime(s); diversity not required"
+        }
+      ],
+      "monte_carlo": {
+        "trades": 1134,
+        "resamples": 5000,
+        "seed": 20260920,
+        "confidence": "0.95",
+        "inconclusive_reason": null,
+        "net_pnl": {
+          "observed": "-18574.98",
+          "low": "-20686.15",
+          "high": "-16440.76"
+        },
+        "expectancy": {
+          "observed": "-0.003843805478711455641948975071434243",
+          "low": "-0.004282227903449308578351538504632089",
+          "high": "-0.003394812836396929037004970057620527"
+        },
+        "profit_factor": {
+          "observed": "0.3199241389662835782097235392540576",
+          "low": "0.2676258801961731115506042672419510",
+          "high": "0.3751699007182184137900387228063078"
+        },
+        "max_drawdown": {
+          "observed": "0.3714996",
+          "low": "0.3714996",
+          "high": "0.3748282740792681451641120967627452"
+        },
+        "probability_net_positive": "0",
+        "probability_of_ruin": "1"
+      },
+      "deflated_sharpe": {
+        "observations": 905,
+        "trial_count": 717,
+        "daily_sharpe": "-0.3909034110041550865096125896551826",
+        "annualised_sharpe": "-6.205399272983182972355880610694808",
+        "expected_max_sharpe": "0.2515944035835158351066058200638228",
+        "probabilistic_sharpe": "0E-12",
+        "deflated_sharpe": "0E-12",
+        "reason": null
+      },
+      "concentration": {
+        "top_instrument": null,
+        "top_instrument_share": null,
+        "top_month": null,
+        "top_month_share": null,
+        "top_trades": 5,
+        "top_trades_share": null
+      },
+      "cost_scenarios": [
+        {
+          "name": "no_slippage",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "-5",
+          "net_pnl": "-13653.993075"
+        },
+        {
+          "name": "benchmark",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-18574.98"
+        },
+        {
+          "name": "slippage_plus5",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "5",
+          "net_pnl": "-23495.966925"
+        },
+        {
+          "name": "fees_x1_5",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-26134.925"
+        },
+        {
+          "name": "fees_x2",
+          "fee_multiplier": "2",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-33694.87"
+        },
+        {
+          "name": "adverse",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "10",
+          "net_pnl": "-35976.89885"
+        }
+      ],
+      "perturbation": {
+        "profitable_share": "0",
+        "runs": [
+          {
+            "window": 0,
+            "candidate": "surge25_t3",
+            "net_pnl": "-634.43"
+          },
+          {
+            "window": 0,
+            "candidate": "surge25_t4",
+            "net_pnl": "-627.25"
+          },
+          {
+            "window": 0,
+            "candidate": "surge40_t5",
+            "net_pnl": "-617.16"
+          },
+          {
+            "window": 1,
+            "candidate": "surge25_t3",
+            "net_pnl": "-656.23"
+          },
+          {
+            "window": 1,
+            "candidate": "surge25_t4",
+            "net_pnl": "-639.00"
+          },
+          {
+            "window": 1,
+            "candidate": "surge40_t5",
+            "net_pnl": "-728.83"
+          },
+          {
+            "window": 2,
+            "candidate": "surge25_t3",
+            "net_pnl": "-577.95"
+          },
+          {
+            "window": 2,
+            "candidate": "surge40_t4",
+            "net_pnl": "-659.28"
+          },
+          {
+            "window": 2,
+            "candidate": "surge40_t5",
+            "net_pnl": "-622.38"
+          },
+          {
+            "window": 3,
+            "candidate": "surge25_t3",
+            "net_pnl": "-621.23"
+          },
+          {
+            "window": 3,
+            "candidate": "surge25_t5",
+            "net_pnl": "-564.30"
+          },
+          {
+            "window": 3,
+            "candidate": "surge40_t4",
+            "net_pnl": "-631.97"
+          },
+          {
+            "window": 4,
+            "candidate": "surge25_t4",
+            "net_pnl": "-614.15"
+          },
+          {
+            "window": 4,
+            "candidate": "surge25_t5",
+            "net_pnl": "-565.39"
+          },
+          {
+            "window": 4,
+            "candidate": "surge40_t3",
+            "net_pnl": "-491.25"
+          },
+          {
+            "window": 5,
+            "candidate": "surge25_t3",
+            "net_pnl": "-608.70"
+          },
+          {
+            "window": 5,
+            "candidate": "surge25_t4",
+            "net_pnl": "-588.83"
+          },
+          {
+            "window": 5,
+            "candidate": "surge40_t5",
+            "net_pnl": "-552.77"
+          },
+          {
+            "window": 6,
+            "candidate": "surge25_t5",
+            "net_pnl": "-527.91"
+          },
+          {
+            "window": 6,
+            "candidate": "surge40_t3",
+            "net_pnl": "-640.99"
+          },
+          {
+            "window": 6,
+            "candidate": "surge40_t4",
+            "net_pnl": "-643.84"
+          },
+          {
+            "window": 7,
+            "candidate": "surge25_t5",
+            "net_pnl": "-683.09"
+          },
+          {
+            "window": 7,
+            "candidate": "surge40_t3",
+            "net_pnl": "-572.00"
+          },
+          {
+            "window": 7,
+            "candidate": "surge40_t4",
+            "net_pnl": "-629.74"
+          },
+          {
+            "window": 8,
+            "candidate": "surge25_t4",
+            "net_pnl": "-473.40"
+          },
+          {
+            "window": 8,
+            "candidate": "surge40_t3",
+            "net_pnl": "-548.24"
+          },
+          {
+            "window": 8,
+            "candidate": "surge40_t5",
+            "net_pnl": "-513.39"
+          },
+          {
+            "window": 9,
+            "candidate": "surge25_t3",
+            "net_pnl": "-687.72"
+          },
+          {
+            "window": 9,
+            "candidate": "surge25_t4",
+            "net_pnl": "-704.83"
+          },
+          {
+            "window": 9,
+            "candidate": "surge40_t5",
+            "net_pnl": "-609.45"
+          },
+          {
+            "window": 10,
+            "candidate": "surge25_t5",
+            "net_pnl": "-643.02"
+          },
+          {
+            "window": 10,
+            "candidate": "surge40_t3",
+            "net_pnl": "-416.64"
+          },
+          {
+            "window": 10,
+            "candidate": "surge40_t4",
+            "net_pnl": "-400.91"
+          },
+          {
+            "window": 11,
+            "candidate": "surge25_t3",
+            "net_pnl": "-618.50"
+          },
+          {
+            "window": 11,
+            "candidate": "surge25_t4",
+            "net_pnl": "-612.23"
+          },
+          {
+            "window": 11,
+            "candidate": "surge40_t5",
+            "net_pnl": "-637.27"
+          },
+          {
+            "window": 12,
+            "candidate": "surge25_t5",
+            "net_pnl": "-537.16"
+          },
+          {
+            "window": 12,
+            "candidate": "surge40_t3",
+            "net_pnl": "-375.09"
+          },
+          {
+            "window": 12,
+            "candidate": "surge40_t4",
+            "net_pnl": "-393.10"
+          },
+          {
+            "window": 13,
+            "candidate": "surge25_t3",
+            "net_pnl": "-665.98"
+          },
+          {
+            "window": 13,
+            "candidate": "surge25_t5",
+            "net_pnl": "-674.98"
+          },
+          {
+            "window": 13,
+            "candidate": "surge40_t4",
+            "net_pnl": "-573.28"
+          },
+          {
+            "window": 14,
+            "candidate": "surge25_t3",
+            "net_pnl": "-576.44"
+          },
+          {
+            "window": 14,
+            "candidate": "surge25_t4",
+            "net_pnl": "-492.77"
+          },
+          {
+            "window": 14,
+            "candidate": "surge40_t5",
+            "net_pnl": "-732.05"
+          },
+          {
+            "window": 15,
+            "candidate": "surge25_t3",
+            "net_pnl": "-690.99"
+          },
+          {
+            "window": 15,
+            "candidate": "surge40_t4",
+            "net_pnl": "-559.21"
+          },
+          {
+            "window": 15,
+            "candidate": "surge40_t5",
+            "net_pnl": "-531.16"
+          },
+          {
+            "window": 16,
+            "candidate": "surge25_t3",
+            "net_pnl": "-593.38"
+          },
+          {
+            "window": 16,
+            "candidate": "surge25_t5",
+            "net_pnl": "-560.80"
+          },
+          {
+            "window": 16,
+            "candidate": "surge40_t4",
+            "net_pnl": "-478.20"
+          },
+          {
+            "window": 17,
+            "candidate": "surge25_t3",
+            "net_pnl": "-628.66"
+          },
+          {
+            "window": 17,
+            "candidate": "surge40_t4",
+            "net_pnl": "-706.68"
+          },
+          {
+            "window": 17,
+            "candidate": "surge40_t5",
+            "net_pnl": "-683.89"
+          },
+          {
+            "window": 18,
+            "candidate": "surge25_t3",
+            "net_pnl": "-627.32"
+          },
+          {
+            "window": 18,
+            "candidate": "surge25_t5",
+            "net_pnl": "-593.31"
+          },
+          {
+            "window": 18,
+            "candidate": "surge40_t4",
+            "net_pnl": "-791.87"
+          },
+          {
+            "window": 19,
+            "candidate": "surge25_t5",
+            "net_pnl": "-166.29"
+          },
+          {
+            "window": 19,
+            "candidate": "surge40_t3",
+            "net_pnl": "-422.76"
+          },
+          {
+            "window": 19,
+            "candidate": "surge40_t4",
+            "net_pnl": "-411.61"
+          },
+          {
+            "window": 20,
+            "candidate": "surge25_t3",
+            "net_pnl": "-669.62"
+          },
+          {
+            "window": 20,
+            "candidate": "surge25_t4",
+            "net_pnl": "-615.01"
+          },
+          {
+            "window": 20,
+            "candidate": "surge40_t5",
+            "net_pnl": "-578.44"
+          },
+          {
+            "window": 21,
+            "candidate": "surge25_t3",
+            "net_pnl": "-591.95"
+          },
+          {
+            "window": 21,
+            "candidate": "surge25_t4",
+            "net_pnl": "-642.98"
+          },
+          {
+            "window": 21,
+            "candidate": "surge40_t5",
+            "net_pnl": "-645.73"
+          },
+          {
+            "window": 22,
+            "candidate": "surge25_t4",
+            "net_pnl": "-594.47"
+          },
+          {
+            "window": 22,
+            "candidate": "surge25_t5",
+            "net_pnl": "-589.87"
+          },
+          {
+            "window": 22,
+            "candidate": "surge40_t3",
+            "net_pnl": "-642.74"
+          },
+          {
+            "window": 23,
+            "candidate": "surge25_t4",
+            "net_pnl": "-567.70"
+          },
+          {
+            "window": 23,
+            "candidate": "surge25_t5",
+            "net_pnl": "-575.11"
+          },
+          {
+            "window": 23,
+            "candidate": "surge40_t3",
+            "net_pnl": "-634.78"
+          },
+          {
+            "window": 24,
+            "candidate": "surge25_t4",
+            "net_pnl": "-518.13"
+          },
+          {
+            "window": 24,
+            "candidate": "surge25_t5",
+            "net_pnl": "-524.12"
+          },
+          {
+            "window": 24,
+            "candidate": "surge40_t3",
+            "net_pnl": "-594.19"
+          },
+          {
+            "window": 25,
+            "candidate": "surge25_t3",
+            "net_pnl": "-604.35"
+          },
+          {
+            "window": 25,
+            "candidate": "surge25_t5",
+            "net_pnl": "-595.77"
+          },
+          {
+            "window": 25,
+            "candidate": "surge40_t4",
+            "net_pnl": "-670.03"
+          },
+          {
+            "window": 26,
+            "candidate": "surge25_t5",
+            "net_pnl": "-627.68"
+          },
+          {
+            "window": 26,
+            "candidate": "surge40_t3",
+            "net_pnl": "-645.67"
+          },
+          {
+            "window": 26,
+            "candidate": "surge40_t4",
+            "net_pnl": "-671.83"
+          },
+          {
+            "window": 27,
+            "candidate": "surge25_t3",
+            "net_pnl": "-383.88"
+          },
+          {
+            "window": 27,
+            "candidate": "surge40_t4",
+            "net_pnl": "-540.92"
+          },
+          {
+            "window": 27,
+            "candidate": "surge40_t5",
+            "net_pnl": "-507.30"
+          },
+          {
+            "window": 28,
+            "candidate": "surge25_t3",
+            "net_pnl": "-649.55"
+          },
+          {
+            "window": 28,
+            "candidate": "surge25_t4",
+            "net_pnl": "-668.28"
+          },
+          {
+            "window": 28,
+            "candidate": "surge40_t5",
+            "net_pnl": "-515.95"
+          },
+          {
+            "window": 29,
+            "candidate": "surge25_t3",
+            "net_pnl": "-661.89"
+          },
+          {
+            "window": 29,
+            "candidate": "surge25_t4",
+            "net_pnl": "-616.39"
+          },
+          {
+            "window": 29,
+            "candidate": "surge40_t5",
+            "net_pnl": "-510.42"
+          },
+          {
+            "window": 30,
+            "candidate": "surge25_t5",
+            "net_pnl": "-548.91"
+          },
+          {
+            "window": 30,
+            "candidate": "surge40_t3",
+            "net_pnl": "-521.85"
+          },
+          {
+            "window": 30,
+            "candidate": "surge40_t4",
+            "net_pnl": "-442.63"
+          },
+          {
+            "window": 31,
+            "candidate": "surge25_t5",
+            "net_pnl": "-402.59"
+          },
+          {
+            "window": 31,
+            "candidate": "surge40_t3",
+            "net_pnl": "-501.82"
+          },
+          {
+            "window": 31,
+            "candidate": "surge40_t4",
+            "net_pnl": "-558.37"
+          }
+        ]
+      },
+      "baseline_net_pnl": "-21066.37",
+      "direction": {
+        "long": {
+          "trades": 660,
+          "net_pnl": "-10484.21"
+        },
+        "short": {
+          "trades": 474,
+          "net_pnl": "-8090.77"
+        }
+      }
+    }
+  }
+]

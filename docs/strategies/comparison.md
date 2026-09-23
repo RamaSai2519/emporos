@@ -21,6 +21,14 @@ record (`emporos backtest verdicts list`); this document reproduces them and lin
 | squeeze_breakout_v1 | **rejected** | 167 | -950.83 | 2,225.50 | -3,176.33 | 0.105 | 22.2% | -6.19% | benchmark_50k/squeeze_breakout_v1.md |
 | momentum_v1 | no verdict (backtested, loses) | — | -14,015.76 | 14,400.78 | -28,416.54 | — | — | -28.42% | ../backtests/README.md |
 | hold_baseline_v1 | baseline, never enabled | — | — | — | — | — | — | — | config, never a candidate |
+| liquidity_thrust_v1 | **rejected** (EM-171) | 1,134 | -3,455.09 | 15,119.89 | -18,574.98 | 0.320 | 24.1% | -31.18% | em171/liquidity_thrust_v1.md |
+
+`liquidity_thrust_v1` (EM-171, 2026-09-23) is judged differently from the eleven above: it ran over
+2022-08-01 to 2026-09-18 (EM-132's ten-year backfill, not the one-year window the eleven used), so
+it is the first strategy for which `EnoughHistory` (1,080 trading days) and `EnoughTrades` (1,134)
+both PASS — no verdict here was capped below VALIDATED by thin evidence. It still failed cleanly:
+gross P&L is negative before costs, a different failure mode from the eleven's cost-drag story.
+Detail: `em171-hypotheses.md`.
 
 All figures are real 5-minute bars over 2025-09-22 to 2026-09-18, out-of-sample walk-forward
 windows on 50,000 rupees under `config/robustness/benchmark.yaml` (10% per position, 2% daily

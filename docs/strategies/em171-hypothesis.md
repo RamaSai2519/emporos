@@ -65,6 +65,30 @@ objective on the training window only). Six candidates over two axes: how rare t
 reasonable middle values (a 3x-plus volume surge is unusual for a liquid large-cap 5-minute bar; 75%
 close-location is a clearly one-sided bar, not a coin flip).
 
+## Result (2026-09-23)
+
+**REJECTED.** Full report: `docs/strategies/em171/liquidity_thrust_v1.md`. Out-of-sample: 1,134
+trades over 32 walk-forward windows, net -18,574.98 (gross -3,455.09, charges -15,119.89), profit
+factor 0.320, win rate 24.1%. 0 of 32 windows profitable, 0 of 27 instruments profitable, 0% of
+neighbouring parameter sets profitable. Gross P&L is negative before any cost is applied: the
+signal itself has no edge here, not just a cost-drag problem like the eleven price-based rejects.
+
+**The thing this session set out to test worked.** `EnoughHistory` (1,080 trading days >= 500) and
+`EnoughTrades` (1,134 >= 150) both PASS — the first time either gate has passed in this project.
+Every earlier curation was structurally capped below VALIDATED regardless of performance; this one
+was not, and still failed cleanly on its own merits (`ProfitAfterCosts` FAIL, P(net > 0) = 0.000).
+That is a more informative result than any of the eleven could give: a strategy tried here for the
+first time, on genuinely sufficient evidence, still has no edge. It does not resurrect the
+structural cost-drag story either — the always-long baseline lost less over the same 32 windows
+(-21,066.37) but liquidity_thrust_v1's own gross return is negative, so its problem is the signal,
+not (only) the 0.37% hurdle.
+
+**What this rules out, and what it doesn't.** Volume-surge-plus-extreme-close, as specified here
+(3-4x trailing volume, 75% close location, fixed ATR targets 3-5x), is not a source of edge on this
+universe at 5-minute bars. It does not test smaller/looser surge thresholds, a trailing rather than
+fixed exit, or volume divergence (falling volume into a move, rather than surging) — those would be
+new, separately pre-declared hypotheses, not a re-tune of this one.
+
 ## Honest limits of the evidence, going in
 
 - **Survivorship**: the 29-symbol universe is today's, used across the whole range (`docs/data/
