@@ -96,6 +96,22 @@ class LiquidityBucket:
         return self._bucket.classify(Decimal(candle.volume))
 
 
+def amihud_illiquidity(
+    previous_close: Decimal | None, close: Decimal, volume: int
+) -> Decimal | None:
+    """The Amihud (2002) illiquidity ratio for one bar: `|return| / volume`, a standard proxy for
+    effective bid-ask spread when no Level-1 quote data is available. `None` for a bar with no
+    trades (undefined, not zero) or with no prior close to measure a move from yet."""
+    if volume == 0:
+        return None
+    move = (
+        Decimal(0)
+        if previous_close is None or previous_close == Decimal(0)
+        else DecimalMath.divide(abs(close - previous_close), previous_close)
+    )
+    return DecimalMath.divide(move, Decimal(volume))
+
+
 class SpreadProxyBucket:
     """Trailing percentile rank of the Amihud (2002) illiquidity ratio — `|return| / volume` —
     a standard proxy for effective bid-ask spread when no Level-1 quote data is available (this
@@ -113,17 +129,10 @@ class SpreadProxyBucket:
         self._previous_close: Decimal | None = None
 
     def update(self, candle: Candle) -> str | None:
-        close, volume = candle.close.amount, candle.volume
         previous = self._previous_close
-        self._previous_close = close
-        if volume == 0:
-            return None  # illiquidity is undefined for a bar with no trades, not zero
-        move = (
-            Decimal(0)
-            if previous is None or previous == Decimal(0)
-            else DecimalMath.divide(abs(close - previous), previous)
-        )
-        return self._bucket.classify(DecimalMath.divide(move, Decimal(volume)))
+        self._previous_close = candle.close.amount
+        reading = amihud_illiquidity(previous, candle.close.amount, candle.volume)
+        return None if reading is None else self._bucket.classify(reading)
 
 
 class MarketRegimeAxis:
@@ -147,6 +156,40 @@ class SectorLookup(Protocol):
     nothing it does not call."""
 
     def sector_of(self, instrument_id: str) -> str | None: ...
+
+
+class MomentumTailAxis:
+    """Trailing percentile rank of the instrument's own k-bar return against its own recent
+    history — a SELF-RELATIVE proxy for "is this instrument's momentum currently strong or weak
+    right now", used to segment EM-181's order-flow features by momentum regime. This is NOT
+    `emporos.research.cross_sectional`'s true cross-sectional residual momentum, which needs the
+    whole universe at once to rank instruments against each other and neutralize market/sector —
+    a `RegimeAxis` only ever sees one instrument's own causal bar stream, the same structural
+    reason `LiquidityBucket` is self-relative rather than a cross-sectional ADV rank. Documented
+    as the simplification it is, not presented as the real thing."""
+
+    name = "momentum"
+
+    def __init__(
+        self,
+        k_bars: int = 12,
+        window: int = 60,
+        low: Decimal = Decimal("0.33"),
+        high: Decimal = Decimal("0.67"),
+    ) -> None:
+        self._k_bars = k_bars
+        self._bucket = _PercentileBucket(window, low, high)
+        self._closes: deque[Decimal] = deque(maxlen=k_bars + 1)
+
+    def update(self, candle: Candle) -> str | None:
+        self._closes.append(candle.close.amount)
+        if len(self._closes) <= self._k_bars:
+            return None
+        origin = self._closes[0]
+        if origin == Decimal(0):
+            return None
+        k_bar_return = DecimalMath.divide(self._closes[-1] - origin, origin)
+        return self._bucket.classify(k_bar_return)
 
 
 class SectorAxis:

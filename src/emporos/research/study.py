@@ -66,7 +66,7 @@ class FeatureStudy:
     ) -> FeatureTrial:
         report = segment.report
         trial_id = "|".join((
-            hypothesis.hypothesis_id, definition.content_hash[-16:],
+            hypothesis.hypothesis_id, role.value, definition.content_hash[-16:],
             instrument_id, segment.horizon.label, segment.axis or "pooled", segment.label or "all",
         ))  # fmt: skip
         return FeatureTrial(

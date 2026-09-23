@@ -13,6 +13,7 @@ from emporos.research.regimes import (
     LOW,
     LiquidityBucket,
     MarketRegimeAxis,
+    MomentumTailAxis,
     SectorAxis,
     SpreadProxyBucket,
     VolatilityBucket,
@@ -102,6 +103,24 @@ def test_spread_proxy_bucket_skips_a_bar_with_no_trades() -> None:
     bucket = SpreadProxyBucket(window=2)
 
     assert bucket.update(bar(0, 100, volume=0)) is None
+
+
+def test_momentum_tail_axis_needs_a_full_window_before_it_labels_anything() -> None:
+    axis = MomentumTailAxis(k_bars=1, window=3)
+
+    labels = [axis.update(bar(i, 100 + i)) for i in range(3)]
+
+    assert labels == [None, None, None]
+
+
+def test_momentum_tail_axis_flags_a_burst_of_gains_as_high() -> None:
+    axis = MomentumTailAxis(k_bars=1, window=3)
+    for i, price in enumerate([100, 101, 102, 103]):
+        axis.update(bar(i, price))
+
+    label = axis.update(bar(4, 200))
+
+    assert label == HIGH
 
 
 def test_market_regime_axis_wraps_the_live_classifier() -> None:

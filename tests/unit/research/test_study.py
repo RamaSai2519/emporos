@@ -111,6 +111,30 @@ async def test_a_test_run_over_exactly_the_holdout_records_trials() -> None:
     )
 
 
+async def test_a_train_run_and_a_test_run_of_the_same_hypothesis_do_not_collide() -> None:
+    """Regression guard (found while proving EM-181): a TRAIN run over one window and a TEST run
+    over the pre-declared holdout, for the SAME hypothesis/feature/instrument/segment, must record
+    as two distinct trials, not raise `DuplicateFeatureTrialError` on the second `append`."""
+    feature_study, ledger = study()
+    definition = FeatureDefinition("momentum", "v1", "", {})
+    declared = hypothesis()
+
+    train_trials = await feature_study.run(
+        definition, AlwaysOn(), {"NSE:1": uptrend(20)},
+        hypothesis=declared, role=TrialRole.TRAIN,
+        dataset_version="sha256:x", study_first=date(2026, 1, 1), study_last=date(2026, 1, 15),
+    )  # fmt: skip
+    test_trials = await feature_study.run(
+        definition, AlwaysOn(), {"NSE:1": uptrend(20)},
+        hypothesis=declared, role=TrialRole.TEST,
+        dataset_version="sha256:x", study_first=date(2026, 1, 20), study_last=date(2026, 2, 1),
+    )  # fmt: skip
+
+    assert train_trials and test_trials
+    assert {t.trial_id for t in train_trials}.isdisjoint({t.trial_id for t in test_trials})
+    assert len(await ledger.all()) == len(train_trials) + len(test_trials)
+
+
 async def test_a_test_run_not_exactly_the_holdout_is_refused() -> None:
     feature_study, _ = study()
     definition = FeatureDefinition("momentum", "v1", "", {})
