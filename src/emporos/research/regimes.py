@@ -96,6 +96,36 @@ class LiquidityBucket:
         return self._bucket.classify(Decimal(candle.volume))
 
 
+class SpreadProxyBucket:
+    """Trailing percentile rank of the Amihud (2002) illiquidity ratio — `|return| / volume` —
+    a standard proxy for effective bid-ask spread when no Level-1 quote data is available (this
+    codebase ingests OHLCV candles only, no order book). HIGH = wide effective spread (illiquid,
+    costly to trade); distinct from `VolatilityBucket` (range-based) and `LiquidityBucket`
+    (raw volume): a bar can be volatile and heavily traded yet still cheap to cross, or quiet and
+    thin yet expensive to cross."""
+
+    name = "spread"
+
+    def __init__(
+        self, window: int = 60, low: Decimal = Decimal("0.33"), high: Decimal = Decimal("0.67")
+    ) -> None:
+        self._bucket = _PercentileBucket(window, low, high)
+        self._previous_close: Decimal | None = None
+
+    def update(self, candle: Candle) -> str | None:
+        close, volume = candle.close.amount, candle.volume
+        previous = self._previous_close
+        self._previous_close = close
+        if volume == 0:
+            return None  # illiquidity is undefined for a bar with no trades, not zero
+        move = (
+            Decimal(0)
+            if previous is None or previous == Decimal(0)
+            else DecimalMath.divide(abs(close - previous), previous)
+        )
+        return self._bucket.classify(DecimalMath.divide(move, Decimal(volume)))
+
+
 class MarketRegimeAxis:
     """Wraps the live `MarketRegimeClassifier` (trending/ranging/high_vol/low_vol) as a
     segmentation axis, so feature research groups by the SAME regime definition a strategy would

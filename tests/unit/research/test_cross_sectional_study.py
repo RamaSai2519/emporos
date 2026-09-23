@@ -1,0 +1,136 @@
+"""EM-179: `CrossSectionalStudy` — wiring the engine, the ledger and the holdout gate together."""
+
+from __future__ import annotations
+
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
+
+import pytest
+from tests.unit.research.conftest import START
+
+from emporos.core.clock import FixedClock
+from emporos.domain.candles import Candle, Timeframe
+from emporos.domain.experiments import TrialRole
+from emporos.domain.fees import FeeSchedule
+from emporos.domain.hypotheses import HypothesisDeclaration
+from emporos.domain.instruments import Exchange
+from emporos.domain.money import Money
+from emporos.research.costs import TransactionCostModel
+from emporos.research.cross_sectional import CrossSectionalEngine
+from emporos.research.cross_sectional_ledger import InMemoryCrossSectionalTrialLedger
+from emporos.research.cross_sectional_study import CrossSectionalStudy
+from emporos.research.factors import AlignedUniverse, BetaEstimator
+from emporos.research.horizons import ForwardReturnCalculator, Horizon
+from emporos.research.hypotheses import HoldoutViolation
+
+SCHEDULE = FeeSchedule(
+    name="test",
+    effective_from=date(2026, 1, 1),
+    brokerage_flat=Money.of("20"),
+    brokerage_percent=Decimal("0.1"),
+    brokerage_minimum=Money.of("5"),
+    stt_sell_percent=Decimal("0.025"),
+    exchange_transaction_percent={Exchange.NSE: Decimal("0.0030699")},
+    sebi_per_crore=Money.of("10"),
+    stamp_duty_buy_percent=Decimal("0.003"),
+    gst_percent=Decimal("18"),
+)
+NOW = datetime(2026, 3, 1, tzinfo=UTC)
+
+
+def _instrument(instrument_id: str, closes: list[float]) -> list[Candle]:
+    out = []
+    for i, close in enumerate(closes):
+        amount = Decimal(str(close))
+        out.append(
+            Candle(
+                instrument_id=instrument_id, timeframe=Timeframe.M5,
+                ts=START + i * Timeframe.M5.duration, open=Money.of(amount), high=Money.of(amount),
+                low=Money.of(amount), close=Money.of(amount), volume=1000,
+            )
+        )  # fmt: skip
+    return out
+
+
+def universe() -> AlignedUniverse:
+    n = 8
+    b_close, c_close = [100.0], [100.0]
+    for i in range(1, n):
+        r = 0.01 if i % 2 else -0.01
+        b_close.append(b_close[-1] * (1 + r))
+        c_close.append(c_close[-1] * (1 - r))
+    return AlignedUniverse({"A": _instrument("A", b_close), "B": _instrument("B", c_close)})
+
+
+def study() -> tuple[CrossSectionalStudy, InMemoryCrossSectionalTrialLedger]:
+    engine = CrossSectionalEngine(
+        signal_horizons=[Horizon(timedelta(minutes=5), 1)],
+        holding_returns=ForwardReturnCalculator(Timeframe.M5, (timedelta(minutes=5),)),
+        beta_estimator=BetaEstimator(window=2, min_samples=2),
+        cost_model=TransactionCostModel(SCHEDULE),
+        exchange=Exchange.NSE,
+        capital=Money.of(Decimal(50_000)),
+        tail_fraction=Decimal("0.5"),
+    )
+    ledger = InMemoryCrossSectionalTrialLedger()
+    return CrossSectionalStudy(engine, ledger, FixedClock(NOW)), ledger
+
+
+def hypothesis(**overrides: object) -> HypothesisDeclaration:
+    fields: dict[str, object] = {
+        "hypothesis_id": "h1", "feature_name": "residual_momentum", "feature_version": "v1",
+        "study_first": date(2026, 1, 1), "study_last": date(2026, 2, 1),
+        "holdout_first": date(2026, 1, 20), "holdout_last": date(2026, 2, 1),
+        "declared_at": NOW,
+    }  # fmt: skip
+    fields.update(overrides)
+    return HypothesisDeclaration(**fields)  # type: ignore[arg-type]
+
+
+async def test_a_standalone_run_outside_the_holdout_records_trials() -> None:
+    cross_study, ledger = study()
+
+    trials = await cross_study.run(
+        universe(), hypothesis=hypothesis(), role=TrialRole.TRAIN,
+        dataset_version="sha256:x", study_first=date(2026, 1, 1), study_last=date(2026, 1, 15),
+    )  # fmt: skip
+
+    assert trials
+    assert sorted(await ledger.all(), key=lambda t: t.trial_id) == sorted(
+        trials, key=lambda t: t.trial_id
+    )
+
+
+async def test_a_train_run_touching_the_holdout_is_refused() -> None:
+    cross_study, _ = study()
+
+    with pytest.raises(HoldoutViolation):
+        await cross_study.run(
+            universe(), hypothesis=hypothesis(), role=TrialRole.TRAIN,
+            dataset_version="sha256:x", study_first=date(2026, 1, 1), study_last=date(2026, 1, 25),
+        )  # fmt: skip
+
+
+async def test_a_test_run_over_exactly_the_holdout_records_trials() -> None:
+    cross_study, ledger = study()
+
+    trials = await cross_study.run(
+        universe(), hypothesis=hypothesis(), role=TrialRole.TEST,
+        dataset_version="sha256:x", study_first=date(2026, 1, 20), study_last=date(2026, 2, 1),
+    )  # fmt: skip
+
+    assert trials
+    assert all(t.role is TrialRole.TEST for t in trials)
+    assert sorted(await ledger.all(), key=lambda t: t.trial_id) == sorted(
+        trials, key=lambda t: t.trial_id
+    )
+
+
+async def test_a_test_run_not_exactly_the_holdout_is_refused() -> None:
+    cross_study, _ = study()
+
+    with pytest.raises(HoldoutViolation):
+        await cross_study.run(
+            universe(), hypothesis=hypothesis(), role=TrialRole.TEST,
+            dataset_version="sha256:x", study_first=date(2026, 1, 21), study_last=date(2026, 2, 1),
+        )  # fmt: skip

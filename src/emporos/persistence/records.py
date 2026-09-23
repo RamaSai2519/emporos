@@ -308,6 +308,28 @@ class HypothesisRecord(Record):
     declared_at: datetime
 
 
+class CrossSectionalTrialRecord(Record):
+    """One attempted residual-momentum tail evaluation, append-only
+    (`emporos.research.cross_sectional_ledger.CrossSectionalTrial`)."""
+
+    hypothesis_id: str
+    signal_horizon_label: str
+    holding_horizon_label: str
+    tail: str
+    role: str
+    dataset_version: str
+    cost_model: str
+    regime_axis: str | None = None
+    regime_label: str | None = None
+    sample_size: int
+    gross_expectancy: DecimalField | None = None
+    net_expectancy: DecimalField | None = None
+    hit_rate: DecimalField | None = None
+    t_statistic: DecimalField | None = None
+    recorded_at: datetime
+    note: str = ""
+
+
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None

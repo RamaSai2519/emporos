@@ -23,6 +23,7 @@ from emporos.persistence.records import (
     BacktestTradeRecord,
     CommandRecord,
     CommandResultRecord,
+    CrossSectionalTrialRecord,
     ExecutionRecord,
     FeatureTrialRecord,
     HypothesisRecord,
@@ -254,6 +255,13 @@ class FeatureTrialRepository(Repository[FeatureTrialRecord]):
 class HypothesisRepository(Repository[HypothesisRecord]):
     def __init__(self, database: Database) -> None:
         super().__init__(database, Collection.HYPOTHESIS_REGISTRY, HypothesisRecord)
+
+
+class CrossSectionalTrialRepository(Repository[CrossSectionalTrialRecord]):
+    def __init__(self, database: Database) -> None:
+        super().__init__(
+            database, Collection.CROSS_SECTIONAL_TRIAL_LEDGER, CrossSectionalTrialRecord
+        )
 
 
 class KillSwitchRepository(Repository[KillSwitchRecord]):

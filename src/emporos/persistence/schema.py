@@ -195,6 +195,12 @@ PLATFORM_SCHEMA = Schema(
         ),
         # A declared hypothesis is never edited or removed; `_id` is the hypothesis id.
         _spec(Collection.HYPOTHESIS_REGISTRY, IndexSpec.on("feature_name", "declared_at")),
+        # No TTL, same reasoning as the feature trial ledger above.
+        _spec(
+            Collection.CROSS_SECTIONAL_TRIAL_LEDGER,
+            IndexSpec.on("hypothesis_id", "recorded_at"),
+            IndexSpec.on("tail", "signal_horizon_label", "holding_horizon_label"),
+        ),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),

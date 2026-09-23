@@ -14,6 +14,7 @@ from emporos.research.regimes import (
     LiquidityBucket,
     MarketRegimeAxis,
     SectorAxis,
+    SpreadProxyBucket,
     VolatilityBucket,
 )
 
@@ -67,6 +68,40 @@ def test_volatility_bucket_flags_a_wide_true_range_as_high() -> None:
 def test_a_percentile_bucket_rejects_bad_thresholds() -> None:
     with pytest.raises(ValueError, match="0 <= low < high <= 1"):
         LiquidityBucket(low=Decimal("0.8"), high=Decimal("0.2"))
+
+
+def test_spread_proxy_bucket_needs_a_full_window_before_it_labels_anything() -> None:
+    bucket = SpreadProxyBucket(window=3)
+
+    labels = [bucket.update(bar(i, 100, volume=100)) for i in range(2)]
+
+    assert labels == [None, None]
+
+
+def test_spread_proxy_bucket_flags_a_big_move_on_thin_volume_as_high() -> None:
+    bucket = SpreadProxyBucket(window=3, low=Decimal("0.33"), high=Decimal("0.67"))
+    for i, close in enumerate([100, 100, 100]):
+        bucket.update(bar(i, close, volume=1000))
+
+    label = bucket.update(bar(3, 200, volume=10))  # a +100% move on almost no volume
+
+    assert label == HIGH
+
+
+def test_spread_proxy_bucket_flags_a_tiny_move_on_heavy_volume_as_low() -> None:
+    bucket = SpreadProxyBucket(window=4, low=Decimal("0.33"), high=Decimal("0.67"))
+    for i, close in enumerate([100, 101, 100, 101]):
+        bucket.update(bar(i, close, volume=1000))
+
+    label = bucket.update(bar(4, Decimal("101.01"), volume=1_000_000))  # tiny move, huge volume
+
+    assert label == LOW
+
+
+def test_spread_proxy_bucket_skips_a_bar_with_no_trades() -> None:
+    bucket = SpreadProxyBucket(window=2)
+
+    assert bucket.update(bar(0, 100, volume=0)) is None
 
 
 def test_market_regime_axis_wraps_the_live_classifier() -> None:

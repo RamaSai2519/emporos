@@ -36,6 +36,7 @@ class Collection(StrEnum):
     TRIAL_LEDGER = "trial_ledger"
     FEATURE_TRIAL_LEDGER = "feature_trial_ledger"
     HYPOTHESIS_REGISTRY = "hypothesis_registry"
+    CROSS_SECTIONAL_TRIAL_LEDGER = "cross_sectional_trial_ledger"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"
     CORPORATE_ACTION_QUARANTINE = "corporate_action_quarantine"
