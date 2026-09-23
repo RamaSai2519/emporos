@@ -24,6 +24,8 @@ from emporos.persistence.records import (
     CommandRecord,
     CommandResultRecord,
     ExecutionRecord,
+    FeatureTrialRecord,
+    HypothesisRecord,
     InstrumentRecord,
     InstrumentVersionRecord,
     KillSwitchRecord,
@@ -242,6 +244,16 @@ class MarketCalendarRepository(Repository[MarketCalendarRecord]):
 class QuarantineRepository(Repository[QuarantineRecord]):
     def __init__(self, database: Database) -> None:
         super().__init__(database, Collection.CORPORATE_ACTION_QUARANTINE, QuarantineRecord)
+
+
+class FeatureTrialRepository(Repository[FeatureTrialRecord]):
+    def __init__(self, database: Database) -> None:
+        super().__init__(database, Collection.FEATURE_TRIAL_LEDGER, FeatureTrialRecord)
+
+
+class HypothesisRepository(Repository[HypothesisRecord]):
+    def __init__(self, database: Database) -> None:
+        super().__init__(database, Collection.HYPOTHESIS_REGISTRY, HypothesisRecord)
 
 
 class KillSwitchRepository(Repository[KillSwitchRecord]):

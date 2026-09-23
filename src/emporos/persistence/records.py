@@ -273,6 +273,41 @@ class TrialRecord(Record):
     note: str = ""
 
 
+class FeatureTrialRecord(Record):
+    """One attempted feature evaluation, append-only (`emporos.research.ledger.FeatureTrial`)."""
+
+    hypothesis_id: str
+    feature_name: str
+    feature_version: str
+    horizon_label: str
+    role: str
+    dataset_version: str
+    cost_model: str
+    regime_axis: str | None = None
+    regime_label: str | None = None
+    sample_size: int
+    conditional_expectancy: DecimalField | None = None
+    cost_adjusted_expectancy: DecimalField | None = None
+    hit_rate: DecimalField | None = None
+    rank_ic: DecimalField | None = None
+    decile_spread: DecimalField | None = None
+    t_statistic: DecimalField | None = None
+    recorded_at: datetime
+    note: str = ""
+
+
+class HypothesisRecord(Record):
+    """One pre-declared hypothesis, append-only (`emporos.domain.hypotheses`)."""
+
+    feature_name: str
+    feature_version: str
+    study_first: str
+    study_last: str
+    holdout_first: str
+    holdout_last: str
+    declared_at: datetime
+
+
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None

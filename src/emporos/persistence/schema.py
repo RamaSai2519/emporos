@@ -186,6 +186,15 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("strategy", "recorded_at"),
             IndexSpec.on("experiment", "recorded_at"),
         ),
+        # No TTL, same reasoning as the trial ledger above: how many feature trials were run is
+        # evidence, and an expired entry would make a search look smaller than it was.
+        _spec(
+            Collection.FEATURE_TRIAL_LEDGER,
+            IndexSpec.on("hypothesis_id", "recorded_at"),
+            IndexSpec.on("feature_name", "feature_version", "recorded_at"),
+        ),
+        # A declared hypothesis is never edited or removed; `_id` is the hypothesis id.
+        _spec(Collection.HYPOTHESIS_REGISTRY, IndexSpec.on("feature_name", "declared_at")),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),

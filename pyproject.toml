@@ -85,6 +85,7 @@ source_modules = [
     "emporos.marketdata", "emporos.history", "emporos.strategies", "emporos.signals",
     "emporos.risk", "emporos.execution", "emporos.portfolio", "emporos.backtest",
     "emporos.session", "emporos.observability", "emporos.control", "emporos.api",
+    "emporos.research",
 ]
 forbidden_modules = ["emporos.persistence.candle_hot"]
 # Reaching CandleRepository (which owns the hot store) is the point; only a direct import is a leak.
@@ -189,3 +190,13 @@ source_modules = [
     "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
 ]
 forbidden_modules = ["emporos.jev"]
+
+[[tool.importlinter.contracts]]
+name = "research is an offline analysis layer: nothing it composes imports it back"
+type = "forbidden"
+source_modules = [
+    "emporos.domain", "emporos.core", "emporos.strategies", "emporos.risk",
+    "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
+    "emporos.backtest",
+]
+forbidden_modules = ["emporos.research"]
