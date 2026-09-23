@@ -27,6 +27,7 @@ from emporos.backtest.clock import BarClock
 from emporos.backtest.costs import BacktestCosts, CostSummary, ScheduleSource
 from emporos.backtest.feed import ClosedBarFeed, FeedWindow, WarmupLoader
 from emporos.backtest.flow import EventSettler, OrderEventQueue, OrderFlow, RunCounters
+from emporos.backtest.journal import BacktestEventSink, NoSink
 from emporos.backtest.metrics.breakdown import build_regime_timeline
 from emporos.backtest.metrics.decimal_math import CONTEXT
 from emporos.backtest.metrics.report import MetricsCalculator, MetricsReport, MetricsSettings
@@ -103,6 +104,7 @@ class BacktestEngine:
         snapshotter: ConfigSnapshotter | None = None,
         metrics: Callable[[MetricsSettings], MetricsCalculator] = MetricsCalculator,
         progress: BacktestProgressSink | None = None,
+        sink: BacktestEventSink | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -113,6 +115,7 @@ class BacktestEngine:
         self._snapshotter = snapshotter or ConfigSnapshotter()
         self._metrics = metrics
         self._progress: BacktestProgressSink = progress or NullBacktestProgressSink()
+        self._sink: BacktestEventSink = sink or NoSink()
 
     async def run(self, spec: BacktestSpec) -> BacktestResult:
         """One run, under the backtest's own decimal context: prices, charges and averages must
@@ -138,7 +141,7 @@ class BacktestEngine:
         square_off = SessionSquareOff(config.session.square_off_at, lambda _id: run_id, clock)
         flow = OrderFlow(
             broker, gate, MarketableLimitPricing(config.execution.limit_buffer_bps, self._ticks),
-            square_off, queue, counters,
+            square_off, queue, counters, sink=self._sink,
         )  # fmt: skip
         alerts = CollectedAlerts()
         prepared = StrategyRunnerBuilder(self._registry).build(
@@ -158,7 +161,7 @@ class BacktestEngine:
 
         session = BacktestSession(
             broker, portfolio, flow, queue,
-            EventSettler(queue, costs, portfolio, prepared.runner, counters),
+            EventSettler(queue, costs, portfolio, prepared.runner, counters, sink=self._sink),
             square_off,
             ForcedClosePricing(spec.fills.forced_close_penalty_bps),
             counters,
@@ -167,6 +170,8 @@ class BacktestEngine:
         )  # fmt: skip
         feed = ClosedBarFeed(self._reader, config.instrument_ids, config.timeframe, spec.window)
         report = await BarReplay(prepared.runner, clock, session).run(feed)
+        for trade in portfolio.closed_trades:
+            self._sink.on_trade(trade)
         regime_timelines = {
             instrument_id: build_regime_timeline(bars) for instrument_id, bars in daily_bars.items()
         }

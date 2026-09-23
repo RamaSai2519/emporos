@@ -18,6 +18,7 @@ from typing import Protocol
 
 from emporos.backtest.broker import SimulatedBroker
 from emporos.backtest.costs import BacktestCosts
+from emporos.backtest.journal import BacktestEventSink, NoSink
 from emporos.backtest.orders import FillReason, SimEvent
 from emporos.backtest.portfolio import BacktestPortfolio
 from emporos.backtest.pricing import GateRejection, OrderPricing, SignalGate
@@ -68,6 +69,7 @@ class OrderFlow:
         cutoff: SessionCutoff,
         queue: OrderEventQueue,
         counters: RunCounters,
+        sink: BacktestEventSink | None = None,
     ) -> None:
         self._broker = broker
         self._gate = gate
@@ -75,9 +77,11 @@ class OrderFlow:
         self._cutoff = cutoff
         self._queue = queue
         self._counters = counters
+        self._sink: BacktestEventSink = sink or NoSink()
 
     async def submit(self, signal: Signal) -> None:
         self._counters.signals += 1
+        self._sink.on_signal(signal, system=False)
         if self._cutoff.blocks(signal):
             self._counters.refused_after_square_off += 1
             return
@@ -86,6 +90,7 @@ class OrderFlow:
     async def submit_system(self, signal: Signal) -> None:
         """The session's own exit: counted as a square-off signal, not as the strategy's."""
         self._counters.square_off_signals += 1
+        self._sink.on_signal(signal, system=True)
         self._route(signal)
 
     def _route(self, signal: Signal) -> None:
@@ -95,7 +100,9 @@ class OrderFlow:
             return
         self._counters.orders += 1
         request = self._pricing.order_for(verdict, f"BT{self._counters.orders:08d}")
-        self._queue.push(self._broker.submit(request))
+        event = self._broker.submit(request)
+        self._queue.push(event)
+        self._sink.on_order(signal, request, event)
 
 
 class UpdateReceiver(Protocol):
@@ -112,12 +119,14 @@ class EventSettler:
         portfolio: BacktestPortfolio,
         receiver: UpdateReceiver,
         counters: RunCounters,
+        sink: BacktestEventSink | None = None,
     ) -> None:
         self._queue = queue
         self._costs = costs
         self._portfolio = portfolio
         self._receiver = receiver
         self._counters = counters
+        self._sink: BacktestEventSink = sink or NoSink()
 
     async def settle(self) -> None:
         """Drain the queue. A strategy answer to an update may queue more; those are drained too."""
@@ -126,6 +135,7 @@ class EventSettler:
             if event.fill is not None:
                 charges = self._costs.charges(event.fill)
                 self._portfolio.apply(event.fill, charges.total)
+                self._sink.on_fill(event.fill, charges)
             await self._receiver.handle_order_update(event.update)
 
     def _count(self, event: SimEvent) -> None:

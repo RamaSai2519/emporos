@@ -13,6 +13,7 @@ from typing import ClassVar
 from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
+from emporos.backtest.journal import BacktestEventSink
 from emporos.backtest.pricing import GateContext, GateRejection, SignalGate
 from emporos.backtest.progress import BacktestProgressSink
 from emporos.backtest.settings import FillSettings
@@ -312,12 +313,17 @@ def engine(
     gate: type[SignalGate] | None = None,
     schedules: ScheduleSource | None = None,
     progress: BacktestProgressSink | None = None,
+    sink: BacktestEventSink | None = None,
 ) -> BacktestEngine:
     source = schedules or FixedSchedule()
     reader = InMemoryCandles(candles)
     if gate is None:
-        return BacktestEngine(reader, registry(), FixedTicks(), lambda: source, progress=progress)
-    return BacktestEngine(reader, registry(), FixedTicks(), lambda: source, gate, progress=progress)
+        return BacktestEngine(
+            reader, registry(), FixedTicks(), lambda: source, progress=progress, sink=sink
+        )
+    return BacktestEngine(
+        reader, registry(), FixedTicks(), lambda: source, gate, progress=progress, sink=sink
+    )
 
 
 async def run(
@@ -327,10 +333,12 @@ async def run(
     fills: FillSettings | None = None,
     gate: type[SignalGate] | None = None,
     progress: BacktestProgressSink | None = None,
+    sink: BacktestEventSink | None = None,
 ) -> BacktestResult:
     BuyThenSell.reset()
     SellThenBuy.reset()
-    return await engine(candles, gate, progress=progress).run(spec(strategy, days, fills))
+    built = engine(candles, gate, progress=progress, sink=sink)
+    return await built.run(spec(strategy, days, fills))
 
 
 # A session laid out for `buy_at=2, sell_at=5` (see test_engine): the buy signal is answered on
