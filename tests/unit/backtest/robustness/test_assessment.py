@@ -1,21 +1,39 @@
 """The assessor on the real engine: evidence comes from out-of-sample days only, and every piece
 of it agrees with the run it was drawn from."""
 
+from datetime import date
 from decimal import Decimal
 
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.perturbation import PerturbationRunner
+from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
 from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.tuning import NET_PNL
 from emporos.backtest.walkforward_run import WalkForwardResult
 from emporos.domain.experiments import Verdict
+from emporos.domain.fees import FeeSchedule
+from emporos.domain.instruments import Exchange
+from emporos.domain.money import Money
 from tests.unit.backtest.test_walkforward_run import (
     CANDIDATES,
     RecordingBacktester,
     base_spec,
     runner,
     windows,
+)
+
+SCHEDULE = FeeSchedule(
+    name="test",
+    effective_from=date(2026, 1, 1),
+    brokerage_flat=Money.of("20"),
+    brokerage_percent=Decimal("0.03"),
+    brokerage_minimum=Money.of("5"),
+    stt_sell_percent=Decimal("0.025"),
+    exchange_transaction_percent={Exchange.NSE: Decimal("0.0030699")},
+    sebi_per_crore=Money.of("10"),
+    stamp_duty_buy_percent=Decimal("0.003"),
+    gst_percent=Decimal("18"),
 )
 
 D = Decimal
@@ -124,3 +142,24 @@ async def test_costs_include_every_declared_scenario_in_order() -> None:
     )
 
     assert [c.name for c in report.costs] == [s.name for s in benchmark.cost_scenarios]
+
+
+async def test_edge_evidence_is_none_without_a_configured_portfolio_cost_model() -> None:
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess("s", await walk(), base_spec(), CANDIDATES)
+
+    assert report.evidence.observed_edge_bps is None
+    assert report.evidence.minimum_edge_bps is None
+
+
+async def test_edge_evidence_is_computed_when_a_portfolio_cost_model_is_configured() -> None:
+    cost_model = PortfolioCostModel(SCHEDULE, spread_bps=Decimal(2), slippage_bps=Decimal(5))
+    assessor = RobustnessAssessor(
+        BenchmarkLoader().load(), stats, portfolio_cost_model=cost_model
+    )
+
+    report = await assessor.assess("s", await walk(), base_spec(), CANDIDATES)
+
+    assert report.evidence.observed_edge_bps is not None
+    assert report.evidence.minimum_edge_bps is not None and report.evidence.minimum_edge_bps > 0

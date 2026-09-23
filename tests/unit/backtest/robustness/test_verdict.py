@@ -33,6 +33,7 @@ from emporos.backtest.robustness.verdict import (
     ProfitAfterCosts,
     RegimeDiversity,
     SurvivesAdverseCosts,
+    SurvivesCostError,
     VerdictPolicy,
     WalkForwardWindows,
 )
@@ -82,6 +83,7 @@ def evidence(**overrides: object) -> Evidence:
         "window_nets": tuple(D(n) for n in (200, 300, 250, 250)),
         "worst_window_drawdown": D("0.04"), "monte_carlo": monte_carlo(), "deflated_sharpe": dsr(),
         "pbo": pbo(),
+        "observed_edge_bps": D(50), "minimum_edge_bps": D(10),
         "concentration": concentration(),
         "perturbation": PerturbationReport(tuple(NeighbourRun(0, str(n), D(10)) for n in range(4))),
         "baseline_net_pnl": D(-50),
@@ -174,6 +176,15 @@ class TestSimpleGates:
         assert strict.assess(evidence(pbo=pbo("0.2"))).outcome is PASS
         assert strict.assess(evidence(pbo=pbo("0.8"))).outcome is FAIL
 
+    def test_edge_survives_cost_error_needs_the_configured_safety_margin(self) -> None:
+        gate = SurvivesCostError(T)  # the real config file: margin defaults to 1.5x
+
+        assert gate.assess(evidence()).outcome is PASS  # 50 bps observed vs 10 bps * 1.5 = 15
+        assert gate.assess(evidence(observed_edge_bps=D(12))).outcome is FAIL  # below 15
+        assert gate.assess(evidence(observed_edge_bps=D(15))).outcome is PASS  # exactly at 15
+        assert gate.assess(evidence(observed_edge_bps=None)).outcome is UNKNOWN
+        assert gate.assess(evidence(minimum_edge_bps=None)).outcome is UNKNOWN
+
     def test_baseline(self) -> None:
         gate = BeatsBaseline()
 
@@ -235,7 +246,7 @@ class TestClassification:
         report = self.policy.classify(evidence())
 
         assert report.verdict is Verdict.VALIDATED
-        assert len(report.gates) == 12 and all(g.outcome is PASS for g in report.gates)
+        assert len(report.gates) == 13 and all(g.outcome is PASS for g in report.gates)
 
     def test_one_fail_rejects_however_much_else_passes(self) -> None:
         assert (

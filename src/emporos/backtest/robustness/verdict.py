@@ -69,6 +69,8 @@ class Evidence:
     monte_carlo: MonteCarloReport
     deflated_sharpe: DeflatedSharpeReport
     pbo: PBOReport
+    observed_edge_bps: Decimal | None  # EM-183: mean gross P&L / entry notional, out-of-sample
+    minimum_edge_bps: Decimal | None  # EM-183: mean modeled cost floor at each trade's own size
     concentration: ConcentrationReport
     perturbation: PerturbationReport | None
     baseline_net_pnl: Decimal | None  # the simple always-long baseline; None when not measured
@@ -268,6 +270,29 @@ class BeatsOverfitting(_GateBase):
         return self._result(GateOutcome.PASS if passed else GateOutcome.FAIL, detail)
 
 
+class SurvivesCostError(_GateBase):
+    """EM-183: the observed average gross edge must clear the modeled minimum (brokerage,
+    statutory charges, spread and slippage, at each trade's own quantity and price) by the
+    configured safety margin — a strategy whose apparent edge is only a whisker above its own
+    cost floor is too small to trust the cost MODEL's own accuracy, let alone the strategy."""
+
+    name = "edge survives plausible cost-model error"
+
+    def __init__(self, t: VerdictThresholds) -> None:
+        self._margin = t.min_edge_safety_margin
+
+    def assess(self, e: Evidence) -> GateResult:
+        if e.observed_edge_bps is None or e.minimum_edge_bps is None:
+            return self._result(GateOutcome.UNKNOWN, "no portfolio cost model was configured")
+        required = e.minimum_edge_bps * self._margin
+        detail = (
+            f"observed {e.observed_edge_bps:.2f} bps/trade, needs {required:.2f} bps "
+            f"({self._margin}x the modeled {e.minimum_edge_bps:.2f} bps minimum)"
+        )
+        outcome = GateOutcome.PASS if e.observed_edge_bps >= required else GateOutcome.FAIL
+        return self._result(outcome, detail)
+
+
 class BeatsBaseline(_GateBase):
     name = "beats the always-long baseline"
 
@@ -335,6 +360,7 @@ class VerdictPolicy:
                 ParameterStability(thresholds),
                 BeatsLuck(thresholds),
                 BeatsOverfitting(thresholds),
+                SurvivesCostError(thresholds),
                 BeatsBaseline(),
                 RegimeDiversity(thresholds),
             ]

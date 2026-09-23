@@ -71,6 +71,10 @@ class RobustnessDocument:
                 "mean_logit": _s(pbo.mean_logit),
                 "reason": pbo.reason,
             },
+            "portfolio_economics": {
+                "observed_edge_bps": _s(report.evidence.observed_edge_bps),
+                "minimum_edge_bps": _s(report.evidence.minimum_edge_bps),
+            },
             "concentration": {
                 "top_instrument": conc.top_instrument,
                 "top_instrument_share": _s(conc.top_instrument_share),

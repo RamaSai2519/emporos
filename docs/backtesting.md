@@ -206,6 +206,7 @@ strategy back from validation; it never rejects and never validates.
 | survives parameter changes | do the neighbouring parameter sets also profit? |
 | beats the luck of the search | Deflated Sharpe, given how many things have ever been tried |
 | does not show CSCV overfitting evidence | PBO (EM-182): across every walk-forward window, was the in-sample-best candidate typically an out-of-sample loser? |
+| edge survives plausible cost-model error | EM-183: does the observed gross edge clear the modeled minimum (brokerage, statutory charges, spread, slippage) by a safety margin? |
 | beats the always-long baseline | better than just being long from the open to the close |
 
 Thresholds live in `config/robustness/benchmark.yaml` (also the ₹50,000 capital, 10% position size,
@@ -226,12 +227,30 @@ standalone signals/candidates whose overfitting evidence exceeds a threshold" me
 PBO threshold is enforced until a benchmark file sets `max_pbo` below 1 (the default disables it, the
 same way `min_regimes` starts at 1); `config/robustness/benchmark.yaml` has not opted in yet.
 
+**Portfolio economics (EM-183)** — `emporos.backtest.robustness.portfolio_economics` hardens the
+cost model that gate reads, at the canonical ₹50,000 production capital
+(`PRODUCTION_CAPITAL`, duplicated deliberately rather than imported from
+`emporos.opportunity.capital`, so this offline module stays independent of the orchestration
+layer): `PortfolioCostModel` reports brokerage, statutory charges, spread and slippage as four
+separate components, in both ₹ and bps; `PortfolioEconomics.fragmentation_scenario` shows what
+splitting that capital across 3, 4, 5 or 10 CONCURRENT positions does to the minimum gross edge a
+trade needs to clear (fixed costs bite harder on a smaller fragment); `TurnoverCalculator` reports
+total turnover and TIME-WEIGHTED capital utilization from real `ClosedTrade`s. The edge-survives-
+cost-error gate feeds off the same cost model: it is UNKNOWN, not FAIL, whenever no
+`PortfolioCostModel` was configured for the run (an optional `RobustnessAssessor` constructor
+argument — the caller supplies it from whichever `FeeSchedule` it already loaded, this module never
+builds one itself), the same "thin evidence never rejects" discipline as every other gate. None of
+this touches `emporos.research.costs.TransactionCostModel` (EM-178), which stays the one thing
+every feature/cross-sectional/lead-lag study cost-adjusts a single trade with; nor does it touch a
+strategy's own `ResolvedStrategyConfig` parameters — capital and risk assumptions are a fact about
+the account, never imported alongside alpha parameters.
+
 The `.json` next to it has the same evidence in full: every gate, Monte Carlo intervals, the Deflated
-Sharpe, the PBO/CSCV combination count and candidate/window counts, concentration shares, the cost
-scenarios and the neighbour runs, next to the out-of-sample totals, per-window nets and
-per-instrument nets. `emporos backtest trials list` shows how many experiments the ledger holds; every
-candidate on every window is appended there (with the cache fingerprint of the bars it read), and
-nothing can edit or delete an entry.
+Sharpe, the PBO/CSCV combination count and candidate/window counts, the portfolio-economics observed
+and minimum edge in bps, concentration shares, the cost scenarios and the neighbour runs, next to the
+out-of-sample totals, per-window nets and per-instrument nets. `emporos backtest trials list` shows
+how many experiments the ledger holds; every candidate on every window is appended there (with the
+cache fingerprint of the bars it read), and nothing can edit or delete an entry.
 
 ## What exists and what does not
 

@@ -1,5 +1,6 @@
-"""EM-182: `RobustnessDocument` renders every gate (including the new PBO one) and its own
-evidence section into the JSON-able document a reviewer reads."""
+"""EM-182/EM-183: `RobustnessDocument` renders every gate (including PBO and the portfolio-
+economics edge-survives-cost-error gate) and their own evidence sections into the JSON-able
+document a reviewer reads."""
 
 from __future__ import annotations
 
@@ -49,3 +50,15 @@ def test_an_uncomputed_pbo_renders_its_reason() -> None:
 
     assert document["pbo"]["probability_of_overfitting"] is None
     assert document["pbo"]["reason"] == "1 candidate(s) scored; need 2"
+
+
+def test_portfolio_economics_renders_the_observed_and_minimum_edge() -> None:
+    pbo = PBOReport(6, 8, 70, D("0.2"), D("0.05"), None)
+
+    document = RobustnessDocument().of(_report(pbo))
+
+    assert document["portfolio_economics"] == {
+        "observed_edge_bps": "50", "minimum_edge_bps": "10",
+    }  # fmt: skip
+    names = {g["name"] for g in document["gates"]}
+    assert "edge survives plausible cost-model error" in names

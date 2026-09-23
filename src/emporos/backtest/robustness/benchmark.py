@@ -65,6 +65,11 @@ class VerdictThresholds(_Frozen):
     # (EM-182's CSCV), and a threshold below 1 rejects a candidate whose overfitting evidence is
     # too strong to ignore rather than merely leaving it unproven.
     max_pbo: ExactDecimal = Field(ge=0, le=1, default=Decimal(1))
+    # EM-183: the observed average gross edge per trade must clear this many times the modeled
+    # minimum edge (brokerage + statutory charges + spread + slippage, at whatever quantity each
+    # trade actually used) before it counts as economically real. 1.5, not 1, because the point
+    # is surviving PLAUSIBLE ERROR in the cost model itself, not merely breaking even against it.
+    min_edge_safety_margin: ExactDecimal = Field(ge=1, default=Decimal("1.5"))
     concentration: ConcentrationLimits
     perturbation: PerturbationLimits
     # Default 1: no regime-diversity requirement unless a benchmark file opts in — existing
@@ -84,6 +89,9 @@ class BenchmarkConfig(_Frozen):
     max_position_fraction: ExactDecimal = Field(gt=0, le=1)
     max_daily_loss_fraction: ExactDecimal = Field(gt=0, le=1)
     slippage_bps: ExactDecimal = Field(ge=0)
+    # EM-183: separate from slippage_bps (market impact) so a report can show which of the two is
+    # doing the damage; 0 by default (a benchmark file opts in by naming its own assumption).
+    spread_bps: ExactDecimal = Field(ge=0, default=Decimal(0))
     cost_scenarios: tuple[CostScenario, ...] = Field(min_length=1)
     adverse_scenario: str
     verdict: VerdictThresholds

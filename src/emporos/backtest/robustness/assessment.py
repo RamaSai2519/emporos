@@ -27,7 +27,7 @@ from emporos.backtest.batch import (
     ignore_progress,
 )
 from emporos.backtest.engine import BacktestSpec
-from emporos.backtest.metrics.decimal_math import ZERO
+from emporos.backtest.metrics.decimal_math import ZERO, DecimalMath
 from emporos.backtest.portfolio import ClosedTrade, TradeDirection
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
 from emporos.backtest.robustness.concentration import ConcentrationCheck, ConcentrationReport
@@ -36,6 +36,7 @@ from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpe, Deflated
 from emporos.backtest.robustness.monte_carlo import MonteCarlo, MonteCarloConfig, MonteCarloReport
 from emporos.backtest.robustness.pbo import CSCV, PBOReport
 from emporos.backtest.robustness.perturbation import PerturbationReport, PerturbationRunner
+from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
 from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.robustness.verdict import (
     DirectionStats,
@@ -46,10 +47,11 @@ from emporos.backtest.robustness.verdict import (
 from emporos.backtest.tuning import ParameterCandidate
 from emporos.backtest.walkforward_run import WalkForwardResult
 from emporos.core.clock import IST
-from emporos.domain.instruments import InstrumentResolver
+from emporos.domain.instruments import Exchange, InstrumentResolver
 from emporos.strategies.config import ResolvedStrategyConfig
 
 TrialStatisticsSource = Callable[[], Awaitable[TrialStatistics]]
+_BASIS_POINTS = Decimal(10_000)
 
 
 class AssessorFactory(Protocol):
@@ -113,12 +115,17 @@ class RobustnessAssessor:
         perturbation: PerturbationRunner | None = None,
         baseline: HoldBaseline | None = None,
         policy: VerdictPolicy | None = None,
+        portfolio_cost_model: PortfolioCostModel | None = None,
     ) -> None:
         self._benchmark = benchmark
         self._trial_statistics = trial_statistics
         self._perturbation = perturbation
         self._baseline = baseline
         self._policy = policy or VerdictPolicy.standard(benchmark.verdict)
+        # EM-183: optional, since it needs a FeeSchedule the caller already loaded
+        # (`FeeScheduleLibrary`) that this class has no reason to know how to build itself; the
+        # edge-survives-cost-error gate is UNKNOWN, not FAIL, when it is not supplied.
+        self._portfolio_cost_model = portfolio_cost_model
 
     async def assess(
         self,
@@ -135,6 +142,7 @@ class RobustnessAssessor:
         monte_carlo = MonteCarlo(self._monte_carlo_config()).run(trades)
         deflated = DeflatedSharpe().evaluate(returns, await self._trial_statistics())
         pbo = CSCV().evaluate(self._candidate_scores(result))
+        observed_edge, minimum_edge = self._edge_evidence(trades)
         concentration = ConcentrationCheck(thresholds.concentration.top_trades).measure(trades)
         perturbation = await self._perturb(base, result, candidates, progress)
         baseline = (
@@ -152,6 +160,8 @@ class RobustnessAssessor:
             monte_carlo=monte_carlo,
             deflated_sharpe=deflated,
             pbo=pbo,
+            observed_edge_bps=observed_edge,
+            minimum_edge_bps=minimum_edge,
             concentration=concentration,
             perturbation=perturbation,
             baseline_net_pnl=baseline,
@@ -181,6 +191,30 @@ class RobustnessAssessor:
         ]
         common = set.intersection(*(set(window) for window in by_window)) if by_window else set()
         return {name: [window[name] for window in by_window] for name in sorted(common)}
+
+    def _edge_evidence(
+        self, trades: Sequence[ClosedTrade]
+    ) -> tuple[Decimal | None, Decimal | None]:
+        """(observed, minimum) gross edge in bps, mean over every out-of-sample trade at its OWN
+        quantity and price — `None`, `None` when no cost model was configured or there are no
+        trades to measure. Every trade is costed against `Exchange.NSE`: this platform trades NSE
+        cash equities only (plan.md), so nothing here picks an exchange per instrument."""
+        cost_model = self._portfolio_cost_model
+        if cost_model is None or not trades:
+            return None, None
+        observed = [
+            DecimalMath.divide(t.gross_pnl.amount * _BASIS_POINTS, t.entry_notional.amount)
+            for t in trades
+            if t.entry_notional.amount != ZERO
+        ]
+        minimum = [
+            cost_model.components_for(Exchange.NSE, t.quantity, t.entry_price).total_bps
+            for t in trades
+            if t.quantity > 0
+        ]
+        if not observed or not minimum:
+            return None, None
+        return DecimalMath.mean(observed), DecimalMath.mean(minimum)
 
     def _monte_carlo_config(self) -> MonteCarloConfig:
         t = self._benchmark.verdict
