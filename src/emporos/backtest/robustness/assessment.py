@@ -27,14 +27,17 @@ from emporos.backtest.batch import (
     ignore_progress,
 )
 from emporos.backtest.engine import BacktestSpec
+from emporos.backtest.feed import FeedWindow
 from emporos.backtest.metrics.decimal_math import ZERO, DecimalMath
 from emporos.backtest.portfolio import ClosedTrade, TradeDirection
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
 from emporos.backtest.robustness.concentration import ConcentrationCheck, ConcentrationReport
 from emporos.backtest.robustness.cost_sensitivity import CostSensitivity, ScenarioOutcome
 from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpe, DeflatedSharpeReport
+from emporos.backtest.robustness.holdout import CurationProvenance
 from emporos.backtest.robustness.monte_carlo import MonteCarlo, MonteCarloConfig, MonteCarloReport
 from emporos.backtest.robustness.pbo import CSCV, PBOReport
+from emporos.backtest.robustness.performance import WindowPerformance, window_performance
 from emporos.backtest.robustness.perturbation import PerturbationReport, PerturbationRunner
 from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
 from emporos.backtest.robustness.trials import TrialStatistics
@@ -105,6 +108,8 @@ class RobustnessReport:
     costs: tuple[ScenarioOutcome, ...]
     perturbation: PerturbationReport | None
     baseline_net_pnl: Decimal | None
+    window_performance: tuple[WindowPerformance, ...]
+    provenance: CurationProvenance | None
 
 
 class RobustnessAssessor:
@@ -134,6 +139,8 @@ class RobustnessAssessor:
         base: BacktestSpec,
         candidates: Sequence[ParameterCandidate],
         progress: ProgressSink = ignore_progress,
+        regime_specific: bool = False,
+        holdout: FeedWindow | None = None,
     ) -> RobustnessReport:
         thresholds = self._benchmark.verdict
         trades = tuple(t for o in result.outcomes for t in o.test.trades)
@@ -166,6 +173,7 @@ class RobustnessAssessor:
             perturbation=perturbation,
             baseline_net_pnl=baseline,
             direction=self._directions(trades),
+            regime_specific=regime_specific,
             regimes_covered=frozenset(
                 regime
                 for o in result.outcomes
@@ -173,9 +181,12 @@ class RobustnessAssessor:
                 if stats.count > 0
             ),
         )
+        windows = [o.window for o in result.outcomes]
+        provenance = None if holdout is None else CurationProvenance.of(windows, holdout)
         return RobustnessReport(
             strategy, self._policy.classify(evidence), evidence, monte_carlo, deflated, pbo,
             concentration, costs, perturbation, baseline,
+            window_performance(result.outcomes), provenance,
         )  # fmt: skip
 
     @staticmethod

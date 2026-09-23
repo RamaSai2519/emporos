@@ -87,6 +87,7 @@ def evidence(**overrides: object) -> Evidence:
         "concentration": concentration(),
         "perturbation": PerturbationReport(tuple(NeighbourRun(0, str(n), D(10)) for n in range(4))),
         "baseline_net_pnl": D(-50),
+        "regimes_covered": frozenset({"trending", "ranging"}),
     }  # fmt: skip
     values.update(overrides)
     return Evidence(**values)  # type: ignore[arg-type]
@@ -196,15 +197,8 @@ class TestSimpleGates:
 
 
 class TestRegimeDiversityGate:
-    def test_default_threshold_never_blocks_even_with_no_regime_data(self) -> None:
-        gate = RegimeDiversity(T)  # the real config file: min_regimes defaults to 1
-
-        assert gate.assess(evidence()).outcome is PASS
-        assert gate.assess(evidence(regimes_covered=frozenset())).outcome is PASS
-
-    def test_an_opted_in_threshold_requires_the_configured_diversity(self) -> None:
-        strict = T.model_copy(update={"min_regimes": 2})
-        gate = RegimeDiversity(strict)
+    def test_the_configured_threshold_requires_that_many_distinct_regimes(self) -> None:
+        gate = RegimeDiversity(T)  # the real config file: EM-184 sets min_regimes to 2
 
         assert gate.assess(evidence(regimes_covered=frozenset({"trending"}))).outcome is FAIL
         assert (
@@ -212,11 +206,23 @@ class TestRegimeDiversityGate:
             is PASS
         )
 
-    def test_an_opted_in_threshold_with_no_regime_data_is_unknown_not_rejected(self) -> None:
-        strict = T.model_copy(update={"min_regimes": 2})
-        gate = RegimeDiversity(strict)
+    def test_no_regime_data_is_unknown_not_rejected(self) -> None:
+        gate = RegimeDiversity(T)
 
         assert gate.assess(evidence(regimes_covered=frozenset())).outcome is UNKNOWN
+
+    def test_min_regimes_at_or_below_one_is_an_explicit_opt_out(self) -> None:
+        opted_out = T.model_copy(update={"min_regimes": 1})
+        gate = RegimeDiversity(opted_out)
+
+        assert gate.assess(evidence(regimes_covered=frozenset())).outcome is PASS
+
+    def test_a_regime_specific_strategy_is_exempt_regardless_of_coverage(self) -> None:
+        gate = RegimeDiversity(T)
+
+        e = evidence(regimes_covered=frozenset(), regime_specific=True)
+
+        assert gate.assess(e).outcome is PASS
 
 
 class TestConcentrationGate:

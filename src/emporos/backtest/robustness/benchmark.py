@@ -72,10 +72,12 @@ class VerdictThresholds(_Frozen):
     min_edge_safety_margin: ExactDecimal = Field(ge=1, default=Decimal("1.5"))
     concentration: ConcentrationLimits
     perturbation: PerturbationLimits
-    # Default 1: no regime-diversity requirement unless a benchmark file opts in — existing
-    # config files stay valid. EM-166 sets this >1 for a strategy graduating toward live capital,
-    # so a result that only ever traded one regime cannot validate on that alone.
-    min_regimes: PositiveInt = 1
+    # EM-184: no default — every benchmark file must make an explicit, deliberate choice rather
+    # than silently inheriting "no regime-diversity requirement" (the historical default before
+    # this file was hardened). A benchmark that genuinely wants no requirement still sets this to
+    # 1 (the gate treats <=1 as an explicit, visible opt-out, not a value nobody chose);
+    # `RegimeDiversity` exempts a strategy declared `regime_specific` regardless of this number.
+    min_regimes: PositiveInt
 
     @model_validator(mode="after")
     def _reject_below_validate(self) -> VerdictThresholds:

@@ -4,10 +4,14 @@ document a reviewer reads."""
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from decimal import Decimal
 
+from emporos.backtest.feed import FeedWindow
 from emporos.backtest.robustness.assessment import RobustnessReport
+from emporos.backtest.robustness.holdout import CurationProvenance
 from emporos.backtest.robustness.pbo import PBOReport
+from emporos.backtest.robustness.performance import RegimeSlice, WindowPerformance
 from emporos.backtest.robustness.report import RobustnessDocument
 from emporos.backtest.robustness.verdict import VerdictPolicy
 from tests.unit.backtest.robustness.test_verdict import (
@@ -21,12 +25,17 @@ from tests.unit.backtest.robustness.test_verdict import (
 D = Decimal
 
 
-def _report(pbo: PBOReport) -> RobustnessReport:
+def _report(
+    pbo: PBOReport,
+    window_performance: tuple[WindowPerformance, ...] = (),
+    provenance: CurationProvenance | None = None,
+) -> RobustnessReport:
     e = evidence(pbo=pbo)
     return RobustnessReport(
         strategy="s", verdict=VerdictPolicy.standard(T).classify(e), evidence=e,
         monte_carlo=monte_carlo(), deflated_sharpe=dsr(), pbo=pbo,
         concentration=concentration(), costs=(), perturbation=None, baseline_net_pnl=D(-50),
+        window_performance=window_performance, provenance=provenance,
     )  # fmt: skip
 
 
@@ -62,3 +71,46 @@ def test_portfolio_economics_renders_the_observed_and_minimum_edge() -> None:
     }  # fmt: skip
     names = {g["name"] for g in document["gates"]}
     assert "edge survives plausible cost-model error" in names
+
+
+def test_windows_render_one_entry_per_window_with_its_regime_breakdown() -> None:
+    pbo = PBOReport(6, 8, 70, D("0.2"), D("0.05"), None)
+    start = datetime(2026, 3, 2, tzinfo=UTC)
+    windows = (
+        WindowPerformance(
+            index=0, test_start=start, test_end=start, net_pnl=D(100),
+            by_regime={"trending": RegimeSlice(5, D(100), D("0.6"))},
+        ),
+    )  # fmt: skip
+
+    document = RobustnessDocument().of(_report(pbo, window_performance=windows))
+
+    assert document["windows"] == [
+        {
+            "index": 0, "test_start": start.isoformat(), "test_end": start.isoformat(),
+            "net_pnl": "100",
+            "by_regime": {"trending": {"count": 5, "net_pnl": "100", "win_rate": "0.6"}},
+        }
+    ]  # fmt: skip
+
+
+def test_provenance_renders_research_validation_and_holdout_ranges() -> None:
+    pbo = PBOReport(6, 8, 70, D("0.2"), D("0.05"), None)
+    a, b, c, d = (datetime(2026, 1, n, tzinfo=UTC) for n in (1, 10, 20, 30))
+    provenance = CurationProvenance(FeedWindow(a, b), FeedWindow(b, c), FeedWindow(c, d))
+
+    document = RobustnessDocument().of(_report(pbo, provenance=provenance))
+
+    assert document["provenance"] == {
+        "research": {"first": a.isoformat(), "last": b.isoformat()},
+        "validation": {"first": b.isoformat(), "last": c.isoformat()},
+        "holdout": {"first": c.isoformat(), "last": d.isoformat()},
+    }
+
+
+def test_provenance_is_none_when_not_configured() -> None:
+    pbo = PBOReport(6, 8, 70, D("0.2"), D("0.05"), None)
+
+    document = RobustnessDocument().of(_report(pbo))
+
+    assert document["provenance"] is None

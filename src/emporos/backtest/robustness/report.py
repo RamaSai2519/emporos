@@ -7,7 +7,9 @@ from decimal import Decimal
 from typing import Any
 
 from emporos.backtest.robustness.assessment import RobustnessReport
+from emporos.backtest.robustness.holdout import CurationProvenance
 from emporos.backtest.robustness.monte_carlo import Interval
+from emporos.backtest.robustness.performance import WindowPerformance
 from emporos.backtest.robustness.verdict import DirectionStats
 
 
@@ -103,6 +105,8 @@ class RobustnessDocument:
             },
             "baseline_net_pnl": _s(report.baseline_net_pnl),
             "direction": self._direction(report.evidence.direction),
+            "windows": [self._window(w) for w in report.window_performance],
+            "provenance": self._provenance(report.provenance),
         }
 
     @staticmethod
@@ -115,6 +119,42 @@ class RobustnessDocument:
             "short": {
                 "trades": direction.short_count,
                 "net_pnl": _s(direction.short_net_pnl),
+            },
+        }
+
+    @staticmethod
+    def _window(window: WindowPerformance) -> dict[str, Any]:
+        return {
+            "index": window.index,
+            "test_start": window.test_start.isoformat(),
+            "test_end": window.test_end.isoformat(),
+            "net_pnl": _s(window.net_pnl),
+            "by_regime": {
+                regime: {
+                    "count": slice_.count,
+                    "net_pnl": _s(slice_.net_pnl),
+                    "win_rate": _s(slice_.win_rate),
+                }
+                for regime, slice_ in window.by_regime.items()
+            },
+        }
+
+    @staticmethod
+    def _provenance(provenance: CurationProvenance | None) -> dict[str, Any] | None:
+        if provenance is None:
+            return None
+        return {
+            "research": {
+                "first": provenance.research.start.isoformat(),
+                "last": provenance.research.end.isoformat(),
+            },
+            "validation": {
+                "first": provenance.validation.start.isoformat(),
+                "last": provenance.validation.end.isoformat(),
+            },
+            "holdout": {
+                "first": provenance.holdout.start.isoformat(),
+                "last": provenance.holdout.end.isoformat(),
             },
         }
 

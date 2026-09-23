@@ -1,9 +1,10 @@
 """The assessor on the real engine: evidence comes from out-of-sample days only, and every piece
 of it agrees with the run it was drawn from."""
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
+from emporos.backtest.feed import FeedWindow
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.perturbation import PerturbationRunner
@@ -163,3 +164,43 @@ async def test_edge_evidence_is_computed_when_a_portfolio_cost_model_is_configur
 
     assert report.evidence.observed_edge_bps is not None
     assert report.evidence.minimum_edge_bps is not None and report.evidence.minimum_edge_bps > 0
+
+
+async def test_window_performance_is_always_reported_one_entry_per_window() -> None:
+    result = await walk()
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess("s", result, base_spec(), CANDIDATES)
+
+    assert len(report.window_performance) == len(result.outcomes)
+
+
+async def test_regime_specific_flag_reaches_the_evidence() -> None:
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess(
+        "s", await walk(), base_spec(), CANDIDATES, regime_specific=True
+    )
+
+    assert report.evidence.regime_specific is True
+
+
+async def test_provenance_is_none_without_a_configured_holdout() -> None:
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess("s", await walk(), base_spec(), CANDIDATES)
+
+    assert report.provenance is None
+
+
+async def test_provenance_is_computed_when_a_holdout_is_configured() -> None:
+    result = await walk()
+    holdout_start = max(o.window.test.end for o in result.outcomes)
+    holdout = FeedWindow(holdout_start, holdout_start + timedelta(days=30))
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess("s", result, base_spec(), CANDIDATES, holdout=holdout)
+
+    assert report.provenance is not None
+    assert report.provenance.holdout == holdout
+    assert report.provenance.validation.end <= holdout.start

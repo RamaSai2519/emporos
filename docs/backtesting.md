@@ -207,6 +207,7 @@ strategy back from validation; it never rejects and never validates.
 | beats the luck of the search | Deflated Sharpe, given how many things have ever been tried |
 | does not show CSCV overfitting evidence | PBO (EM-182): across every walk-forward window, was the in-sample-best candidate typically an out-of-sample loser? |
 | edge survives plausible cost-model error | EM-183: does the observed gross edge clear the modeled minimum (brokerage, statutory charges, spread, slippage) by a safety margin? |
+| evidence spans enough distinct regimes | EM-166/EM-184: at least `min_regimes` of trending/ranging/high_vol/low_vol, unless the strategy is declared regime-specific |
 | beats the always-long baseline | better than just being long from the open to the close |
 
 Thresholds live in `config/robustness/benchmark.yaml` (also the ₹50,000 capital, 10% position size,
@@ -224,8 +225,8 @@ CHOSEN candidate's own Sharpe beats what luck alone would produce) — the two g
 disagree, and both need to pass. Unlike Deflated Sharpe (which only ever withholds validation, never
 rejects), a PBO that clears the configured limit FAILS the strategy outright: this is what "reject
 standalone signals/candidates whose overfitting evidence exceeds a threshold" means in practice. No
-PBO threshold is enforced until a benchmark file sets `max_pbo` below 1 (the default disables it, the
-same way `min_regimes` starts at 1); `config/robustness/benchmark.yaml` has not opted in yet.
+PBO threshold is enforced until a benchmark file sets `max_pbo` below 1 (the default disables it);
+`config/robustness/benchmark.yaml` has not opted in yet.
 
 **Portfolio economics (EM-183)** — `emporos.backtest.robustness.portfolio_economics` hardens the
 cost model that gate reads, at the canonical ₹50,000 production capital
@@ -245,12 +246,38 @@ every feature/cross-sectional/lead-lag study cost-adjusts a single trade with; n
 strategy's own `ResolvedStrategyConfig` parameters — capital and risk assumptions are a fact about
 the account, never imported alongside alpha parameters.
 
+**Regime diversity and the final holdout (EM-184).** `min_regimes` is no longer a field a benchmark
+file can silently leave unset — `VerdictThresholds.min_regimes` has no default any more, so
+`config/robustness/benchmark.yaml` now makes an explicit, reviewed choice (2, of the 4 possible
+regimes) instead of inheriting the old "no requirement" default. `RegimeDiversity` exempts a
+strategy whose `StrategyMetadata.supported_regimes` was declared non-empty BEFORE any result was
+seen — trading only the regime it was explicitly built for is not the single-lucky-stretch problem
+this gate exists to catch. Performance is now reported both by regime AND by walk-forward window in
+one structure (`emporos.backtest.robustness.performance.WindowPerformance`, one entry per window,
+each carrying that window's own `by_regime` breakdown straight from `MetricsReport.by_regime` — no
+merged, cross-window regime figure is computed, since a `TradeStatistics`' derived ratios are not
+meaningfully additive across windows, and a reviewer seeing exactly which window a regime's evidence
+came from is more useful than one blurred number). `emporos.backtest.robustness.holdout.
+FinalHoldoutReservation.split` carves an immutable final period off the end of a curation run's date
+range BEFORE any `WalkForwardWindow` is planned — the walk-forward pipeline is only ever given the
+walkable remainder, so no parameter or hypothesis selection CAN inspect the holdout: the reserved
+dates are never loaded into the process, the same "prevented by the shape of the thing" principle
+`emporos.backtest.feed`'s single-pass iterator already relies on. `CurationProvenance` records which
+date ranges research (every window's training span), validation (every window's test span — what
+`Evidence` is built from) and the holdout actually covered, wired into `RobustnessAssessor.assess`
+as two new optional arguments (`regime_specific`, `holdout`) that leave every existing caller
+unchanged when omitted. Wiring `FinalHoldoutReservation`/`CurationProvenance` into the CLI curation
+command itself (`emporos backtest curate`) is a natural next step this subtask does not do — today a
+caller must construct and pass the reservation explicitly.
+
 The `.json` next to it has the same evidence in full: every gate, Monte Carlo intervals, the Deflated
 Sharpe, the PBO/CSCV combination count and candidate/window counts, the portfolio-economics observed
-and minimum edge in bps, concentration shares, the cost scenarios and the neighbour runs, next to the
-out-of-sample totals, per-window nets and per-instrument nets. `emporos backtest trials list` shows
-how many experiments the ledger holds; every candidate on every window is appended there (with the
-cache fingerprint of the bars it read), and nothing can edit or delete an entry.
+and minimum edge in bps, per-window performance with its regime breakdown, the research/validation/
+holdout provenance (when configured), concentration shares, the cost scenarios and the neighbour
+runs, next to the out-of-sample totals, per-window nets and per-instrument nets. `emporos backtest
+trials list` shows how many experiments the ledger holds; every candidate on every window is
+appended there (with the cache fingerprint of the bars it read), and nothing can edit or delete an
+entry.
 
 ## What exists and what does not
 

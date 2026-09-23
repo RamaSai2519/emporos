@@ -29,6 +29,9 @@ verdict:
   min_trades_to_validate: 150
   min_history_days: 500                    # trading days: about two years
   min_windows: 3                           # walk-forward test windows
+  min_regimes: 2                           # EM-184: distinct market regimes evidence must span
+                                            # (of trending/ranging/high_vol/low_vol), unless the
+                                            # strategy is explicitly declared regime-specific
   min_positive_window_share: "0.6"
   max_window_drawdown: "0.10"              # a fraction of capital: the risk budget
   min_deflated_sharpe: "0.95"

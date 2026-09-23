@@ -76,6 +76,11 @@ class Evidence:
     baseline_net_pnl: Decimal | None  # the simple always-long baseline; None when not measured
     direction: DirectionStats = field(default_factory=lambda: DirectionStats(0, _ZERO, 0, _ZERO))
     regimes_covered: frozenset[str] = frozenset()  # distinct regimes traded across all windows
+    # EM-184: set from the strategy's own StrategyMetadata.supported_regimes (non-empty = the
+    # strategy declared, before any result was seen, that it only trades certain regimes) —
+    # exempts RegimeDiversity, which would otherwise fault a strategy for doing exactly what it
+    # was built to do.
+    regime_specific: bool = False
 
 
 class Gate(Protocol):
@@ -307,10 +312,13 @@ class BeatsBaseline(_GateBase):
 
 
 class RegimeDiversity(_GateBase):
-    """EM-166: a strategy that only ever traded in one market regime has not shown a repeatable
-    edge, only a fit to that regime's conditions — this is what keeps a strategy from graduating
-    on evidence from a single lucky stretch. `min_regimes` defaults to 1 (no requirement) so
-    existing benchmark files are unaffected until one opts in."""
+    """EM-166/EM-184: a strategy that only ever traded in one market regime has not shown a
+    repeatable edge, only a fit to that regime's conditions — this is what keeps a strategy from
+    graduating on evidence from a single lucky stretch. Exempted when the strategy was declared
+    `regime_specific` (`StrategyMetadata.supported_regimes`, set before any result was seen) — it
+    is not overfitting to trade only the regime it was explicitly built for. `min_regimes <= 1` is
+    still honoured as a benchmark file's own explicit, visible opt-out (there is no default to
+    fall back on any more — EM-184 removed it), distinct from a strategy's own exemption."""
 
     name = "evidence spans enough distinct regimes"
 
@@ -318,10 +326,10 @@ class RegimeDiversity(_GateBase):
         self._min = t.min_regimes
 
     def assess(self, e: Evidence) -> GateResult:
+        if e.regime_specific:
+            return self._result(GateOutcome.PASS, "strategy is declared regime-specific")
         count = len(e.regimes_covered)
         if self._min <= 1:
-            # Not opted in: never blocks, and never needs regime data populated at all — the
-            # backward-compatible no-op every existing benchmark file gets by default.
             return self._result(GateOutcome.PASS, f"{count} regime(s); diversity not required")
         detail = (
             f"{count} distinct regime(s) traded ({sorted(e.regimes_covered)}), {self._min} needed"
