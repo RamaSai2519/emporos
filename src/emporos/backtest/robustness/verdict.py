@@ -25,6 +25,7 @@ from emporos.backtest.robustness.benchmark import VerdictThresholds
 from emporos.backtest.robustness.concentration import ConcentrationReport
 from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpeReport
 from emporos.backtest.robustness.monte_carlo import MonteCarloReport
+from emporos.backtest.robustness.pbo import PBOReport
 from emporos.backtest.robustness.perturbation import PerturbationReport
 from emporos.domain.experiments import Verdict
 
@@ -67,6 +68,7 @@ class Evidence:
     worst_window_drawdown: Decimal
     monte_carlo: MonteCarloReport
     deflated_sharpe: DeflatedSharpeReport
+    pbo: PBOReport
     concentration: ConcentrationReport
     perturbation: PerturbationReport | None
     baseline_net_pnl: Decimal | None  # the simple always-long baseline; None when not measured
@@ -241,6 +243,31 @@ class BeatsLuck(_GateBase):
         )
 
 
+class BeatsOverfitting(_GateBase):
+    """EM-182: unlike `BeatsLuck`, missing PBO evidence and STRONG PBO evidence are told apart —
+    the acceptance criteria ask for one or the other, not always the softer of the two. No CSCV
+    result yet is UNKNOWN (thin data, not disproof); a computed probability of overfitting above
+    the configured limit is FAIL (the search's in-sample winner is shown, not merely unproven, to
+    tend toward an out-of-sample loser)."""
+
+    name = "does not show CSCV overfitting evidence (PBO)"
+
+    def __init__(self, t: VerdictThresholds) -> None:
+        self._max = t.max_pbo
+
+    def assess(self, e: Evidence) -> GateResult:
+        pbo = e.pbo
+        if pbo.probability_of_overfitting is None:
+            return self._result(GateOutcome.UNKNOWN, pbo.reason or "not computed")
+        detail = (
+            f"PBO {pbo.probability_of_overfitting:.3f} over {pbo.candidate_count} candidates x "
+            f"{pbo.block_count} windows ({pbo.combination_count} combinations), "
+            f"{self._max:.2f} allowed"
+        )
+        passed = pbo.probability_of_overfitting <= self._max
+        return self._result(GateOutcome.PASS if passed else GateOutcome.FAIL, detail)
+
+
 class BeatsBaseline(_GateBase):
     name = "beats the always-long baseline"
 
@@ -307,6 +334,7 @@ class VerdictPolicy:
                 NotConcentrated(thresholds),
                 ParameterStability(thresholds),
                 BeatsLuck(thresholds),
+                BeatsOverfitting(thresholds),
                 BeatsBaseline(),
                 RegimeDiversity(thresholds),
             ]

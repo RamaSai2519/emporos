@@ -60,6 +60,11 @@ class VerdictThresholds(_Frozen):
     min_positive_window_share: ExactDecimal = Field(gt=0, le=1)
     max_window_drawdown: ExactDecimal = Field(gt=0, le=1)
     min_deflated_sharpe: ExactDecimal = Field(gt=0, lt=1)
+    # 1 disables the check (no benchmark.yaml has to add this to stay valid): PBO is the
+    # probability that a parameter search's in-sample winner was an out-of-sample loser
+    # (EM-182's CSCV), and a threshold below 1 rejects a candidate whose overfitting evidence is
+    # too strong to ignore rather than merely leaving it unproven.
+    max_pbo: ExactDecimal = Field(ge=0, le=1, default=Decimal(1))
     concentration: ConcentrationLimits
     perturbation: PerturbationLimits
     # Default 1: no regime-diversity requirement unless a benchmark file opts in — existing

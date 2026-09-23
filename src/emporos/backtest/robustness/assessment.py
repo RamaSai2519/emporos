@@ -34,6 +34,7 @@ from emporos.backtest.robustness.concentration import ConcentrationCheck, Concen
 from emporos.backtest.robustness.cost_sensitivity import CostSensitivity, ScenarioOutcome
 from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpe, DeflatedSharpeReport
 from emporos.backtest.robustness.monte_carlo import MonteCarlo, MonteCarloConfig, MonteCarloReport
+from emporos.backtest.robustness.pbo import CSCV, PBOReport
 from emporos.backtest.robustness.perturbation import PerturbationReport, PerturbationRunner
 from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.robustness.verdict import (
@@ -97,6 +98,7 @@ class RobustnessReport:
     evidence: Evidence
     monte_carlo: MonteCarloReport
     deflated_sharpe: DeflatedSharpeReport
+    pbo: PBOReport
     concentration: ConcentrationReport
     costs: tuple[ScenarioOutcome, ...]
     perturbation: PerturbationReport | None
@@ -132,6 +134,7 @@ class RobustnessAssessor:
         costs = tuple(CostSensitivity().evaluate(trades, self._benchmark.cost_scenarios))
         monte_carlo = MonteCarlo(self._monte_carlo_config()).run(trades)
         deflated = DeflatedSharpe().evaluate(returns, await self._trial_statistics())
+        pbo = CSCV().evaluate(self._candidate_scores(result))
         concentration = ConcentrationCheck(thresholds.concentration.top_trades).measure(trades)
         perturbation = await self._perturb(base, result, candidates, progress)
         baseline = (
@@ -148,6 +151,7 @@ class RobustnessAssessor:
             ),
             monte_carlo=monte_carlo,
             deflated_sharpe=deflated,
+            pbo=pbo,
             concentration=concentration,
             perturbation=perturbation,
             baseline_net_pnl=baseline,
@@ -160,9 +164,23 @@ class RobustnessAssessor:
             ),
         )
         return RobustnessReport(
-            strategy, self._policy.classify(evidence), evidence, monte_carlo, deflated,
+            strategy, self._policy.classify(evidence), evidence, monte_carlo, deflated, pbo,
             concentration, costs, perturbation, baseline,
         )  # fmt: skip
+
+    @staticmethod
+    def _candidate_scores(result: WalkForwardResult) -> dict[str, list[Decimal]]:
+        """One row per walk-forward window, one column per candidate — a CSCV block matrix built
+        entirely from `TrainingScore`s already computed by the walk-forward run, over the TRAINING
+        windows only (never `result.outcomes[i].test`, which is the untouched holdout each window
+        scored its chosen candidate on exactly once). Only candidates scored in EVERY window are
+        included, so the matrix stays rectangular without inventing a score CSCV never saw."""
+        by_window = [
+            {s.candidate.name: s.score for s in outcome.training if s.score is not None}
+            for outcome in result.outcomes
+        ]
+        common = set.intersection(*(set(window) for window in by_window)) if by_window else set()
+        return {name: [window[name] for window in by_window] for name in sorted(common)}
 
     def _monte_carlo_config(self) -> MonteCarloConfig:
         t = self._benchmark.verdict

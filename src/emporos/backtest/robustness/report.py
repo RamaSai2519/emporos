@@ -24,6 +24,7 @@ def _interval(interval: Interval | None) -> dict[str, str | None] | None:
 class RobustnessDocument:
     def of(self, report: RobustnessReport) -> dict[str, Any]:
         mc, dsr, conc = report.monte_carlo, report.deflated_sharpe, report.concentration
+        pbo = report.pbo
         distribution = mc.distribution
         return {
             "verdict": report.verdict.verdict.value,
@@ -61,6 +62,14 @@ class RobustnessDocument:
                 "probabilistic_sharpe": _s(dsr.probabilistic_sharpe),
                 "deflated_sharpe": _s(dsr.deflated_sharpe),
                 "reason": dsr.reason,
+            },
+            "pbo": {
+                "candidate_count": pbo.candidate_count,
+                "block_count": pbo.block_count,
+                "combination_count": pbo.combination_count,
+                "probability_of_overfitting": _s(pbo.probability_of_overfitting),
+                "mean_logit": _s(pbo.mean_logit),
+                "reason": pbo.reason,
             },
             "concentration": {
                 "top_instrument": conc.top_instrument,

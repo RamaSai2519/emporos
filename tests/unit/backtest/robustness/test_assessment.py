@@ -48,6 +48,19 @@ async def test_evidence_is_the_out_of_sample_trades_and_days() -> None:
     )
 
 
+async def test_pbo_is_computed_from_every_windows_training_scores() -> None:
+    result = await walk()
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
+
+    report = await assessor.assess("s", result, base_spec(), CANDIDATES)
+
+    pbo = report.pbo.probability_of_overfitting
+    assert report.pbo.computed and pbo is not None
+    assert report.pbo.candidate_count == len(CANDIDATES)
+    assert report.pbo.block_count == len(result.outcomes) - 1  # 5 windows, odd, one dropped
+    assert Decimal(0) <= pbo <= Decimal(1)
+
+
 async def test_direction_stats_split_the_same_trades_without_losing_one() -> None:
     result = await walk()
     report = await RobustnessAssessor(BenchmarkLoader().load(), stats).assess(

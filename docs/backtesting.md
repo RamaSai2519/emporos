@@ -205,15 +205,31 @@ strategy back from validation; it never rejects and never validates.
 | profit is not concentrated | not one instrument, month or handful of trades |
 | survives parameter changes | do the neighbouring parameter sets also profit? |
 | beats the luck of the search | Deflated Sharpe, given how many things have ever been tried |
+| does not show CSCV overfitting evidence | PBO (EM-182): across every walk-forward window, was the in-sample-best candidate typically an out-of-sample loser? |
 | beats the always-long baseline | better than just being long from the open to the close |
 
 Thresholds live in `config/robustness/benchmark.yaml` (also the ₹50,000 capital, 10% position size,
 2% daily loss and the cost scenarios). They were fixed before any result and are only changed by
 adding a new benchmark and re-running everything.
 
+**PBO is a different shape of evidence than the rest of this table.** Every other gate reads
+out-of-sample TEST-window results; PBO instead reads the TRAINING scores every candidate earned on
+every walk-forward window (`emporos.backtest.tuning.TrainingScore`, computed once per window, never
+touching that window's test period) and asks a Combinatorially Symmetric Cross-Validation question:
+across every way of splitting the windows into two equal halves, did the candidate that looked best
+on one half tend to be a below-median performer on the other? A high PBO is direct evidence that a
+parameter search overfit its training windows, distinct from Deflated Sharpe (which asks whether the
+CHOSEN candidate's own Sharpe beats what luck alone would produce) — the two gates can and do
+disagree, and both need to pass. Unlike Deflated Sharpe (which only ever withholds validation, never
+rejects), a PBO that clears the configured limit FAILS the strategy outright: this is what "reject
+standalone signals/candidates whose overfitting evidence exceeds a threshold" means in practice. No
+PBO threshold is enforced until a benchmark file sets `max_pbo` below 1 (the default disables it, the
+same way `min_regimes` starts at 1); `config/robustness/benchmark.yaml` has not opted in yet.
+
 The `.json` next to it has the same evidence in full: every gate, Monte Carlo intervals, the Deflated
-Sharpe, concentration shares, the cost scenarios and the neighbour runs, next to the out-of-sample
-totals, per-window nets and per-instrument nets. `emporos backtest trials list` shows how many experiments the ledger holds; every
+Sharpe, the PBO/CSCV combination count and candidate/window counts, concentration shares, the cost
+scenarios and the neighbour runs, next to the out-of-sample totals, per-window nets and
+per-instrument nets. `emporos backtest trials list` shows how many experiments the ledger holds; every
 candidate on every window is appended there (with the cache fingerprint of the bars it read), and
 nothing can edit or delete an entry.
 

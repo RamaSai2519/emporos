@@ -16,10 +16,12 @@ from emporos.backtest.robustness.monte_carlo import (
     ObservedFigures,
     ResampledDistribution,
 )
+from emporos.backtest.robustness.pbo import PBOReport
 from emporos.backtest.robustness.perturbation import NeighbourRun, PerturbationReport
 from emporos.backtest.robustness.verdict import (
     BeatsBaseline,
     BeatsLuck,
+    BeatsOverfitting,
     DrawdownWithinBudget,
     EnoughHistory,
     EnoughTrades,
@@ -68,11 +70,18 @@ def concentration(
     return ConcentrationReport(D(1000), "NSE:1", D(instrument), "2026-03", D(month), 5, D(top))
 
 
+def pbo(value: str | None = "0.1") -> PBOReport:
+    if value is None:
+        return PBOReport(2, 4, 6, None, None, "not computed")
+    return PBOReport(6, 8, 70, D(value), D("0.05"), None)
+
+
 def evidence(**overrides: object) -> Evidence:
     values: dict[str, object] = {
         "trade_count": 400, "net_pnl": D(1000), "adverse_net_pnl": D(400), "history_days": 800,
         "window_nets": tuple(D(n) for n in (200, 300, 250, 250)),
         "worst_window_drawdown": D("0.04"), "monte_carlo": monte_carlo(), "deflated_sharpe": dsr(),
+        "pbo": pbo(),
         "concentration": concentration(),
         "perturbation": PerturbationReport(tuple(NeighbourRun(0, str(n), D(10)) for n in range(4))),
         "baseline_net_pnl": D(-50),
@@ -154,6 +163,17 @@ class TestSimpleGates:
         assert gate.assess(evidence(deflated_sharpe=dsr("0.60"))).outcome is UNKNOWN
         assert gate.assess(evidence(deflated_sharpe=dsr(None))).outcome is UNKNOWN
 
+    def test_overfitting_evidence_is_unknown_when_not_computed_but_fails_when_conclusive(
+        self,
+    ) -> None:
+        gate = BeatsOverfitting(T)  # the real config file: max_pbo defaults to 1 (no limit)
+
+        assert gate.assess(evidence()).outcome is PASS
+        assert gate.assess(evidence(pbo=pbo(None))).outcome is UNKNOWN
+        strict = BeatsOverfitting(T.model_copy(update={"max_pbo": D("0.3")}))
+        assert strict.assess(evidence(pbo=pbo("0.2"))).outcome is PASS
+        assert strict.assess(evidence(pbo=pbo("0.8"))).outcome is FAIL
+
     def test_baseline(self) -> None:
         gate = BeatsBaseline()
 
@@ -215,7 +235,7 @@ class TestClassification:
         report = self.policy.classify(evidence())
 
         assert report.verdict is Verdict.VALIDATED
-        assert len(report.gates) == 11 and all(g.outcome is PASS for g in report.gates)
+        assert len(report.gates) == 12 and all(g.outcome is PASS for g in report.gates)
 
     def test_one_fail_rejects_however_much_else_passes(self) -> None:
         assert (
