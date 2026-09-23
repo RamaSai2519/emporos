@@ -54,6 +54,11 @@ _ACKNOWLEDGE = typer.Option(
 )
 _ACCOUNT = typer.Option("paper", help="The paper account id (the API shows this account).")
 _CASH = typer.Option(DEFAULT_PAPER_CASH, help="The paper account's starting cash, a quoted number.")
+_PARITY = typer.Option(
+    True,
+    "--parity/--no-parity",
+    help="After close-out, compare the day with the backtest of the same config (read-only).",
+)
 _LIVE_START = typer.Option(
     None, "--start", "-s", help="Strategy to take live (repeatable); every one must clear the gate."
 )
@@ -117,6 +122,7 @@ def worker_run(
     acknowledge: list[str] | None = _ACKNOWLEDGE,
     account: str = _ACCOUNT,
     cash: str = _CASH,
+    parity: bool = _PARITY,
 ) -> None:
     """Run one paper trading day: live ticks, real risk rules, simulated fills. Start before 09:15.
 
@@ -130,8 +136,9 @@ def worker_run(
         typer.secho("--acknowledge takes NAME=STANDING", fg=typer.colors.RED)
         raise typer.Exit(code=1)
     options = PaperWorkerOptions(
-        files, start or (), account, Money.of(cash), acknowledged=acknowledged
-    )
+        files, start or (), account, Money.of(cash), acknowledged=acknowledged,
+        parity_report=parity,
+    )  # fmt: skip
     settings, clock, sleeper = Settings.default(), SystemClock(), AsyncioSleeper()
     feeds = AngelOneFeedOpener(settings, clock, sleeper, RandomJitter())
     try:

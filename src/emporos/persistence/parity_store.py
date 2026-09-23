@@ -64,6 +64,18 @@ class MongoParityReportStore:
         )
         return [self._report(r) for r in found]
 
+    async def for_strategy(self, strategy: str) -> list[ParityReport]:
+        """Every report of every kind for a strategy, newest session first."""
+        found = await self._records.find(
+            {"strategy": strategy}, sort=[("last_session", DESCENDING), ("recorded_at", DESCENDING)]
+        )
+        return [self._report(r) for r in found]
+
+    async def strategies(self) -> list[str]:
+        return sorted(
+            {r.strategy for r in await self._records.find({"kind": ParityKind.DAILY.value})}
+        )
+
     async def daily_on(self, session_date: date) -> list[ParityReport]:
         found = await self._records.find(
             {"kind": ParityKind.DAILY.value, "first_session": session_date.isoformat()}

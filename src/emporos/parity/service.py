@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Protocol
 
 from emporos.core.alerts import AlertSink
@@ -113,6 +113,16 @@ class ParityService:
         return DailyOutcome(day, tuple(made), already, tuple(skipped), tuple(rolled))
 
     # --- one run ----------------------------------------------------------------------------
+    async def weekly(self, day: date) -> tuple[ParityReport, ...]:
+        """Rebuild the ISO week's WEEKLY report (and the CUMULATIVE one) from the stored dailies."""
+        monday = day - timedelta(days=day.weekday())
+        dailies = [r for n in range(7) for r in await self._reports.daily_on(monday + timedelta(n))]
+        return tuple(await self._roll_up(dailies, day, force_weekly=True))
+
+    def assemble(self, sessions: Sequence[SessionParity], kind: ParityKind) -> ParityReport:
+        """A report over any set of stored sessions, not persisted (for export and display)."""
+        return self._report(kind, sessions)
+
     async def _one_run(
         self, run: StrategyRunRecord, day: date, existing: set[tuple[str, str]]
     ) -> ParityReport | None:
@@ -150,13 +160,15 @@ class ParityService:
         return self._snapshotter.hash_of(document)
 
     # --- roll-ups ---------------------------------------------------------------------------
-    async def _roll_up(self, made: Sequence[ParityReport], day: date) -> list[ParityReport]:
+    async def _roll_up(
+        self, made: Sequence[ParityReport], day: date, force_weekly: bool = False
+    ) -> list[ParityReport]:
         rolled: list[ParityReport] = []
         for strategy, behaviour_hash in sorted({(r.strategy, r.behaviour_hash) for r in made}):
             dailies = await self._reports.dailies(strategy, behaviour_hash)
             sessions = [self._codec.from_document(d.payload) for d in dailies]
             kinds = [(ParityKind.CUMULATIVE, sessions)]
-            if self._last_session_of_week(day):
+            if force_weekly or self._last_session_of_week(day):
                 week = day.isocalendar()[:2]
                 weekly = [s for s in sessions if s.session_date.isocalendar()[:2] == week]
                 kinds.append((ParityKind.WEEKLY, weekly))

@@ -132,7 +132,7 @@ from emporos.risk.limits import RiskLimits
 from emporos.risk.rejection_log import MongoRejectionLog
 from emporos.risk.standard import StandardRuleSet
 from emporos.session.bar_feed import ClosedBarQueue
-from emporos.session.close_out import EndOfDay
+from emporos.session.close_out import CloseOutHook, EndOfDay
 from emporos.session.decision_quotes import QuoteCapturingMarketFacts
 from emporos.session.halt import KillSwitchHalt
 from emporos.session.host import ManagedRun, StrategyHost
@@ -316,6 +316,7 @@ class _CommonFields(Protocol):
     config_validator: ConfigValidator | None
     job_runners: Mapping[str, JobFunction]
     warmup: WarmupSource | None
+    close_out_hooks: Sequence[CloseOutHook]
 
 
 @dataclass(frozen=True)
@@ -374,6 +375,7 @@ class PaperWorkerComposer:
     config_validator: ConfigValidator | None = None
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
     warmup: WarmupSource | None = None  # history for a launched strategy; None starts it empty
+    close_out_hooks: Sequence[CloseOutHook] = ()
     # May a strategy start? None means the paper rule: a strategy that is not validated needs its
     # standing acknowledged. A test that wants no rule passes `OpenStartGate` explicitly.
     start_gate: StartGate | None = None
@@ -479,6 +481,7 @@ class LiveWorkerComposer:
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
     warmup: WarmupSource | None = None
     start_gate: StartGate | None = None
+    close_out_hooks: Sequence[CloseOutHook] = ()
 
     async def build(self) -> WorkerAssembly:
         await self.client.admin.command("ping")
@@ -647,7 +650,7 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
     while_trading = JobScheduler(
         [Job("reprice", t.reprice, repricer.run_once)], common.clock, alerts
     )
-    end_of_day = EndOfDay(sync, engine, reconciler, snapshots, alerts)
+    end_of_day = EndOfDay(sync, engine, reconciler, snapshots, alerts, common.close_out_hooks)
     host = StrategyHost(
         runs, common.bars, updates, journal, OrderUpdateTranslator(), factory, runs_board
     )

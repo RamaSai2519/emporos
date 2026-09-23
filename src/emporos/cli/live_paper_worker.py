@@ -21,6 +21,7 @@ from pathlib import Path
 
 from emporos.cli.history_runtime import instrument_master
 from emporos.cli.live_feed import FeedRequest, LiveFeedOpener
+from emporos.cli.parity_composition import ParityCloseOutHook, open_parity_runtime
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.worker_composition import (
     PaperWorkerComposer,
@@ -61,6 +62,9 @@ class PaperWorkerOptions:
     kill_switch_collection: str = Collection.KILL_SWITCH  # tests point this at a scratch one
     verdict_collection: str = Collection.STRATEGY_VERDICTS  # ... and this
     tuning: WorkerTuning = field(default_factory=WorkerTuning)
+    # EM-185: after close-out, compare the day with the backtest of the same config and store
+    # the report. Off unless asked, so a test rig never opens a second Mongo connection.
+    parity_report: bool = False
 
 
 class LivePaperWorker:
@@ -121,12 +125,19 @@ class LivePaperWorker:
                     starting_cash=options.starting_cash,
                     warmup=feed.warmup,
                     start_gate=gate,
+                    close_out_hooks=self._close_out_hooks(settings),
                 ).build()
                 async with feed.running():
                     _LOG.info("paper worker running: %d strategies loadable", len(available))
                     return await assembly.worker.run_session()
         finally:
             await mongo.close()
+
+    def _close_out_hooks(self, settings: Settings) -> tuple[ParityCloseOutHook, ...]:
+        if not self._options.parity_report:
+            return ()
+        cash = self._options.starting_cash
+        return (ParityCloseOutHook(lambda: open_parity_runtime(settings, cash), self._clock),)
 
     async def _require_startable(
         self, gate: StartGate, configs: Sequence[ResolvedStrategyConfig]

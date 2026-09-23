@@ -21,6 +21,7 @@ from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_probe_commands import history_probe_depth
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
+from emporos.cli.parity_commands import paper_app
 from emporos.cli.quality_commands import history_check, history_quarantine
 from emporos.cli.worker_commands import worker_app, worker_run
 from emporos.core.alerts import LogAlertSink
@@ -69,6 +70,7 @@ app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(api_app, name="api")
 app.add_typer(worker_app, name="worker")
+app.add_typer(paper_app, name="paper")
 app.command("run")(worker_run)  # `emporos run` is `emporos worker run`
 app.command("halt")(halt)
 app.command("resume")(resume)

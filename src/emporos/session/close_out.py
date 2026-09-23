@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -37,6 +38,17 @@ class CloseOutResult:
     trades: int | None
 
 
+class CloseOutHook(Protocol):
+    """Read-only follow-up work once the day's books are final (EM-185: the parity report).
+
+    A hook runs after the snapshot, holds no broker, and is isolated: whatever it does, the
+    session's close-out is unaffected."""
+
+    name: str
+
+    async def after_close_out(self, result: CloseOutResult) -> None: ...
+
+
 class EndOfDay:
     def __init__(
         self,
@@ -45,12 +57,14 @@ class EndOfDay:
         reconciler: AccountReconciler,
         snapshots: Snapshots,
         alerts: AlertSink,
+        hooks: Sequence[CloseOutHook] = (),
     ) -> None:
         self._fills = fills
         self._orders = orders
         self._reconciler = reconciler
         self._snapshots = snapshots
         self._alerts = alerts
+        self._hooks = tuple(hooks)
 
     async def close_out(self) -> CloseOutResult:
         await self._fills.sync()
@@ -61,9 +75,15 @@ class EndOfDay:
             snapshot = await self._snapshots.take(SnapshotKind.EOD)
         except Exception as error:
             self._alerts.raise_alert("eod_snapshot_failed", repr(error))
-        return CloseOutResult(
+        result = CloseOutResult(
             len(found),
             snapshot,
             None if snapshot is None else snapshot.realised_pnl,
             None if snapshot is None else snapshot.trades,
         )
+        for hook in self._hooks:
+            try:
+                await hook.after_close_out(result)
+            except Exception as error:
+                self._alerts.raise_alert(f"close_out_hook_failed:{hook.name}", repr(error))
+        return result
