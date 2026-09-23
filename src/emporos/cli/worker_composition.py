@@ -133,6 +133,7 @@ from emporos.risk.rejection_log import MongoRejectionLog
 from emporos.risk.standard import StandardRuleSet
 from emporos.session.bar_feed import ClosedBarQueue
 from emporos.session.close_out import EndOfDay
+from emporos.session.decision_quotes import QuoteCapturingMarketFacts
 from emporos.session.halt import KillSwitchHalt
 from emporos.session.host import ManagedRun, StrategyHost
 from emporos.session.jobs import Job, JobScheduler
@@ -561,6 +562,9 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
         KillSwitchHalt(prelude.control),
         tracker, common.clock, common.ids, alerts,
     )  # fmt: skip
+    decision_quotes = QuoteCapturingMarketFacts(
+        QuotedMarketFacts(broker, marks), common.clock, "broker_quote"
+    )
     assembler = SnapshotAssembler(
         common.clock,
         MonitoredSystemFacts(
@@ -571,7 +575,7 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
             tracker,
         ),
         LedgerAccountFacts(portfolio, book, marks),
-        QuotedMarketFacts(broker, marks),
+        decision_quotes,
         JournalOrderFlow(journal, ledger, common.clock),
     )
     rejections = RejectionCounter(MongoRejectionLog(RiskEventRepository(db), common.ids))
@@ -581,9 +585,8 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
         rejections,
         common.ids, common.clock, alerts,
     )  # fmt: skip
-    sink = GatedExecutionSink(
-        SignalRecorder(SignalRepository(db), common.ids), risk, engine, alerts
-    )
+    recorder = SignalRecorder(SignalRepository(db), common.ids)
+    sink = GatedExecutionSink(recorder, risk, engine, alerts, decision_quotes, recorder)
 
     # --- strategies ---------------------------------------------------------------------
     run_records = StrategyRunRepository(db)

@@ -112,6 +112,13 @@ class SignalRecord(Record):
     trigger_price: MoneyField | None = None
     reason: str = ""
     sequence: int | None = None  # 1-based position within the run: orders same-timestamp signals
+    # EM-185: the market the risk snapshot judged this signal against (same fetch, not a second
+    # one). All optional: rows written before this field existed still load.
+    quote_ltp: MoneyField | None = None
+    quote_bid: MoneyField | None = None
+    quote_ask: MoneyField | None = None
+    quote_ts: datetime | None = None
+    quote_source: str | None = None
 
 
 class OrderRecord(Record):

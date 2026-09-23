@@ -397,6 +397,12 @@ class InMemorySignalStore:
     async def insert(self, record: SignalRecord) -> None:
         self.records.append(record)
 
+    async def get(self, record_id: str) -> SignalRecord | None:
+        return next((r for r in self.records if r.id == record_id), None)
+
+    async def replace(self, record: SignalRecord) -> None:
+        self.records = [record if r.id == record.id else r for r in self.records]
+
 
 # --- momentum_v1 and replay helpers -----------------------------------------------------------
 

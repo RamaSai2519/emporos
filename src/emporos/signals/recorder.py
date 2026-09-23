@@ -15,6 +15,7 @@ from emporos.core.ids import IdGenerator
 from emporos.domain.signals import Signal
 from emporos.persistence.errors import DuplicateRecordError
 from emporos.persistence.records import SignalRecord
+from emporos.signals.quotes import DecisionQuote
 
 
 class SignalStore(Protocol):
@@ -74,3 +75,20 @@ class SignalRecorder:
         record = await self._store.get(signal_id)
         if record is not None:
             await self._store.replace(record.model_copy(update={"ordertag": ordertag}))
+
+    async def stamp_quote(self, signal_id: str, quote: DecisionQuote) -> None:
+        """Attach the market the signal was judged against (EM-185). The signal itself was
+        already persisted first; this only adds context to it."""
+        record = await self._store.get(signal_id)
+        if record is not None:
+            await self._store.replace(
+                record.model_copy(
+                    update={
+                        "quote_ltp": quote.ltp,
+                        "quote_bid": quote.bid,
+                        "quote_ask": quote.ask,
+                        "quote_ts": quote.ts,
+                        "quote_source": quote.source,
+                    }
+                )
+            )

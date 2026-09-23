@@ -56,3 +56,21 @@ async def test_signals_are_sequenced_per_run_and_get_unique_ids() -> None:
         ("run-a", 3),
     ]
     assert len({r.id for r in store.records}) == 4
+
+
+async def test_stamping_a_quote_adds_context_without_touching_the_signal() -> None:
+    from emporos.signals.quotes import DecisionQuote
+
+    store = InMemorySignalStore()
+    recorder = SignalRecorder(store, IdGenerator())
+    signal_id = await recorder.record(make_signal())
+    before = store.records[0]
+
+    await recorder.stamp_quote(signal_id, DecisionQuote(T0, "q", Money.of("100"), None, None))
+
+    (after,) = store.records
+    assert (after.quote_ltp, after.quote_bid, after.quote_source) == (Money.of("100"), None, "q")
+    assert (
+        after.model_copy(update={"quote_ltp": None, "quote_ts": None, "quote_source": None})
+        == before
+    )

@@ -19,6 +19,7 @@ from emporos.domain.signals import Signal
 from emporos.execution.errors import ExecutionRefusedError
 from emporos.persistence.records import OrderRecord
 from emporos.risk.approval import RiskApprovedSignal, RiskDecision, RiskRejection
+from emporos.signals.quotes import DecisionQuotes, QuoteStamper
 
 
 class SignalLedger(Protocol):
@@ -58,11 +59,15 @@ class GatedExecutionSink:
         risk: SignalReviewer,
         execution: ApprovedOrders,
         alerts: AlertSink,
+        quotes: DecisionQuotes | None = None,
+        stamper: QuoteStamper | None = None,
     ) -> None:
         self._ledger = ledger
         self._risk = risk
         self._execution = execution
         self._alerts = alerts
+        self._quotes = quotes
+        self._stamper = stamper
 
     async def submit(self, signal: Signal) -> None:
         await self.submit_as(signal)
@@ -73,6 +78,7 @@ class GatedExecutionSink:
         re-reviews it, and gets back the SAME order rather than placing another."""
         signal_id = await self._ledger.record(signal, signal_id)
         decision = await self._risk.review(signal, signal_id)
+        await self._stamp_quote(signal, signal_id)
         if isinstance(decision, RiskRejection):
             return Submission(signal_id, rejection=decision)  # persisted with its reason by risk
         try:
@@ -84,3 +90,16 @@ class GatedExecutionSink:
             return Submission(signal_id, refusal=str(refused))
         await self._ledger.link(signal_id, order.ordertag)
         return Submission(signal_id, order=order)
+
+    async def _stamp_quote(self, signal: Signal, signal_id: str) -> None:
+        """Audit context only: it must never be able to stop or delay a trade, so a failure is
+        alerted and the signal proceeds."""
+        if self._quotes is None or self._stamper is None:
+            return
+        quote = self._quotes.take(signal.instrument_id)
+        if quote is None:
+            return
+        try:
+            await self._stamper.stamp_quote(signal_id, quote)
+        except Exception as error:
+            self._alerts.raise_alert("signal_quote_not_recorded", f"{signal_id}: {error!r}")
