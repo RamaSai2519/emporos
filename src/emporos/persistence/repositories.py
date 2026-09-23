@@ -32,6 +32,7 @@ from emporos.persistence.records import (
     OrderRecord,
     PortfolioSnapshotRecord,
     PositionRecord,
+    QuarantineRecord,
     ReconciliationRunRecord,
     RiskEventRecord,
     SignalRecord,
@@ -236,6 +237,11 @@ class MarketCalendarRepository(Repository[MarketCalendarRecord]):
 
     async def get_by_date(self, date: str) -> MarketCalendarRecord | None:
         return await self.find_one({"date": date})
+
+
+class QuarantineRepository(Repository[QuarantineRecord]):
+    def __init__(self, database: Database) -> None:
+        super().__init__(database, Collection.CORPORATE_ACTION_QUARANTINE, QuarantineRecord)
 
 
 class KillSwitchRepository(Repository[KillSwitchRecord]):

@@ -21,7 +21,7 @@ from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_probe_commands import history_probe_depth
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
-from emporos.cli.quality_commands import history_check
+from emporos.cli.quality_commands import history_check, history_quarantine
 from emporos.cli.worker_commands import worker_app, worker_run
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
@@ -63,6 +63,7 @@ history_app = typer.Typer(
 )
 history_app.command("probe-depth")(history_probe_depth)
 history_app.command("check")(history_check)
+history_app.command("quarantine")(history_quarantine)
 app.add_typer(instruments_app, name="instruments")
 app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")

@@ -287,6 +287,17 @@ class MarketCalendarRecord(Record):
     is_trading_day: bool = True
 
 
+class QuarantineRecord(Record):
+    """One quarantined instrument/day (EM-177). `_id` is `f"{instrument_id}:{day}"`, so
+    re-detecting the same artifact upserts rather than duplicating it."""
+
+    instrument_id: str
+    day: str
+    reason: str
+    source: str
+    recorded_at: datetime
+
+
 class KillSwitchRecord(Record):
     """The kill switch: one document. `halted` is what the worker polls; the rest is who and why."""
 

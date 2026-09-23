@@ -76,6 +76,51 @@ instrument with an UNKNOWN order is frozen, fills are idempotent, and every orde
 are proven on the paper and emulator brokers, not on the real one — nothing in this repository has
 placed, or can place, a real order.
 
+## Broker operational constraints (EM-186)
+
+Scattered across test docstrings until now; centralized here.
+
+* **One session per client code, account-wide.** Logging in a second time (a test, a second
+  worker, a manual script) invalidates whatever session was already logged in as that client
+  code — including a running worker's. Never run a live check against the same `.env` credentials
+  a worker is using.
+* **One login per second, account-wide** (`LOGIN_COOLDOWN_SECONDS` in `tests/integration/conftest.py`).
+  Angel One enforces this with a plain-text 403 ("Access denied because of exceeding access
+  rate"), not a JSON error or a 429 — `broker/angelone/limits.py`'s `EndpointGroup.LOGIN` cap and
+  the retry/backoff stack are built around this.
+* **Order endpoints are IP-gated; market data is not.** The dev API key has no static IP
+  registered in the SmartAPI portal, so `placeOrder`/`cancelOrder`/etc. refuse it outright,
+  regardless of every other flag — this is what makes paper trading (market data only) safe to run
+  today and live trading structurally impossible until step 1 below is done. No MAC-based
+  auth exists in Angel One's API; only the API key + TOTP + the registered IP for order endpoints.
+* **Published per-endpoint rate limits** (`broker/angelone/limits.py`, marked `[VOLATILE]` —
+  unverified against Angel One's current published table): login/account/order-book/position/
+  search/holding at 1/s; `placeOrder` throttled to 5/s (below the 9/s the static-IP rollout
+  allows, itself below the 20/s originally published) with 500/min and 1000/hour caps; quotes/LTP
+  at 10/s, 500/min, 5000/hour; candles at 3/s, 180/min, 5000/hour.
+* **The websocket layer is TLS-verified, our own transport** (not the SmartAPI SDK — AGENTS.md);
+  reconnect/heartbeat behavior is proven live for a stable connection (`test_angelone_live_feed.py`)
+  but **not yet proven live across an actual connection drop**, and no documented subscription-count
+  ceiling exists yet for the market-data socket — both remain open items under EM-186.
+
+### Live verified, 2026-09-23 (market open, ~12:47-12:52 IST), EM-186
+
+`emporos worker run` (paper, every `config/strategies/*.yaml` loaded, none `--start`ed) run for
+~5 minutes against the real Angel One feed and stopped with `SIGTERM` (clean exit, code 143 from
+the signal): real-time 1m candles were constructed from live ticks and written correctly for every
+subscribed instrument, with plausible non-zero volumes and IST-correct timestamps (spot-checked
+directly against `candles`, e.g. `NSE:3499 1m 2026-09-23 07:18:00+00:00 vol=21297`). This is the
+first time the live tick-to-candle pipeline has been exercised against real NSE data end-to-end
+(EM-138's outstanding smoke test).
+
+One finding: `market_data.no_ticks_at_open` (`marketdata/staleness.py`'s `_check_market_open`)
+fired once at startup — a **false positive**, not a feed problem: the check fires when no tick has
+been seen by `open + 1 minute` on the CURRENT session, and starting the worker mid-session (12:47,
+not before 09:15 as the command's own docstring requires) means that window had already long
+passed with nothing yet received in THIS run. Ticks began arriving and candles were written
+correctly seconds later. Real: order-book/reconnect-under-loss/subscription-limit checks remain
+unexercised (no orders can be placed — IP-gated — and this run was never disconnected mid-session).
+
 ## What you must do, in order
 
 The composition exists now; none of the rest can be done by the codebase, and none of it has been

@@ -17,10 +17,12 @@ from emporos.history.quality import (
     MarketDays,
     MissingMarketDays,
     OvernightDiscontinuity,
+    QuarantinedBar,
     SeriesContext,
     Severity,
     TimestampAlignment,
 )
+from emporos.history.quarantine import CorporateActionQuarantine, QuarantineEntry, QuarantineSource
 from emporos.marketdata.session import SessionWindow
 
 DAY1, DAY2, DAY3 = date(2026, 3, 2), date(2026, 3, 3), date(2026, 3, 4)  # Mon, Tue, Wed
@@ -125,6 +127,26 @@ def test_the_discontinuity_limit_is_a_setting() -> None:
     calm = [*full_day(DAY1, close="100"), *full_day(DAY2, open_="103")]
 
     assert len(OvernightDiscontinuity(limit=Decimal("0.02")).run(ID, calm, context())) == 1
+
+
+def test_a_quarantined_day_is_an_error_and_a_clean_series_has_none() -> None:
+    quarantine = CorporateActionQuarantine(
+        [QuarantineEntry(ID, DAY2, "split", QuarantineSource.DETECTED, datetime(2026, 3, 5))]
+    )
+
+    found = QuarantinedBar(quarantine).run(ID, [*full_day(DAY1), *full_day(DAY2)], context())
+
+    assert [f.day for f in found] == [DAY2] and found[0].severity is Severity.ERROR
+    assert QuarantinedBar(CorporateActionQuarantine()).run(ID, full_day(DAY1), context()) == []
+
+
+def test_a_quarantined_day_for_a_different_instrument_does_not_flag_this_one() -> None:
+    other = QuarantineEntry(
+        "NSE:OTHER", DAY1, "split", QuarantineSource.DETECTED, datetime(2026, 3, 5)
+    )
+    quarantine = CorporateActionQuarantine([other])
+
+    assert QuarantinedBar(quarantine).run(ID, full_day(DAY1), context()) == []
 
 
 def test_market_days_are_the_days_half_the_instruments_traded() -> None:

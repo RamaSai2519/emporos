@@ -30,6 +30,7 @@
     "fills: through crossing, at the order's own limit, 0.1 of bar volume, 0 bps rejected (seed 0), forced square-off 10 bps against",
     "fee schedule NOT reconciled against a contract note (verified: false)"
   ],
+  "provenance": null,
   "activity": {
     "signals": 75,
     "signals_refused_by_the_gate": 0,

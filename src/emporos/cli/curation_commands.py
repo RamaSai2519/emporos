@@ -208,6 +208,7 @@ async def _curate(
                     runtime.cache.fingerprint if runtime.cache else None,
                 ),
                 assessors=assessor, batch=batch,
+                calendar=runtime.calendar, quarantine=runtime.quarantine,
             )  # fmt: skip
             records = await run.run(
                 [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pymongo.asynchronous.database import AsyncDatabase
@@ -26,10 +26,14 @@ from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
 from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
+from emporos.history.calendar import StoredTradingCalendar
+from emporos.history.quarantine import CorporateActionQuarantine
+from emporos.persistence.calendar_store import MongoCalendarStore
 from emporos.persistence.candle_cache import CachingCandleReader, CandleCacheFiles
 from emporos.persistence.candle_hot import MongoCandleStore
 from emporos.persistence.candles import CandleReader, CandleRepository
 from emporos.persistence.mongo import MongoClientFactory
+from emporos.persistence.quarantine_store import MongoQuarantineStore
 from emporos.persistence.records import InstrumentRecord, InstrumentVersionRecord
 from emporos.persistence.repositories import InstrumentRepository, InstrumentVersionRepository
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
@@ -45,6 +49,8 @@ class BacktestRuntime:
     database: AsyncDatabase  # type: ignore[type-arg]
     cache: CachingCandleReader | None = None
     eras: tuple[InstrumentEra, ...] = ()
+    calendar: StoredTradingCalendar = field(default_factory=StoredTradingCalendar)
+    quarantine: CorporateActionQuarantine = field(default_factory=CorporateActionQuarantine)
 
 
 class InstrumentErasReader:
@@ -93,7 +99,11 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
             repository, CandleCacheFiles(candle_cache_root(settings)), SystemClock()
         )
         eras = await InstrumentErasReader(database).read()
-        yield BacktestRuntime(reader, AsOfInstruments(eras), database, reader, tuple(eras))
+        calendar = await StoredTradingCalendar.from_store(MongoCalendarStore(database))
+        quarantine = CorporateActionQuarantine(await MongoQuarantineStore(database).load_all())
+        yield BacktestRuntime(
+            reader, AsOfInstruments(eras), database, reader, tuple(eras), calendar, quarantine
+        )
     finally:
         await mongo.close()
 
@@ -120,6 +130,7 @@ async def run_backtest(
 
     async with open_backtest_runtime(settings) as runtime:
         job = BacktestJob(
-            runtime.reader, registry, runtime.instruments, config_for, schedules, progress=progress
-        )
+            runtime.reader, registry, runtime.instruments, config_for, schedules,
+            progress=progress, calendar=runtime.calendar, quarantine=runtime.quarantine,
+        )  # fmt: skip
         return await job.run(request)

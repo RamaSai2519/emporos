@@ -36,6 +36,7 @@ class Collection(StrEnum):
     TRIAL_LEDGER = "trial_ledger"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"
+    CORPORATE_ACTION_QUARANTINE = "corporate_action_quarantine"
     HISTORY_COVERAGE = "history_coverage"
     KILL_SWITCH = "kill_switch"
     COMMANDS = "commands"

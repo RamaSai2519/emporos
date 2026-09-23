@@ -13,8 +13,6 @@ and a float anywhere is an error. The hash is SHA-256 over compact, key-sorted J
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import time
@@ -23,13 +21,13 @@ from enum import Enum
 
 from pydantic import BaseModel, ValidationError
 
+from emporos.core.hashing import HASH_PREFIX, Canonical, content_hash
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.resolution import ParametersCatalog, StrategyConfigError
 
 SCHEMA_VERSION = 1
-HASH_PREFIX = "sha256:"
 
-Canonical = str | int | bool | None | list["Canonical"] | dict[str, "Canonical"]
+__all__ = ["Canonical", "HASH_PREFIX", "Canonicalizer", "ConfigSnapshot", "ConfigSnapshotter"]
 
 
 class SnapshotIntegrityError(ValueError):
@@ -89,8 +87,7 @@ class ConfigSnapshotter:
 
     @staticmethod
     def hash_of(document: Mapping[str, Canonical]) -> str:
-        text = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-        return HASH_PREFIX + hashlib.sha256(text.encode("utf-8")).hexdigest()
+        return content_hash(document)
 
     def restore(
         self,

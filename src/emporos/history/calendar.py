@@ -18,6 +18,7 @@ from typing import Protocol
 
 from emporos.core.clock import IST
 from emporos.core.errors import ConfigurationError
+from emporos.core.hashing import Canonical, content_hash
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.instruments import Instrument
 from emporos.history.source import HistoricalCandleSource
@@ -50,6 +51,14 @@ class StoredTradingCalendar:
 
     def known_days(self) -> int:
         return len(self._days)
+
+    def content_hash(self) -> str:
+        """A content hash of the loaded snapshot (EM-177): two runs that hashed the same calendar
+        checked every date against the same holiday/trading-day knowledge."""
+        document: dict[str, Canonical] = {
+            "days": [[d.isoformat(), is_trading] for d, is_trading in sorted(self._days.items())]
+        }
+        return content_hash(document)
 
 
 def derive_trading_days(daily_bars: Sequence[Candle], first: date, last: date) -> dict[date, bool]:

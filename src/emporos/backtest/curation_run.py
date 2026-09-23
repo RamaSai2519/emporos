@@ -14,8 +14,10 @@ from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.curation import CurationRecord, StrategyCurator
 from emporos.backtest.engine import BacktestEngine, BacktestSpec
 from emporos.backtest.feed import FeedWindow
+from emporos.backtest.integrity import ResearchIntegrityGate
 from emporos.backtest.job import ResolverTickSizes
 from emporos.backtest.pricing import GateContext, SignalGate
+from emporos.backtest.provenance import ProvenanceSnapshotter
 from emporos.backtest.robustness.assessment import AssessorFactory
 from emporos.backtest.robustness.recording import NoRecording, ResultRecorder
 from emporos.backtest.tuning import BestScoreSelector, ConfigVariants, Objective, ParameterCandidate
@@ -25,6 +27,8 @@ from emporos.backtest.walkforward_run import WalkForwardRunner
 from emporos.core.clock import IST
 from emporos.domain.instruments import InstrumentResolver
 from emporos.domain.money import Money
+from emporos.history.calendar import StoredTradingCalendar
+from emporos.history.quarantine import CorporateActionQuarantine
 from emporos.persistence.candles import CandleReader
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.registry import StrategyRegistry
@@ -69,6 +73,9 @@ class CurationRun:
         recorder: ResultRecorder | None = None,
         assessors: AssessorFactory | None = None,
         batch: BatchBacktester | None = None,
+        calendar: StoredTradingCalendar | None = None,
+        quarantine: CorporateActionQuarantine | None = None,
+        allow_quarantined_instruments: bool = False,
     ) -> None:
         """`batch` runs the independent backtests of a strategy (default: one after another)."""
         self._reader = reader
@@ -82,6 +89,9 @@ class CurationRun:
         self._recorder = recorder or NoRecording()
         self._assessors = assessors
         self._batch = batch
+        self._calendar = calendar or StoredTradingCalendar()
+        self._quarantine = quarantine or CorporateActionQuarantine()
+        self._allow_quarantined = allow_quarantined_instruments
 
     async def run(
         self,
@@ -101,6 +111,14 @@ class CurationRun:
                 f"{planned.name}: {len(planned.candidates)} candidates x {len(windows)} windows"
             )
             config = planned.config_for(universe.resolver)
+            ResearchIntegrityGate(self._quarantine).check(
+                config.instrument_ids, plan.first_day, plan.last_day,
+                allow_quarantined=self._allow_quarantined,
+            )  # fmt: skip
+            provenance = ProvenanceSnapshotter().take(
+                universe, config.instrument_ids, config.timeframe, plan.first_day,
+                plan.last_day, self._quarantine, self._calendar.content_hash(),
+            )  # fmt: skip
             engine = BacktestEngine(
                 self._reader, self._registry, ResolverTickSizes(universe.resolver),
                 self._schedules, gate=self._gate,
@@ -112,6 +130,7 @@ class CurationRun:
             base = BacktestSpec(
                 config=config, window=FeedWindow(start, end), starting_cash=starting_cash,
                 assumptions=("universe resolved from earliest recorded definitions",),
+                provenance=provenance,
             )  # fmt: skip
             result = await runner.run(base, planned.candidates, windows, run_log)
             await self._recorder.record(planned.name, result)

@@ -12,6 +12,7 @@ from typing import Any
 from emporos.backtest.engine import BacktestResult
 from emporos.backtest.metrics.document import MetricsDocument
 from emporos.backtest.portfolio import ClosedTrade
+from emporos.backtest.provenance import ResearchProvenance
 from emporos.core.clock import IST
 
 _RISK_NOT_BUILT = (
@@ -54,6 +55,7 @@ class BacktestDocument:
                 "alerts": [list(alert) for alert in result.alerts],
             },
             "assumptions": self._assumptions(result),
+            "provenance": self._provenance(spec.provenance),
             "activity": {
                 "signals": result.counters.signals,
                 "signals_refused_by_the_gate": result.counters.gate_rejections,
@@ -97,6 +99,21 @@ class BacktestDocument:
                 "were priced with it"
             )
         return notes + list(result.spec.assumptions)
+
+    @staticmethod
+    def _provenance(provenance: ResearchProvenance | None) -> dict[str, Any] | None:
+        if provenance is None:
+            return None
+        return {
+            "schema_version": provenance.schema_version,
+            "dataset_timeframe": provenance.dataset_timeframe.value,
+            "dataset_first": provenance.dataset_first.isoformat(),
+            "dataset_last": provenance.dataset_last.isoformat(),
+            "universe_hash": provenance.universe_hash,
+            "calendar_version": provenance.calendar_version,
+            "quarantine_hash": provenance.quarantine_hash,
+            "assumed_instrument_ids": list(provenance.assumed_instrument_ids),
+        }
 
     def _trade(self, trade: ClosedTrade) -> dict[str, Any]:
         return {

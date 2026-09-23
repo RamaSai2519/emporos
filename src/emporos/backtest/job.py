@@ -18,13 +18,17 @@ from datetime import UTC, date, datetime, time, timedelta
 from emporos.backtest.costs import ScheduleSource
 from emporos.backtest.engine import BacktestEngine, BacktestResult, BacktestSpec
 from emporos.backtest.feed import FeedWindow
+from emporos.backtest.integrity import ResearchIntegrityGate
 from emporos.backtest.metrics.report import MetricsSettings
 from emporos.backtest.progress import BacktestProgressSink
+from emporos.backtest.provenance import ProvenanceSnapshotter
 from emporos.backtest.settings import FillSettings
 from emporos.backtest.universe import AsOfInstruments
 from emporos.core.clock import IST
 from emporos.domain.instruments import InstrumentResolver
 from emporos.domain.money import Money
+from emporos.history.calendar import StoredTradingCalendar
+from emporos.history.quarantine import CorporateActionQuarantine
 from emporos.marketdata.session import SessionWindow
 from emporos.persistence.candles import CandleReader
 from emporos.strategies.config import ResolvedStrategyConfig
@@ -40,6 +44,8 @@ class BacktestRequest:
     metrics: MetricsSettings = field(default_factory=MetricsSettings)
     # Resolve instruments the master has no history for from their earliest known definition.
     assume_current_universe: bool = False
+    # An explicit, recorded opt-in to run across a quarantined corporate-action day (EM-177).
+    allow_quarantined_instruments: bool = False
 
     def __post_init__(self) -> None:
         if self.first_day > self.last_day:
@@ -66,6 +72,8 @@ class BacktestJob:
         schedules: Callable[[], ScheduleSource],
         session: SessionWindow | None = None,
         progress: BacktestProgressSink | None = None,
+        calendar: StoredTradingCalendar | None = None,
+        quarantine: CorporateActionQuarantine | None = None,
     ) -> None:
         self._reader = reader
         self._registry = registry
@@ -74,6 +82,8 @@ class BacktestJob:
         self._schedules = schedules
         self._session = session or SessionWindow()
         self._progress = progress
+        self._calendar = calendar or StoredTradingCalendar()
+        self._quarantine = quarantine or CorporateActionQuarantine()
 
     async def run(self, request: BacktestRequest) -> BacktestResult:
         moment = self._session.open_at(request.first_day)
@@ -81,6 +91,14 @@ class BacktestJob:
             moment, assume_earliest_before_history=request.assume_current_universe
         )
         config = self._config_for(universe.resolver)
+        ResearchIntegrityGate(self._quarantine).check(
+            config.instrument_ids, request.first_day, request.last_day,
+            allow_quarantined=request.allow_quarantined_instruments,
+        )  # fmt: skip
+        provenance = ProvenanceSnapshotter().take(
+            universe, config.instrument_ids, config.timeframe, request.first_day,
+            request.last_day, self._quarantine, self._calendar.content_hash(),
+        )  # fmt: skip
         engine = BacktestEngine(
             self._reader, self._registry, ResolverTickSizes(universe.resolver), self._schedules,
             progress=self._progress,
@@ -92,6 +110,7 @@ class BacktestJob:
             fills=request.fills,
             metrics=request.metrics,
             assumptions=self._assumptions(config, universe.assumed_ids, request),
+            provenance=provenance,
         )
         return await engine.run(spec)
 

@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
+from emporos.backtest.integrity import ResearchIntegrityViolation
 from emporos.backtest.job import BacktestJob, BacktestRequest, ResolverTickSizes
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
 from emporos.cli.strategy_composition import build_registry
@@ -17,6 +18,7 @@ from emporos.domain.instruments import (
     UnknownInstrumentError,
 )
 from emporos.domain.money import Money
+from emporos.history.quarantine import CorporateActionQuarantine, QuarantineEntry, QuarantineSource
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.resolution import StrategyConfigError, StrategyConfigResolver
 from tests.support.backtest import InMemoryCandles
@@ -105,6 +107,35 @@ async def test_the_tick_size_comes_from_the_same_universe() -> None:
     assert ResolverTickSizes(INSTRUMENT_MASTER).tick_size("NSE:1002") == Money.of("0.05")
     with pytest.raises(UnknownInstrumentError):
         ResolverTickSizes(universe).tick_size("NSE:9999")
+
+
+async def test_the_result_carries_provenance_for_the_universe_it_ran_against() -> None:
+    result = await job(LONG_AGO).run(request())
+
+    provenance = result.spec.provenance
+    assert provenance is not None
+    assert provenance.dataset_first == FIRST and provenance.dataset_last == LAST
+    assert provenance.universe_hash.startswith("sha256:")
+    assert provenance.assumed_instrument_ids == ()
+
+
+async def test_a_quarantined_day_inside_the_window_refuses_the_run_unless_opted_in() -> None:
+    entry = QuarantineEntry(
+        "NSE:1001", FIRST + timedelta(days=1), "split", QuarantineSource.DETECTED, LONG_AGO
+    )
+    quarantine = CorporateActionQuarantine([entry])
+    clean = await job(LONG_AGO).run(request())
+    gated = BacktestJob(
+        InMemoryCandles(momentum_candles()), build_registry(), eras(LONG_AGO), config_for,
+        lambda: FixedSchedule(), quarantine=quarantine,
+    )  # fmt: skip
+
+    with pytest.raises(ResearchIntegrityViolation, match="NSE:1001"):
+        await gated.run(request())
+
+    allowed = await gated.run(request(allow_quarantined_instruments=True))
+    assert allowed.spec.provenance is not None and clean.spec.provenance is not None
+    assert allowed.spec.provenance.quarantine_hash != clean.spec.provenance.quarantine_hash
 
 
 def test_a_request_runs_forward_in_time() -> None:

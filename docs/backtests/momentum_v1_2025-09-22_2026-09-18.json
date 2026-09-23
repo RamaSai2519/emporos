@@ -32,6 +32,19 @@
     "146 trading day(s) predate the oldest fee schedule and were priced with it",
     "universe: 2 of 2 instrument(s) were resolved from their EARLIEST recorded definition, because the instrument master holds no history covering 2025-09-22; a delisting or symbol change before the master began recording is not represented (survivorship, EM-99 H8)"
   ],
+  "provenance": {
+    "schema_version": 1,
+    "dataset_timeframe": "5m",
+    "dataset_first": "2025-09-22",
+    "dataset_last": "2026-09-18",
+    "universe_hash": "sha256:aa64a4834960c47126b97a1470e0d71a041c0f07cfd2b69071cecc8e34ae4d5a",
+    "calendar_version": "sha256:807e0a1905a035a49a107e33494e38a97ebe88e65514ef9e12c1626dcf983e96",
+    "quarantine_hash": "sha256:d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658",
+    "assumed_instrument_ids": [
+      "NSE:11536",
+      "NSE:2885"
+    ]
+  },
   "activity": {
     "signals": 339,
     "signals_refused_by_the_gate": 0,

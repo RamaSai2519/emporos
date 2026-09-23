@@ -39,6 +39,7 @@ from emporos.backtest.pricing import (
     TickSizes,
 )
 from emporos.backtest.progress import BacktestProgressSink, NullBacktestProgressSink
+from emporos.backtest.provenance import ResearchProvenance
 from emporos.backtest.replay import BarReplay
 from emporos.backtest.session import BacktestSession
 from emporos.backtest.settings import FillModelFactory, FillSettings
@@ -70,6 +71,9 @@ class BacktestSpec:
     warmup_bars: int = DEFAULT_WARMUP_BARS
     warmup_lookback: timedelta = DEFAULT_WARMUP_LOOKBACK
     assumptions: tuple[str, ...] = ()  # things the caller assumed (e.g. the universe basis)
+    # What dataset/universe/calendar/quarantine this ran against (EM-177); None from a caller that
+    # has not been wired to a calendar/quarantine store yet.
+    provenance: ResearchProvenance | None = None
 
 
 @dataclass(frozen=True)

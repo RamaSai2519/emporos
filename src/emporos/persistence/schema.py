@@ -194,6 +194,9 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("ts", expire_after=30 * _DAY),
         ),
         _spec(Collection.MARKET_CALENDAR, IndexSpec.on("date", unique=True)),
+        # `_id` is already `f"{instrument_id}:{day}"` (unique by construction); this index is for
+        # `overlapping(instrument_id, first, last)` lookups, not uniqueness.
+        _spec(Collection.CORPORATE_ACTION_QUARANTINE, IndexSpec.on("instrument_id", "day")),
         _spec(
             Collection.HISTORY_COVERAGE,
             IndexSpec.on("instrument_id", "timeframe", "day", unique=True),

@@ -10,6 +10,9 @@ collects `Finding`s into a report. Adding a check is adding a class, never editi
     MissingMarketDays            a market day the instrument has no bars at all for
     OvernightDiscontinuity       the open jumps from the last close by more than a limit: what an
                                  unadjusted split, bonus or a data error looks like
+    QuarantinedBar               a bar falls on an instrument/day a person or a prior audit has
+                                 quarantined (EM-177); it is optional and needs a
+                                 `CorporateActionQuarantine` to run
 
 A "market day" is inferred from the data, not from a holiday list: a day on which at least half of
 the audited instruments have bars. That needs no calendar (the stored one is empty) and cannot
@@ -32,6 +35,7 @@ from typing import Protocol
 
 from emporos.core.clock import IST
 from emporos.domain.candles import Candle, Timeframe
+from emporos.history.quarantine import CorporateActionQuarantine
 from emporos.marketdata.session import SessionWindow
 from emporos.persistence.candles import CandleReader
 
@@ -222,6 +226,29 @@ class OvernightDiscontinuity:
                     )  # fmt: skip
                 )
         return found
+
+
+class QuarantinedBar:
+    """A bar on an instrument/day already in `CorporateActionQuarantine`: an unadjusted split,
+    bonus or confirmed bad print a backtest must not trade across silently (EM-177)."""
+
+    name = "quarantined_bar"
+
+    def __init__(self, quarantine: CorporateActionQuarantine) -> None:
+        self._quarantine = quarantine
+
+    def run(
+        self, instrument_id: str, bars: Sequence[Candle], context: SeriesContext
+    ) -> list[Finding]:
+        days = {_day(bar) for bar in bars}
+        return [
+            Finding(
+                self.name, instrument_id, day, Severity.ERROR,
+                f"{instrument_id} {day.isoformat()} is quarantined for a corporate-action artifact",
+            )  # fmt: skip
+            for day in sorted(days)
+            if self._quarantine.is_quarantined(instrument_id, day)
+        ]
 
 
 def standard_checks() -> list[SeriesCheck]:
