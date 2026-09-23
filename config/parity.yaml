@@ -1,0 +1,20 @@
+# Bounds on how far paper trading may degrade from the backtest of the same config and session
+# before a strategy is blocked from graduating (EM-185, plan.md §21; consumed by EM-189).
+#
+# Fixed BEFORE any parity report was looked at (the commit that adds this file precedes the first
+# real run) and never tuned afterwards: loosening a bound after seeing a result is exactly what this
+# file exists to prevent. Change them only by adding a new file and re-judging everything.
+# Numbers are integers or QUOTED strings; a YAML float is refused, and so is an unknown key.
+#
+# A gate that cannot be judged (too few sessions or matched trades) is INCONCLUSIVE, which blocks
+# graduation just as REJECTED does. Do not lower min_sessions / min_matched_trades to get a verdict.
+
+min_sessions: 10               # paper sessions with a recorded run
+min_matched_trades: 30         # round trips present on BOTH sides
+min_signal_agreement: "0.8"    # signalled by both / (both + paper-only + backtest-only)
+max_fill_rate_drop: "0.15"     # backtest fill rate minus paper's, absolute
+max_slippage_increase_bps: 5   # paper's mean slippage minus the backtest's, basis points
+max_expectancy_drop_fraction: "0.5"   # paper's expectancy below the backtest's, as a fraction of it
+max_drawdown_increase_fraction: "0.5" # paper's worst drawdown above the backtest's, as a fraction
+max_win_rate_drop: "0.10"      # backtest win rate minus paper's, absolute
+max_turnover_ratio: "1.5"      # paper's traded value / the backtest's
