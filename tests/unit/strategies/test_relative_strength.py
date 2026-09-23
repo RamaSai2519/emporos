@@ -45,9 +45,7 @@ class Harness:
         )
         config = config.model_copy(
             update={
-                "risk": config.risk.model_copy(
-                    update={"max_open_positions": max_open_positions}
-                ),
+                "risk": config.risk.model_copy(update={"max_open_positions": max_open_positions}),
                 "session": config.session.model_copy(
                     update={"no_new_entries_after": time.fromisoformat(no_entries_after)}
                 ),
@@ -81,9 +79,7 @@ def rounds(
 ) -> list[Candle]:
     """`closes` laid out round-robin, `order` fed last-to-trigger inside each round, so whichever
     instrument closes the round has already-recorded siblings when it fires the rebalance."""
-    per_instrument = {
-        iid: closes_to_bars(series, iid, start) for iid, series in closes.items()
-    }
+    per_instrument = {iid: closes_to_bars(series, iid, start) for iid, series in closes.items()}
     rounds_count = len(next(iter(closes.values())))
     return [per_instrument[iid][i] for i in range(rounds_count) for iid in order]
 
@@ -96,10 +92,10 @@ BASE = dict(
 
 class TestRankingAndRotation:
     WINDOW1: ClassVar[dict[str, list[str]]] = {
-        A: ["100", "106", "113"],   # +13%: strongest
-        B: ["100", "102", "104"],   # +4%
-        C: ["100", "98", "96"],     # -4%
-        D: ["100", "94", "87"],     # -13%: weakest
+        A: ["100", "106", "113"],  # +13%: strongest
+        B: ["100", "102", "104"],  # +4%
+        C: ["100", "98", "96"],  # -4%
+        D: ["100", "94", "87"],  # -13%: weakest
     }
 
     def test_it_longs_the_strongest_and_shorts_the_weakest(self) -> None:
@@ -125,8 +121,8 @@ class TestRankingAndRotation:
         window2 = {
             A: ["113", "112", "111", "110"],  # flat-ish from here: falls out of the top
             B: ["104", "100", "110", "121"],  # +21%: the new strongest
-            C: ["96", "100", "90", "80"],     # -20%: the new weakest
-            D: ["87", "88", "89", "90"],      # mild recovery: falls out of the bottom
+            C: ["96", "100", "90", "80"],  # -20%: the new weakest
+            D: ["87", "88", "89", "90"],  # mild recovery: falls out of the bottom
         }
         # feed one throwaway bar per instrument first so `rounds` (3 more bars) lines up on a
         # fresh rebalance boundary (bar_of_day 4, 5, 6)

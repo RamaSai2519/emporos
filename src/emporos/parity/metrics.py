@@ -272,7 +272,7 @@ class ParityAnalyzer:
     def _of_symbol(self, sessions: Sequence[SessionParity], symbol: str) -> ParityMetrics:
         narrowed = [
             SessionParity(
-                s.strategy, s.run_id, s.session_date, s.config_hash, s.starting_cash,
+                s.strategy, s.run_id, s.session_date, s.behaviour_hash, s.starting_cash,
                 tuple(r for r in s.signals if r.instrument_id == symbol),
                 tuple(t for t in s.trades if t.instrument_id == symbol),
             )

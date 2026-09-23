@@ -375,15 +375,19 @@ class TestShortsFlowThroughTheGuards:
         verdict = MaxDailyLossGuard(Decimal("2000")).evaluate(self.cover(), healthy(account=daily))
         assert verdict.allowed
         strategy = account(strategy_pnl={RUN_ID: Money.of("-9000")})
-        assert MaxStrategyLossGuard(Decimal("1000")).evaluate(
-            self.cover(), healthy(account=strategy)
-        ).allowed
+        assert (
+            MaxStrategyLossGuard(Decimal("1000"))
+            .evaluate(self.cover(), healthy(account=strategy))
+            .allowed
+        )
 
     def test_a_short_entry_is_blocked_after_the_daily_loss_cap_is_breached(self) -> None:
         pnl = account(daily_pnl=Money.of("-2000.01"))
-        assert not MaxDailyLossGuard(Decimal("2000")).evaluate(
-            self.short_entry(), healthy(account=pnl)
-        ).allowed
+        assert (
+            not MaxDailyLossGuard(Decimal("2000"))
+            .evaluate(self.short_entry(), healthy(account=pnl))
+            .allowed
+        )
 
     def test_a_working_sell_blocks_a_second_short_entry_but_not_a_cover(self) -> None:
         guard = DuplicateOrderGuard(timedelta(seconds=5))

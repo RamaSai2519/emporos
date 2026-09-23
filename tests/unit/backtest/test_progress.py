@@ -69,10 +69,18 @@ class TestProgressValue:
 
     def test_snapshots_are_immutable(self) -> None:
         progress = BacktestProgress(
-            day=date(2026, 1, 5), closes_at=dt.datetime(2026, 1, 5, 3, 45),
-            bars_seen=0, equity=Money.of("100000"), gross_exposure=Money.of("0"),
-            open_positions=0, closed_trades=0, signals=0, orders=0, fills=0,
-            cancelled_or_expired=0, forced_square_offs=0,
+            day=date(2026, 1, 5),
+            closes_at=dt.datetime(2026, 1, 5, 3, 45),
+            bars_seen=0,
+            equity=Money.of("100000"),
+            gross_exposure=Money.of("0"),
+            open_positions=0,
+            closed_trades=0,
+            signals=0,
+            orders=0,
+            fills=0,
+            cancelled_or_expired=0,
+            forced_square_offs=0,
         )
         with pytest.raises(FrozenInstanceError):
             progress.bars_seen = 99  # type: ignore[misc]

@@ -52,9 +52,9 @@ def _engine(**overrides: object) -> LeadLagEngine:
     return LeadLagEngine(**defaults)  # type: ignore[arg-type]
 
 
-def _series() -> tuple[
-    dict[date, list[Decimal]], dict[date, list[Decimal]], dict[date, list[Candle]]
-]:
+def _series() -> (
+    tuple[dict[date, list[Decimal]], dict[date, list[Decimal]], dict[date, list[Candle]]]
+):
     predictor_by_day = {
         DAY1: [D("0.01"), D("0.01")],
         DAY2: [D("-0.01"), D("-0.01")],

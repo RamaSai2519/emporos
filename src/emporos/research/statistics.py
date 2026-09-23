@@ -63,9 +63,7 @@ class ExpectancyStats:
             cost_adjusted_expectancy=DecimalMath.mean(cost_returns) if cost_returns else None,
             median_return=ExpectancyStats._median(returns) if returns else None,
             hit_rate=ExpectancyStats._hit_rate(returns) if returns else None,
-            rank_ic=(
-                ExpectancyStats._rank_ic(observations) if len(observations) >= 2 else None
-            ),
+            rank_ic=(ExpectancyStats._rank_ic(observations) if len(observations) >= 2 else None),
             decile_spread=(
                 ExpectancyStats._decile_spread(observations)
                 if len(observations) >= _DECILE_COUNT

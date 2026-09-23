@@ -36,9 +36,9 @@ def event(
     hour_min: str = "09:15",
 ) -> BacktestProgress:
     hour, minute = (int(part) for part in hour_min.split(":"))
-    closes_at = dt.datetime(
-        day.year, day.month, day.day, hour, minute, tzinfo=IST
-    ).astimezone(dt.UTC)
+    closes_at = dt.datetime(day.year, day.month, day.day, hour, minute, tzinfo=IST).astimezone(
+        dt.UTC
+    )
     return BacktestProgress(
         day=day,
         closes_at=closes_at,

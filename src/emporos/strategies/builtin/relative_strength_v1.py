@@ -119,9 +119,7 @@ class RelativeStrengthV1(IntradayStrategy):
                 scores[instrument_id] = score
 
         ranked = sorted(scores.items(), key=lambda kv: kv[1].roc_bps, reverse=True)
-        longs = {
-            iid for iid, s in ranked[: self._p.top_n] if s.roc_bps >= self._p.min_abs_roc_bps
-        }
+        longs = {iid for iid, s in ranked[: self._p.top_n] if s.roc_bps >= self._p.min_abs_roc_bps}
         shorts: set[str] = set()
         if self._p.allow_short and self._p.bottom_n > 0:
             shorts = {

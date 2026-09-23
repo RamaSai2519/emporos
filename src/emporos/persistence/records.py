@@ -364,6 +364,24 @@ class LeadLagTrialRecord(Record):
     note: str = ""
 
 
+class ParityReportRecord(Record):
+    """One backtest-vs-paper comparison, append-only (`emporos.domain.parity.ParityReport`)."""
+
+    strategy: str
+    behaviour_hash: str
+    kind: str
+    period: str
+    first_session: str
+    last_session: str
+    verdict: str
+    gates: list[dict[str, Any]] = Field(default_factory=list)
+    sessions: int
+    matched_trades: int
+    metrics: dict[str, dict[str, str | None]] = Field(default_factory=dict)
+    recorded_at: datetime
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None

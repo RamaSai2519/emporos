@@ -493,7 +493,9 @@ class LiveWorkerComposer:
             cash=_BrokerCash(self.broker),
             start_gate=self.start_gate
             or live_start_gate(
-                self.database, list(loadable.values()), self.live_trading_enabled,
+                self.database,
+                list(loadable.values()),
+                self.live_trading_enabled,
                 _SwitchView(prelude.monitor),
             ),  # fmt: skip
         )

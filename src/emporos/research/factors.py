@@ -86,9 +86,7 @@ def bar_returns(bars: Sequence[Candle]) -> list[Decimal | None]:
     return returns
 
 
-def compounded_return(
-    returns: Sequence[Decimal | None], start: int, end: int
-) -> Decimal | None:
+def compounded_return(returns: Sequence[Decimal | None], start: int, end: int) -> Decimal | None:
     """The compounded return spanning bars `start+1..end` of a per-bar return series — the
     trailing counterpart of `emporos.research.horizons.ForwardReturnCalculator`'s close-to-close
     math, built by compounding period returns rather than dividing closes, since a factor series

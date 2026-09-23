@@ -44,9 +44,9 @@ def _bars() -> list[Candle]:
     return [bar(i, 100 + i) for i in range(4)]
 
 
-def series() -> tuple[
-    dict[date, list[Decimal]], dict[date, list[Decimal]], dict[date, list[Candle]]
-]:
+def series() -> (
+    tuple[dict[date, list[Decimal]], dict[date, list[Decimal]], dict[date, list[Candle]]]
+):
     predictor_by_day = {DAY1: [Decimal("0.01"), Decimal("0.01")], DAY2: [Decimal("0.02")] * 2}
     target_by_day = {
         DAY1: [Decimal("0.005")] * 2 + [Decimal("0.02")] * 2,

@@ -146,9 +146,7 @@ async def test_overview_never_shows_another_accounts_health_report() -> None:
 async def test_overview_shows_the_most_recent_health_report_not_the_first() -> None:
     events = [
         health_event("paper", NOW, mode="paper", broker=True),
-        health_event(
-            "paper", datetime(2026, 9, 21, 5, 0, tzinfo=UTC), mode="paper", broker=False
-        ),
+        health_event("paper", datetime(2026, 9, 21, 5, 0, tzinfo=UTC), mode="paper", broker=False),
     ]
 
     overview = await service("paper", events).overview()

@@ -156,9 +156,7 @@ async def test_edge_evidence_is_none_without_a_configured_portfolio_cost_model()
 
 async def test_edge_evidence_is_computed_when_a_portfolio_cost_model_is_configured() -> None:
     cost_model = PortfolioCostModel(SCHEDULE, spread_bps=Decimal(2), slippage_bps=Decimal(5))
-    assessor = RobustnessAssessor(
-        BenchmarkLoader().load(), stats, portfolio_cost_model=cost_model
-    )
+    assessor = RobustnessAssessor(BenchmarkLoader().load(), stats, portfolio_cost_model=cost_model)
 
     report = await assessor.assess("s", await walk(), base_spec(), CANDIDATES)
 
@@ -178,9 +176,7 @@ async def test_window_performance_is_always_reported_one_entry_per_window() -> N
 async def test_regime_specific_flag_reaches_the_evidence() -> None:
     assessor = RobustnessAssessor(BenchmarkLoader().load(), stats)
 
-    report = await assessor.assess(
-        "s", await walk(), base_spec(), CANDIDATES, regime_specific=True
-    )
+    report = await assessor.assess("s", await walk(), base_spec(), CANDIDATES, regime_specific=True)
 
     assert report.evidence.regime_specific is True
 

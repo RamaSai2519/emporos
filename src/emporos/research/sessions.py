@@ -88,9 +88,7 @@ def early_return(returns: Sequence[Decimal], horizon: Horizon) -> Decimal | None
     return _compound(returns[: horizon.bars])
 
 
-def subsequent_return(
-    returns: Sequence[Decimal], start: Horizon, span: Horizon
-) -> Decimal | None:
+def subsequent_return(returns: Sequence[Decimal], start: Horizon, span: Horizon) -> Decimal | None:
     """The return from the close of the bar ending `start`'s window to the close of the bar
     `span.bars` further on — begins exactly where `start`'s window ended, sharing an anchor PRICE
     with it but never a bar's own return, so predictor and target windows never overlap."""

@@ -104,8 +104,12 @@ class RegimeSelectorV1(IntradayStrategy):
         p = self._p
         return _Track(
             classifier=MarketRegimeClassifier(
-                p.regime_trend_period, p.regime_atr_period, p.regime_vol_window,
-                p.regime_trend_threshold, p.regime_high_vol_percentile, p.regime_low_vol_percentile,
+                p.regime_trend_period,
+                p.regime_atr_period,
+                p.regime_vol_window,
+                p.regime_trend_threshold,
+                p.regime_high_vol_percentile,
+                p.regime_low_vol_percentile,
             ),  # fmt: skip
             atr=AverageTrueRange(p.atr_period),
             vwap=SessionVwap(),

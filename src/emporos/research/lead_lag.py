@@ -125,9 +125,7 @@ class LeadLagEngine:
         price_by_day: Mapping[date, Money] | None,
         labels_by_day: dict[date, dict[str, str | None]],
     ) -> dict[tuple[str, str, str | None, str | None], list[Observation]]:
-        groups: dict[tuple[str, str, str | None, str | None], list[Observation]] = defaultdict(
-            list
-        )
+        groups: dict[tuple[str, str, str | None, str | None], list[Observation]] = defaultdict(list)
         for day in days:
             predictor = early_return(predictor_by_day[day], early_horizon)
             if predictor is None or predictor == _ZERO:

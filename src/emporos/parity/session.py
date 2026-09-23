@@ -32,7 +32,7 @@ class SessionKey:
     strategy: str
     run_id: str
     session_date: date
-    config_hash: str
+    behaviour_hash: str
     starting_cash: Decimal
 
 
@@ -61,6 +61,6 @@ class SessionParityBuilder:
                 )
             )
         return SessionParity(
-            key.strategy, key.run_id, key.session_date, key.config_hash, key.starting_cash,
+            key.strategy, key.run_id, key.session_date, key.behaviour_hash, key.starting_cash,
             tuple(rows), self._pairer.pair(paper.trades, backtest.trades),
         )  # fmt: skip

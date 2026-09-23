@@ -27,8 +27,12 @@ class MongoQuarantineStore:
             record_id = f"{entry.instrument_id}:{entry.day.isoformat()}"
             await self._repository.replace(
                 QuarantineRecord(
-                    _id=record_id, instrument_id=entry.instrument_id, day=entry.day.isoformat(),
-                    reason=entry.reason, source=entry.source.value, recorded_at=entry.recorded_at,
+                    _id=record_id,
+                    instrument_id=entry.instrument_id,
+                    day=entry.day.isoformat(),
+                    reason=entry.reason,
+                    source=entry.source.value,
+                    recorded_at=entry.recorded_at,
                 ),  # fmt: skip
                 upsert=True,
             )

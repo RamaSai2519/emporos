@@ -56,9 +56,7 @@ class CurationProvenance:
     holdout: FeedWindow
 
     @classmethod
-    def of(
-        cls, windows: Sequence[WalkForwardWindow], holdout: FeedWindow
-    ) -> CurationProvenance:
+    def of(cls, windows: Sequence[WalkForwardWindow], holdout: FeedWindow) -> CurationProvenance:
         if not windows:
             raise ValueError("provenance needs at least one walk-forward window")
         research = FeedWindow(

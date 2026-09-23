@@ -243,7 +243,10 @@ class QuarantinedBar:
         days = {_day(bar) for bar in bars}
         return [
             Finding(
-                self.name, instrument_id, day, Severity.ERROR,
+                self.name,
+                instrument_id,
+                day,
+                Severity.ERROR,
                 f"{instrument_id} {day.isoformat()} is quarantined for a corporate-action artifact",
             )  # fmt: skip
             for day in sorted(days)

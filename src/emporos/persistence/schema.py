@@ -207,6 +207,13 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("hypothesis_id", "recorded_at"),
             IndexSpec.on("predictor", "expression", "direction"),
         ),
+        # Backtest-vs-paper parity reports (EM-185): append-only, one per (strategy, configuration,
+        # period, kind). No TTL: the record of how paper compared is evidence, like the ledgers.
+        _spec(
+            Collection.PARITY_REPORTS,
+            IndexSpec.on("strategy", "behaviour_hash", "period", "kind", unique=True),
+            IndexSpec.on("strategy", "behaviour_hash", "kind", "recorded_at"),
+        ),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),

@@ -123,10 +123,13 @@ def test_beta_estimator_recovers_an_exact_single_factor_slope() -> None:
 
 
 def test_beta_estimator_recovers_exact_two_factor_loadings() -> None:
-    instrument: list[Decimal | None] = [None] + [
-        D(2) * m + D(3) * s  # type: ignore[operator]
-        for m, s in zip(MARKET[1:], SECTOR[1:], strict=True)
-    ]
+    instrument: list[Decimal | None] = (
+        [None]
+        + [
+            D(2) * m + D(3) * s  # type: ignore[operator]
+            for m, s in zip(MARKET[1:], SECTOR[1:], strict=True)
+        ]
+    )
 
     loadings = BetaEstimator(window=6).loadings_at(6, instrument, MARKET, SECTOR)
 
@@ -152,10 +155,13 @@ def test_beta_estimator_falls_back_to_market_only_with_no_sector_variance() -> N
 
 def test_residual_signal_is_zero_for_a_one_bar_horizon_fit_exactly_by_its_betas() -> None:
     horizon = Horizon(timedelta(minutes=5), bars=1)
-    instrument: list[Decimal | None] = [None] + [
-        D(2) * m + D(3) * s  # type: ignore[operator]
-        for m, s in zip(MARKET[1:], SECTOR[1:], strict=True)
-    ]
+    instrument: list[Decimal | None] = (
+        [None]
+        + [
+            D(2) * m + D(3) * s  # type: ignore[operator]
+            for m, s in zip(MARKET[1:], SECTOR[1:], strict=True)
+        ]
+    )
     calculator = ResidualSignalCalculator(BetaEstimator(window=6))
 
     signal = calculator.signal_at(6, horizon, instrument, MARKET, SECTOR)

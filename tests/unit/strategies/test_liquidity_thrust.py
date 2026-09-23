@@ -20,9 +20,7 @@ THRUST = {
 def baseline_bars(count: int = 5, start: int = 0, price: str = "100", day=DAY1) -> list:
     """`count` narrow, unremarkable bars at the default test volume (1000): the rolling average
     the surge test is measured against."""
-    return [
-        bar(day, start + i, price, "100.3", "99.8", "100.1", volume=1000) for i in range(count)
-    ]
+    return [bar(day, start + i, price, "100.3", "99.8", "100.1", volume=1000) for i in range(count)]
 
 
 class TestLiquidityThrust:

@@ -66,7 +66,7 @@ class SessionParity:
     strategy: str
     run_id: str
     session_date: date
-    config_hash: str
+    behaviour_hash: str
     starting_cash: Decimal
     signals: tuple[SignalParity, ...]
     trades: tuple[TradePair, ...]
