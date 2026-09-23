@@ -30,6 +30,7 @@ from emporos.persistence.records import (
     InstrumentRecord,
     InstrumentVersionRecord,
     KillSwitchRecord,
+    LeadLagTrialRecord,
     MarketCalendarRecord,
     OrderEventRecord,
     OrderRecord,
@@ -262,6 +263,11 @@ class CrossSectionalTrialRepository(Repository[CrossSectionalTrialRecord]):
         super().__init__(
             database, Collection.CROSS_SECTIONAL_TRIAL_LEDGER, CrossSectionalTrialRecord
         )
+
+
+class LeadLagTrialRepository(Repository[LeadLagTrialRecord]):
+    def __init__(self, database: Database) -> None:
+        super().__init__(database, Collection.LEAD_LAG_TRIAL_LEDGER, LeadLagTrialRecord)
 
 
 class KillSwitchRepository(Repository[KillSwitchRecord]):

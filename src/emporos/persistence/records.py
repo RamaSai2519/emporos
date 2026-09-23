@@ -330,6 +330,33 @@ class CrossSectionalTrialRecord(Record):
     note: str = ""
 
 
+class LeadLagTrialRecord(Record):
+    """One attempted intraday lead-lag evaluation, append-only
+    (`emporos.research.lead_lag_ledger.LeadLagTrial`)."""
+
+    hypothesis_id: str
+    predictor: str
+    expression: str
+    subject: str
+    early_horizon_label: str
+    target_horizon_label: str
+    direction: str
+    role: str
+    dataset_version: str
+    cost_model: str
+    regime_axis: str | None = None
+    regime_label: str | None = None
+    sample_size: int
+    conditional_expectancy: DecimalField | None = None
+    cost_adjusted_expectancy: DecimalField | None = None
+    hit_rate: DecimalField | None = None
+    rank_ic: DecimalField | None = None
+    decile_spread: DecimalField | None = None
+    t_statistic: DecimalField | None = None
+    recorded_at: datetime
+    note: str = ""
+
+
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None

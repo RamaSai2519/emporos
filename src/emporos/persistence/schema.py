@@ -201,6 +201,12 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("hypothesis_id", "recorded_at"),
             IndexSpec.on("tail", "signal_horizon_label", "holding_horizon_label"),
         ),
+        # No TTL, same reasoning as the feature trial ledger above.
+        _spec(
+            Collection.LEAD_LAG_TRIAL_LEDGER,
+            IndexSpec.on("hypothesis_id", "recorded_at"),
+            IndexSpec.on("predictor", "expression", "direction"),
+        ),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),
