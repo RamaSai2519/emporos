@@ -83,8 +83,8 @@ a separate action (Close position, or Square off all).
 - Fills are simulated against live quotes with the platform's dated charges. They are not what a
   real broker would have given you.
 - Risk uses `config/risk.yaml` (25,000 per instrument, 3 open positions, 50,000 deployed and a
-  1,000 daily loss cap: aligned to the ₹50,000 capital by EM-189, values PROPOSED pending operator
-  sign-off; the stricter live tier is in [live-trading.md](live-trading.md)). A backtest
+  1,000 daily loss cap: aligned to the ₹50,000 capital by EM-189, values approved by the
+  operator on 2026-09-24; the stricter live tier is in [live-trading.md](live-trading.md)). A backtest
   verdict is reached under limits and position sizes **scaled to the benchmark capital** (₹50,000,
   10% per position), so a strategy sized larger in its config will trade larger here than it was
   judged at. The verdict says so in its notes.

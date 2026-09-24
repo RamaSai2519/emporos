@@ -2,8 +2,8 @@
 # trades under. It must sit within config/risk.yaml on every cap; the loader refuses a tier that
 # raises one.
 #
-# PROPOSED, NOT APPROVED: these numbers are the EM-189 plan's example values. The operator has not
-# signed them off; confirm or change them before the first live deployment.
+# OPERATOR-APPROVED 2026-09-24: these numbers began as the EM-189 plan's example values and the
+# operator confirmed them. Changing one needs a fresh operator sign-off.
 #   capital deployed 10000 = 20% of Rs 50,000 (DEFAULT_CONSERVATIVE_FRACTION)
 #   daily loss 500 = 1% of capital; strategy loss 300; risk per trade 150 (0.3% of capital)
 

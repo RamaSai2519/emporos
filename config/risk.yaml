@@ -3,7 +3,7 @@
 # These are deliberately conservative starting points for a small account; tune them
 # deliberately, never to make a rejected signal go through.
 #
-# EM-189 (PROPOSED, awaiting operator sign-off): capital deployed and the daily loss cap are
+# EM-189 (operator-approved 2026-09-24): capital deployed and the daily loss cap are
 # aligned to the Rs 50,000 production capital (config/robustness/benchmark.yaml): capital
 # deployed 60000 -> 50000, daily loss 2000 (4%) -> 1000 (2%, the benchmark's fraction).
 

@@ -96,13 +96,13 @@ exactly. It runs only on an interactive terminal, and it exists only on the CLI:
 read-only route (`GET /strategies/{name}/graduation`) and no write route, consistent with the kill
 switch not depending on the dashboard. Nothing in a script or a test may type it for you.
 
-### The live risk tier (PROPOSED numbers: not yet approved by the operator)
+### The live risk tier (numbers approved by the operator on 2026-09-24)
 
 Every order passes the risk engine, so conservative exposure is enforced there, not in a wrapper.
 `config/risk.yaml` is aligned to the ₹50,000 production capital and the live worker loads
 `config/risk.live_conservative.yaml`, which the loader refuses if any cap is looser than
-`risk.yaml`'s. **These values are the EM-189 plan's examples, committed as PROPOSED; the operator has
-to confirm or change them before the first live deployment.**
+`risk.yaml`'s. **These values began as the EM-189 plan's examples; the operator confirmed them on
+2026-09-24. Changing one needs a fresh operator sign-off.**
 
 | limit | `risk.yaml` (was) | `risk.yaml` | `risk.live_conservative.yaml` |
 |---|---|---|---|
@@ -231,8 +231,8 @@ done.
    `LIVE_TRADING_ENABLED=true`, then `emporos worker run-live -s <strategy>` must report nothing
    missing before `emporos worker live -s <strategy>` is run for real.
 5. **Graduate it** (`emporos graduation status`, `promote --to paper`, then, once paper reconciliation
-   and broker verification exist, `acknowledge` and `promote --to live_conservative`). Confirm the
-   PROPOSED live risk numbers above first.
+   and broker verification exist, `acknowledge` and `promote --to live_conservative`). The live risk
+   numbers above are operator-approved (2026-09-24).
 6. **Size the first day small.** Judge nothing from one session. Keep `emporos halt` and the SSM
    instance stop in reach: the kill switch does not depend on the dashboard.
 
