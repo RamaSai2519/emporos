@@ -1,0 +1,72 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-213, search-map cell
+# L2-earnings-gap-fade-after-first-hour, child of L2-earnings-gap-fade. Not yet run: no result of
+# this cell has been seen.
+#
+# Why this cell (§7.4, from the parent's Discovery output only): the parent's 4 arms were all
+# feasible (median |move| 1.15-1.49% against a 0.99% bar) and its gross rose from nothing to +0.14%
+# (1% gap) and +0.19% (2% gap) when entry waited from the first bar to the first 30 minutes, still
+# under the 0.23% break-even at Rs 50,000, on only 206-371 trades from 29 names. Two independent
+# observations point at the same cell: waiting lifts the fade (EM-203 found the same), and results
+# days are large by construction. The failure modes are "gross positive, net negative" and "too few
+# trades", and §7.4 says to widen the universe (D1) before loosening anything. So the only new
+# things here are the universe and one later entry, the end of the first hour (bar 12, the bar that
+# starts 10:10 and closes 10:15); the gap thresholds and the rules are the parent's.
+#
+# What is run: the parent's scan unchanged (scans/earnings_gap.py over scans/raw_gap.py): one trade
+# per name per event day, on the session that REACTS to the name's results filing (decided from the
+# exchange's IST timestamp and the name's own sessions only), a raw overnight gap of at least
+# `gap_threshold_pct` in either direction, entry at the close of bar `entry_bar` AGAINST the gap
+# (fade), hold to the 15:15 square-off, no stop, no target.
+# 2 (gap 1.0, 2.0) x 1 (fade) x 2 (entry bar 6 = first 30 minutes, the parent's best; bar 12 = first
+# hour) = 4 arms, every one a counted look. The bar-6 arms are the parent's arms on a wider universe:
+# they say whether the parent's near-miss was a small-sample effect.
+#
+# Data: Discovery only (start of data to 2024-12-31). Universe: the committed D1 manifest
+# (config/universe/d1/universe.yaml, EM-214), run with `--universe d1`: the D1 names outside the
+# seeded 30% instrument holdout, at least 500 Discovery sessions and a median daily traded value of
+# at least Rs 10 crore, plus the 29 audited names; every instrument-day whose open is 15% or more
+# from the previous close (an unadjusted split or bonus) is quarantined. Confirmation and the vault
+# are not touched. Rs 50,000 per position (EM-207). KNOWN LIMITS, declared now: (a) the D1 lists are
+# the CURRENT NIFTY 100 and Midcap 150, so the universe is survivorship-biased when projected back
+# to 2016 (config/universe/d1/SOURCE.yaml): a name that was demoted or delisted is absent, which
+# flatters any long side of the past and does not obviously help a fade; (b) actions smaller than 15%
+# (a 1:10 bonus) are not caught; (c) the results ledger is missing about a third of 2022 and some
+# quarters elsewhere (events/README.md), so a missing event is a missed trade; (d) the filter uses no
+# surprise measure, so gap size is the only surprise proxy; (e) the scan is advisory.
+#
+# Stages (§6): S1 median absolute move at least 2x the mean adverse round-trip cost at Rs 50,000
+# (§3.5, about 0.99%); S2 net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no
+# instrument > 50% of net, net expectancy > 0 at benchmark costs, gross >= the adverse break-even.
+family: strategy
+slug: l2-earnings-gap-fade-after-first-hour
+hypothesis: >-
+  On the session that reacts to a name's results, a large overnight gap that is still open at the
+  end of the first 30 minutes or the first hour is an over-reaction of the opening auction that
+  liquidity providers have not yet taken back, and fading it into the close pays more than the fixed
+  round-trip cost on a wide universe of liquid names.
+economic_rationale: >-
+  The opening auction on a results day clears a burst of one-sided orders from participants who
+  must act at the open (stop-losses, index and delta hedges, retail market flow) before slower
+  capital has read the filing. The price that clears is set by urgency, not value. Providers who
+  quote against that flow do so through the morning, and the part of the move that is inventory
+  pressure and not information is returned slowly: waiting for the first half hour or hour to pass
+  removes the days on which the gap was information that kept running, and leaves the days on which
+  it was pressure that is fading. The cost is only paid back on days when the move is large, and
+  results days are those days.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the entry to the
+  close on the traded days is below 2x the mean adverse round-trip cost at Rs 50,000: that arm is
+  INFEASIBLE. S2: net t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years,
+  no instrument above 50% of net profit, net expectancy > 0 at benchmark costs and mean gross at
+  least the adverse break-even. If no arm passes S2 the cell is SCREEN_REJECT and the results-day
+  gap fade is closed on Discovery, on the 29 names and on the wider universe. All 4 arms are
+  counted in the program-wide trial count. The scan is advisory (no engine strategy to prove parity
+  against).
+parameter_grid:
+  gap_threshold_pct: ["1.0", "2.0"]
+  direction: ["fade"]
+  entry_bar: ["6", "12"]
+feature_versions:
+  results_reaction_session: 1
+position_value: "50000"
+declared_at: 2026-09-25T02:45:00+05:30
