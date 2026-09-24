@@ -65,8 +65,10 @@ cells:
     lane: L2
     hypothesis: earnings-gap-fade-after-first-hour
     parent: L2-earnings-gap-fade
-    status: TODO
+    status: SCREEN_REJECT
     requires: [F2, F2B, F3, F3B, F4, VAULT, D5, D1]
+    experiments: [EXP-20260925-l2-earnings-gap-fade-after-first-hour-44ac1c08]
+    lesson: "4 arms on the D1 universe (148 names, 1,072-1,804 trades, Discovery, Rs 50,000), feasible (median |move| 1.17-1.36%) but gross is about zero (-0.02..+0.02%) and net -0.21..-0.25%, t -2.7..-3.7: the parent's +0.14..0.19% gross on 29 names was a small-sample effect, not a fade. The results-day gap fade is closed on Discovery on the wide universe too, and the continuation has no mirror to run (advisory scan)"
   - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
