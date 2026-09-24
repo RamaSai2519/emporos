@@ -31,7 +31,12 @@ class RobustnessDocument:
         return {
             "verdict": report.verdict.verdict.value,
             "gates": [
-                {"name": g.name, "outcome": g.outcome.value, "detail": g.detail}
+                {
+                    "name": g.name,
+                    "code": None if g.code is None else g.code.value,
+                    "outcome": g.outcome.value,
+                    "detail": g.detail,
+                }
                 for g in report.verdict.gates
             ],
             "monte_carlo": {

@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from emporos.backtest.robustness.benchmark import VerdictThresholds
 from emporos.backtest.robustness.concentration import ConcentrationReport
@@ -28,6 +28,7 @@ from emporos.backtest.robustness.monte_carlo import MonteCarloReport
 from emporos.backtest.robustness.pbo import PBOReport
 from emporos.backtest.robustness.perturbation import PerturbationReport
 from emporos.domain.experiments import Verdict
+from emporos.domain.research_experiments import ReasonCode
 
 _ZERO = Decimal(0)
 
@@ -43,6 +44,7 @@ class GateResult:
     name: str
     outcome: GateOutcome
     detail: str
+    code: ReasonCode | None = None  # which rule spoke; None for a gate outside the standard set
 
 
 @dataclass(frozen=True)
@@ -85,19 +87,22 @@ class Evidence:
 
 class Gate(Protocol):
     name: str
+    code: ClassVar[ReasonCode]
 
     def assess(self, evidence: Evidence) -> GateResult: ...
 
 
 class _GateBase:
     name: str
+    code: ClassVar[ReasonCode]
 
     def _result(self, outcome: GateOutcome, detail: str) -> GateResult:
-        return GateResult(self.name, outcome, detail)
+        return GateResult(self.name, outcome, detail, self.code)
 
 
 class ProfitAfterCosts(_GateBase):
     name = "profit after costs is real"
+    code = ReasonCode.NET_PNL_NOT_REAL
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._t = t
@@ -123,6 +128,7 @@ class ProfitAfterCosts(_GateBase):
 
 class SurvivesAdverseCosts(_GateBase):
     name = "profit survives adverse costs"
+    code = ReasonCode.ADVERSE_COSTS
 
     def assess(self, e: Evidence) -> GateResult:
         detail = f"net {e.net_pnl:.2f} as run, {e.adverse_net_pnl:.2f} under adverse costs"
@@ -135,6 +141,7 @@ class SurvivesAdverseCosts(_GateBase):
 
 class WalkForwardWindows(_GateBase):
     name = "profitable in most walk-forward windows"
+    code = ReasonCode.TOO_FEW_WINDOWS_PROFITABLE
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._t = t
@@ -156,6 +163,7 @@ class WalkForwardWindows(_GateBase):
 
 class EnoughTrades(_GateBase):
     name = "enough trades"
+    code = ReasonCode.TOO_FEW_TRADES
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._t = t
@@ -168,6 +176,7 @@ class EnoughTrades(_GateBase):
 
 class EnoughHistory(_GateBase):
     name = "enough history"
+    code = ReasonCode.TOO_LITTLE_HISTORY
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._t = t
@@ -180,6 +189,7 @@ class EnoughHistory(_GateBase):
 
 class DrawdownWithinBudget(_GateBase):
     name = "drawdown within the risk budget"
+    code = ReasonCode.DRAWDOWN_OVER_BUDGET
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._t = t
@@ -194,6 +204,7 @@ class DrawdownWithinBudget(_GateBase):
 
 class NotConcentrated(_GateBase):
     name = "profit is not concentrated"
+    code = ReasonCode.PROFIT_CONCENTRATED
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._limits = t.concentration
@@ -220,6 +231,7 @@ class NotConcentrated(_GateBase):
 
 class ParameterStability(_GateBase):
     name = "survives parameter changes"
+    code = ReasonCode.PARAMETER_UNSTABLE
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._min = t.perturbation.min_profitable_neighbour_share
@@ -234,6 +246,7 @@ class ParameterStability(_GateBase):
 
 class BeatsLuck(_GateBase):
     name = "beats the luck of the search (Deflated Sharpe)"
+    code = ReasonCode.DSR_BELOW_THRESHOLD
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._min = t.min_deflated_sharpe
@@ -258,6 +271,7 @@ class BeatsOverfitting(_GateBase):
     tend toward an out-of-sample loser)."""
 
     name = "does not show CSCV overfitting evidence (PBO)"
+    code = ReasonCode.PBO_ABOVE_THRESHOLD
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._max = t.max_pbo
@@ -282,6 +296,7 @@ class SurvivesCostError(_GateBase):
     cost floor is too small to trust the cost MODEL's own accuracy, let alone the strategy."""
 
     name = "edge survives plausible cost-model error"
+    code = ReasonCode.EDGE_BELOW_COST_ERROR
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._margin = t.min_edge_safety_margin
@@ -300,6 +315,7 @@ class SurvivesCostError(_GateBase):
 
 class BeatsBaseline(_GateBase):
     name = "beats the always-long baseline"
+    code = ReasonCode.BELOW_BASELINE
 
     def assess(self, e: Evidence) -> GateResult:
         if e.baseline_net_pnl is None:
@@ -321,6 +337,7 @@ class RegimeDiversity(_GateBase):
     fall back on any more — EM-184 removed it), distinct from a strategy's own exemption."""
 
     name = "evidence spans enough distinct regimes"
+    code = ReasonCode.TOO_FEW_REGIMES
 
     def __init__(self, t: VerdictThresholds) -> None:
         self._min = t.min_regimes
@@ -353,6 +370,10 @@ class VerdictPolicy:
         if not gates:
             raise ValueError("a verdict needs at least one gate")
         self._gates = tuple(gates)
+
+    @property
+    def gates(self) -> tuple[Gate, ...]:
+        return self._gates
 
     @classmethod
     def standard(cls, thresholds: VerdictThresholds) -> VerdictPolicy:

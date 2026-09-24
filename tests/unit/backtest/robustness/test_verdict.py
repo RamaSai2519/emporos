@@ -38,6 +38,7 @@ from emporos.backtest.robustness.verdict import (
     WalkForwardWindows,
 )
 from emporos.domain.experiments import Verdict
+from emporos.domain.research_experiments import ReasonCode
 
 D = Decimal
 T = BenchmarkLoader().load().verdict
@@ -288,6 +289,7 @@ class TestClassification:
     def test_a_new_check_is_a_new_gate_not_an_edit(self) -> None:
         class Never:
             name = "never"
+            code = ReasonCode.NET_PNL_NOT_REAL
 
             def assess(self, evidence: Evidence):  # type: ignore[no-untyped-def]
                 from emporos.backtest.robustness.verdict import GateResult
@@ -298,3 +300,20 @@ class TestClassification:
 
         assert VerdictPolicy(gates).classify(evidence()).verdict is Verdict.REJECTED
         assert replace(evidence(), trade_count=1).trade_count == 1
+
+
+class TestGateReasonCodes:
+    """A finding says which rule spoke, in a form a report can group by (EM-188)."""
+
+    def test_every_standard_gate_has_its_own_code(self) -> None:
+        gates = VerdictPolicy.standard(T).gates
+        codes = [g.code for g in gates]
+
+        assert len(codes) == len(set(codes))
+
+    def test_a_result_carries_the_code_of_the_gate_that_produced_it(self) -> None:
+        report = VerdictPolicy.standard(T).classify(evidence())
+
+        gates = VerdictPolicy.standard(T).gates
+        assert [r.code for r in report.gates] == [g.code for g in gates]
+        assert all(r.code is not None for r in report.gates)

@@ -33,6 +33,7 @@ class GateFinding:
     name: str
     outcome: str  # "pass", "fail" or "unknown"
     detail: str
+    code: str | None = None  # a `ReasonCode` value; None on records made before codes existed
 
 
 @dataclass(frozen=True)

@@ -36,7 +36,9 @@ class CurationVerdicts:
         if record.robustness is not None:
             verdict = Verdict(record.robustness.verdict.verdict.value)
             gates = tuple(
-                GateFinding(g.name, g.outcome.value, g.detail)
+                GateFinding(
+                    g.name, g.outcome.value, g.detail, None if g.code is None else g.code.value
+                )
                 for g in record.robustness.verdict.gates
             )
         else:
@@ -67,7 +69,8 @@ class ReportVerdicts:
         else:
             verdict = Verdict(robustness["verdict"])
             gates = tuple(
-                GateFinding(g["name"], g["outcome"], g["detail"]) for g in robustness["gates"]
+                GateFinding(g["name"], g["outcome"], g["detail"], g.get("code"))
+                for g in robustness["gates"]
             )
         return _recorded(str(document["strategy"]), verdict, gates, context, "imported")
 
