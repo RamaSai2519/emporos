@@ -23,7 +23,7 @@ from emporos.marketdata.normalizer import TickNormalizer
 from emporos.marketdata.queue import QueuedTick
 from tests.support.fakes import make_instrument
 
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "angelone"
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "angelone" / "live_recordings"
 
 
 class RecordedFrames:
