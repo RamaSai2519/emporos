@@ -1,0 +1,82 @@
+# Declared BEFORE any directional data run (EDGE_SEARCH_PLAN.md §3.1). EM-191 meta-review 2
+# (docs/research/edge-search/review-2.md), search-map cell L17-daily-top-shock-fade, lane L17 (daily
+# capacity allocation across the universe). Not yet run: no direction or P&L of this cell has been seen.
+#
+# What is new. Every cell so far asks "does THIS name, today, cross a fixed threshold?" and trades
+# each name that does. That design fights itself: gross per trade rises only as the threshold rises
+# (EM-201/203/204: the first-hour fade makes 0.19% at a 1% gap, 0.35% at 2%, 0.43% at 2.5%), and the
+# trade count falls to the 300 floor on 29 names. But the book can hold at most two Rs 50,000
+# positions (config/risk.yaml, EM-207): capacity is the scarce resource, not signals. This cell spends
+# the capacity only on the most extreme confirmed dislocation in the whole liquid universe that day,
+# a RANK, not a threshold. The day's single largest shock is, by construction, far out in the tail
+# where the fade's gross was highest, and a universe of about 180 names supplies one on nearly every
+# session, so the count is not the constraint.
+#
+# Evidence used to design it (Discovery only, and UNSIGNED: magnitudes, no direction, no P&L), in
+# review-2.md §2: over the D1 research names (seeded holdout never read; >= Rs 10 crore median daily
+# value, >= 500 sessions), 1,995 Discovery sessions have at least one name with |gap| >= 1% whose
+# first hour retraced >= 0.25; the top one per day has median |gap| 2.76% and a median |10:15 ->
+# 15:15| move of 1.04% (S1 bar about 0.99%). Taking the top TWO per day drops that to 0.98%, below
+# the bar, so K = 2 is not declared: it is infeasible by construction.
+#
+# The rules (one scan, then one cross-sectional selection):
+# * Candidate, per name per session: the 09:15 bar opens at least `gap_floor_pct` from the previous
+#   session's last close (below 15%: larger is an unadjusted action and quarantined), and at the close
+#   of the bar starting 10:10 the retrace (open - close) / (open - previous close) is >= 0.25 (the
+#   parent EM-203/204 rule, unchanged). The candidate's side is the retrace direction (short a gap up,
+#   long a gap down), its score is |gap|, known at 09:15.
+# * Selection, per session: the candidate with the largest score across the universe (ties: the
+#   lower instrument id). Only candidates whose name has a 10:10 bar that day compete. The choice is
+#   made from signals, BEFORE fills: if the chosen order does not fill, the day has no trade (the
+#   next candidate is not substituted, which would peek at the fill).
+# * Execution: the shared IntradayScan order path (marketable limit on the next bar, 10% of bar
+#   volume, strictly-through fills), hold to the 15:15 square-off, no stop, no target. Rs 50,000.
+# * `news`: `all` takes every session; `no_results` removes, per name, the session that reacts to
+#   that name's results filing (scans/event_days.py, D5 ledger), so only shocks without a scheduled
+#   information release compete.
+# 2 (gap floor 1.0, 2.5) x 2 (news all, no_results) = 4 arms, each a counted look.
+#
+# Data: Discovery only (start of data to 2024-12-31). Universe: the committed D1 manifest
+# (config/universe/d1/universe.yaml, EM-214), `--universe d1`. Confirmation and the vault are not
+# touched. KNOWN LIMITS, declared now: (a) D1 lists are the CURRENT NIFTY 100 and Midcap 150
+# (survivorship; a demoted or delisted name is absent); (b) actions under 15% are not caught; (c) the
+# results ledger misses about a third of 2022, so `no_results` still contains some results days;
+# (d) spreads on mid-caps are likely wider than the benchmark's 5 bps per side, which is exactly why
+# S2 requires gross >= the ADVERSE break-even (15 bps per side); (e) the scan is advisory (no engine
+# strategy to prove parity against), so S2 is triage and a pass goes to S3 then curate.
+family: strategy
+slug: l17-daily-top-shock-fade
+hypothesis: >-
+  On each session, the single largest overnight gap in a wide liquid universe that the first hour
+  has already begun to give back is an over-reaction of the opening auction, and fading only that
+  one name from 10:15 to the 15:15 square-off earns more per trade than the adverse round-trip cost
+  at Rs 50,000, because the rank puts every trade in the far tail where the fade's gross is largest.
+economic_rationale: >-
+  The biggest gap of the day is the one that attracts the most attention-driven flow: retail
+  investors buy what is in the news and on the top-gainers list (Barber and Odean), and stop-losses
+  and hedges must execute at the open. The auction clears at an urgency price. Liquidity providers
+  who absorb that flow need to be paid, and they are paid by the reversion as slower capital arrives
+  through the session. The first-hour retrace is the market's own evidence that the flow has turned.
+  Without a scheduled release (no_results), the move is more likely to be pressure than
+  information, which is where the no-news reversal literature (Chan 2003) finds reversals, while
+  news-driven moves drift. The rank matters because the edge scales with the size of the
+  dislocation and the cost is fixed: a threshold spreads capacity over mediocre shocks, a rank does
+  not.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the entry to the
+  exit on the traded days is below 2x the mean adverse round-trip cost at Rs 50,000: INFEASIBLE.
+  S2: net t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years, no
+  instrument above 50% of net profit, net expectancy > 0 at benchmark costs and mean gross at least
+  the adverse break-even (about 0.495%). If no arm passes, the cell is SCREEN_REJECT and the
+  daily-top-shock fade is closed on Discovery. A child is allowed only per §7.4, from this cell's
+  Discovery output. Specifically, if gross is positive but under the bar, the ONLY children are the
+  L13 passive entry and an L1 size escalation to the operator; no new gap floor or retrace floor is
+  tried.
+parameter_grid:
+  gap_floor_pct: ["1.0", "2.5"]
+  news: ["all", "no_results"]
+feature_versions:
+  results_reaction_session: 1
+  daily_top_shock_rank: 1
+position_value: "50000"
+declared_at: 2026-09-25T03:40:00+05:30
