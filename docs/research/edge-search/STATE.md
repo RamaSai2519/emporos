@@ -3,6 +3,13 @@
 Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 [`search-map.yaml`](search-map.yaml) (validated in CI by `emporos.research.search_map`).
 
+> **Steering (2026-09-25, head session): the program is now run under [`PROFIT_PLAN.md`](../../../PROFIT_PLAN.md) (EM-219).**
+> The intraday search (this file, Track C) continues as a loop in Agent 2's session, which reports every cell to the
+> head (emporos-bd) and declares children only on the head's go. Swing (Track A) and index options (Track B) are new
+> tracks with their own ledger. L17 (review-2, EM-216) is SCREEN_REJECT: the daily rank lifts gross to +0.21..0.34% on
+> D1 where a threshold gets about 0%, but it stays under the adverse break-even and is concentrated in one name.
+> Priority for Track C: PROFIT_PLAN §6.
+
 > **Steering (2026-09-24, operator session): read [`review-1.md`](review-1.md) before choosing the next cell.**
 > Its §4 priority order supersedes the "Next" row below: D1 (wide and mid-cap universe, run in the background) and D5
 > (event calendar) come ahead of further mega-cap cells. D7 quote recording starts now. Mega-cap cells only where the
@@ -16,9 +23,9 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 | Iteration | 19 (2026-09-25) |
 | Last completed | **D1 research universe (EM-214) and L2-earnings-gap-fade-after-first-hour: SCREEN_REJECT** (EM-213, 4 arms on 148 names, feasible, gross about zero: the 29-name near-miss was small-sample); **L2-earnings-gap-fade and L2-earnings-gap-continuation: both SCREEN_REJECT** (EM-213, 8 arms, all feasible; fade after 30 minutes gross +0.14..0.19% under the 0.23% break-even, continuation gross negative); D5 results events done (EM-209): 8,573 filings, 8,070 first-public events for 250 names, gaps documented**; L4-india-vix-regime: SCREEN_REJECT** (EM-210, 6 arms, feasible at Rs 50,000 but t under 0.5); D5 collector built and running (EM-209, operator-authorised); **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
 | Next | **The gap-fade family is closed on Discovery** (29 names and D1). Per review-2 (EM-215) the operator session builds L17 (daily top shock fade, EM-216) on the D1 seam. Loop candidates after that: L2-earnings-pead-first-hour (reaction-day gate exists; continuation after a results gap, D1 universe), D5b (EM-212), mega-cap large-day cells (expect weak), and D3 sector taxonomy (the Industry column of the D1 lists is the first source). **A D1 screen takes about 38 minutes for 4 arms**: budget one cell per iteration and run it in the background |
-| Global N | **14,090** on 2026-09-25 (14,086 plus the 4 arms of the D1 earnings-gap child) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Global N | **14,094** on 2026-09-25 (14,090 plus the 4 arms of L17-daily-top-shock-fade) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 37 TODO, 0 BLOCKED, 9 terminal (all SCREEN_REJECT); D5b (EM-212) gates 4 L2 cells; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 37 TODO, 0 BLOCKED, 10 terminal (all SCREEN_REJECT); D5b (EM-212) gates 4 L2 cells; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. EM-209 was ruled on by the operator (NSE announcements endpoint authorised, 2026-09-24); EM-206 and EM-207 approved |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |

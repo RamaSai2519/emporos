@@ -25,6 +25,7 @@ lanes:
   - {id: L14, priority: P3, name: "Calendar and seasonality"}
   - {id: L15, priority: P3, name: "Machine-learning return prediction"}
   - {id: L16, priority: P3, name: "Jev as a filter on another lane's CANDIDATE"}
+  - {id: L17, priority: P1, name: "Daily capacity allocation: rank signals across the universe (review-2)"}
 
 foundations:
   - {id: F1,    name: "Search map, STATE.md and typed loader/validator", status: DONE, ticket: EM-192}
@@ -41,7 +42,7 @@ foundations:
   - {id: D5,    name: "Event calendar: results announcements timestamped at publication", status: DONE, ticket: EM-209}
   - {id: D5b,   name: "Event calendar: ex-dates, bulk deals, index rebalances, F&O ban list", status: TODO, ticket: EM-212}
   - {id: D6,    name: "Daily bhavcopy delivery % and FII/DII flows", status: TODO}
-  - {id: D7,    name: "Forward L1 quote recording", status: TODO}
+  - {id: D7,    name: "Forward L1 quote recording", status: TODO, ticket: EM-217}
   - {id: D8,    name: "Fee schedule reconciled against a contract note", status: DONE, ticket: EM-197}
 
 cells:
@@ -160,3 +161,10 @@ cells:
   - {id: L15-gbm-return-ranking,        lane: L15, hypothesis: gbm-return-ranking,        status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L15-deep-model,                lane: L15, hypothesis: deep-return-model,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D1]}
   - {id: L16-jev-meta-feature,          lane: L16, hypothesis: jev-meta-feature,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - id: L17-daily-top-shock-fade
+    lane: L17
+    hypothesis: l17-daily-top-shock-fade
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D1, D5]
+    experiments: [EXP-20260925-l17-daily-top-shock-fade-d8270b59]
+    lesson: "4 arms on D1 (148 names, Discovery, Rs 50,000), the top-1 confirmed shock per session: the rank recovers gross that the per-name threshold loses on the same names (+0.21% at a 1% floor, +0.34% at 2.5%, against about 0% for EM-213's D1 fade), and the 2.5% arms are net +0.11% at benchmark (t 1.2, 958-1,100 trades), but gross stays under the 0.495% adverse break-even and one instrument carries over half the net. Removing results days changes nothing (news is not the driver). The declared children are L13 passive entry (needs D7) and L1 size: at Rs 2.5L the adverse break-even is 0.382%, still above 0.341%, so no child is declared now (advisory scan)"
