@@ -233,7 +233,10 @@ class CostModelVersion:
 class VersionStamp:
     """Which config, data, cost model and code produced the numbers. None means not recorded."""
 
-    behaviour_hash: str | None = None
+    behaviour_hash: str | None = None  # of the config judged, when one config was
+    candidate_behaviour_hashes: Mapping[str, str] = field(
+        default_factory=dict
+    )  # per chosen candidate
     dataset: DatasetVersion | None = None
     cost_model: CostModelVersion | None = None
     code_revision: str | None = None
@@ -299,6 +302,9 @@ class ExperimentReport:
     outcome: ExperimentOutcomeLabel
     reasons: tuple[ReasonFinding, ...]
     notes: tuple[str, ...] = ()
+    # Family-specific evidence carried verbatim (a curation's robustness document, say): kept for
+    # whoever wants the detail, never read by anything that compares experiments across families.
+    supporting: Mapping[str, JsonValue] = field(default_factory=dict)
     schema_version: int = SCHEMA_VERSION
 
     def __post_init__(self) -> None:

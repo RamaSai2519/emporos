@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import Any
 
 from emporos.backtest.document import BacktestDocument
+from emporos.backtest.experiment_document import ExperimentDocument
 from tests.support.backtest_momentum import momentum_backtest
 from tests.support.backtest_real import FIXTURES, real_year_backtest
+from tests.support.experiment_reports import sample_report
 
 REAL_YEAR = FIXTURES / "momentum_v1_real_year.golden.json"
 WAVE = FIXTURES / "momentum_wave_engine.golden.json"
@@ -32,11 +34,35 @@ async def wave_document() -> dict[str, Any]:
     return BacktestDocument().render(await momentum_backtest())
 
 
-GOLDENS: dict[Path, Callable[[], Awaitable[dict[str, Any]]]] = {
-    REAL_YEAR: real_year_document,
-    WAVE: wave_document,
-}
+EXPERIMENT_JSON = FIXTURES.parent / "experiments" / "sample_report.golden.json"
+EXPERIMENT_MARKDOWN = FIXTURES.parent / "experiments" / "sample_report.golden.md"
 
 
 def render(document: dict[str, Any]) -> str:
     return json.dumps(document, indent=2) + "\n"
+
+
+def _rendered(produce: Callable[[], Awaitable[dict[str, Any]]]) -> Callable[[], Awaitable[str]]:
+    async def go() -> str:
+        return render(await produce())
+
+    return go
+
+
+async def experiment_report_json() -> str:
+    """EM-188: the standard report for a fixed sample: a schema drift fails the build."""
+    return render(ExperimentDocument().to_json(sample_report()))
+
+
+async def experiment_report_markdown() -> str:
+    return ExperimentDocument().markdown(sample_report())
+
+
+# What each golden file should currently contain, as text: the regression tests COMPARE against
+# these, `regenerate_goldens` WRITES them, only when told to.
+GOLDENS: dict[Path, Callable[[], Awaitable[str]]] = {
+    REAL_YEAR: _rendered(real_year_document),
+    WAVE: _rendered(wave_document),
+    EXPERIMENT_JSON: experiment_report_json,
+    EXPERIMENT_MARKDOWN: experiment_report_markdown,
+}

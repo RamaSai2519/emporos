@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260924-orb-breakout-d089023d",
+  "family": "strategy",
+  "slug": "orb-breakout",
+  "outcome": "inconclusive",
+  "declaration": {
+    "hypothesis": "Opening-range breakouts continue on high-volume days.",
+    "economic_rationale": "Order-flow imbalance at the open persists for the first hour.",
+    "falsification": "Net expectancy after costs is not positive out of sample.",
+    "parameter_grid": {
+      "range_bars": [
+        "3",
+        "6"
+      ],
+      "target_r": [
+        "1.5",
+        "3.0"
+      ]
+    },
+    "feature_versions": {
+      "opening_range": "1"
+    },
+    "declared_at": "2026-09-24T03:00:00+00:00"
+  },
+  "versions": {
+    "behaviour_hash": "sha256:abababababababababababababababababababababababababababababababab",
+    "candidate_behaviour_hashes": {
+      "r3_t15": "sha256:cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd"
+    },
+    "dataset": {
+      "universe_hash": "sha256:0101010101010101010101010101010101010101010101010101010101010101",
+      "calendar_version": "sha256:0202020202020202020202020202020202020202020202020202020202020202",
+      "quarantine_hash": "sha256:0303030303030303030303030303030303030303030303030303030303030303",
+      "timeframe": "5m",
+      "first": "2025-09-22",
+      "last": "2026-08-07"
+    },
+    "cost_model": {
+      "fee_schedule_id": "angelone-2026-09-20",
+      "slippage_bps": "5",
+      "benchmark_hash": "sha256:0404040404040404040404040404040404040404040404040404040404040404"
+    },
+    "code_revision": "1748aab"
+  },
+  "periods": {
+    "train": {
+      "first": "2025-09-22",
+      "last": "2026-06-26"
+    },
+    "validation": {
+      "first": "2026-01-30",
+      "last": "2026-08-07"
+    },
+    "holdout": {
+      "first": "2026-08-08",
+      "last": "2026-09-18"
+    }
+  },
+  "metrics": {
+    "gross_pnl": "5210.40",
+    "net_pnl": "3120.75",
+    "expectancy": "8.6688",
+    "profit_factor": "1.4210",
+    "max_drawdown": "0.0412",
+    "sharpe": "1.3721",
+    "deflated_sharpe": "0.9314",
+    "pbo": "0.2200",
+    "trade_count": 360,
+    "win_rate": "0.5111",
+    "costs": {
+      "brokerage": "900.00",
+      "statutory": "700.00",
+      "spread": "310.40",
+      "slippage": "479.25",
+      "total": "2389.65",
+      "per_trade_bps": "6.6379",
+      "per_trade_inr": "6.6379"
+    },
+    "by_regime": {
+      "range": {
+        "count": 150,
+        "net_pnl": "720.65",
+        "win_rate": "0.4533"
+      },
+      "trend_up": {
+        "count": 210,
+        "net_pnl": "2400.10",
+        "win_rate": "0.55"
+      }
+    },
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2026-01-30",
+        "last": "2026-03-12",
+        "net_pnl": "1200.50"
+      },
+      {
+        "index": 1,
+        "first": "2026-03-13",
+        "last": "2026-04-23",
+        "net_pnl": "-310.25"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": "net_pnl_not_real",
+      "name": "profit after costs is real",
+      "outcome": "pass",
+      "detail": "net 3120.75, P(net > 0) 0.981"
+    },
+    {
+      "code": "dsr_below_threshold",
+      "name": "beats the luck of the search (Deflated Sharpe)",
+      "outcome": "unknown",
+      "detail": "DSR 0.931 over 35 trials, 0.95 needed"
+    }
+  ],
+  "primary_reason_codes": [
+    "dsr_below_threshold"
+  ],
+  "notes": [
+    "the final holdout was reserved and is not evaluated by curation"
+  ],
+  "supporting": {
+    "robustness": {
+      "verdict": "inconclusive",
+      "gates": []
+    }
+  }
+}

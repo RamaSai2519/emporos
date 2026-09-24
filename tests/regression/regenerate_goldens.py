@@ -15,13 +15,13 @@ import asyncio
 import difflib
 import sys
 
-from tests.regression.goldens import GOLDENS, render
+from tests.regression.goldens import GOLDENS
 
 
 async def _run(write: bool) -> int:
     changed = 0
     for path, produce in GOLDENS.items():
-        fresh = render(await produce())
+        fresh = await produce()
         current = path.read_text(encoding="utf-8") if path.exists() else ""
         if fresh == current:
             print(f"unchanged: {path.name}")
