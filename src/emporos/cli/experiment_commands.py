@@ -28,6 +28,7 @@ from emporos.cli.experiment_registry import (
     ExperimentPublication,
     FileExperimentRegistry,
 )
+from emporos.cli.results_commands import research_collect_results
 from emporos.cli.screen_commands import research_screen
 from emporos.cli.vault_commands import vault_app
 from emporos.core.config import Settings
@@ -57,6 +58,7 @@ experiments_app = typer.Typer(
 research_app.add_typer(experiments_app, name="experiments")
 research_app.add_typer(vault_app, name="vault")
 research_app.command("screen")(research_screen)
+research_app.command("collect-results")(research_collect_results)
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")
 _DECLARATION = typer.Argument(..., exists=True, dir_okay=False, help="An experiment declaration.")

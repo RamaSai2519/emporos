@@ -29,7 +29,7 @@ from emporos.marketdata.timeframes import DERIVED_TIMEFRAMES
 from emporos.research.universe_lists import ConstituentList, combined_symbols
 
 DEFAULT_LIST_DIR = Path("config/universe/d1")
-_LISTS = {"nifty100.csv": "NIFTY 100", "niftymidcap150.csv": "NIFTY Midcap 150"}
+LISTS = {"nifty100.csv": "NIFTY 100", "niftymidcap150.csv": "NIFTY Midcap 150"}
 
 _DIR = typer.Option(DEFAULT_LIST_DIR, help="The directory holding the committed constituent lists.")
 _TIMEFRAME = typer.Option("5m", "--timeframe", "-t", help="The derived timeframe to store.")
@@ -40,7 +40,7 @@ _SKIP = typer.Option(0, help="Skip this many names first (resume a stopped run b
 
 
 def universe_symbols(directory: Path) -> list[str]:
-    lists = [ConstituentList.load(index, directory / name) for name, index in _LISTS.items()]
+    lists = [ConstituentList.load(index, directory / name) for name, index in LISTS.items()]
     return combined_symbols(lists)
 
 
