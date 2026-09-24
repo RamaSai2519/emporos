@@ -1,0 +1,62 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-213, search-map cell
+# L2-earnings-gap-continuation. Not yet run: no result of this cell has been seen.
+#
+# Why this cell: every earlier gap cell (EM-201..EM-204, EM-210) picked its days from price alone
+# and found the median absolute move too small or the fade too weak. Results days are days on
+# which the size of the move is large by construction and the reason for it is known and dated by
+# the exchange (D5, EM-209), so this is the first cell whose conditioning set is an event and not
+# a price feature.
+#
+# What is run: one trade per name per event day. The event is a name's results filing, first public
+# per results season (`first_public_results`), with the exchange's own IST timestamp. The REACTION
+# session is decided from that time and the name's own sessions only: published before 09:15, the
+# same session; after 15:30 (or on a non-session day), the next session; published DURING a session,
+# no reaction session (no overnight gap to trade) and the event is skipped and counted. On the
+# reaction session the rules are the raw overnight gap exactly (scans/raw_gap.py): the first bar's
+# open against the previous session's last close, at least `gap_threshold_pct` in either direction;
+# enter at the close of bar `entry_bar` (1 = the 09:15 bar, 6 = the first 30 minutes) WITH the
+# gap (continuation); hold to the 15:15 square-off. No stop, no target.
+# 2 (gap 1.0, 2.0) x 1 (continuation) x 2 (entry bar 1, 6) = 4 arms, every one a counted look.
+#
+# Data: Discovery only (start of data to 2024-12-31), the 29 names with ten years of 5m bars, the 7
+# audit-quarantined corporate-action days excluded. Confirmation and the vault are not touched. Rs
+# 50,000 per position (EM-207). KNOWN LIMITS, declared now: (a) the results ledger is missing about
+# a third of 2022 and some quarters elsewhere (events/README.md), so a missing event is a missed
+# trade; the run reports reaction sessions used per year; (b) 29 names over about 8 years leave a
+# few hundred reaction days, of which only those gapping 1% or more trade, so the trade floor (300)
+# may bind at the 2% threshold: if it does, the diagnosis is "too few trades", and the child is the
+# D1 universe, not a looser threshold; (c) the filter uses no surprise measure (no consensus data),
+# so gap size is the only surprise proxy.
+#
+# Stages (§6): S1 median absolute move at least 2x the adverse round-trip cost at Rs 50,000 (§3.5,
+# about 0.99%); S2 net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no instrument > 50%
+# of net, net expectancy > 0 at benchmark costs, gross >= the adverse break-even.
+family: strategy
+slug: l2-earnings-gap-continuation
+hypothesis: >-
+  A large overnight gap on the session that reacts to a name's results continues through the day
+  (post-earnings drift compressed into the reaction session): entering with the gap, from the first
+  bar or after the first 30 minutes, and holding to the close captures a move large enough to clear
+  costs, because results-day ranges are large.
+economic_rationale: >-
+  A results filing is information that slower capital (funds, which must size and route orders over
+  hours) has not yet acted on when the open prints. The opening auction prices only part of the
+  news; the rest arrives as institutional flow through the session, in the direction of the news.
+  The fixed round-trip cost is only paid back on days when the move is large, and results days are
+  those days. This is the opposite side of l2-earnings-gap-fade, declared with its own mechanism.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the entry to the
+  close on the traded days is below 2x the mean adverse round-trip cost at Rs 50,000: that arm is
+  INFEASIBLE. S2: net t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years,
+  no instrument above 50% of net profit, net expectancy > 0 at benchmark costs and mean gross at
+  least the adverse break-even. If no arm passes S2 the cell is SCREEN_REJECT and the results-day
+  gap continuation is closed on these names in Discovery. All 4 arms are counted in the program-wide trial
+  count. The scan is advisory (no engine strategy to prove parity against).
+parameter_grid:
+  gap_threshold_pct: ["1.0", "2.0"]
+  direction: ["continuation"]
+  entry_bar: ["1", "6"]
+feature_versions:
+  results_reaction_session: 1
+position_value: "50000"
+declared_at: 2026-09-25T01:58:00+05:30
