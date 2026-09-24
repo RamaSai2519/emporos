@@ -40,6 +40,8 @@ from emporos.research.scans.base import ScanExecution, SignalScan
 from emporos.research.scans.orb_rvol import OrbRvolParameters, orb_rvol_scan
 from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
 from emporos.research.scans.raw_gap import RawGapParameters, declared_arms, raw_gap_scan
+from emporos.research.scans.shock_reversal import ShockReversalParameters, shock_reversal_scan
+from emporos.research.scans.shock_reversal import declared_arms as shock_reversal_arms
 from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
 from emporos.research.screen_evaluator import ScreenEvaluator
 from emporos.research.screen_ledger import JsonlScreenLedger
@@ -106,7 +108,24 @@ class OrbRvolCell:
         )
 
 
-CELLS: Mapping[str, ScreenCell] = {c.slug: c for c in (RawGapCell(), OrbRvolCell())}
+class ShockReversalCell:
+    """The recipe for cell L3-first-hour-shock-reversal."""
+
+    slug = "l3-first-hour-shock-reversal"
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in shock_reversal_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        return shock_reversal_scan(ShockReversalParameters.from_point(point), execution)
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"gap>={point['gap_threshold_pct']}% retrace>={point['retrace_min']}"
+
+
+CELLS: Mapping[str, ScreenCell] = {
+    c.slug: c for c in (RawGapCell(), OrbRvolCell(), ShockReversalCell())
+}
 
 
 def _table(recipe: ScreenCell, results: list[ArmResult]) -> list[str]:
