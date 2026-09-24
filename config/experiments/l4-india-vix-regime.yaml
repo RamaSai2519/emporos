@@ -1,0 +1,54 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-210, search-map cell
+# L4-india-vix-regime. Not yet run: no result of this cell has been seen.
+#
+# Why this cell: review-1 §2 (unsigned moves only, Discovery) found the median full-session move on
+# the 29 names is 0.89%, under the S1 bar, and 1.18% in the top INDIA VIX quintile, above the
+# ~0.99% bar at Rs 50,000. Only a conditioning set that selects large days by construction can be
+# feasible on these names, and VIX is known at the open, so it selects them without looking ahead.
+# The direction comes from the nearest miss so far, the first-hour gap reversal (EM-203/EM-204).
+#
+# What is run: one trade per name per day. The rules are the first-hour shock reversal exactly
+# (scans/shock_reversal.py): the 09:15 bar opens at least `gap_threshold_pct` from the previous
+# close; at the close of the 10:10 bar the retrace (day open - close) / (day open - previous close)
+# is at least `retrace_min`; if so trade the retrace direction from that close to the 15:15
+# square-off, no stop, no target. NEW: the day must ALSO be a high-volatility day, meaning the
+# INDIA VIX 09:15 open is at or above the `vix_min_percentile` quantile of its own 09:15 opens over
+# the previous 252 sessions (at least 100 needed, today excluded, nearest rank). Otherwise no trade.
+# 3 (gap) x 1 (retrace 0.25, as the parent's best) x 2 (VIX 0.6, 0.8) = 6 arms, every one a counted
+# look.
+#
+# Data: Discovery only (start of data to 2024-12-31), the 29 names with ten years of 5m bars, the 7
+# audit-quarantined corporate-action days excluded. Confirmation and the vault are not touched. Rs
+# 50,000 per position (EM-207), the new default; the parent cells were declared at Rs 25,000 and are
+# not re-run.
+#
+# Stages (§6): S1 median absolute move at least 2x the adverse round-trip cost at Rs 50,000 (§3.5,
+# about 0.99%); S2 net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no instrument > 50%
+# of net, net expectancy > 0 at benchmark costs, gross >= the adverse break-even.
+family: strategy
+slug: l4-india-vix-regime
+hypothesis: >-
+  The first-hour reversal of an overnight gap is worth trading only when INDIA VIX says the day is
+  large: on high-VIX days the reversal travels far enough (median move above the ~0.99% bar at Rs
+  50,000) for its gross return to exceed the adverse round-trip cost, which on all days it does not.
+economic_rationale: >-
+  The cost of a round trip is fixed in percent, so a fade can only pay on days when prices move a lot.
+  A high VIX open is the market's own forecast of a large-range day, published before the first bar.
+  Over-reactions to overnight news are also larger and more frequent when volatility is high, and the
+  correction that follows is proportionally larger.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from 10:15 to the close on
+  the conditioning days is below 2x the mean adverse round-trip cost at Rs 50,000: that arm is
+  INFEASIBLE. S2: net t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years,
+  no instrument above 50% of net profit, net expectancy > 0 at benchmark costs and mean gross at
+  least the adverse break-even. If no arm passes S2 the cell is SCREEN_REJECT and a VIX filter on this
+  rule is closed on Discovery data. All 6 arms are counted in the program-wide trial count. The scan
+  is advisory (no engine strategy to prove parity against).
+parameter_grid:
+  gap_threshold_pct: ["1.0", "1.5", "2.0"]
+  retrace_min: ["0.25"]
+  vix_min_percentile: ["0.6", "0.8"]
+feature_versions:
+  india_vix_open_percentile: 1
+position_value: "50000"
+declared_at: 2026-09-24T21:10:00+05:30
