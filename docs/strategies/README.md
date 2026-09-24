@@ -1,5 +1,15 @@
 # Strategy curation
 
+**Every experiment has a report with a stable id: `docs/strategies/experiments/INDEX.md`** lists all
+of them, every strategy family in one table (outcome, trades, net P&L, PF, Sharpe, DSR, PBO, the
+reasons that decided it). Each report (`<id>.json`, `<id>.md`) has the same sections and the same
+metric rows whatever produced it, so two can be compared side by side. The reports below and in
+`benchmark_50k/` and `em171/` are all indexed there, marked `BACKFILLED_NOT_PREDECLARED`: they
+predate declarations, so their rationale reads "backfilled: not pre-declared" and what they did not
+record is `n/a`. New experiments are declared first (`config/experiments/README.md`) and published
+by `emporos backtest curate --declaration ...`. The rest of this file is the narrative of the first
+curations, kept as written.
+
 **Result: no strategy passed. None is enabled.** Three candidates were built and evaluated
 honestly; each failed every check that measures profit. The plan, the criteria and the parameter
 grids were committed before any result existed (commits `781e609` and `2f5750e`).

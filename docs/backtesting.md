@@ -266,9 +266,15 @@ dates are never loaded into the process, the same "prevented by the shape of the
 date ranges research (every window's training span), validation (every window's test span — what
 `Evidence` is built from) and the holdout actually covered, wired into `RobustnessAssessor.assess`
 as two new optional arguments (`regime_specific`, `holdout`) that leave every existing caller
-unchanged when omitted. Wiring `FinalHoldoutReservation`/`CurationProvenance` into the CLI curation
-command itself (`emporos backtest curate`) is a natural next step this subtask does not do — today a
-caller must construct and pass the reservation explicitly.
+unchanged when omitted. `emporos backtest curate` now uses it (EM-188): `CurationRun` takes a
+`FinalHoldoutReservation` and splits it off before `WalkForwardPlanner.plan`; the base spec, the
+integrity check and the dataset provenance stop at the last walkable day, so no bar of the holdout
+is ever read (a test spies on every read). The reservation comes from `holdout_days` in the plan
+file (top level, next to `windows`; `config/curation/plan.yaml` reserves 42 days). A plan without
+it reserves nothing and its report can never be ACCEPTED. `curate` also now supplies the
+`PortfolioCostModel` (the fee schedule in force on the last day, the benchmark's spread and
+slippage) to the assessor, which it never did before, so the edge-survives-cost-error gate is
+evaluated in real runs instead of always UNKNOWN.
 
 The `.json` next to it has the same evidence in full: every gate, Monte Carlo intervals, the Deflated
 Sharpe, the PBO/CSCV combination count and candidate/window counts, the portfolio-economics observed
@@ -278,6 +284,46 @@ runs, next to the out-of-sample totals, per-window nets and per-instrument nets.
 trials list` shows how many experiments the ledger holds; every candidate on every window is
 appended there (with the cache fingerprint of the bars it read), and nothing can edit or delete an
 entry.
+
+### The experiment report (EM-188)
+
+Every experiment, of any family, publishes one standard report under
+`docs/strategies/experiments/`, and `INDEX.md` there is the comparison table:
+
+| file | what it is |
+|---|---|
+| `EXP-<YYYYMMDD declared>-<slug>-<8 hex>.json` | the record: every number exact (decimals as strings) |
+| `EXP-....md` | the same report for people, with a fixed section order and metric table (`n/a` where a metric does not apply) |
+| `INDEX.md`, `index.json` | one row per experiment, sorted by family then declaration time |
+
+The id is a function of the **declaration** (`config/experiments/<slug>.yaml`: hypothesis, economic
+rationale, what would falsify it, parameter grid, feature versions, declared time), so re-running
+the same declaration is the same experiment and changing a word makes a new one. A report holds:
+the declaration; the version stamp (behaviour hash of the base config and of each chosen candidate,
+dataset universe/calendar/quarantine hashes, fee schedule id, slippage, benchmark file hash, code
+revision); the periods (train, walk-forward validation, reserved holdout); gross and net P&L,
+expectancy, profit factor, worst-window drawdown, annualised Sharpe, Deflated Sharpe, PBO, trade
+count and win rate, by regime and by window; the cost breakdown (brokerage, statutory, spread,
+slippage); and the outcome, **ACCEPTED / INCONCLUSIVE / REJECTED**, with machine-readable reasons
+(`ReasonCode`, one per gate, in `emporos.domain.research_experiments`). `ACCEPTED` is the recorded
+`VALIDATED` verdict (the persisted enum keeps its name; the report maps it at the boundary).
+
+Rules the code enforces: a report is **immutable** (publishing identical content is a no-op, a
+different report under an existing id is refused); an **accepted** report needs a reserved holdout
+and every reason passing; a report whose rationale was reconstructed after the fact is marked
+`BACKFILLED_NOT_PREDECLARED` and can never be accepted. `emporos backtest curate --declaration`
+refuses a declaration that is not committed (`git status`), so "declared before the run" is
+version control, not trust.
+
+Feature, cross-sectional and lead-lag studies (EM-178..181) have no P&L, so those fields read `n/a`;
+they are judged on their declared holdout only: evaluated, enough observations, every pooled row
+positive after costs with |t| at the threshold, the edge in at least two regime segments
+(`emporos research experiments report --hypothesis ID --family ...`). At the time of writing the
+shared database holds no feature, cross-sectional or lead-lag trials, so none is published.
+
+`emporos research experiments declare|report|index|backfill` are the commands; the schema is
+pinned by a golden (`tests/fixtures/experiments/`), regenerated only deliberately with
+`python -m tests.regression.regenerate_goldens --write`.
 
 ## What exists and what does not
 
