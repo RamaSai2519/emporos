@@ -12,3 +12,7 @@ lists:
     index: NIFTY Midcap 150
     url: https://www.niftyindices.com/IndexConstituent/ind_niftymidcap150list.csv
 # The Industry column is NSE's classification as of the fetch date: a first source for D3.
+# tokens.csv: each symbol's Angel One cash-equity (NSE, -EQ) token, from the public scrip master
+# (OpenAPIScripMaster.json) on 2026-09-25, so an event keyed by symbol can be joined to candles keyed
+# by `NSE:<token>` without a database. All 250 symbols resolved. Tokens are stable for a listing.
+tokens_fetched_on: 2026-09-25

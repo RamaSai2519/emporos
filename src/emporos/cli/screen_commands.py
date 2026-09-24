@@ -37,7 +37,14 @@ from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.research.cell_run import ArmResult, BarSource, CellScreenRun, ScanFactory
 from emporos.research.history_audit import HistoryAudit
 from emporos.research.partition import DISCOVERY, DataSplit
+from emporos.research.results_filings import FilingLedger
 from emporos.research.scans.base import ScanExecution, SignalScan
+from emporos.research.scans.earnings_gap import earnings_gap_scan
+from emporos.research.scans.event_days import (
+    EventReactionScan,
+    InstrumentSymbols,
+    results_by_symbol,
+)
 from emporos.research.scans.orb_rvol import OrbRvolParameters, orb_rvol_scan
 from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
 from emporos.research.scans.range_compression import CompressionParameters, range_compression_scan
@@ -85,10 +92,17 @@ class ScreenCell(Protocol):
         """Load whatever the cell needs besides the instruments' own bars (a regime series)."""
         ...
 
+    def notes(self) -> list[str]:
+        """Lines to print after the table: what the run used, so a reader can judge coverage."""
+        ...
+
 
 class _NoPreparation:
     def prepare(self, bars: BarSource) -> None:
         return None
+
+    def notes(self) -> list[str]:
+        return []
 
 
 class RawGapCell(_NoPreparation):
@@ -154,7 +168,7 @@ class CompressionCell(_NoPreparation):
         return f"{point['condition']} break buffer {point['buffer_bps']}bps"
 
 
-class VixRegimeCell:
+class VixRegimeCell(_NoPreparation):
     """The recipe for cell L4-india-vix-regime: the INDIA VIX's opens gate each arm's days."""
 
     slug = "l4-india-vix-regime"
@@ -185,6 +199,58 @@ class VixRegimeCell:
         )
 
 
+DEFAULT_EVENTS_DIR = Path("docs/research/edge-search/events")
+DEFAULT_TOKEN_TABLE = Path("config/universe/d1/tokens.csv")
+
+
+class EarningsGapCell:
+    """The recipe for the earnings-reaction-day gap cells: one scan, one declaration per cell."""
+
+    def __init__(self, slug: str) -> None:
+        self.slug = slug
+        self._events: dict[str, list[datetime]] | None = None
+        self._symbols: InstrumentSymbols | None = None
+        self._scans: list[EventReactionScan] = []
+
+    def prepare(self, bars: BarSource) -> None:
+        ledger = FilingLedger(
+            DEFAULT_EVENTS_DIR / "results-filings.jsonl",
+            DEFAULT_EVENTS_DIR / "results-collected.jsonl",
+        )
+        self._events = results_by_symbol(ledger.load())
+        self._symbols = InstrumentSymbols.load(DEFAULT_TOKEN_TABLE)
+        if not self._events:
+            raise ValueError("no results events: run `emporos research collect-results` first")
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in declared_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        if self._events is None or self._symbols is None:
+            raise ValueError("the results events were not loaded before scanning")
+        scan = earnings_gap_scan(
+            RawGapParameters.from_point(point), execution, self._events, self._symbols
+        )
+        self._scans.append(scan)
+        return scan
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"gap>={point['gap_threshold_pct']}% {point['direction']} bar{point['entry_bar']}"
+
+    def notes(self) -> list[str]:
+        """Reaction sessions used per year (every arm sees the same ones, so the first is read),
+        and the events skipped: a missing quarter is a missed trade the reader must be told of."""
+        if not self._scans:
+            return []
+        outcome = self._scans[0].outcome
+        years = " ".join(f"{year}:{count}" for year, count in outcome.by_year.items())
+        return [
+            f"reaction sessions used per year: {years}",
+            f"results published in session (skipped): {outcome.in_session}; "
+            f"reaction session missing from the bars: {outcome.no_session}",
+        ]
+
+
 CELLS: Mapping[str, ScreenCell] = {
     c.slug: c
     for c in (
@@ -194,6 +260,8 @@ CELLS: Mapping[str, ScreenCell] = {
         ShockReversalCell("l3-first-hour-reversal-large-gap"),
         CompressionCell(),
         VixRegimeCell(),
+        EarningsGapCell("l2-earnings-gap-fade"),
+        EarningsGapCell("l2-earnings-gap-continuation"),
     )
 }
 
@@ -256,6 +324,8 @@ def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
         typer.secho(f"screen failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
     for line in _table(recipe, results):
+        typer.echo(line)
+    for line in recipe.notes():
         typer.echo(line)
     if any(r.result.advisory for r in results):
         typer.echo("advisory: this scan is not parity-proven against an engine strategy (F3b)")
