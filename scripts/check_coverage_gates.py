@@ -1,7 +1,7 @@
 """Enforces the coverage gates from plan.md §18.
 
-`domain`, `risk`, and `execution` must hold >= 90%; every other package >= 70%.
-Run `pipenv run test` first (it writes `.coverage`), then this script. Exits 0
+`domain`, `risk`, `execution` and `graduation` (it guards money) must hold >= 90%; every other
+package >= 70%. Run `pipenv run test` first (it writes `.coverage`), then this script. Exits 0
 iff all gates hold and at least one emporos module was measured.
 """
 
@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 COVERAGE_FILE = REPO_ROOT / ".coverage"
 SRC_ROOT = REPO_ROOT / "src" / "emporos"
 
-HIGH_GATE_PACKAGES = ("domain", "risk", "execution")
+HIGH_GATE_PACKAGES = ("domain", "risk", "execution", "graduation")
 HIGH_GATE_PERCENT = 90.0
 LOW_GATE_PERCENT = 70.0
 
