@@ -219,3 +219,22 @@ forbidden_modules = ["emporos.broker", "emporos.execution", "emporos.api"]
 # `backtest` itself books fills through the paper broker's `PaperAccount`; reaching that through
 # `backtest` is the point. Only a direct import from parity would be a leak.
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "graduation is an orchestration layer: nothing it composes imports it back"
+type = "forbidden"
+source_modules = [
+    "emporos.domain", "emporos.core", "emporos.strategies", "emporos.risk",
+    "emporos.execution", "emporos.portfolio", "emporos.broker", "emporos.persistence",
+    "emporos.session", "emporos.marketdata", "emporos.signals", "emporos.backtest",
+    "emporos.api",
+]
+forbidden_modules = ["emporos.graduation"]
+
+[[tool.importlinter.contracts]]
+name = "graduation never reaches a concrete broker, storage, the execution engine or the API"
+type = "forbidden"
+source_modules = ["emporos.graduation"]
+forbidden_modules = [
+    "emporos.broker", "emporos.persistence", "emporos.execution", "emporos.api", "emporos.cli",
+]
