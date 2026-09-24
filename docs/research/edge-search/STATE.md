@@ -11,7 +11,7 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3 (vault not yet sealed) |
 | Cells | 42 TODO, 0 terminal; no lane may run before F3B, F4 and VAULT are DONE |
-| Blocked on operator | D8 fee reconciliation -> BLOCKED(EM-190) |
+| Blocked on operator | D8 fee reconciliation -> BLOCKED(EM-197): needs one real contract note |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
 
