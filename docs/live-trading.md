@@ -84,10 +84,12 @@ promotion prints every unmet one together):
 
 **Today every one of these refuses**, which is the correct state: no strategy is validated, no report
 records its data provenance yet (`supporting.data_provenance` is not emitted by any report builder, so
-`DataIntegrityClean` cannot pass), and **broker verification (EM-186) has produced no evidence**: its
+`DataIntegrityClean` cannot pass), and **broker verification (EM-186) is only partly evidenced**: its
 seam (`BrokerVerificationEvidence`, `domain/broker_verification.py`) is bound to
-`UnverifiedBrokerEvidence`, which reports every critical check as `unknown`. Nothing assumes a pass;
-when EM-186 records real checks, only the binding in `cli/graduation_runtime.py` changes. Jev is not
+`RecordedBrokerEvidence` over the append-only `broker_verification_checks` collection. A critical
+check with no result is UNVERIFIED, and BLOCKED, FAIL, UNVERIFIED or stale (older than
+`broker_verification_max_age_days`) all refuse. Of the 7 critical checks today one is PASS and six are
+BLOCKED or UNVERIFIED (see the EM-186 status table below). Jev is not
 wired into the live worker, so `--jev-enabled` must be given by whoever enables it for a deployment.
 
 **The acknowledgement is deliberate.** `acknowledge` prints the risk tier, the capital, every limit
@@ -187,10 +189,18 @@ Scattered across test docstrings until now; centralized here.
   search/holding at 1/s; `placeOrder` throttled to 5/s (below the 9/s the static-IP rollout
   allows, itself below the 20/s originally published) with 500/min and 1000/hour caps; quotes/LTP
   at 10/s, 500/min, 5000/hour; candles at 3/s, 180/min, 5000/hour.
-* **The websocket layer is TLS-verified, our own transport** (not the SmartAPI SDK — AGENTS.md);
-  reconnect/heartbeat behavior is proven live for a stable connection (`test_angelone_live_feed.py`)
-  but **not yet proven live across an actual connection drop**, and no documented subscription-count
-  ceiling exists yet for the market-data socket — both remain open items under EM-186.
+* **The websocket layer is TLS-verified, our own transport** (not the SmartAPI SDK — AGENTS.md).
+  Reconnect after a deliberate client-side drop was exercised against the real feed on 2026-09-24
+  (below). Subscription limits are documented only on the SmartAPI forum: **1000 tokens per
+  connection and 3 connections per client code** (a 4th is blocked). We do not enforce either
+  client-side and did not probe them live.
+* **Session, IP and MAC.** Auth is API key + client code + PIN + TOTP; login yields a JWT, a refresh
+  token and a feed token. A market-feed socket needs the JWT, API key, client code and feed token as
+  handshake headers; the order-update socket needs the bearer JWT only. Only one session per client
+  code exists account-wide. Order endpoints require the calling IP to be the API key's registered
+  **static IP**; market data, history, the market-feed and order-update sockets and login work from
+  any IP. The `X-ClientLocalIP`/`X-ClientPublicIP`/`X-MACAddress` headers are sent (from
+  `ANGELONE_CLIENT_*` settings) but MAC is not an authorisation factor.
 
 ### Live verified, 2026-09-23 (market open, ~12:47-12:52 IST), EM-186
 
@@ -209,6 +219,63 @@ not before 09:15 as the command's own docstring requires) means that window had 
 passed with nothing yet received in THIS run. Ticks began arriving and candles were written
 correctly seconds later. Real: order-book/reconnect-under-loss/subscription-limit checks remain
 unexercised (no orders can be placed — IP-gated — and this run was never disconnected mid-session).
+
+### Live verified, 2026-09-24 (15:22-15:29 IST), EM-186 (read-only, market data only)
+
+`scripts/record_angelone_frames.py` (no worker, no strategy, no order endpoint) logged in, subscribed
+four NSE instruments in QUOTE mode, dropped its own socket once, pulled `getCandleData` and logged
+out. Fixtures are in `tests/fixtures/angelone/live_recordings/`; tests are
+`tests/contract/test_recorded_live_frames.py` and `test_recorded_candle_comparison.py`.
+
+* **Frames and timestamps: PASS.** 296 real 123-byte QUOTE frames; our decoder equals the pinned SDK
+  on every sampled frame; `exchange_ts` is **UTC epoch millis** (arrival lag 0.03-6.5 s, median
+  0.5 s; the IST-wall-clock reading is exactly 19800 s off). Ticks arrive roughly every 6 s per
+  instrument in this window, not every second.
+* **Reconnect: PASS.** Controlled close at 15:23:20: `disconnected` at +0.03 s, reconnected and
+  resubscribed at +1.0 s, frames resumed, no lockout. Heartbeat: 18 pongs in 3.3 min, 0 timeouts.
+* **Candle comparison: FAIL / unresolved.** Replaying the recording through our parser, normalizer
+  and aggregator gives candles that disagree with `getCandleData` for 15:22-15:25: the feed's last
+  price and cumulative volume were frozen (e.g. SBIN 978.50 / 13 494 498) while the broker's bars
+  moved (983.2 -> 981.5). At about 15:28 the feed's volume jumped by exactly the broker's 15:28
+  1m volume, so the feed caught up late. Whether this is specific to the 15:20-15:30 window is
+  unknown; **a mid-session recording is needed** before candles are trusted. Broker-side, the 5m bars
+  equal the aggregate of the 1m bars (one INFY bar differs). Note that `getCandleData` returns 366
+  bars for 09:15-15:26 and rate-limited (403 plain text) twice during the pull; the retry absorbed both.
+* **Order-update socket: connects live, no updates observed.** It authenticates with the bearer JWT,
+  heartbeats, and sends a greeting on connect (`order-status: AB00`, every field empty). Our parser
+  used to count that as a malformed update; it is now ignored as a notice (fixture
+  `streams/order_stream_greeting.json`).
+* **First-bar / pre-open: UNVERIFIED.** The market was past 09:15 and Mongo holds no live-constructed
+  session covering the open (only mid-session paper runs). Needs a run started before 09:00.
+* Housekeeping seen while reading Mongo: many leftover `zz_dashboard_*` scratch collections exist in
+  `emporos_dev`; they are not from this work and were not touched.
+
+## EM-186 acceptance criteria: honest status
+
+Machine-checkable record: `emporos broker-verify show` (append-only `broker_verification_checks`).
+Recorded by `emporos broker-verify record <check> <pass|fail|unverified|blocked> --evidence ...`.
+
+| acceptance criterion | status | evidence / reason |
+|---|---|---|
+| WS binary frame decoding and timestamps | PASS | `tests/contract/test_recorded_live_frames.py`, 296 real frames vs SDK oracle, UTC epoch confirmed |
+| Live 1m/5m candles vs broker data | FAIL (unresolved) | `test_recorded_candle_comparison.py` strict xfail; feed frozen at 15:22-15:25, needs a mid-session run |
+| First-bar volume and pre-open behaviour | UNVERIFIED | no pre-09:15 observation possible or persisted; needs a run before 09:00 |
+| Reconnect / heartbeat | PASS | controlled drop against the real feed, resubscribed in about 1 s; heartbeat 0 timeouts |
+| Subscription limits | UNVERIFIED | forum-documented 1000 tokens per connection, 3 connections per client; not probed, not enforced |
+| Real placement / cancel / update / rejection / order book | BLOCKED | no static IP registered, no Angel One sandbox; `tests/unit/test_order_safety.py` forbids it |
+| Tagging / audit identifiers | BLOCKED (real); PASS on fakes | `ordertag` = client tag on the wire, `find_orders_by_tag` exact; real round trip needs an order |
+| Rate-limit behaviour | PASS for data endpoints; BLOCKED for orders | real 403 plain-text denials absorbed by retry; order path over fakes |
+| Session / IP / MAC constraints documented | PASS | "Broker operational constraints" above |
+| Integration tests / mocks for all failure paths | PASS | `tests/failure/test_angelone_order_failures.py` (real stack over a fault-injecting HTTP server), plus the existing chaos suite |
+| No production capital until all critical checks pass | ENFORCED | `BrokerVerificationPassed` over `RecordedBrokerEvidence`; today 1 of 7 critical checks PASS |
+
+Critical checks (`CRITICAL_BROKER_CHECKS`): `login_and_session` PASS; `static_ip_registered`,
+`limit_order_round_trip`, `ordertag_round_trip` BLOCKED; `order_update_socket`,
+`order_rate_within_exchange_threshold`, `algo_tagging_requirement_confirmed` UNVERIFIED. **What a human
+must do:** register a static IP for the API key in the SmartAPI portal and run from it; then place one
+tiny limit order and record the round trip; confirm the exchange order-rate threshold and any algo-ID
+requirement with the broker/NSE; run a recording during 09:00-15:20 to settle the candle and first-bar
+questions.
 
 ## What you must do, in order
 
