@@ -5,15 +5,27 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 3 (2026-09-24) |
-| Last completed | F2B: documented EM-178..EM-181 grids counted into N (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **F3** fast screener with the curate-parity test (EM-195, To Do). Then F4, vault seal; D7 quote recording and D1 in the background |
+| Iteration | 4 (2026-09-24) |
+| Last completed | F3 core: screener, S2 bar, screen ledger, evaluator parity (EM-195, advisory); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **F3B** signal-level parity: vectorised orb_v1 / vwap_reversion_v1 / rsi_pullback_v1 scans vs `backtest curate` (EM-196). Then F4, vault seal; D7 quote recording and D1 in the background |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3 (vault not yet sealed) |
-| Cells | 42 TODO, 0 terminal; no lane may run before F3, F4 and VAULT are DONE |
+| Cells | 42 TODO, 0 terminal; no lane may run before F3B, F4 and VAULT are DONE |
 | Blocked on operator | D8 fee reconciliation -> BLOCKED(EM-190) |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 4 (2026-09-24): F3 core (EM-195)
+`emporos.research` gained the screener: `ScreenTrade`/`DeclaredValueSizer` (whole shares at the
+declared size), `ScreenCostScenario`/`ScreenCostModel` (the benchmark.yaml scenarios, statutory
+charges from `TransactionCostModel`, per-side slippage), `ScreenEvaluator` with the plan's fixed
+S2 `ScreenBar` (pinned by a test), and `Screener`, which appends every screen to the append-only
+`screens.jsonl` before returning; `ProgramTrialCount` counts that file, so N grows with each screen.
+The same screen twice is one look. A test checks evaluator parity with `backtest curate`'s own
+re-pricing (expectancy within 10%). **Split (§7):** signal-level parity needs vectorised
+re-implementations of three strategies, so it is F3B (EM-196). Until it passes, `Screener` is
+`advisory` and no cell verdict may rest on a screen. Not vectorised with numpy: it is not a
+dependency, and the pure-Decimal path is exact; revisit if a screen is too slow.
 
 ## Iteration 3 (2026-09-24): F2B
 The Mongo feature, cross-sectional and lead-lag ledgers are empty because EM-178..EM-181 ran with

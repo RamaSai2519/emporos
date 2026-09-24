@@ -5,7 +5,7 @@
 #              PAPER_REJECT | BLOCKED(EM-n) | CANDIDATE | VALIDATED
 # Foundation status: TODO | IN_PROGRESS | DONE | BLOCKED(EM-n)
 # A rejected cell must list its experiment ids and a one-line lesson. Children set `parent`.
-# Every lane cell requires F2 (global N), F2B (N complete), F3 (screener, for S2), F4 (size-aware evaluation) and
+# Every lane cell requires F2 (global N), F2B (N complete), F3 (screener core), F3B (screener signal parity), F4 (size-aware evaluation) and
 # VAULT (the seal, §4.3): no lane runs before them.
 
 lanes:
@@ -30,7 +30,8 @@ foundations:
   - {id: F1,    name: "Search map, STATE.md and typed loader/validator", status: DONE, ticket: EM-192}
   - {id: F2,    name: "Global trial counter (program-wide N into S4/S5 DSR)", status: DONE, ticket: EM-193}
   - {id: F2B,   name: "Backfill EM-178..EM-181 research grids so N is complete", status: DONE, ticket: EM-194}
-  - {id: F3,    name: "Fast screener with curate-parity test", status: TODO, ticket: EM-195}
+  - {id: F3,    name: "Fast screener core: sizing, costs, S2 bar, screen ledger (advisory)", status: DONE, ticket: EM-195}
+  - {id: F3B,   name: "Screener signal-level parity with curate on 3 strategies", status: TODO, ticket: EM-196}
   - {id: F4,    name: "Size-aware evaluation (declared position value)", status: TODO}
   - {id: VAULT, name: "Vault seal (vault.yaml + VaultGate)", status: TODO}
   - {id: D1,    name: "Wider universe (NIFTY 100, liquid NIFTY 200)", status: TODO}
@@ -44,47 +45,47 @@ foundations:
 
 cells:
   # --- P1 ---------------------------------------------------------------------------------------
-  - {id: L2-pead-first-hour,            lane: L2, hypothesis: pead-first-hour,            status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-continuation,  lane: L2, hypothesis: earnings-gap-continuation,  status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-fade,          lane: L2, hypothesis: earnings-gap-fade,          status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L2-fno-ban-days,               lane: L2, hypothesis: fno-ban-entry-exit,         status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L3-raw-gap-hold-to-close,      lane: L3, hypothesis: raw-gap-hold-to-close,      status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L3-idio-gap-continuation,      lane: L3, hypothesis: idio-gap-continuation,      status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2]}
-  - {id: L3-idio-gap-fade,              lane: L3, hypothesis: idio-gap-fade,              status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2]}
-  - {id: L3-orb-high-rvol-wide-range,   lane: L3, hypothesis: orb-high-rvol-wide-range,   status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L3-first-hour-shock-reversal,  lane: L3, hypothesis: first-hour-shock-reversal,  status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L4-nr7-inside-day-breakout,    lane: L4, hypothesis: nr7-inside-day-breakout,    status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L4-atr-percentile-regime,      lane: L4, hypothesis: atr-percentile-regime,      status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L4-expected-range-filter,      lane: L4, hypothesis: expected-range-filter,      status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L4-india-vix-regime,           lane: L4, hypothesis: india-vix-regime,           status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2]}
-  - {id: L5-early-trend-day-leaders,    lane: L5, hypothesis: early-trend-day-leaders,    status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2, D3]}
+  - {id: L2-pead-first-hour,            lane: L2, hypothesis: pead-first-hour,            status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-earnings-gap-continuation,  lane: L2, hypothesis: earnings-gap-continuation,  status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-earnings-gap-fade,          lane: L2, hypothesis: earnings-gap-fade,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-fno-ban-days,               lane: L2, hypothesis: fno-ban-entry-exit,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L3-raw-gap-hold-to-close,      lane: L3, hypothesis: raw-gap-hold-to-close,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L3-idio-gap-continuation,      lane: L3, hypothesis: idio-gap-continuation,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
+  - {id: L3-idio-gap-fade,              lane: L3, hypothesis: idio-gap-fade,              status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
+  - {id: L3-orb-high-rvol-wide-range,   lane: L3, hypothesis: orb-high-rvol-wide-range,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L3-first-hour-shock-reversal,  lane: L3, hypothesis: first-hour-shock-reversal,  status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L4-nr7-inside-day-breakout,    lane: L4, hypothesis: nr7-inside-day-breakout,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L4-atr-percentile-regime,      lane: L4, hypothesis: atr-percentile-regime,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L4-expected-range-filter,      lane: L4, hypothesis: expected-range-filter,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L4-india-vix-regime,           lane: L4, hypothesis: india-vix-regime,           status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
+  - {id: L5-early-trend-day-leaders,    lane: L5, hypothesis: early-trend-day-leaders,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2, D3]}
   # --- P2 ---------------------------------------------------------------------------------------
-  - {id: L6-meta-label-rejected-entries, lane: L6, hypothesis: meta-label-rejected-entries, status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L7-nifty-leads-constituents,   lane: L7, hypothesis: nifty-leads-constituents,   status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2]}
-  - {id: L7-sector-leads-laggards,      lane: L7, hypothesis: sector-leads-laggards,      status: TODO, requires: [F2, F2B, F3, F4, VAULT, D2, D3]}
-  - {id: L8-residual-momentum-low-turnover, lane: L8, hypothesis: residual-momentum-low-turnover, status: TODO, requires: [F2, F2B, F3, F4, VAULT, D1, D3]}
-  - {id: L8-residual-reversal-low-turnover, lane: L8, hypothesis: residual-reversal-low-turnover, status: TODO, requires: [F2, F2B, F3, F4, VAULT, D1, D3]}
-  - {id: L8-sector-pair-zscore,         lane: L8, hypothesis: sector-pair-zscore,         status: TODO, requires: [F2, F2B, F3, F4, VAULT, D3]}
-  - {id: L9-rvol-time-of-day,           lane: L9, hypothesis: rvol-time-of-day,           status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L9-volume-price-divergence,    lane: L9, hypothesis: volume-price-divergence,    status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L9-opening-volume-shock,       lane: L9, hypothesis: opening-volume-shock,       status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L9-delivery-pct-prior,         lane: L9, hypothesis: delivery-pct-prior,         status: TODO, requires: [F2, F2B, F3, F4, VAULT, D6]}
-  - {id: L9-quote-conditioned,          lane: L9, hypothesis: quote-conditioned-volume,   status: TODO, requires: [F2, F2B, F3, F4, VAULT, D7]}
-  - {id: L10-s3-passer-ensemble,        lane: L10, hypothesis: s3-passer-ensemble,        status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
+  - {id: L6-meta-label-rejected-entries, lane: L6, hypothesis: meta-label-rejected-entries, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L7-nifty-leads-constituents,   lane: L7, hypothesis: nifty-leads-constituents,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
+  - {id: L7-sector-leads-laggards,      lane: L7, hypothesis: sector-leads-laggards,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2, D3]}
+  - {id: L8-residual-momentum-low-turnover, lane: L8, hypothesis: residual-momentum-low-turnover, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D1, D3]}
+  - {id: L8-residual-reversal-low-turnover, lane: L8, hypothesis: residual-reversal-low-turnover, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D1, D3]}
+  - {id: L8-sector-pair-zscore,         lane: L8, hypothesis: sector-pair-zscore,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D3]}
+  - {id: L9-rvol-time-of-day,           lane: L9, hypothesis: rvol-time-of-day,           status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L9-volume-price-divergence,    lane: L9, hypothesis: volume-price-divergence,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L9-opening-volume-shock,       lane: L9, hypothesis: opening-volume-shock,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L9-delivery-pct-prior,         lane: L9, hypothesis: delivery-pct-prior,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D6]}
+  - {id: L9-quote-conditioned,          lane: L9, hypothesis: quote-conditioned-volume,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D7]}
+  - {id: L10-s3-passer-ensemble,        lane: L10, hypothesis: s3-passer-ensemble,        status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   # --- P3 ---------------------------------------------------------------------------------------
-  - {id: L11-indicator-feature-sweep,   lane: L11, hypothesis: indicator-feature-sweep,   status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L12-daily-regime-intraday-entry, lane: L12, hypothesis: daily-regime-intraday-entry, status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L12-htf-confirmation,          lane: L12, hypothesis: htf-confirmation,          status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L13-passive-limit-entry,       lane: L13, hypothesis: passive-limit-entry,       status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L13-quote-validated-passive,   lane: L13, hypothesis: quote-validated-passive,   status: TODO, requires: [F2, F2B, F3, F4, VAULT, D7]}
-  - {id: L14-day-of-week,               lane: L14, hypothesis: day-of-week,               status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L14-month-turn,                lane: L14, hypothesis: month-turn,                status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L14-pre-holiday,               lane: L14, hypothesis: pre-holiday,               status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L14-expiry-day,                lane: L14, hypothesis: expiry-day,                status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L14-results-season,            lane: L14, hypothesis: results-season,            status: TODO, requires: [F2, F2B, F3, F4, VAULT, D5]}
-  - {id: L15-gbm-return-ranking,        lane: L15, hypothesis: gbm-return-ranking,        status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
-  - {id: L15-deep-model,                lane: L15, hypothesis: deep-return-model,         status: TODO, requires: [F2, F2B, F3, F4, VAULT, D1]}
-  - {id: L16-jev-meta-feature,          lane: L16, hypothesis: jev-meta-feature,          status: TODO, requires: [F2, F2B, F3, F4, VAULT]}
+  - {id: L11-indicator-feature-sweep,   lane: L11, hypothesis: indicator-feature-sweep,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L12-daily-regime-intraday-entry, lane: L12, hypothesis: daily-regime-intraday-entry, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L12-htf-confirmation,          lane: L12, hypothesis: htf-confirmation,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L13-passive-limit-entry,       lane: L13, hypothesis: passive-limit-entry,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L13-quote-validated-passive,   lane: L13, hypothesis: quote-validated-passive,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D7]}
+  - {id: L14-day-of-week,               lane: L14, hypothesis: day-of-week,               status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L14-month-turn,                lane: L14, hypothesis: month-turn,                status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L14-pre-holiday,               lane: L14, hypothesis: pre-holiday,               status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L14-expiry-day,                lane: L14, hypothesis: expiry-day,                status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L14-results-season,            lane: L14, hypothesis: results-season,            status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L15-gbm-return-ranking,        lane: L15, hypothesis: gbm-return-ranking,        status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - {id: L15-deep-model,                lane: L15, hypothesis: deep-return-model,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D1]}
+  - {id: L16-jev-meta-feature,          lane: L16, hypothesis: jev-meta-feature,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}

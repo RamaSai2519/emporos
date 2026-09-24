@@ -1,9 +1,9 @@
 """Composition root for program-wide N (EM-191 F2): which stores count as looks.
 
-Every Mongo trial ledger, the published experiment registry and the documented proof-run grids
-that predate their Mongo ledgers (F2B). A curation that is not recording
-its trials still counts them: its own in-memory ledger joins as one more source, so an exploratory
-run is priced at the same N it would have raised.
+Every Mongo trial ledger, the published experiment registry, the documented proof-run grids
+that predate their Mongo ledgers (F2B) and every screen the fast screener has run (F3). A
+curation that is not recording its trials still counts them: its own in-memory ledger joins as one
+more source, so an exploratory run is priced at the same N it would have raised.
 """
 
 from __future__ import annotations
@@ -31,9 +31,11 @@ from emporos.persistence.cross_sectional_ledger import MongoCrossSectionalTrialL
 from emporos.persistence.feature_ledger import MongoFeatureTrialLedger
 from emporos.persistence.lead_lag_ledger import MongoLeadLagTrialLedger
 from emporos.persistence.trial_ledger import MongoTrialLedger
+from emporos.research.screen_ledger import JsonlScreenLedger, ScreenLedgerCounter
 
 STRATEGY_TRIALS = "strategy trials"
 DEFAULT_HISTORICAL_GRIDS = Path("docs/research/edge-search/historical-trials.yaml")
+DEFAULT_SCREENS = Path("docs/research/edge-search/screens.jsonl")
 
 
 class ProgramTrialCountFactory:
@@ -41,9 +43,11 @@ class ProgramTrialCountFactory:
         self,
         experiments_dir: Path = DEFAULT_EXPERIMENTS_DIR,
         historical_grids: Path = DEFAULT_HISTORICAL_GRIDS,
+        screens: Path = DEFAULT_SCREENS,
     ) -> None:
         self._experiments_dir = experiments_dir
         self._historical_grids = historical_grids
+        self._screens = screens
 
     def build(
         self,
@@ -64,5 +68,6 @@ class ProgramTrialCountFactory:
             ),
             HistoricalGridCounter("lead-lag grids (historical)", GridFamily.LEAD_LAG, grids),
             RegistryIndexCounter(self._experiments_dir / INDEX_JSON),
+            ScreenLedgerCounter(JsonlScreenLedger(self._screens)),
         ]
         return ProgramTrialCount(scored, counters)
