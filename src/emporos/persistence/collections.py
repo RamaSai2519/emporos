@@ -39,6 +39,8 @@ class Collection(StrEnum):
     CROSS_SECTIONAL_TRIAL_LEDGER = "cross_sectional_trial_ledger"
     LEAD_LAG_TRIAL_LEDGER = "lead_lag_trial_ledger"
     PARITY_REPORTS = "parity_reports"
+    GRADUATION_EVENTS = "graduation_events"
+    LIVE_ACKNOWLEDGEMENTS = "live_acknowledgements"
     JEV_DECISIONS = "jev_decisions"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"

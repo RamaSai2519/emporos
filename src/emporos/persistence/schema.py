@@ -214,6 +214,19 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("strategy", "behaviour_hash", "period", "kind", unique=True),
             IndexSpec.on("strategy", "behaviour_hash", "kind", "recorded_at"),
         ),
+        # The road to real money (EM-189): append-only, never edited or expired, because the
+        # record of who promoted what on which evidence is the audit trail. `seq` is monotonic per
+        # strategy and its unique index is what makes two racing promotions impossible.
+        _spec(
+            Collection.GRADUATION_EVENTS,
+            IndexSpec.on("strategy", "seq", unique=True),
+            IndexSpec.on("strategy", "at"),
+        ),
+        # One human acknowledgement per configuration (EM-189); a second is refused, not stacked.
+        _spec(
+            Collection.LIVE_ACKNOWLEDGEMENTS,
+            IndexSpec.on("strategy", "behaviour_hash", unique=True),
+        ),
         # Jev's recorded answers (EM-187): append-only and replayed forever, so no TTL. The unique
         # key is the question's identity: a changed prompt or model is a new question.
         _spec(

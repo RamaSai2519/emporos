@@ -382,6 +382,34 @@ class ParityReportRecord(Record):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
+class GraduationEventRecord(Record):
+    """One transition on the road to real money, append-only
+    (`emporos.domain.graduation.GraduationEvent`)."""
+
+    strategy: str
+    behaviour_hash: str
+    seq: int
+    from_stage: str
+    to_stage: str
+    kind: str
+    evidence: list[dict[str, str]] = Field(default_factory=list)
+    actor: str
+    reason: str
+    at: datetime
+
+
+class LiveAcknowledgementRecord(Record):
+    """A human's typed acceptance of one configuration going live, append-only
+    (`emporos.domain.graduation.LiveAcknowledgement`)."""
+
+    strategy: str
+    behaviour_hash: str
+    operator: str
+    typed_phrase: str
+    risk_tier: str
+    at: datetime
+
+
 class JevDecisionDocument(Record):
     """One answer the Jev model gave, append-only (`emporos.domain.jev_records.JevDecisionRecord`).
     Confidence is stored as its decimal string, like every other exact number outside money."""
