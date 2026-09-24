@@ -13,7 +13,9 @@ from typing import TypeVar
 import typer
 
 from emporos.backtest.robustness.backfill import PastExperiments
+from emporos.backtest.robustness.program_trials import ProgramTrials
 from emporos.backtest.robustness.trials import TrialLedger, TrialStatistics
+from emporos.cli.program_trials import ProgramTrialCountFactory
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.domain.experiments import DuplicateTrialError, Trial
@@ -90,3 +92,30 @@ def trials_backfill(curation: list[Path] = _CURATION, momentum: Path = _MOMENTUM
         typer.secho(f"trial ledger unavailable: {error.message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
     typer.echo(f"backfill: {added} trials added, {skipped} already recorded")
+
+
+def _program_summary(program: ProgramTrials) -> list[str]:
+    stats = program.statistics
+    lines = [f"program-wide N = {stats.count} ({stats.scored} carry a Sharpe ratio)"]
+    lines += [f"  {name}: {count}" for name, count in program.by_source.items()]
+    return lines
+
+
+async def _program_trials() -> ProgramTrials:
+    mongo = MongoClientFactory(Settings.default())
+    try:
+        return await ProgramTrialCountFactory().build(mongo.database()).trials()
+    finally:
+        await mongo.close()
+
+
+@trials_app.command("program")
+def trials_program() -> None:
+    """Program-wide N (EM-191): every look in every ledger plus every published experiment."""
+    try:
+        program = asyncio.run(_program_trials())
+    except EmporosError as error:
+        typer.secho(f"trial ledgers unavailable: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for line in _program_summary(program):
+        typer.echo(line)

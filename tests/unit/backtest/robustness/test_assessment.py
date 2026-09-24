@@ -9,13 +9,13 @@ from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAsses
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.perturbation import PerturbationRunner
 from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
-from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.tuning import NET_PNL
 from emporos.backtest.walkforward_run import WalkForwardResult
 from emporos.domain.experiments import Verdict
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from tests.support.program_trials import program_trials
 from tests.unit.backtest.test_walkforward_run import (
     CANDIDATES,
     RecordingBacktester,
@@ -46,8 +46,7 @@ async def walk() -> WalkForwardResult:
     )
 
 
-async def stats() -> TrialStatistics:
-    return TrialStatistics(35, 0, None)
+stats = program_trials(35)
 
 
 async def test_evidence_is_the_out_of_sample_trades_and_days() -> None:
@@ -65,6 +64,7 @@ async def test_evidence_is_the_out_of_sample_trades_and_days() -> None:
     assert report.deflated_sharpe.observations == sum(
         len(o.test.metrics.daily_returns) for o in result.outcomes
     )
+    assert report.deflated_sharpe.trial_count == 35  # program-wide N, not this run's count
 
 
 async def test_pbo_is_computed_from_every_windows_training_scores() -> None:

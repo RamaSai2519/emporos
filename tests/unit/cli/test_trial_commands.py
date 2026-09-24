@@ -7,9 +7,10 @@ from decimal import Decimal
 
 from typer.testing import CliRunner
 
-from emporos.backtest.robustness.trials import InMemoryTrialLedger
+from emporos.backtest.robustness.program_trials import ProgramTrials
+from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialStatistics
 from emporos.cli.main import app
-from emporos.cli.trial_commands import _append_missing, _summary
+from emporos.cli.trial_commands import _append_missing, _program_summary, _summary
 from emporos.domain.experiments import Trial, TrialRole
 
 runner = CliRunner()
@@ -66,3 +67,13 @@ def test_the_summary_counts_by_experiment_and_strategy() -> None:
 
 def test_the_summary_says_when_no_spread_can_be_measured() -> None:
     assert _summary([trial(1), trial(2)])[0] == "2 trials, 0 carry a Sharpe ratio"
+
+
+def test_the_program_summary_reports_n_and_every_source() -> None:
+    program = ProgramTrials(TrialStatistics(42, 5, None), {"strategy trials": 12, "feature": 30})
+
+    assert _program_summary(program) == [
+        "program-wide N = 42 (5 carry a Sharpe ratio)",
+        "  strategy trials: 12",
+        "  feature: 30",
+    ]

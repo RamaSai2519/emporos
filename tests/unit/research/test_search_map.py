@@ -63,7 +63,7 @@ def test_no_committed_lane_cell_can_run_before_the_trial_counter_and_the_vault_s
     search_map = SearchMapLoader().load(COMMITTED_MAP)
 
     for each in search_map.cells.values():
-        assert {"F2", "VAULT"} <= set(each.requires), each.cell_id
+        assert {"F2", "F2B", "VAULT"} <= set(each.requires), each.cell_id
 
 
 # --- status ---------------------------------------------------------------------------------------

@@ -88,3 +88,18 @@ def _mentions(annotation: ast.expr, names: set[str]) -> bool:
         ):
             return True
     return False
+
+
+def class_uses(name: str, root: Path = SRC) -> list[Hit]:
+    """Every call that constructs `name` or calls a method on it: `X(...)`, `X.of(...)`."""
+    hits = []
+    for path, tree in python_files(root):
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            if isinstance(func, ast.Attribute):
+                func = func.value  # type: ignore[assignment]
+            if isinstance(func, ast.Name) and func.id == name:
+                hits.append(Hit(path, node.lineno, name))
+    return hits

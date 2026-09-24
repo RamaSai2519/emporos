@@ -29,6 +29,10 @@ class MongoFeatureTrialLedger:
         except DuplicateRecordError as error:
             raise DuplicateFeatureTrialError(trial.trial_id) from error
 
+    async def count(self) -> int:
+        """How many trials, without loading them (program-wide N, EM-191 F2)."""
+        return await self._records.count()
+
     async def all(self) -> list[FeatureTrial]:
         records = await self._records.find(
             {}, sort=[("recorded_at", ASCENDING), ("_id", ASCENDING)]

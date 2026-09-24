@@ -44,7 +44,7 @@ from emporos.backtest.robustness.recording import (
     WalkForwardTrials,
 )
 from emporos.backtest.robustness.report import RobustnessDocument
-from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger, TrialStatistics
+from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
 from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
 from emporos.cli.backtest_runtime import candle_cache_root, open_backtest_runtime
@@ -55,6 +55,7 @@ from emporos.cli.experiment_registry import (
     ExperimentPublication,
     FileExperimentRegistry,
 )
+from emporos.cli.program_trials import ProgramTrialCountFactory
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
@@ -298,9 +299,9 @@ async def _curate(
         ledger: TrialLedger = InMemoryTrialLedger()
         if record_trials:
             ledger = MongoTrialLedger(runtime.database)
-
-        async def trial_statistics() -> TrialStatistics:
-            return TrialStatistics.of(await ledger.all())
+        trials = ProgramTrialCountFactory().build(
+            runtime.database, None if record_trials else ledger
+        )
 
         window_plan = WindowPlan(
             first.date(),
@@ -329,7 +330,7 @@ async def _curate(
                     backtester, load(f"config/strategies/{_BASELINE}.yaml", resolver), batch
                 )
                 return RobustnessAssessor(
-                    benchmark, trial_statistics, PerturbationRunner(backtester, batch=batch),
+                    benchmark, trials, PerturbationRunner(backtester, batch=batch),
                     baseline, portfolio_cost_model=cost_model,
                 )  # fmt: skip
 

@@ -5,13 +5,15 @@ only, runs each analysis, and hands the lot to the verdict policy. It reads the 
 checks that need one (neighbouring parameters, the always-long baseline), backtests further on the
 test windows; it can never change what was chosen or what the run found.
 
-The trial count for the Deflated Sharpe comes from the whole ledger, every experiment ever
-recorded, not just this strategy's: the luck to be beaten is the luck of the whole search.
+The trial count for the Deflated Sharpe is program-wide N (EM-191 F2): every trial in every ledger
+plus every published experiment, not just this strategy's, since the luck to be beaten is the luck
+of the whole search. The assessor takes a `ProgramTrialCount` by type, so no caller can price the
+Deflated Sharpe at a local count.
 """
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import timedelta
 from decimal import Decimal
@@ -40,7 +42,7 @@ from emporos.backtest.robustness.pbo import CSCV, PBOReport
 from emporos.backtest.robustness.performance import WindowPerformance, window_performance
 from emporos.backtest.robustness.perturbation import PerturbationReport, PerturbationRunner
 from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
-from emporos.backtest.robustness.trials import TrialStatistics
+from emporos.backtest.robustness.program_trials import ProgramTrialCount
 from emporos.backtest.robustness.verdict import (
     DirectionStats,
     Evidence,
@@ -53,7 +55,6 @@ from emporos.core.clock import IST
 from emporos.domain.instruments import Exchange, InstrumentResolver
 from emporos.strategies.config import ResolvedStrategyConfig
 
-TrialStatisticsSource = Callable[[], Awaitable[TrialStatistics]]
 _BASIS_POINTS = Decimal(10_000)
 
 
@@ -116,14 +117,14 @@ class RobustnessAssessor:
     def __init__(
         self,
         benchmark: BenchmarkConfig,
-        trial_statistics: TrialStatisticsSource,
+        trials: ProgramTrialCount,
         perturbation: PerturbationRunner | None = None,
         baseline: HoldBaseline | None = None,
         policy: VerdictPolicy | None = None,
         portfolio_cost_model: PortfolioCostModel | None = None,
     ) -> None:
         self._benchmark = benchmark
-        self._trial_statistics = trial_statistics
+        self._trials = trials
         self._perturbation = perturbation
         self._baseline = baseline
         self._policy = policy or VerdictPolicy.standard(benchmark.verdict)
@@ -147,7 +148,7 @@ class RobustnessAssessor:
         returns = tuple(r for o in result.outcomes for r in o.test.metrics.daily_returns)
         costs = tuple(CostSensitivity().evaluate(trades, self._benchmark.cost_scenarios))
         monte_carlo = MonteCarlo(self._monte_carlo_config()).run(trades)
-        deflated = DeflatedSharpe().evaluate(returns, await self._trial_statistics())
+        deflated = DeflatedSharpe().evaluate(returns, await self._trials.statistics())
         pbo = CSCV().evaluate(self._candidate_scores(result))
         observed_edge, minimum_edge = self._edge_evidence(trades)
         concentration = ConcentrationCheck(thresholds.concentration.top_trades).measure(trades)

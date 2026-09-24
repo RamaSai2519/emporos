@@ -16,13 +16,13 @@ from emporos.backtest.robustness.assessment import RobustnessAssessor
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.holdout import FinalHoldoutReservation
 from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
-from emporos.backtest.robustness.trials import TrialStatistics
 from emporos.backtest.tuning import NET_PNL, ParameterCandidate
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
 from tests.support.backtest import InMemoryCandles
 from tests.support.backtest_engine import WORKED_DAY, FixedSchedule, bars, config, registry
+from tests.support.program_trials import program_trials
 from tests.support.strategies import T0
 
 FIRST_DAY, LAST_DAY = date(2026, 1, 5), date(2026, 1, 22)  # 18 sessions of data
@@ -36,8 +36,7 @@ PLAN = WindowPlan(
 )
 
 
-async def trial_statistics() -> TrialStatistics:
-    return TrialStatistics(35, 0, None)
+trial_statistics = program_trials(35)
 
 
 def instruments() -> AsOfInstruments:
