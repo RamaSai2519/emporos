@@ -38,12 +38,19 @@ from emporos.core.errors import EmporosError
 from emporos.domain.research_experiments import ExperimentDeclaration
 from emporos.domain.sizing import SizeResolver
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.research.cell_run import BarSource
 from emporos.research.daily_selection import DailyTopKSelection
 from emporos.research.partition import DISCOVERY
 from emporos.research.ranked_cell_run import RankedArmResult, RankedCellScreenRun, RankedScan
 from emporos.research.results_filings import FilingLedger
 from emporos.research.scans.base import ScanExecution
 from emporos.research.scans.event_days import InstrumentSymbols, results_by_symbol
+from emporos.research.scans.index_trend_leader import (
+    IndexFirstHour,
+    IndexTrendLeaderScan,
+    LeaderParameters,
+)
+from emporos.research.scans.index_trend_leader import declared_arms as leader_arms
 from emporos.research.scans.top_shock import (
     EverySession,
     NewsFilter,
@@ -58,7 +65,13 @@ from emporos.research.screen_evaluator import ScreenEvaluator
 from emporos.research.screen_ledger import JsonlScreenLedger
 from emporos.risk.config import RiskLimitsLoader
 
-__all__ = ["RANKED_CELLS", "RankedCell", "TopShockCell", "research_screen_ranked"]
+__all__ = [
+    "RANKED_CELLS",
+    "IndexTrendLeaderCell",
+    "RankedCell",
+    "TopShockCell",
+    "research_screen_ranked",
+]
 
 _SLUG = typer.Argument(..., help="A declared ranked cell: config/experiments/<slug>.yaml")
 _LEDGER = typer.Option(DEFAULT_SCREENS_FILE, help="The append-only screen ledger.")
@@ -68,7 +81,9 @@ class RankedCell(Protocol):
     slug: str
     selection: DailyTopKSelection
 
-    def prepare(self) -> None: ...
+    def prepare(self, bars: BarSource) -> None:
+        """Load whatever the cell needs besides the instruments' own bars (events, an index)."""
+        ...
 
     def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]: ...
 
@@ -86,7 +101,7 @@ class TopShockCell:
     def __init__(self) -> None:
         self._filters: dict[NewsFilter, SessionFilter] | None = None
 
-    def prepare(self) -> None:
+    def prepare(self, bars: BarSource) -> None:
         ledger = FilingLedger(
             DEFAULT_EVENTS_DIR / "results-filings.jsonl",
             DEFAULT_EVENTS_DIR / "results-collected.jsonl",
@@ -113,7 +128,37 @@ class TopShockCell:
         return f"top1 gap>={point['gap_floor_pct']}% news={point['news']}"
 
 
-RANKED_CELLS: Mapping[str, RankedCell] = {c.slug: c for c in (TopShockCell(),)}
+class IndexTrendLeaderCell:
+    """The recipe for L5-index-trend-day-leader: the top ONE candidate leading the index on a
+    strongly trending first hour, ranked by the arm's key."""
+
+    slug = "l5-index-trend-day-leader"
+    selection = DailyTopKSelection(1)
+    NIFTY_SERIES_ID = "NSE:99926000"  # config/reference_series.yaml, token of Nifty 50
+
+    def __init__(self) -> None:
+        self._index: IndexFirstHour | None = None
+
+    def prepare(self, bars: BarSource) -> None:
+        self._index = IndexFirstHour.from_bars(bars.bars(self.NIFTY_SERIES_ID, DISCOVERY))
+        if not self._index.moves:
+            raise ValueError("no NIFTY 50 bars in the cache: run `history fetch-reference` first")
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in leader_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> RankedScan:
+        if self._index is None:
+            raise ValueError("the NIFTY 50 series was not loaded before scanning")
+        return IndexTrendLeaderScan(LeaderParameters.from_point(point), self._index, execution)
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"top1 index>={point['index_move_min_pct']}% rank={point['rank_key']}"
+
+
+RANKED_CELLS: Mapping[str, RankedCell] = {
+    c.slug: c for c in (TopShockCell(), IndexTrendLeaderCell())
+}
 
 
 def _pct(value: object) -> str:
@@ -163,10 +208,9 @@ def research_screen_ranked(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
             f"{slug}: {DISCOVERY.first}..{DISCOVERY.last}, {size.position_value} rupees per "
             f"position, universe {D1_UNIVERSE}, top {recipe.selection.k} per session"
         )
-        recipe.prepare()
-        results = run.run(
-            slug, recipe.arms(declaration), vaulted_bars(Settings.default(), wide=True), size
-        )
+        bars = vaulted_bars(Settings.default(), wide=True)
+        recipe.prepare(bars)
+        results = run.run(slug, recipe.arms(declaration), bars, size)
     except (EmporosError, ValueError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"screen failed: {message}", fg=typer.colors.RED)

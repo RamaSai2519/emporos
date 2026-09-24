@@ -55,7 +55,7 @@ def rejected(cell_id: str = "L3-gap", *, parent: str | None = None) -> SearchCel
 def test_the_committed_search_map_is_valid() -> None:
     search_map = SearchMapLoader().load(COMMITTED_MAP)
 
-    assert set(search_map.lanes) == {f"L{n}" for n in range(1, 17)}
+    assert set(search_map.lanes) == {f"L{n}" for n in range(1, 18)}
     assert {"F1", "F2", "F3", "F4", "VAULT"} <= set(search_map.foundations)
 
 
