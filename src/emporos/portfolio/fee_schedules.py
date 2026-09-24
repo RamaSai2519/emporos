@@ -14,7 +14,7 @@ from typing import Any
 import yaml
 
 from emporos.core.config import CONFIG_DIR
-from emporos.domain.fees import FeeSchedule
+from emporos.domain.fees import FeeSchedule, TradeProduct
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
 
@@ -30,9 +30,16 @@ class FeeScheduleLibrary:
         self._schedules = sorted(schedules, key=lambda s: s.effective_from)
 
     @classmethod
-    def from_directory(cls, directory: Path = CONFIG_DIR / "fees") -> FeeScheduleLibrary:
+    def from_directory(
+        cls,
+        directory: Path = CONFIG_DIR / "fees",
+        product: TradeProduct = TradeProduct.INTRADAY,
+    ) -> FeeScheduleLibrary:
+        """The schedules of ONE product. The default is intraday so that a delivery file added to
+        the directory can never become the schedule an intraday reader finds in force."""
         parser = FeeScheduleParser()
-        return cls([parser.parse(path) for path in sorted(directory.glob("*.yaml"))])
+        parsed = [parser.parse(path) for path in sorted(directory.glob("*.yaml"))]
+        return cls([schedule for schedule in parsed if schedule.product is product])
 
     @property
     def earliest(self) -> FeeSchedule:
@@ -66,6 +73,9 @@ class FeeScheduleParser:
                 stamp_duty_buy_percent=self._exact(raw["stamp_duty_buy_percent"]),
                 gst_percent=self._exact(raw["gst_percent"]),
                 verified=raw.get("verified", False) is True,
+                product=TradeProduct(str(raw.get("product", TradeProduct.INTRADAY.value))),
+                stt_buy_percent=self._exact(raw.get("stt_buy_percent", "0")),
+                dp_charge_per_sale=Money(self._exact(raw.get("dp_charge_per_sale", "0"))),
             )
         except FeeScheduleError:
             raise

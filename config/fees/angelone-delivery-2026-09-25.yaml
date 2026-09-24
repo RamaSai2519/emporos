@@ -1,0 +1,38 @@
+# Angel One cash-equity DELIVERY charges (PROFIT_PLAN §4 A-F4, EM-222). Rates are quoted STRINGS on
+# purpose: a YAML float would be an inexact number, and money never touches a float.
+#
+# [VOLATILE] Read from https://www.angelone.in/exchange-transaction-charges on 2026-09-25 (the
+# delivery section of the page whose intraday section fed angelone-2026-09-20.yaml). The page states
+# no effective date, so `effective_from` is the date it was read. `verified: false`: read from the
+# tariff page only, never reconciled against a contract note. Fine for research P&L; the operator
+# must reconcile against a delivery contract note before any live delivery order is sized from it.
+#
+# `product: delivery` keeps this file out of every intraday reader (FeeScheduleLibrary.from_directory
+# defaults to intraday); a swing reader asks for it with `product=TradeProduct.DELIVERY`.
+#
+# Differences from intraday, all from that page:
+#   * STT is 0.1% on BOTH the buy and the sell (intraday: 0.025% on the sell only).
+#   * Stamp duty on the buy is 0.015% (intraday: 0.003%).
+#   * The depository charges Rs 20 + GST per scrip sold. The page notes CDSL variations by client
+#     type; the higher figure is used, which can only overstate the cost.
+#   * Brokerage is the lower of Rs 20 or 0.1% of turnover per executed order, minimum Rs 5. The page
+#     also advertises "Rs 0 brokerage up to Rs 500 for the first 30 days": a promotion, ignored.
+# Not modelled: the IPFT levy (0.0000001% on NSE, negligible), BSE scrip groups (BSE uses one rate
+# here), the pledge/margin-pledge and call-and-trade charges, and the once-a-year DP AMC.
+name: angelone-equity-delivery
+product: delivery
+effective_from: "2026-09-25"
+verified: false
+brokerage:
+  flat: "20"            # lower of this per executed order...
+  percent: "0.1"        # ...or this share of turnover,
+  minimum: "5"          # but never below this
+stt_buy_percent: "0.1"
+stt_sell_percent: "0.1"
+exchange_transaction_percent:
+  NSE: "0.0030699"
+  BSE: "0.00375"
+sebi_per_crore: "10"
+stamp_duty_buy_percent: "0.015"
+dp_charge_per_sale: "20"
+gst_percent: "18"

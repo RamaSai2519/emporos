@@ -10,7 +10,7 @@ import pytest
 
 from emporos.broker.models import BrokerTrade
 from emporos.broker.paper.costs import ScheduledCosts
-from emporos.domain.fees import IntradayCharges
+from emporos.domain.fees import IntradayCharges, TradeProduct
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
@@ -101,3 +101,44 @@ def test_scheduled_costs_charge_a_paper_trade_from_its_instrument_and_side() -> 
 
     assert costs.charges(buy) == Money.of("26.96")
     assert costs.charges(sell) == Money.of("38.26")
+
+
+DELIVERY_FILE = VALID.replace("stt_sell_percent", "product: delivery\nstt_buy_percent: \"0.1\"\n"
+                              "dp_charge_per_sale: \"20\"\nstt_sell_percent")  # fmt: skip
+
+
+def test_the_shipped_delivery_schedule_loads_unverified_and_stays_out_of_the_intraday_library() -> (
+    None
+):
+    delivery = FeeScheduleLibrary.from_directory(product=TradeProduct.DELIVERY).for_date(
+        date(2026, 9, 25)
+    )
+    intraday = FeeScheduleLibrary.from_directory().for_date(date(2026, 9, 25))
+
+    assert delivery.name == "angelone-equity-delivery"
+    assert delivery.verified is False
+    assert (delivery.stt_buy_percent, delivery.stt_sell_percent) == (Decimal("0.1"), Decimal("0.1"))
+    assert delivery.stamp_duty_buy_percent == Decimal("0.015")
+    assert delivery.dp_charge_per_sale == Money.of("20")
+    assert intraday.name == "angelone-equity-intraday"  # the newer delivery file did not take over
+
+
+def test_a_directory_with_only_the_other_products_files_has_no_schedule(tmp_path: Path) -> None:
+    (tmp_path / "d.yaml").write_text(
+        DELIVERY_FILE.format(name="d", day="2026-01-01", stt="0.1"), encoding="utf-8"
+    )
+
+    with pytest.raises(FeeScheduleError, match="no fee schedules"):
+        FeeScheduleLibrary.from_directory(tmp_path)
+    assert FeeScheduleLibrary.from_directory(tmp_path, TradeProduct.DELIVERY).earliest.name == "d"
+
+
+def test_an_unknown_product_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "x.yaml"
+    path.write_text(
+        VALID.format(name="x", day="2026-01-01", stt="0.025") + "product: futures\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FeeScheduleError, match="x.yaml"):
+        FeeScheduleParser().parse(path)
