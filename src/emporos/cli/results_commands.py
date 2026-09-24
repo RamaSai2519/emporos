@@ -21,7 +21,7 @@ from emporos.research.nse_announcements import (
     AnnouncementSource,
     NseAnnouncementSource,
 )
-from emporos.research.results_filings import FilingLedger
+from emporos.research.results_filings import RESULTS_SUBJECTS, FilingLedger
 from emporos.research.universe_lists import ConstituentList
 
 DEFAULT_EVENTS_DIR = Path("docs/research/edge-search/events")
@@ -42,23 +42,25 @@ class ResultsCollection:
         self._clock = clock
 
     async def run(self, symbols: list[str], first: date, last: date) -> tuple[int, list[str]]:
-        """(filings added, names that failed). A refusal from the exchange propagates."""
-        done = self._ledger.collected_symbols()
+        """(filings added, "SYMBOL/subject" pairs that failed). A refusal from the exchange
+        propagates. Every subject is collected for every name."""
         added, failed = 0, []
-        for symbol in symbols:
-            if symbol in done:
-                continue
-            try:
-                filings = await self._source.results_filings(symbol, first, last)
-            except AnnouncementRefused:
-                raise
-            except (httpx.HTTPError, ValueError) as error:
-                failed.append(symbol)
-                typer.echo(f"{symbol}: failed ({error})")
-                continue
-            new = self._ledger.record(symbol, filings, first, last, self._clock.now())
-            added += new
-            typer.echo(f"{symbol}: {len(filings)} results filing(s), {new} new")
+        for subject in RESULTS_SUBJECTS:
+            done = self._ledger.collected_symbols(subject)
+            for symbol in symbols:
+                if symbol in done:
+                    continue
+                try:
+                    filings = await self._source.results_filings(symbol, first, last, subject)
+                except AnnouncementRefused:
+                    raise
+                except (httpx.HTTPError, ValueError) as error:
+                    failed.append(f"{symbol}/{subject}")
+                    typer.echo(f"{symbol} [{subject}]: failed ({error})")
+                    continue
+                new = self._ledger.record(symbol, filings, first, last, self._clock.now(), subject)
+                added += new
+                typer.echo(f"{symbol} [{subject}]: {len(filings)} filing(s), {new} new")
         return added, failed
 
 

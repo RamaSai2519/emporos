@@ -91,7 +91,7 @@ class TestCollection:
 
         await collection.run(["A", "B"], FIRST, LAST)
 
-        assert asked == ["B"]
+        assert asked == ["B", "A", "B"]  # A was collected under the first subject only
 
     async def test_one_failing_name_does_not_stop_the_others(self, tmp_path: Path) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
@@ -103,9 +103,22 @@ class TestCollection:
 
         added, failed = await collection.run(["A", "BAD", "C"], FIRST, LAST)
 
-        assert failed == ["BAD"]
+        assert failed == ["BAD/Financial Result Updates", "BAD/Outcome of Board Meeting"]
         assert ledger.collected_symbols() == {"A", "C"}  # the failed name is retried next run
+        assert ledger.collected_symbols("Outcome of Board Meeting") == {"A", "C"}
         assert added == 1  # the same sequence id is one filing however many names report it
+
+    async def test_every_subject_is_asked_for_every_name(self, tmp_path: Path) -> None:
+        subjects: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            subjects.append(request.url.params["subject"])
+            return httpx.Response(200, json=[])
+
+        collection, _ = self.collection(tmp_path, handler)
+        await collection.run(["A"], FIRST, LAST)
+
+        assert subjects == ["Financial Result Updates", "Outcome of Board Meeting"]
 
     async def test_a_refusal_propagates_and_keeps_what_was_collected(self, tmp_path: Path) -> None:
         def handler(request: httpx.Request) -> httpx.Response:

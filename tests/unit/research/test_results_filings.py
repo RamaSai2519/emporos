@@ -58,6 +58,50 @@ class TestParse:
             parse_filings({"error": "x"}, "RELIANCE")
 
 
+class TestBoardOutcomes:
+    def outcome(self, text: str, seq: str = "1") -> dict:  # type: ignore[type-arg]
+        base = row("21-Oct-2022 19:38:09", seq, "Outcome of Board Meeting")
+        base["attchmntText"] = text
+        return base
+
+    def test_an_outcome_about_results_is_a_results_filing(self) -> None:
+        payload = [
+            self.outcome(
+                "pursuant to Regulation 33 the Unaudited Financial Results for the quarter"
+            )
+        ]
+
+        (f,) = parse_filings(payload, "RELIANCE", "Outcome of Board Meeting")
+
+        assert f.subject == "Outcome of Board Meeting"
+
+    def test_an_outcome_about_something_else_is_not(self) -> None:
+        payload = [self.outcome("The Board approved a fund raise through NCDs and a dividend")]
+
+        assert parse_filings(payload, "RELIANCE", "Outcome of Board Meeting") == []
+
+    def test_a_subject_is_not_mixed_into_another(self) -> None:
+        payload = [self.outcome("Unaudited Financial Results")]
+
+        assert parse_filings(payload, "RELIANCE") == []  # asked for the default subject
+
+    def test_a_record_written_before_subjects_existed_reads_as_the_first_kind(self) -> None:
+        old = {"symbol": "A", "isin": "", "public_at": "2024-01-19T18:13:00+05:30", "seq_id": "1",
+               "text": "", "attachment": ""}  # fmt: skip
+
+        assert ResultsFiling.from_record(old).subject == "Financial Result Updates"
+
+    def test_the_manifest_keeps_subjects_apart(self, tmp_path: Path) -> None:
+        ledger = FilingLedger(tmp_path / "f.jsonl", tmp_path / "m.jsonl")
+        ledger.record("A", [], date(2016, 10, 3), date(2026, 9, 18), NOW)
+        ledger.record(
+            "B", [], date(2016, 10, 3), date(2026, 9, 18), NOW, "Outcome of Board Meeting"
+        )
+
+        assert ledger.collected_symbols() == {"A"}
+        assert ledger.collected_symbols("Outcome of Board Meeting") == {"B"}
+
+
 class TestFirstPublic:
     def test_a_revised_copy_a_day_later_is_not_a_new_season(self) -> None:
         a = datetime(2024, 1, 19, 18, 13, tzinfo=IST)

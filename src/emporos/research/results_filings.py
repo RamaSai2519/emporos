@@ -4,7 +4,11 @@ A result "became public" when the exchange disseminated the filing, so every eve
 exchange's own timestamp (`an_dt`, IST) and never a quarter-end or the day the price moved. The
 reaction day is decided later, from `public_at`, by whoever needs it; nothing here looks at prices.
 
-* `ResultsFiling` is one exchange filing tagged "Financial Result Updates".
+* `ResultsFiling` is one exchange filing that announces results. The exchange tags them under two
+  subjects: "Financial Result Updates" (the whole record before mid-2022, sparse after) and
+  "Outcome of Board Meeting" (how most results are announced since). Board-meeting outcomes are kept
+  only when their text says they are about results, so a dividend or fund-raising meeting is not a
+  results date.
 * `first_public_results` collapses a name's filings (standalone and consolidated copies, revisions)
   into one event per results season: the EARLIEST filing of a cluster is when the market could first
   know. A filing more than `GAP_DAYS` after the cluster's first starts a new one; quarters are about
@@ -16,6 +20,7 @@ reaction day is decided later, from `public_at`, by whoever needs it; nothing he
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -27,6 +32,7 @@ from emporos.core.clock import IST
 __all__ = [
     "GAP_DAYS",
     "RESULTS_SUBJECT",
+    "RESULTS_SUBJECTS",
     "FilingLedger",
     "ResultsFiling",
     "first_public_results",
@@ -34,6 +40,15 @@ __all__ = [
 ]
 
 RESULTS_SUBJECT = "Financial Result Updates"
+BOARD_OUTCOME_SUBJECT = "Outcome of Board Meeting"
+RESULTS_SUBJECTS = (RESULTS_SUBJECT, BOARD_OUTCOME_SUBJECT)
+# A board-meeting outcome is a results date only if its text says so: the results regulation (33) or
+# the words the exchange filings use for them.
+_RESULTS_TEXT = re.compile(
+    r"financial results?|unaudited|audited|regulation 33"
+    r"|quarter(?:ly)? (?:and|ended)|results for the",
+    re.IGNORECASE,
+)
 GAP_DAYS = 20
 _STAMP = "%d-%b-%Y %H:%M:%S"
 
@@ -46,6 +61,7 @@ class ResultsFiling:
     seq_id: str
     text: str
     attachment: str
+    subject: str = RESULTS_SUBJECT
 
     def __post_init__(self) -> None:
         if self.public_at.tzinfo is None:
@@ -61,6 +77,7 @@ class ResultsFiling:
             "seq_id": self.seq_id,
             "text": self.text,
             "attachment": self.attachment,
+            "subject": self.subject,
         }
 
     @classmethod
@@ -72,25 +89,32 @@ class ResultsFiling:
             record["seq_id"],
             record["text"],
             record["attachment"],
+            record.get("subject", RESULTS_SUBJECT),  # the first collection stored no subject
         )
 
 
-def parse_filings(payload: object, symbol: str) -> list[ResultsFiling]:
-    """The results filings in one exchange response for `symbol`. Rows tagged with any other
-    subject are ignored; a malformed row is refused rather than guessed at."""
+def parse_filings(
+    payload: object, symbol: str, subject: str = RESULTS_SUBJECT
+) -> list[ResultsFiling]:
+    """The results filings under `subject` in one exchange response for `symbol`. Rows tagged with
+    any other subject are ignored, as are board-meeting outcomes that are not about results; a
+    malformed row is refused rather than guessed at."""
     if not isinstance(payload, list):
         raise ValueError(
             f"{symbol}: expected a list of announcements, got {type(payload).__name__}"
         )
     out: list[ResultsFiling] = []
     for row in payload:
-        if not isinstance(row, dict) or row.get("desc") != RESULTS_SUBJECT:
+        if not isinstance(row, dict) or row.get("desc") != subject:
             continue
-        out.append(_filing(row, symbol))
+        filing = _filing(row, symbol, subject)
+        if subject == BOARD_OUTCOME_SUBJECT and not _RESULTS_TEXT.search(filing.text):
+            continue
+        out.append(filing)
     return sorted(out, key=lambda f: f.public_at)
 
 
-def _filing(row: Mapping[str, Any], symbol: str) -> ResultsFiling:
+def _filing(row: Mapping[str, Any], symbol: str, subject: str) -> ResultsFiling:
     try:
         public_at = datetime.strptime(str(row["an_dt"]), _STAMP).replace(tzinfo=IST)
         seq_id = str(row["seq_id"])
@@ -105,6 +129,7 @@ def _filing(row: Mapping[str, Any], symbol: str) -> ResultsFiling:
         seq_id,
         str(row.get("attchmntText") or "").strip(),
         str(row.get("attchmntFile") or ""),
+        subject,
     )
 
 
@@ -136,14 +161,22 @@ class FilingLedger:
         with self._filings.open(encoding="utf-8") as handle:
             return [ResultsFiling.from_record(json.loads(line)) for line in handle if line.strip()]
 
-    def collected_symbols(self) -> set[str]:
+    def collected_symbols(self, subject: str = RESULTS_SUBJECT) -> set[str]:
+        """Names already collected under `subject` (entries with no subject are the first kind)."""
         if not self._manifest.exists():
             return set()
         with self._manifest.open(encoding="utf-8") as handle:
-            return {json.loads(line)["symbol"] for line in handle if line.strip()}
+            entries = [json.loads(line) for line in handle if line.strip()]
+        return {e["symbol"] for e in entries if e.get("subject", RESULTS_SUBJECT) == subject}
 
     def record(
-        self, symbol: str, filings: Sequence[ResultsFiling], first: date, last: date, at: datetime
+        self,
+        symbol: str,
+        filings: Sequence[ResultsFiling],
+        first: date,
+        last: date,
+        at: datetime,
+        subject: str = RESULTS_SUBJECT,
     ) -> int:
         """Add the filings not already held, note the name as collected; returns the new count."""
         held = {(f.symbol, f.seq_id) for f in self.load()}
@@ -155,6 +188,7 @@ class FilingLedger:
                     handle.write(json.dumps(filing.as_record(), sort_keys=True) + "\n")
         entry = {
             "symbol": symbol,
+            "subject": subject,
             "first": first.isoformat(),
             "last": last.isoformat(),
             "filings": len(filings),

@@ -29,8 +29,10 @@ class AnnouncementRefused(RuntimeError):
 
 
 class AnnouncementSource(Protocol):
-    async def results_filings(self, symbol: str, first: date, last: date) -> list[ResultsFiling]:
-        """Every results filing for `symbol` published in [first, last], oldest first."""
+    async def results_filings(
+        self, symbol: str, first: date, last: date, subject: str = RESULTS_SUBJECT
+    ) -> list[ResultsFiling]:
+        """Every results filing for `symbol` under `subject` in [first, last], oldest first."""
         ...
 
 
@@ -45,14 +47,16 @@ class NseAnnouncementSource:
         self._gap = seconds_between_requests
         self._requests = 0
 
-    async def results_filings(self, symbol: str, first: date, last: date) -> list[ResultsFiling]:
+    async def results_filings(
+        self, symbol: str, first: date, last: date, subject: str = RESULTS_SUBJECT
+    ) -> list[ResultsFiling]:
         if self._requests:
             await self._sleeper.sleep(self._gap)
         self._requests += 1
         url = (
             f"{ENDPOINT}?index=equities&symbol={quote(symbol, safe='')}"
             f"&from_date={first.strftime(_DAY)}&to_date={last.strftime(_DAY)}"
-            f"&subject={quote(RESULTS_SUBJECT)}"
+            f"&subject={quote(subject)}"
         )
         response = await self._client.get(url, headers={"User-Agent": USER_AGENT})
         if response.status_code in (401, 403, 429):
@@ -60,4 +64,4 @@ class NseAnnouncementSource:
                 f"{symbol}: the exchange answered {response.status_code}; stopping the run"
             )
         response.raise_for_status()
-        return parse_filings(response.json(), symbol)
+        return parse_filings(response.json(), symbol, subject)
