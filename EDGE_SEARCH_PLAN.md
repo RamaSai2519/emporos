@@ -400,7 +400,7 @@ other lanes.
 | Buy tick or depth data, or subscribe to a vendor feed | Money, and a licence. |
 | Add a new benchmark, or change the parity or graduation thresholds | These define what "validated" means. |
 | Move into futures, options, BTST, swing or another venue | Product scope (plan.md). |
-| Contract-note fee reconciliation (D8), static IP, a live order round trip (EM-190) | Human-only actions. |
+| Contract-note fee reconciliation (D8), a live order round trip (EM-190) | Human-only actions. The static IP is done (2026-09-25): `65.0.238.146` is registered and is the production host's Elastic IP (EM-211, `docs/ops/production-host.md`). The host is stopped when idle and only the operator starts it. |
 | Vault open 3 of 3 | The last clean historical test. The operator must see the case first. |
 
 ---

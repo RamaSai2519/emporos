@@ -15,7 +15,7 @@ Confirmed scope decisions:
 |---|---|---|
 | Instruments | Equity cash + intraday only | Small instrument master, one WebSocket connection suffices, no expiry/Greeks/rollover logic in v1 |
 | Budget | Rock bottom, ~$10–25/mo total | Single small EC2 + Elastic IP; Atlas M0 (dev) / Flex (prod); no NAT Gateway; no continuously-running staging |
-| Broker status | Trading account exists, no API access yet | Roadmap must include SmartAPI onboarding, TOTP enrolment, static-IP app creation |
+| Broker status | Trading account exists, no API access yet *(at planning time; since then: SmartAPI onboarded, and the Elastic IP `65.0.238.146` registered as the API key's static IP on 2026-09-25, EM-211)* | Roadmap must include SmartAPI onboarding, TOTP enrolment, static-IP app creation |
 | Tenancy | Single user, single Angel One account | `users`/`accounts` exist but degenerate; no multi-tenant auth; read-only dashboard later |
 
 The goal of this document is that a coding agent can be handed "Implement Phase N" and know exactly what to build, where, why, what interfaces it exposes, what tests are required, and what completion means.

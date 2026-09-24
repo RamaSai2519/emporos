@@ -44,7 +44,8 @@ and starts/stops its paper run (EM-139).
 6. **Backfill from the command bus** has no runner in a paper worker (the command is REJECTED with
    that reason).
 7. **Live-mode composition (EM-142) is built** and proved on the SmartAPI emulator, not yet on a
-   real broker session (needs a static IP, per `docs/live-trading.md`). The gate in front of it
+   real broker session (the static IP `65.0.238.146` has been registered to the production host since
+   2026-09-25, but nothing has run there yet; see `docs/live-trading.md`). The gate in front of it
    (EM-140: `emporos worker run-live`, `session/launch_gate.py`) refuses by default; behind it,
    `emporos worker live` builds and runs `LiveWorkerComposer` only when every condition holds for
    every named strategy. See `docs/live-trading.md`.

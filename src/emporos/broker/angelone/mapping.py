@@ -4,8 +4,8 @@ Two kinds of data flow through here with different trust:
 
 * OUT (order requests): built from validated DTOs, so a MARKET/IOC order cannot be produced — the
   neutral types cannot express one. The request-body field names follow SmartAPI's documentation
-  and the SDK's parameter names; they have NOT been exercised live (the dev key has no static IP,
-  and no order is ever attempted from it).
+  and the SDK's parameter names; they have NOT been exercised live (orders are accepted only from
+  the production host's registered static IP, 65.0.238.146, and none has been attempted from it).
 * IN (books, positions, updates): tolerant. A listing must never fail because one entry has an
   order type we cannot place (orders entered in the broker's app) or a timestamp we cannot read;
   unknown statuses become `UNRECOGNISED`, never a guess.

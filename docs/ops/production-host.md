@@ -121,7 +121,8 @@ Everything below was done once and verified. Do not redo it; only re-check it if
 
 | Item | State |
 |---|---|
-| Angel One SmartAPI key | Static IP `65.0.238.146` registered (operator, SmartAPI portal) |
+| Angel One SmartAPI key | Static IP `65.0.238.146` registered (operator, SmartAPI portal, 2026-09-25). Order endpoints accept the key only from this host; market data and login work from anywhere. Nothing has been ordered from it yet, and the verification ledger still reads `static_ip_registered` = BLOCKED (see `docs/live-trading.md`) |
+| One login only | The host and your laptop use the same client code, and Angel One keeps one session per client code. While the worker runs on the host, do not run `test:live`, the recorders or any live script locally: each login invalidates the worker's session. Stop the worker first |
 | MongoDB Atlas | `65.0.238.146/32` on the IP access list. Verified: an authenticated `ping` from the host to `emporos_dev` worked (84 collections) |
 | GitHub | Read-only deploy key `emporos-worker-deploy` on `RamaSai2519/emporos`. It works over `ssh.github.com:443`; port 22 egress is closed by design |
 | Code | `/opt/emporos/app`, cloned from `origin`, owned by `emporos`. Host HEAD was `55e9528`; whatever is pushed to `origin` is what the host gets |
@@ -252,12 +253,20 @@ When the gate passes, these are the **host** changes still needed. None is done 
    or the kill switch) would otherwise be restarted after 10 seconds by systemd. The launch gate
    refuses to start with the kill switch set, but decide consciously whether a restart loop is what
    you want on a live day.
-4. **Broker headers (check).** The client sends `X-ClientPublicIP`, `X-ClientLocalIP` and
-   `X-MACAddress` from the settings `ANGELONE_CLIENT_PUBLIC_IP`, `ANGELONE_CLIENT_LOCAL_IP` and
-   `ANGELONE_CLIENT_MAC_ADDRESS` (`docs/live-trading.md` says MAC is not an authorisation factor).
-   Those are not set in SSM today. If you set them, the public IP is `65.0.238.146`; the local IP is
-   the instance's private address and can change on a new instance. Nothing on the host verifies
-   whether Angel One needs them for orders, so confirm with the first tiny order.
+4. **Broker headers.** The client sends `X-ClientPublicIP`, `X-ClientLocalIP` and `X-MACAddress`
+   from the settings `ANGELONE_CLIENT_PUBLIC_IP`, `ANGELONE_CLIENT_LOCAL_IP` and
+   `ANGELONE_CLIENT_MAC_ADDRESS`. Unset, they default to `127.0.0.1` placeholders, which are fine
+   for market data but, per `core/config.py`, "must be the worker's real ones for orders". They are
+   not in SSM today. Add them as String parameters before the first order (values as of
+   2026-09-25; re-read them from EC2 if the instance is ever replaced):
+   ```bash
+   aws ssm put-parameter --region ap-south-1 --type String --name /emporos/ANGELONE_CLIENT_PUBLIC_IP --value 65.0.238.146
+   aws ssm put-parameter --region ap-south-1 --type String --name /emporos/ANGELONE_CLIENT_LOCAL_IP  --value 172.31.40.62
+   aws ssm put-parameter --region ap-south-1 --type String --name /emporos/ANGELONE_CLIENT_MAC_ADDRESS --value 02:ff:dc:09:fc:a7
+   ```
+   (`172.31.40.62` is the instance's private IP and `02:ff:dc:09:fc:a7` the MAC of its network
+   interface `eni-0c26dfa5bd63f224f`.) MAC is not an authorisation factor
+   (`docs/live-trading.md`); the registered public IP is what the order endpoints check.
 5. **First day small.** Use the tiny-limit-order round trip from `docs/live-trading.md` before any
    real size. Keep the kill switch and the instance stop within reach the whole session.
 

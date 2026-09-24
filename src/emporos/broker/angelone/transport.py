@@ -32,7 +32,8 @@ class ClientIdentity:
     """The `X-ClientLocalIP` / `X-ClientPublicIP` / `X-MACAddress` headers SmartAPI requires.
 
     Only order APIs are gated on the *registered* static IP (plan.md §1.3), so a placeholder is
-    fine for login, quotes and history; real orders (Phase 7+) need the worker's registered IP."""
+    fine for login, quotes and history; real orders (Phase 7+) need the worker's real values, and
+    must come from the registered IP (the production host, 65.0.238.146)."""
 
     local_ip: str = "127.0.0.1"
     public_ip: str = "127.0.0.1"

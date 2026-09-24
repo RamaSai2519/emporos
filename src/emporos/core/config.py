@@ -121,7 +121,8 @@ class Settings(BaseSettings):
     angelone_totp_secret: str | None = Field(default=None, alias="ANGELONE_TOTP_SECRET")
     angelone_api_key: str | None = Field(default=None, alias="ANGELONE_API_KEY")
     # The `X-Client*` headers. Only order APIs check them against the registered static IP, so
-    # they are optional for login/quotes/history and must be the worker's real ones for orders.
+    # they are optional for login/quotes/history and must be the worker's real ones for orders (on
+    # the production host: public 65.0.238.146, plus its private IP and MAC).
     angelone_local_ip: str | None = Field(default=None, alias="ANGELONE_CLIENT_LOCAL_IP")
     angelone_public_ip: str | None = Field(default=None, alias="ANGELONE_CLIENT_PUBLIC_IP")
     angelone_mac_address: str | None = Field(default=None, alias="ANGELONE_CLIENT_MAC_ADDRESS")

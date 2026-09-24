@@ -1,6 +1,6 @@
 """Live, read-only Angel One checks through the typed API (EM-47): profile, funds, quote, LTP
-and historical candles. PLACES NO ORDERS — the dev key has no registered static IP, and only
-order APIs are IP-gated.
+and historical candles. PLACES NO ORDERS — orders are IP-gated to the production host's registered
+static IP, and these run from a dev machine.
 
 Skipped unless ANGELONE_* credentials are set. Assertions are on derived booleans so a failure
 can never echo account data into logs. One session per client code: see test_angelone_live_auth.

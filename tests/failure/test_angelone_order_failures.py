@@ -6,7 +6,8 @@ session layer, request mapper and `AngelOneBroker` adapter all run. What is asse
 platform's safety contract for money-moving calls: a definitive rejection is surfaced once, an
 ambiguous outcome is never resent (it is resolved by tag), a rate-limit denial and an expired
 session never turn into a duplicate order, and a dropped order-update socket is noticed and
-resubscribed. The same behaviours are UNVERIFIED against the real endpoint (BLOCKED, no static IP).
+resubscribed. The same behaviours are UNVERIFIED against the real endpoint (BLOCKED: no order has
+been attempted from the registered host).
 """
 
 from __future__ import annotations

@@ -1,7 +1,8 @@
 """Live Angel One checks (EM-46): a real TOTP login, renewal and logout.
 
 Skipped unless ANGELONE_* credentials are set. NEVER prints or asserts on token values.
-Places no orders — the dev key has no static IP registered, and only order APIs are IP-gated.
+Places no orders — orders are IP-gated to the production host's registered static IP, not to
+this machine.
 
 CAUTION: Angel One allows ONE session per client code. Running this while a production worker
 is logged in as the same client would invalidate the worker's session.

@@ -3,7 +3,8 @@
     pipenv run python scripts/record_angelone_fixtures.py
 
 Uses the real `.env` credentials and the *read-only* endpoints only — it never places, modifies
-or cancels an order (the dev key has no registered static IP and only order APIs are IP-gated).
+or cancels an order (orders are IP-gated to the production host's registered static IP, not to
+this machine).
 It performs a real login, which supersedes any other session for this client code.
 
 Safety, in layers:

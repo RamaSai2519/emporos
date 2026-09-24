@@ -12,8 +12,9 @@ Important properties (each has a test):
   claim every untagged order placed in the broker's own app);
 * `modify_order` exists because the interface has it, but repricing is cancel-then-replace: the
   execution engine must not use it to chase a price;
-* ORDER PLACEMENT HAS NEVER BEEN EXERCISED LIVE: the dev key has no registered static IP, and no
-  order is attempted from it. Request shapes follow the docs and the SDK oracle.
+* ORDER PLACEMENT HAS NEVER BEEN EXERCISED LIVE: orders are accepted only from the API key's
+  registered static IP (the production host's Elastic IP, 65.0.238.146), and none has been placed
+  from it; dev machines cannot place one. Request shapes follow the docs and the SDK oracle.
 """
 
 from __future__ import annotations

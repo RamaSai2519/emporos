@@ -1,6 +1,7 @@
 """Live, READ-ONLY checks of `AngelOneBroker` against the real account, and the order-update socket
-handshake. No order is ever placed, modified or cancelled (the dev key has no registered static IP,
-and tests/unit/test_order_safety.py forbids this file from naming those operations).
+handshake. No order is ever placed, modified or cancelled (orders are IP-gated to the production
+host's registered static IP, and tests/unit/test_order_safety.py forbids this file from naming
+those operations).
 
 Assertions are on derived booleans so a failure cannot echo account data. Skipped unless ANGELONE_*
 credentials are set. One session per client code: see test_angelone_live_auth."""

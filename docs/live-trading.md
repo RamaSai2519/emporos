@@ -5,8 +5,11 @@ built and tested, and the live worker behind the gate is now built too (EM-142) 
 this repository has ever touched a real Angel One order endpoint. The only thing that has
 exercised the Angel One order path, at every layer including the full worker composition, is an
 emulator written from the documentation. No strategy is validated, no strategy has been paper
-traded forward, and the dev API key has no static IP registered, so order endpoints would refuse
-it even if every flag were set.
+traded forward. The broker side is no longer the blocker it was: since 2026-09-25 the production
+host (`docs/ops/production-host.md`, EM-211) exists with the Elastic IP `65.0.238.146`, and that IP
+is registered as the static IP for the Angel One API key. Order endpoints accept the key only from
+that address, so only the host can place an order; a laptop still cannot. The host is stopped when
+idle, and no order has ever been placed from it (the worker has not yet run there either).
 
 This page describes the gate as built, the composition behind it, and the steps that are yours.
 
@@ -179,11 +182,20 @@ Scattered across test docstrings until now; centralized here.
   Angel One enforces this with a plain-text 403 ("Access denied because of exceeding access
   rate"), not a JSON error or a 429 — `broker/angelone/limits.py`'s `EndpointGroup.LOGIN` cap and
   the retry/backoff stack are built around this.
-* **Order endpoints are IP-gated; market data is not.** The dev API key has no static IP
-  registered in the SmartAPI portal, so `placeOrder`/`cancelOrder`/etc. refuse it outright,
-  regardless of every other flag — this is what makes paper trading (market data only) safe to run
-  today and live trading structurally impossible until step 1 below is done. No MAC-based
-  auth exists in Angel One's API; only the API key + TOTP + the registered IP for order endpoints.
+* **Order endpoints are IP-gated; market data is not.** The API key's registered static IP is the
+  production host's Elastic IP, `65.0.238.146` (registered 2026-09-25, EM-211). `placeOrder`/
+  `cancelOrder`/etc. refuse the key from any other address, regardless of every other flag, so from
+  a laptop (or any dev machine) live ordering is still structurally impossible and paper trading
+  (market data only) is safe; from the host it is now possible in principle, which is why every
+  other gate on this page still applies. No MAC-based auth exists in Angel One's API; only the API
+  key + TOTP + the registered IP for order endpoints. Angel One lets the registered IP change only
+  once a week, so the Elastic IP is never released or re-associated, and it stays attached while the
+  instance is stopped. Up to five static IPs per key are allowed (`plan.md` §1.3); only one is
+  registered.
+* **The host and your laptop share one login.** Both use the same client code, and Angel One keeps
+  one session per client code account-wide. While the worker runs on the host, any live check run
+  from a laptop (`test:live`, the recorders, `scripts/record_angelone_*.py`) logs in again and
+  invalidates the worker's session. Stop the worker first, or do not run them.
 * **Published per-endpoint rate limits** (`broker/angelone/limits.py`, marked `[VOLATILE]` —
   unverified against Angel One's current published table): login/account/order-book/position/
   search/holding at 1/s; `placeOrder` throttled to 5/s (below the 9/s the static-IP rollout
@@ -198,9 +210,11 @@ Scattered across test docstrings until now; centralized here.
   token and a feed token. A market-feed socket needs the JWT, API key, client code and feed token as
   handshake headers; the order-update socket needs the bearer JWT only. Only one session per client
   code exists account-wide. Order endpoints require the calling IP to be the API key's registered
-  **static IP**; market data, history, the market-feed and order-update sockets and login work from
-  any IP. The `X-ClientLocalIP`/`X-ClientPublicIP`/`X-MACAddress` headers are sent (from
-  `ANGELONE_CLIENT_*` settings) but MAC is not an authorisation factor.
+  **static IP** (`65.0.238.146`, the production host); market data, history, the market-feed and
+  order-update sockets and login work from any IP. The `X-ClientLocalIP`/`X-ClientPublicIP`/
+  `X-MACAddress` headers are sent (from `ANGELONE_CLIENT_*` settings; they default to `127.0.0.1`
+  placeholders) but MAC is not an authorisation factor. On the host they must carry the host's real
+  values before the first order: see `docs/ops/production-host.md`, stage E.
 
 ### Live verified, 2026-09-23 (market open, ~12:47-12:52 IST), EM-186
 
@@ -262,7 +276,7 @@ Recorded by `emporos broker-verify record <check> <pass|fail|unverified|blocked>
 | First-bar volume and pre-open behaviour | UNVERIFIED | no pre-09:15 observation possible or persisted; needs a run before 09:00 |
 | Reconnect / heartbeat | PASS | controlled drop against the real feed, resubscribed in about 1 s; heartbeat 0 timeouts |
 | Subscription limits | UNVERIFIED | forum-documented 1000 tokens per connection, 3 connections per client; not probed, not enforced |
-| Real placement / cancel / update / rejection / order book | BLOCKED | no static IP registered, no Angel One sandbox; `tests/unit/test_order_safety.py` forbids it |
+| Real placement / cancel / update / rejection / order book | BLOCKED | placing is now possible only from the production host (static IP `65.0.238.146` registered 2026-09-25) and no order has been attempted there; no Angel One sandbox; `tests/unit/test_order_safety.py` forbids it from dev code |
 | Tagging / audit identifiers | BLOCKED (real); PASS on fakes | `ordertag` = client tag on the wire, `find_orders_by_tag` exact; real round trip needs an order |
 | Rate-limit behaviour | PASS for data endpoints; BLOCKED for orders | real 403 plain-text denials absorbed by retry; order path over fakes |
 | Session / IP / MAC constraints documented | PASS | "Broker operational constraints" above |
@@ -271,20 +285,31 @@ Recorded by `emporos broker-verify record <check> <pass|fail|unverified|blocked>
 
 Critical checks (`CRITICAL_BROKER_CHECKS`): `login_and_session` PASS; `static_ip_registered`,
 `limit_order_round_trip`, `ordertag_round_trip` BLOCKED; `order_update_socket`,
-`order_rate_within_exchange_threshold`, `algo_tagging_requirement_confirmed` UNVERIFIED. **What a human
-must do:** register a static IP for the API key in the SmartAPI portal and run from it; then place one
-tiny limit order and record the round trip; confirm the exchange order-rate threshold and any algo-ID
-requirement with the broker/NSE; run a recording during 09:00-15:20 to settle the candle and first-bar
-questions.
+`order_rate_within_exchange_threshold`, `algo_tagging_requirement_confirmed` UNVERIFIED.
+
+Update, 2026-09-25 (EM-211): the operator registered `65.0.238.146` as the API key's static IP and
+the production host now holds that Elastic IP. **The ledger has not been updated**, so
+`static_ip_registered` still reads BLOCKED until someone records it (`emporos broker-verify record
+static_ip_registered pass --evidence <where the proof is>`); the only evidence today is the
+operator's statement that the portal registration was done, not an order accepted from the host. The
+other two BLOCKED checks stay blocked until a real order is attempted from the host.
+
+**What a human must do:** ~~register a static IP for the API key~~ (done, 2026-09-25) and run from
+it (the worker has never run on the host, see `docs/ops/production-host.md`); then place one
+tiny limit order from the host and record the round trip; confirm the exchange order-rate threshold
+and any algo-ID requirement with the broker/NSE; run a recording during 09:00-15:20 to settle the
+candle and first-bar questions (this can now run on the host, provided no other login is active).
 
 ## What you must do, in order
 
 The composition exists now; none of the rest can be done by the codebase, and none of it has been
 done.
 
-1. **Register a static IP for the Angel One API key** in the SmartAPI portal, and run the worker
-   from that address. Without it order endpoints refuse the key. Market data does not need it,
-   which is why paper works today.
+1. ~~**Register a static IP for the Angel One API key** in the SmartAPI portal, and run the worker
+   from that address.~~ **Done 2026-09-25** (EM-211): `65.0.238.146` is registered and is the
+   production host's Elastic IP. What remains of this step is running the worker *from the host*
+   (`docs/ops/production-host.md`, stages A-E); order endpoints still refuse the key from anywhere
+   else. Market data does not need the IP, which is why paper works from a laptop.
 2. **Get a strategy validated.** Every verdict so far is `rejected`: about ₹3,100 lost per strategy
    at the ₹50,000 benchmark, with the 95% interval wholly below zero, no window profitable, and about
    0.37% per round trip in charges and buffer against no measurable edge. Validation also needs
@@ -314,7 +339,8 @@ machine-checked prerequisite rather than a promise in this document: it blocks
 - [ ] **Order rate** stays below the exchange's threshold for unregistered algos (our budget is
   `max_orders_per_second: 2` in `config/risk.yaml`) - `order_rate_within_exchange_threshold`.
 - [ ] **Static IP / API session constraints** confirmed, cross-referenced with EM-186 - `static_ip_registered`,
-  `login_and_session`.
+  `login_and_session`. Registered 2026-09-25 (`65.0.238.146`); still open until it is recorded in the
+  verification ledger and an order from the host is accepted.
 - [ ] **Algo-ID or order tagging** requirement confirmed with the broker; our `ordertag`
   idempotency tag must stay compatible - `algo_tagging_requirement_confirmed`, `ordertag_round_trip`.
 - [ ] **Order lifecycle proven** on a real (tiny) limit order and the order-update socket -
