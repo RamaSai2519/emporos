@@ -1,0 +1,268 @@
+{
+  "behaviour_hash": "sha256:72af624ef3f0d8558541b1ae5d0420cab71b62eae7f3cad77cdf6b05dc5765fd",
+  "by_session": {
+    "2026-09-22": {
+      "charges": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "cost_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "cost_per_trade": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "expectancy": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "fill_rate": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "max_drawdown": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "net_pnl": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "slippage_mean_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "slippage_p90_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "turnover": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "win_rate": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      }
+    }
+  },
+  "by_strategy": {
+    "vwap_trend_v1": {
+      "charges": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "cost_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "cost_per_trade": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "expectancy": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "fill_rate": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "max_drawdown": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "net_pnl": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "slippage_mean_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "slippage_p90_bps": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      },
+      "turnover": {
+        "absolute": "0",
+        "backtest": "0",
+        "paper": "0",
+        "relative": null
+      },
+      "win_rate": {
+        "absolute": null,
+        "backtest": null,
+        "paper": null,
+        "relative": null
+      }
+    }
+  },
+  "by_symbol": {},
+  "gates": [
+    {
+      "detail": "1 session(s), 10 needed",
+      "name": "enough paper sessions",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "0 matched trade(s), 30 needed",
+      "name": "enough matched trades",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "agreement n/a, 0.8 needed: nothing to compare",
+      "name": "paper signals as the backtest does",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "fill rate n/a vs n/a, drop n/a (at most 0.15): nothing to compare",
+      "name": "paper fills as often as the backtest",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "mean slippage n/a vs n/a bps, rise n/a (at most 5): nothing to compare",
+      "name": "paper slips no more than the backtest",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "expectancy n/a vs n/a, change n/a (drop at most 0.5): nothing to compare",
+      "name": "paper earns what the backtest earns per trade",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "worst drawdown 0.0000 vs 0.0000, rise n/a (at most 0.5) (within bound, but only 1 session(s), 10 needed to judge)",
+      "name": "paper draws down no more than the backtest",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "win rate n/a vs n/a, drop n/a (at most 0.10): nothing to compare",
+      "name": "paper wins as often as the backtest",
+      "outcome": "unknown"
+    },
+    {
+      "detail": "paper traded n/ax the backtest's value (at most 1.5x): nothing to compare",
+      "name": "paper trades no more than the backtest",
+      "outcome": "unknown"
+    }
+  ],
+  "kind": "cumulative",
+  "matched_trades": 0,
+  "metrics": {
+    "charges": {
+      "absolute": "0",
+      "backtest": "0",
+      "paper": "0",
+      "relative": null
+    },
+    "cost_bps": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "cost_per_trade": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "expectancy": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "fill_rate": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "max_drawdown": {
+      "absolute": "0",
+      "backtest": "0",
+      "paper": "0",
+      "relative": null
+    },
+    "net_pnl": {
+      "absolute": "0",
+      "backtest": "0",
+      "paper": "0",
+      "relative": null
+    },
+    "slippage_mean_bps": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "slippage_p90_bps": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    },
+    "turnover": {
+      "absolute": "0",
+      "backtest": "0",
+      "paper": "0",
+      "relative": null
+    },
+    "win_rate": {
+      "absolute": null,
+      "backtest": null,
+      "paper": null,
+      "relative": null
+    }
+  },
+  "period": "2026-09-22",
+  "recorded_at": "2026-09-24T06:46:13.992324+00:00",
+  "sessions": 1,
+  "signal_agreement": null,
+  "signals": [],
+  "strategy": "vwap_trend_v1",
+  "verdict": "inconclusive"
+}

@@ -95,3 +95,35 @@ and listed as skipped with its reason: comparing against a different config woul
   assumption), and the instrument universe is resolved as of the session day.
 * There is no API/dashboard view yet: adding a route changes the OpenAPI contract, which the
   dashboard's generated client must be regenerated against (`npm run contract:generate`).
+
+## First real run (2026-09-24, against `emporos_dev`)
+
+`emporos paper parity daily` was backfilled over every paper run recorded so far: 2026-09-21
+(`rsi_pullback_v1`, `vwap_reversion_v1`) and 2026-09-22 (`vwap_trend_v1`). Rendered samples are in
+[`docs/paper/parity/`](paper/parity/) (`emporos paper parity export`).
+
+**There is no usable parity evidence yet, and the reports say so.** All three came out
+INCONCLUSIVE, with 1 session, 0 matched trades, and empty signal and trade ledgers on both sides:
+
+* The pipeline itself ran end to end on real Atlas: it restored each run's recorded config and
+  reproduced its hash, replayed it through the backtest engine under paper's own risk limits, read
+  the paper records, stored a daily and a cumulative report per run, and rendered them.
+* The recorded runs had no signals to compare. The 2026-09-22 run was the short market-data smoke
+  session (only 58 five-minute bars exist in the universe that day); the 2026-09-21 runs have no
+  account id and are scripted-feed test runs. The 99 signals and 36 orders in the database are all
+  from 2026-09-18 smoke tests under ephemeral or `manual` run ids, with no recorded strategy run, so
+  there is no config to shadow. This was checked directly rather than assumed, to rule out a loader
+  bug.
+* Every gate is UNKNOWN, which is the correct answer to "nothing happened on either side", and it
+  blocks graduation exactly as REJECTED would.
+
+What the real run does not yet show is the interesting part (fill rate, slippage against the
+decision quote, latency, MISSED / RISK_REJECTED rows on live data). That needs the next full
+market-session run of `emporos worker run` with a strategy started (`--start`); the parity job then
+runs by itself after close-out. Those signals will also be the first to carry the decision quote
+(`signals.quote_*`), which did not exist before this change.
+
+Verified in tests instead (`tests/unit/parity/`): a backtest compared with itself has zero
+degradation on every metric and every signal MATCHED (the identity property); paper round trips equal
+the backtest's for identical fills; and scripted degradations appear as MISSED, RISK_REJECTED,
+BACKTEST_ONLY_SIGNAL, a slippage breach that REJECTS, and a thin-sample INCONCLUSIVE.
