@@ -5,15 +5,41 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 8 (2026-09-24) |
-| Last completed | D2 tooling and fetch started (EM-200, data still landing); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **D2 verification** once the background fetch ends (see Iteration 8): check bars per day and the coverage, `emporos backtest cache warm-reference`, close EM-200. In the meantime run the no-dependency P1 cells, starting with **L3-raw-gap-hold-to-close** (declare, S1, S2), then L3-orb-high-rvol-wide-range, L3-first-hour-shock-reversal, L4 cells. Then D5 (unlocks 8), D3 (5), D1 (3; it needs the broker session, so not while a fetch runs). D7 quote recording starts at the first market session that allows it |
-| Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 9 (2026-09-24) |
+| Last completed | **L3-raw-gap-hold-to-close: SCREEN_REJECT** (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | Next P1 cells with no D-dependency: **L3-orb-high-rvol-wide-range**, L3-first-hour-shock-reversal, then L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter and the child L4-gap-fade-expected-range. D2 is done, so the D2 cells are open too: L3-idio-gap-continuation, L3-idio-gap-fade (the idiosyncratic gap is the stock gap minus the NIFTY 50 gap, which the raw-gap result makes the natural follow-up), L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
+| Global N | **14,044** on 2026-09-24 (14,028 plus the 16 arms of L3-raw-gap-hold-to-close) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
 | Cells | 42 TODO, 0 terminal; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 9 (2026-09-24): L3-raw-gap-hold-to-close (EM-201) and D2 closed
+**The cell (first lane run).** Declared and committed first (`config/experiments/l3-raw-gap-hold-to-close.yaml`,
+d30993a): 16 arms (gap threshold 1/1.5/2/3%, continuation or fade, entry at bar 1 or 3), one trade per
+name per day held to the 15:15 square-off, Rs 25,000, Discovery only (2016-10-03..2024-12-31), the 29
+names with ten years of bars, the 7 audit-quarantined corporate-action days excluded. Machinery
+(committed before the run, 64a8990): S1 feasibility is the evaluator's first check (median absolute
+move >= 2x mean adverse round-trip cost, the plan's §3.5), `ScreenVerdict` (INFEASIBLE / SCREEN_REJECT
+/ PASS), the raw-gap scan, `CellScreenRun` (instrument-outer so memory stays bounded) and
+`emporos research screen <slug>`; every arm is one line in `screens.jsonl`.
+
+**Result: every arm fails.** Continuation is gross-negative in 7 of 8 arms (down to -0.42%). Fade is
+gross-positive in 6 of 8 but small (+0.07..0.10% at 1-2% gaps; it does not grow with gap size and is
+-0.05% at 3%), against a benchmark cost of 0.324% and an adverse 0.636%: net -0.23..-0.26% for the
+1-2% fades, net t between -2.3 and -16.9 across all arms. Six arms are INFEASIBLE (median |move| below
+the ~1.27% bar: the four 1% arms and the two 1.5% bar-3 arms); the other ten are SCREEN_REJECT. **The scan is advisory** (no engine strategy
+to prove parity against), so this is a triage rejection; its rules are pinned by 21 tests. Lesson in
+the map. Child per §7.4 (gross positive, net negative: restrict to days that can pay): the cell
+L4-gap-fade-expected-range. Continuation has no mechanism worth a child (its opposite is the fade arms).
+
+**D2 is verified and closed.** 14 of 15 series carry the full 2,450 sessions (2016-10-03..2026-09-10 in
+cold, the last days in the hot tier), 75 bars a day, volume 0; INDIA VIX has 2 fewer days. **Nifty Pvt
+Bank starts 2023-06-16** (the broker's history for that index begins there), so a cell needing it before
+then cannot have it. 51 malformed bars were skipped and reported by the fetch, 0 chunks failed. The
+cache now holds all 15 (2.63M bars). Only 29 equities have ten years of 5m bars: **RELIANCE and TCS have
+one year** (why the committed fixture is a year), so they are outside the Discovery universe.
 
 ## Iteration 8 (2026-09-24): D2 index and INDIA VIX series (EM-200)
 Indices are not instruments: the master drops `AMXIDX` rows on purpose. `emporos.domain.reference_series`
@@ -29,13 +55,7 @@ fetch-reference` and `emporos backtest cache warm-reference`. Probe results (pre
 five-minute bars a day (09:15..15:25), volume always 0 (indices carry none), sensible levels, and the
 broker serves back to at least 2016-10. Volume-based features cannot use these series.
 
-**The fetch is running in the background** (started 18:26, 5m, 2016-10-03..2026-09-18, all 15
-series, about 9 s per 28-day chunk, roughly 4-5 hours in all; log in the loop session's scratchpad
-`d2-fetch.log`, which prints only at the end). It holds the one Angel One session: do not start
-another broker command while it runs (a second login kills it). It is resumable: if it dies, run
-`pipenv run emporos history fetch-reference --from 2016-10-03 --to 2026-09-18` again and chunks
-already recorded are skipped. Progress shows as files in `~/.local/share/emporos/cold/candles/5m/
-NSE:999260xx/`. Daily bars are not stored: they are derivable from the 5m bars.
+The full fetch finished at about 18:44 (see Iteration 9 for what it produced).
 
 ## Iteration 7 (2026-09-24): the vault seal (EM-199)
 `emporos.backtest.vault`: `VaultSeal` (days, instruments, at most 3 opens), `UnsealRecord` (open
