@@ -19,6 +19,7 @@ from emporos.backtest.costs import EarliestBeforeFirst
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.vault import VaultedCandleReader
 from emporos.cli.backtest_runtime import candle_cache_root
+from emporos.cli.cold_storage import DEFAULT_COLD_DIR
 from emporos.cli.experiment_declarations import (
     DEFAULT_DECLARATIONS_DIR,
     DeclarationGate,
@@ -32,9 +33,16 @@ from emporos.core.errors import EmporosError
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.research_experiments import ExperimentDeclaration
 from emporos.domain.sizing import SizeResolver
-from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
+from emporos.persistence.candle_cache import CandleCacheFiles, ColdArchiveFiles, FileCandleReader
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
-from emporos.research.cell_run import ArmResult, BarSource, CellScreenRun, ScanFactory
+from emporos.research.cell_run import (
+    ArmResult,
+    BarSource,
+    CellScreenRun,
+    ScanFactory,
+    ScreenUniverse,
+)
+from emporos.research.d1_universe import D1Universe
 from emporos.research.history_audit import HistoryAudit
 from emporos.research.partition import DISCOVERY, DataSplit
 from emporos.research.results_filings import FilingLedger
@@ -63,6 +71,10 @@ from emporos.risk.config import RiskLimitsLoader
 DEFAULT_SCREENS_FILE = Path("docs/research/edge-search/screens.jsonl")
 _SLUG = typer.Argument(..., help="A declared cell: config/experiments/<slug>.yaml")
 _LEDGER = typer.Option(DEFAULT_SCREENS_FILE, help="The append-only screen ledger.")
+_UNIVERSE = typer.Option(
+    "audit", help="`audit`: the 29 names with ten years of bars. `d1`: the committed D1 universe."
+)
+AUDIT_UNIVERSE, D1_UNIVERSE = "audit", "d1"
 
 
 class LocalBars:
@@ -75,6 +87,25 @@ class LocalBars:
         start = datetime.combine(split.first, time(0, 0), tzinfo=IST)
         end = datetime.combine(split.last + timedelta(days=1), time(0, 0), tzinfo=IST)
         return asyncio.run(self._reader.get_range(instrument_id, Timeframe.M5, start, end))
+
+
+def vaulted_bars(settings: Settings, *, wide: bool) -> LocalBars:
+    """5m bars from local files, through the vault. The wide universe also reads the local cold
+    tier (the fetcher's archive); the 29-name audit universe reads the cache alone, as before."""
+    layers = [CandleCacheFiles(candle_cache_root(settings))]
+    if wide:
+        layers.append(ColdArchiveFiles(Path(settings.cold_archive_dir or DEFAULT_COLD_DIR)))
+    return LocalBars(
+        VaultedCandleReader(FileCandleReader(layers, memoize=not wide), VaultFiles().load())
+    )
+
+
+def screen_universe(name: str) -> ScreenUniverse:
+    if name == AUDIT_UNIVERSE:
+        return HistoryAudit.load()
+    if name == D1_UNIVERSE:
+        return D1Universe.load()
+    raise ValueError(f"unknown universe {name!r}: use {AUDIT_UNIVERSE!r} or {D1_UNIVERSE!r}")
 
 
 class ScreenCell(Protocol):
@@ -262,6 +293,7 @@ CELLS: Mapping[str, ScreenCell] = {
         VixRegimeCell(),
         EarningsGapCell("l2-earnings-gap-fade"),
         EarningsGapCell("l2-earnings-gap-continuation"),
+        EarningsGapCell("l2-earnings-gap-fade-after-first-hour"),
     )
 }
 
@@ -286,7 +318,7 @@ def _table(recipe: ScreenCell, results: list[ArmResult]) -> list[str]:
     return lines
 
 
-def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
+def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER, universe: str = _UNIVERSE) -> None:
     """Run S1 and S2 for every arm of a declared cell over the Discovery split."""
     try:
         recipe = CELLS.get(slug)
@@ -304,19 +336,15 @@ def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
             ScreenCostScenario.from_benchmark(config, "benchmark"),
             ScreenCostScenario.from_benchmark(config, config.adverse_scenario),
         )
-        reader = VaultedCandleReader(
-            FileCandleReader([CandleCacheFiles(candle_cache_root(Settings.default()))]),
-            VaultFiles().load(),
-        )
+        local_bars = vaulted_bars(Settings.default(), wide=universe == D1_UNIVERSE)
         factory: ScanFactory = recipe.scan
         run = CellScreenRun(
-            factory, evaluator, JsonlScreenLedger(ledger), SystemClock(), HistoryAudit.load()
+            factory, evaluator, JsonlScreenLedger(ledger), SystemClock(), screen_universe(universe)
         )
         typer.echo(
             f"{slug}: {DISCOVERY.first}..{DISCOVERY.last}, "
-            f"{size.position_value} rupees per position"
+            f"{size.position_value} rupees per position, universe {universe}"
         )
-        local_bars = LocalBars(reader)
         recipe.prepare(local_bars)
         results = run.run(slug, recipe.arms(declaration), local_bars, size)
     except (EmporosError, ValueError) as error:

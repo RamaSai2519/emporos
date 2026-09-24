@@ -85,6 +85,22 @@ class CandleCacheFiles:
         return f"candle-cache:{digest.hexdigest()[:16]}"
 
 
+class ColdArchiveFiles(CandleCacheFiles):
+    """The local cold tier as a read-only layer for `FileCandleReader`: the archive's own layout
+    (`{root}/candles/{timeframe}/{instrument id}/{YYYY-MM}.parquet`, the id keeping its colon) and
+    the same codec, so a wide-universe run reads the months the fetcher archived without a
+    database and without copying them into the cache first. Never written through."""
+
+    def path(self, instrument_id: str, timeframe: str, month: str) -> Path:
+        return self.root / "candles" / timeframe / instrument_id / f"{month}.parquet"
+
+    def write(self, path: Path, data: bytes) -> None:
+        raise PermissionError("the cold archive is read-only here: the fetcher owns its files")
+
+    def clear(self) -> int:
+        raise PermissionError("the cold archive is read-only here: it is the only copy of history")
+
+
 class CachingCandleReader:
     def __init__(
         self,
@@ -152,10 +168,17 @@ class FileCandleReader:
     """
 
     def __init__(
-        self, layers: Sequence[CandleCacheFiles], codec: ParquetCandleCodec | None = None
+        self,
+        layers: Sequence[CandleCacheFiles],
+        codec: ParquetCandleCodec | None = None,
+        *,
+        memoize: bool = True,
     ) -> None:
+        """`memoize=False` keeps no month in memory after it is returned: a run that walks a wide
+        universe once, name by name, would otherwise hold every name's decade of bars at once."""
         self._layers = tuple(layers)
         self._codec = codec or ParquetCandleCodec()
+        self._memoize = memoize
         self._memory: dict[tuple[str, str, str], list[Candle]] = {}
 
     async def get_range(
@@ -172,6 +195,8 @@ class FileCandleReader:
 
     def _month(self, instrument_id: str, timeframe: str, month: str) -> list[Candle]:
         key = (instrument_id, timeframe, month)
+        if not self._memoize:
+            return self._read(key)
         if key not in self._memory:
             self._memory[key] = self._read(key)
         return self._memory[key]

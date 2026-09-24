@@ -1,0 +1,410 @@
+seed: emporos-d1-vault-2026-09-25
+holdout_fraction: '0.30'
+liquidity:
+  min_median_daily_value: '100000000'
+  min_sessions: 500
+profiled:
+  split: discovery
+  first: '2016-10-03'
+  last: '2024-12-31'
+audited:
+- NSE:10604
+- NSE:10999
+- NSE:11483
+- NSE:11532
+- NSE:11630
+- NSE:11723
+- NSE:1333
+- NSE:13538
+- NSE:1394
+- NSE:14977
+- NSE:1594
+- NSE:1660
+- NSE:16675
+- NSE:17963
+- NSE:1922
+- NSE:2031
+- NSE:20374
+- NSE:236
+- NSE:2475
+- NSE:25
+- NSE:3045
+- NSE:317
+- NSE:3351
+- NSE:3499
+- NSE:3506
+- NSE:3787
+- NSE:4963
+- NSE:5900
+- NSE:7229
+holdout:
+- NSE:10753
+- NSE:10990
+- NSE:11195
+- NSE:11236
+- NSE:11287
+- NSE:11373
+- NSE:11491
+- NSE:11536
+- NSE:1181
+- NSE:11956
+- NSE:12018
+- NSE:13285
+- NSE:13310
+- NSE:1348
+- NSE:14299
+- NSE:14309
+- NSE:14413
+- NSE:14912
+- NSE:15141
+- NSE:157
+- NSE:1621
+- NSE:16669
+- NSE:16713
+- NSE:16783
+- NSE:17029
+- NSE:17388
+- NSE:17875
+- NSE:17971
+- NSE:18096
+- NSE:19020
+- NSE:19585
+- NSE:20302
+- NSE:20825
+- NSE:212
+- NSE:21808
+- NSE:2181
+- NSE:22
+- NSE:2277
+- NSE:25049
+- NSE:25270
+- NSE:27176
+- NSE:275
+- NSE:277
+- NSE:2885
+- NSE:29135
+- NSE:312
+- NSE:3417
+- NSE:3432
+- NSE:3718
+- NSE:3721
+- NSE:383
+- NSE:404
+- NSE:422
+- NSE:467
+- NSE:4745
+- NSE:5097
+- NSE:5258
+- NSE:6545
+- NSE:694
+- NSE:757885
+- NSE:759265
+- NSE:760407
+- NSE:772
+- NSE:8124
+- NSE:910
+- NSE:9819
+included:
+- NSE:10099
+- NSE:10217
+- NSE:1023
+- NSE:10440
+- NSE:10447
+- NSE:10604
+- NSE:10666
+- NSE:10738
+- NSE:10794
+- NSE:10925
+- NSE:10940
+- NSE:10999
+- NSE:11184
+- NSE:11351
+- NSE:11483
+- NSE:11532
+- NSE:11543
+- NSE:11630
+- NSE:11703
+- NSE:11723
+- NSE:11915
+- NSE:1232
+- NSE:1270
+- NSE:13
+- NSE:13270
+- NSE:1333
+- NSE:13528
+- NSE:13538
+- NSE:13611
+- NSE:1363
+- NSE:13750
+- NSE:13751
+- NSE:13786
+- NSE:1394
+- NSE:1406
+- NSE:1424
+- NSE:14366
+- NSE:14418
+- NSE:14552
+- NSE:14592
+- NSE:14732
+- NSE:14977
+- NSE:15083
+- NSE:1512
+- NSE:15332
+- NSE:15355
+- NSE:1594
+- NSE:1624
+- NSE:163
+- NSE:1633
+- NSE:1660
+- NSE:16675
+- NSE:17400
+- NSE:17438
+- NSE:17818
+- NSE:17869
+- NSE:17903
+- NSE:17963
+- NSE:18365
+- NSE:18457
+- NSE:18564
+- NSE:18652
+- NSE:18921
+- NSE:1901
+- NSE:1922
+- NSE:19234
+- NSE:1964
+- NSE:19913
+- NSE:1997
+- NSE:20242
+- NSE:2029
+- NSE:2031
+- NSE:20374
+- NSE:21238
+- NSE:2142
+- NSE:2144
+- NSE:21508
+- NSE:21614
+- NSE:21690
+- NSE:21770
+- NSE:22377
+- NSE:2303
+- NSE:236
+- NSE:23650
+- NSE:24184
+- NSE:2475
+- NSE:24948
+- NSE:25
+- NSE:25780
+- NSE:2664
+- NSE:2955
+- NSE:2963
+- NSE:3045
+- NSE:305
+- NSE:3063
+- NSE:3103
+- NSE:31181
+- NSE:3150
+- NSE:317
+- NSE:3220
+- NSE:3273
+- NSE:335
+- NSE:3351
+- NSE:3363
+- NSE:3411
+- NSE:3426
+- NSE:3456
+- NSE:3499
+- NSE:3506
+- NSE:3518
+- NSE:3563
+- NSE:357
+- NSE:3787
+- NSE:4067
+- NSE:4204
+- NSE:4244
+- NSE:4306
+- NSE:438
+- NSE:4503
+- NSE:4668
+- NSE:4717
+- NSE:4749
+- NSE:4963
+- NSE:509
+- NSE:526
+- NSE:547
+- NSE:5900
+- NSE:6066
+- NSE:6364
+- NSE:6656
+- NSE:6705
+- NSE:6733
+- NSE:676
+- NSE:685
+- NSE:7229
+- NSE:739
+- NSE:7406
+- NSE:760
+- NSE:7929
+- NSE:8075
+- NSE:8110
+- NSE:8479
+- NSE:881
+- NSE:9480
+- NSE:9552
+- NSE:958
+- NSE:9590
+- NSE:9683
+excluded:
+  NSE:1011: median daily value Rs 1.7 crore (need 10)
+  NSE:11377: median daily value Rs 3.6 crore (need 10)
+  NSE:1153: median daily value Rs 4.8 crore (need 10)
+  NSE:13061: median daily value Rs 6.9 crore (need 10)
+  NSE:13086: median daily value Rs 7.5 crore (need 10)
+  NSE:13332: median daily value Rs 3.7 crore (need 10)
+  NSE:14154: median daily value Rs 7.5 crore (need 10)
+  NSE:14947: median daily value Rs 9.5 crore (need 10)
+  NSE:15380: 406 sessions in Discovery (need 500)
+  NSE:1627: median daily value Rs 7.0 crore (need 10)
+  NSE:17313: 358 sessions in Discovery (need 500)
+  NSE:18143: 332 sessions in Discovery (need 500)
+  NSE:18822: median daily value Rs 7.7 crore (need 10)
+  NSE:18883: median daily value Rs 4.7 crore (need 10)
+  NSE:20261: 267 sessions in Discovery (need 500)
+  NSE:23489: 177 sessions in Discovery (need 500)
+  NSE:23553: 171 sessions in Discovery (need 500)
+  NSE:25844: 47 sessions in Discovery (need 500)
+  NSE:25907: 43 sessions in Discovery (need 500)
+  NSE:27066: 32 sessions in Discovery (need 500)
+  NSE:27969: 9 sessions in Discovery (need 500)
+  NSE:29251: 0 sessions in Discovery (need 500)
+  NSE:29666: 0 sessions in Discovery (need 500)
+  NSE:3339: median daily value Rs 5.8 crore (need 10)
+  NSE:3475: median daily value Rs 6.3 crore (need 10)
+  NSE:399: median daily value Rs 4.9 crore (need 10)
+  NSE:474: median daily value Rs 5.6 crore (need 10)
+  NSE:756871: 0 sessions in Discovery (need 500)
+  NSE:757: median daily value Rs 5.5 crore (need 10)
+  NSE:757772: 0 sessions in Discovery (need 500)
+  NSE:759605: 0 sessions in Discovery (need 500)
+  NSE:759782: 0 sessions in Discovery (need 500)
+  NSE:759806: 0 sessions in Discovery (need 500)
+  NSE:760213: 0 sessions in Discovery (need 500)
+  NSE:8311: median daily value Rs 6.0 crore (need 10)
+  NSE:8585: median daily value Rs 7.7 crore (need 10)
+quarantined:
+- - NSE:10217
+  - '2024-11-21'
+- - NSE:10738
+  - '2020-03-23'
+- - NSE:10794
+  - '2022-05-10'
+- - NSE:11703
+  - '2020-03-23'
+- - NSE:11915
+  - '2020-07-23'
+- - NSE:13786
+  - '2024-04-15'
+- - NSE:14418
+  - '2018-10-01'
+- - NSE:14418
+  - '2021-03-08'
+- - NSE:14977
+  - '2021-09-07'
+- - NSE:15332
+  - '2018-10-12'
+- - NSE:15355
+  - '2020-08-13'
+- - NSE:1624
+  - '2018-04-05'
+- - NSE:1633
+  - '2020-01-01'
+- - NSE:1633
+  - '2020-03-23'
+- - NSE:1633
+  - '2020-04-07'
+- - NSE:16675
+  - '2020-09-08'
+- - NSE:17818
+  - '2020-03-23'
+- - NSE:17869
+  - '2020-03-23'
+- - NSE:17903
+  - '2020-03-30'
+- - NSE:17963
+  - '2021-12-31'
+- - NSE:18365
+  - '2022-03-24'
+- - NSE:18921
+  - '2018-03-09'
+- - NSE:18921
+  - '2020-03-23'
+- - NSE:18921
+  - '2021-06-10'
+- - NSE:18921
+  - '2023-12-20'
+- - NSE:2029
+  - '2024-01-23'
+- - NSE:21238
+  - '2018-04-18'
+- - NSE:21508
+  - '2022-01-04'
+- - NSE:21690
+  - '2018-10-01'
+- - NSE:2303
+  - '2020-03-23'
+- - NSE:2303
+  - '2021-09-24'
+- - NSE:2475
+  - '2020-03-23'
+- - NSE:25780
+  - '2017-04-28'
+- - NSE:25780
+  - '2017-05-02'
+- - NSE:25780
+  - '2017-10-17'
+- - NSE:25780
+  - '2017-10-18'
+- - NSE:25780
+  - '2018-10-01'
+- - NSE:25780
+  - '2018-12-03'
+- - NSE:31181
+  - '2020-03-23'
+- - NSE:3220
+  - '2021-05-26'
+- - NSE:3273
+  - '2018-01-12'
+- - NSE:3456
+  - '2019-10-29'
+- - NSE:3499
+  - '2020-07-28'
+- - NSE:3499
+  - '2022-07-26'
+- - NSE:3499
+  - '2022-07-28'
+- - NSE:3518
+  - '2018-04-13'
+- - NSE:3563
+  - '2024-11-21'
+- - NSE:4204
+  - '2020-01-01'
+- - NSE:4244
+  - '2020-03-23'
+- - NSE:4717
+  - '2018-06-28'
+- - NSE:6066
+  - '2019-10-14'
+- - NSE:6066
+  - '2024-11-21'
+- - NSE:6705
+  - '2024-02-01'
+- - NSE:6705
+  - '2024-02-02'
+- - NSE:760
+  - '2019-08-20'
+- - NSE:760
+  - '2019-08-21'
+- - NSE:8075
+  - '2020-03-13'
+- - NSE:9683
+  - '2020-03-13'
+content_hash: 27d5496b82bb49e5108236f6a7a44ffa62e47287b4a2fbb4997e62948b5e310a

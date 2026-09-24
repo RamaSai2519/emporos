@@ -15,6 +15,7 @@ from emporos.backtest.experiment_backfill import ReportBackfill
 from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
+from emporos.cli.d1_universe_commands import research_d1_universe
 from emporos.cli.experiment_backfill import (
     DEFAULT_STRATEGIES_DIR,
     BackfillSources,
@@ -59,6 +60,7 @@ research_app.add_typer(experiments_app, name="experiments")
 research_app.add_typer(vault_app, name="vault")
 research_app.command("screen")(research_screen)
 research_app.command("collect-results")(research_collect_results)
+research_app.command("d1-universe")(research_d1_universe)
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")
 _DECLARATION = typer.Argument(..., exists=True, dir_okay=False, help="An experiment declaration.")
