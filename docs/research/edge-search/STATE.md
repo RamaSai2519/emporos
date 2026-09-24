@@ -11,15 +11,27 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 12 (2026-09-24) |
-| Last completed | **L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **L4-nr7-inside-day-breakout**, then L4-atr-percentile-regime, L4-expected-range-filter, and the children L4-gap-fade-expected-range and L3-orb-extreme-rvol. D2 cells are open: L3-idio-gap-continuation, L3-idio-gap-fade, L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3, and the only route for the gap-fade family), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
-| Global N | **14,066** on 2026-09-24 (14,062 plus the 4 arms of L3-first-hour-reversal-large-gap) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 13 (2026-09-24) |
+| Last completed | **L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | Per the steering note and review-1 §4: **D1** (wide and mid-cap universe, background fetch), then D5 and D7; mega-cap cells only where the conditioning selects large days by construction: L4-expected-range-filter, L4-india-vix-regime (top quintile), L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. L9, L11, L14 parked on the mega-caps. EM-206 and EM-207 are with the operator and are not implemented |
+| Global N | **14,072** on 2026-09-24 (14,066 plus the 6 arms of L4-nr7-inside-day-breakout) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 41 TODO, 4 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 40 TODO, 5 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 13 (2026-09-24): L4-nr7-inside-day-breakout (EM-205)
+Declared and committed first (dae511a): the previous session was NR4, NR7 or inside; the first bar
+closing 5 or 25 bps beyond its high or low is the entry; hold to 15:15. 6 arms, Discovery only. Scan
+`scans/range_compression.py` (17 tests): sessions are built from the 5m bars, one with fewer than 70
+bars is a hole and breaks the run.
+
+**Result: nothing there.** Every arm INFEASIBLE, median |move| 0.65-0.70%, gross 0.02-0.05% over
+5,800-12,900 trades (net -0.28..-0.31%, t -14..-25). Compression in yesterday's range does not
+predict a bigger move today on these names, and the 25 bps buffer is no different from 5. No child:
+gross is barely positive and no mechanism points the other way. This cell was run before the
+steering note arrived (it was already declared); the next iterations follow the note.
 
 ## Iteration 12 (2026-09-24): L3-first-hour-reversal-large-gap (EM-204)
 Child of the shock-reversal cell, declared and committed first (02c4c46): the same scan at gaps of 2.5

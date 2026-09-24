@@ -89,7 +89,13 @@ cells:
     requires: [F2, F2B, F3, F3B, F4, VAULT]
     experiments: [EXP-20260924-l3-first-hour-reversal-large-gap-b481b077]
     lesson: "4 arms on Discovery, all feasible (median |move| 1.39-1.70%) but none passes: gross 0.43% (2.5% gap) and 0.39% (3%) at retrace 0.25 clears the 0.324% benchmark cost yet not the 0.636% adverse break-even, net +0.10% t 0.77 and +0.06% t 0.33; a 0.5 retrace floor halves gross; trades 504/301 at retrace 0.25 sit at the floor. The fade-after-a-gap family is closed on Discovery; the only route is D1's wider universe, not a looser filter (advisory scan)"
-  - {id: L4-nr7-inside-day-breakout,    lane: L4, hypothesis: nr7-inside-day-breakout,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - id: L4-nr7-inside-day-breakout
+    lane: L4
+    hypothesis: l4-nr7-inside-day-breakout
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT]
+    experiments: [EXP-20260924-l4-nr7-inside-day-breakout-52d83b6c]
+    lesson: "6 arms on Discovery, all INFEASIBLE (median |move| 0.65-0.70%) with gross 0.02-0.05% on 5,800-12,900 trades: yesterday's compression (NR4, NR7, inside) does not predict a bigger next-day move on mega-caps, and a bigger break buffer changes nothing; no child, no mechanism for the opposite direction that the data suggests (advisory scan)"
   - id: L4-gap-fade-expected-range
     lane: L4
     hypothesis: gap-fade-expected-range
