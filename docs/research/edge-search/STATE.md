@@ -13,15 +13,35 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 |---|---|
 | Capital and size | **Rs 1,00,000 capital, Rs 50,000 max position** (EM-207, 325f8b8): risk.yaml deployed 1,00,000, daily loss 2,000; benchmark.yaml capital 1,00,000. New declarations default to Rs 50,000, so the §3.5 bar is about 0.99%. Cells declared earlier keep their declared size; rejected cells are not re-run at the new size |
 | DSR at S4/S5 | EM-206 (529c8e2): `deflated_sharpe_spread`, null hypothesis spread 1/sqrt(T-1), with the full program-wide N. At N about 14k a DSR of 0.95 needs z of about 5.6, an annualised Sharpe of about 2.0 over 2,000 walk-forward days: S4 is passable, so a candidate that clears S3 goes on to S4 and is not parked |
-| Iteration | 15 (2026-09-24) |
-| Last completed | **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **D7** quote recording (starts now, review-1 §4.3); while the D1 fetch runs (log `/tmp/claude-1000/d1/fetch.log`, resumable), the large-day mega-cap cells, now sized at Rs 50,000 where it helps (the S1 bar at 50k is about 0.99%, so the top VIX quintile clears it): L4-india-vix-regime (top quintile), L4-expected-range-filter, L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. When D1 lands: liquidity filter from Discovery-period bars, unsigned-move table on the new names, vault instrument seal (§4.3), vectorised screen path (review-1 §4.7). D5 is blocked on EM-209 |
-| Global N | **14,072** on 2026-09-24 (14,066 plus the 6 arms of L4-nr7-inside-day-breakout) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 16 (2026-09-24) |
+| Last completed | **L4-india-vix-regime: SCREEN_REJECT** (EM-210, 6 arms, feasible at Rs 50,000 but t under 0.5); D5 collector built and running (EM-209, operator-authorised); **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | When the two background jobs finish (D1 price fetch, log `/tmp/claude-1000/d1/fetch.log`; D5 results collection, log `/tmp/claude-1000/d1/results.log`, both resumable): validate the D5 ledger (coverage per name) and unblock the 8 D5 cells (the operator authorised the NSE endpoint); D1 liquidity filter, unsigned-move table on the new names, vault instrument seal, vectorised screen path. Mega-cap large-day cells left: L4-expected-range-filter, L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. The VIX gate did not lift gross, so expect these to be weak; D1 names and D5 event days are the real test |
+| Global N | **14,078** on 2026-09-24 (14,072 plus the 6 arms of L4-india-vix-regime) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 40 TODO, 5 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 32 TODO, 8 BLOCKED (D5, EM-209), 6 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | **EM-209**: D5 event-calendar source. The operator's answer (2026-09-24, relayed by the operator session): use only published CSVs, press-release PDFs and normal downloads within each site's terms; no scraping of NSE's APIs against their terms; if a source cannot be had that way, declare the bias or mark the cells BLOCKED. NSE's announcements endpoint does answer a plain GET with a per-filing timestamp, but it is an API, so it is NOT used (four probe requests were made before the answer was seen; nothing was kept). D5 and its 8 cells stay `BLOCKED(EM-209)` until a published-file source is found or the operator rules otherwise. Every other lane continues |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 16 (2026-09-24): L4-india-vix-regime (EM-210), and D5 collector authorised
+**D5.** The operator, in this session, ruled that NSE's corporate-announcements endpoint may be used.
+Built (66d8704): `research.results_filings` (the exchange's IST timestamp on every filing, first-public
+per results season, append-only resumable ledger in `docs/research/edge-search/events/`) and
+`research.nse_announcements` (one request per name for the whole window, 3 s apart, honest user
+agent, no retry, a 401/403/429 stops the run). `emporos research collect-results --to 2026-09-18` is
+running for the 250 D1 names (about 14 minutes; 32 filings per name back to October 2016). Validation
+and unblocking the 8 cells is next.
+
+**Cell.** Declared first (25564df), Rs 50,000: the first-hour gap reversal (the nearest miss) only on
+days when the INDIA VIX 09:15 open is at or above the 0.6 or 0.8 quantile of its own previous 252
+opens; 6 arms. Machinery: `scans/regime_gate.py` (`TrailingPercentileDays`, `DayGatedRules`, a
+decorator any scan can take) and `scans/vix_shock_reversal.py`; the recipe loads the VIX series
+through a new `prepare` step. 19 tests.
+
+**Result: feasible, rejected.** The gate does select large days (median |move| 1.02-1.52%, above the
+0.99% bar), so every arm passes S1, but gross is 0.16-0.28%, not better than the ungated 0.19-0.35%;
+net -0.07..+0.05%, t under 0.5. The stricter 0.8 gate is worse than 0.6. So a large day is necessary
+but not sufficient: the fade has no extra edge there. No child.
 
 ## Iteration 15 (2026-09-24): D5 blocked on the operator (EM-209)
 Probed the screener MCP for the earnings calendar: `get_company_announcements` returned nothing for

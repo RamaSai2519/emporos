@@ -104,7 +104,13 @@ cells:
     requires: [F2, F2B, F3, F3B, F4, VAULT]
   - {id: L4-atr-percentile-regime,      lane: L4, hypothesis: atr-percentile-regime,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L4-expected-range-filter,      lane: L4, hypothesis: expected-range-filter,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
-  - {id: L4-india-vix-regime,           lane: L4, hypothesis: india-vix-regime,           status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
+  - id: L4-india-vix-regime
+    lane: L4
+    hypothesis: l4-india-vix-regime
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D2]
+    experiments: [EXP-20260924-l4-india-vix-regime-31cf0fed]
+    lesson: "6 arms on Discovery at Rs 50,000, all feasible (median |move| 1.02-1.52%, so a VIX gate does select large days) but none passes: gross 0.16-0.28% barely moves against the ungated reversal (0.19-0.35%), net -0.07..+0.05% with t under 0.5; the stricter p0.8 gate is worse than p0.6 (fewer trades, lower gross). Large days are necessary but not sufficient: the fade has no more edge on them (advisory scan)"
   - {id: L5-early-trend-day-leaders,    lane: L5, hypothesis: early-trend-day-leaders,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2, D3]}
   # --- P2 ---------------------------------------------------------------------------------------
   - {id: L6-meta-label-rejected-entries, lane: L6, hypothesis: meta-label-rejected-entries, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
