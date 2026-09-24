@@ -10,7 +10,7 @@ from emporos.domain.broker_verification import (
     CheckOutcome,
 )
 from emporos.domain.experiments import Verdict
-from emporos.domain.graduation import GraduationEvent, LiveAcknowledgement
+from emporos.domain.graduation import GraduationEvent, GraduationStage, LiveAcknowledgement
 from emporos.domain.parity import ParityKind, ParityReport
 from emporos.domain.research_experiments import ExperimentOutcomeLabel
 from emporos.domain.verdicts import GateFinding, RecordedVerdict
@@ -19,6 +19,8 @@ from emporos.persistence.graduation_store import (
     AcknowledgementExistsError,
     GraduationConflictError,
 )
+from emporos.risk.config import RiskTier
+from emporos.session.launch_gate import LiveGraduation
 
 NOW = datetime(2026, 9, 24, 4, 0, tzinfo=UTC)
 STRATEGY = "orb_v1"
@@ -155,3 +157,31 @@ class FakeBrokerEvidence:
 
 def all_passing(at: datetime = NOW - timedelta(days=1)) -> list[BrokerCheck]:
     return [BrokerCheck(name, CheckOutcome.PASS, at) for name in CRITICAL_BROKER_CHECKS]
+
+
+class FakeStages:
+    """`session.launch_gate.GraduationStageView`."""
+
+    def __init__(self, stage: GraduationStage = GraduationStage.LIVE_CONSERVATIVE) -> None:
+        self._stage = stage
+
+    async def stage(self, strategy: str, behaviour_hash: str) -> GraduationStage:
+        return self._stage
+
+
+class FakeAcknowledged:
+    """`session.launch_gate.AcknowledgementView`."""
+
+    def __init__(self, acknowledged: bool = True) -> None:
+        self._acknowledged = acknowledged
+
+    async def acknowledged(self, strategy: str, behaviour_hash: str) -> bool:
+        return self._acknowledged
+
+
+def live_graduation(
+    stage: GraduationStage = GraduationStage.LIVE_CONSERVATIVE,
+    acknowledged: bool = True,
+    tier: RiskTier = RiskTier.LIVE_CONSERVATIVE,
+) -> LiveGraduation:
+    return LiveGraduation(FakeStages(stage), FakeAcknowledged(acknowledged), tier)

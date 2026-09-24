@@ -39,6 +39,7 @@ from emporos.persistence.migrations import MigrationRunner, MongoSchemaStore
 from emporos.persistence.mongo import MongoClientFactory
 from emporos.persistence.schema import PLATFORM_SCHEMA
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.risk.config import RiskTier
 from emporos.risk.kill_switch import FileSentinelKillSwitch
 from emporos.session.lifecycle import SessionState
 from emporos.session.risk_facts import VenueHealth
@@ -217,6 +218,7 @@ async def _run(
         venue=venue,
         health=health,
         live_trading_enabled=live_trading_enabled,
+        risk_tier=RiskTier.LIVE_CONSERVATIVE,
         bars=bars,
         registry=registry,
         configs=[config],

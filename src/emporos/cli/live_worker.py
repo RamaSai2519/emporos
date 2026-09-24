@@ -13,6 +13,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from emporos.cli.graduation_composition import LIVE_RISK_TIER, live_graduation
 from emporos.cli.history_runtime import instrument_master
 from emporos.cli.live_feed import FeedRequest
 from emporos.cli.live_launch import LiveLaunchCheck, LiveLaunchReport, MonitorSwitchView
@@ -87,7 +88,7 @@ class LiveWorker:
             )
             policy = live_policy(
                 MongoVerdictBook(database), settings.live_trading_enabled,
-                MonitorSwitchView(monitor),
+                MonitorSwitchView(monitor), live_graduation(database, LIVE_RISK_TIER),
             )  # fmt: skip
             report = await LiveLaunchCheck(policy, ConfigLaunchFacts(available)).run(
                 [c.name for c in configs]
@@ -110,7 +111,8 @@ class LiveWorker:
                     bars=bars,
                     registry=registry,
                     configs=configs,
-                    limits=RiskLimitsLoader().load(),
+                    limits=RiskLimitsLoader.for_tier(LIVE_RISK_TIER).load(),
+                    risk_tier=LIVE_RISK_TIER,
                     fees=FeeScheduleLibrary.from_directory().for_date(
                         clock.now().astimezone(IST).date()
                     ),

@@ -8,6 +8,7 @@ from pathlib import Path
 import typer
 
 from emporos.broker.backoff import RandomJitter
+from emporos.cli.graduation_composition import LIVE_RISK_TIER, live_graduation
 from emporos.cli.history_runtime import instrument_master
 from emporos.cli.live_feed import AngelOneFeedOpener
 from emporos.cli.live_launch import (
@@ -84,8 +85,9 @@ async def _run_live_check(files: list[Path], start: list[str]) -> LiveLaunchRepo
             sleeper,
         )
         policy = live_policy(
-            MongoVerdictBook(database), settings.live_trading_enabled, MonitorSwitchView(monitor)
-        )
+            MongoVerdictBook(database), settings.live_trading_enabled, MonitorSwitchView(monitor),
+            live_graduation(database, LIVE_RISK_TIER),
+        )  # fmt: skip
         return await LiveLaunchCheck(policy, ConfigLaunchFacts(configs)).run(start)
     finally:
         await mongo.close()

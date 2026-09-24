@@ -7,7 +7,9 @@ Two policies use the same conditions differently:
   legitimate experiment; an unread click is not.
 * **Live** needs every condition to hold, and nothing can be acknowledged past them: the
   `LIVE_TRADING_ENABLED` switch, the strategy enabled in its config, a VALIDATED verdict for
-  exactly this configuration, and the kill switch clear.
+  exactly this configuration, the kill switch clear, and (EM-189) the graduation ledger at
+  LIVE_CONSERVATIVE for exactly this configuration, a human's typed acknowledgement of it, and the
+  worker started with the risk tier that stage requires.
 
 Conditions are independent objects, so a new rule is a new class in a policy's list, not an edit to
 an existing one. All refusals are reported together, so the operator fixes them in one pass.
@@ -19,7 +21,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from emporos.domain.graduation import GraduationStage
 from emporos.domain.verdicts import RecordedVerdict, Standing, standing_of
+from emporos.risk.config import RiskTier
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.snapshot import ConfigSnapshotter
 
@@ -44,6 +48,16 @@ class VerdictBook(Protocol):
 
 class SwitchView(Protocol):
     async def halted(self) -> bool: ...
+
+
+class GraduationStageView(Protocol):
+    """Where a configuration stands on the road to real money. The ledger is the only source."""
+
+    async def stage(self, strategy: str, behaviour_hash: str) -> GraduationStage: ...
+
+
+class AcknowledgementView(Protocol):
+    async def acknowledged(self, strategy: str, behaviour_hash: str) -> bool: ...
 
 
 class LaunchCondition(Protocol):
@@ -146,17 +160,122 @@ class KillSwitchClear:
         return None
 
 
-def paper_policy(book: VerdictBook) -> LaunchPolicy:
-    return AllConditions([StandingAcknowledged(VerdictStanding(book))])
+# The risk tier each stage trades under. A stage with no entry places no tier requirement.
+STAGE_RISK_TIERS = {
+    GraduationStage.LIVE_CONSERVATIVE: RiskTier.LIVE_CONSERVATIVE,
+    GraduationStage.PRODUCTION: RiskTier.STANDARD,
+}
 
 
-def live_policy(book: VerdictBook, switch_enabled: bool, kill_switch: SwitchView) -> LaunchPolicy:
+class GraduatedTo:
+    """The ledger holds this configuration at `minimum` or beyond. Retired, researching and stale
+    (edited since it was promoted) all fall short."""
+
+    def __init__(self, minimum: GraduationStage, stages: GraduationStageView) -> None:
+        self._minimum = minimum
+        self._stages = stages
+
+    async def refusal(self, request: LaunchRequest) -> str | None:
+        stage = await self._stages.stage(request.strategy, request.behaviour_hash)
+        if stage.rank >= self._minimum.rank:
+            return None
+        return (
+            f"{request.strategy} is at {stage.value} for this configuration; it must be graduated "
+            f"to {self._minimum.value} (`emporos graduation promote`)"
+        )
+
+
+class FirstLiveAcknowledged:
+    """A human typed the acknowledgement for exactly this configuration. Always required: whether
+    the strategy has run live before is not something a launch should be trusted to say."""
+
+    def __init__(self, acknowledgements: AcknowledgementView) -> None:
+        self._acknowledgements = acknowledgements
+
+    async def refusal(self, request: LaunchRequest) -> str | None:
+        if await self._acknowledgements.acknowledged(request.strategy, request.behaviour_hash):
+            return None
+        return (
+            f"no human acknowledgement is recorded for {request.strategy} in this configuration "
+            f"(`emporos graduation acknowledge {request.strategy}`)"
+        )
+
+
+class RiskTierMatchesStage:
+    """The worker was started with the risk limits the strategy's stage requires."""
+
+    def __init__(self, loaded: RiskTier, stages: GraduationStageView) -> None:
+        self._loaded = loaded
+        self._stages = stages
+
+    async def refusal(self, request: LaunchRequest) -> str | None:
+        stage = await self._stages.stage(request.strategy, request.behaviour_hash)
+        required = STAGE_RISK_TIERS.get(stage)
+        if required is None or required is self._loaded:
+            return None
+        return (
+            f"{request.strategy} is at {stage.value}, which trades under the {required.value} risk "
+            f"tier, but this worker loaded {self._loaded.value}"
+        )
+
+
+class AnyOf:
+    """Satisfied when any one condition is; otherwise every reason is reported."""
+
+    def __init__(self, conditions: Sequence[LaunchCondition]) -> None:
+        if not conditions:
+            raise ValueError("AnyOf with no condition could never be satisfied")
+        self._conditions = tuple(conditions)
+
+    async def refusal(self, request: LaunchRequest) -> str | None:
+        reasons: list[str] = []
+        for condition in self._conditions:
+            reason = await condition.refusal(request)
+            if reason is None:
+                return None
+            reasons.append(reason)
+        return "; or ".join(reasons)
+
+
+@dataclass(frozen=True)
+class LiveGraduation:
+    """What the live gate needs from graduation, bundled so a live policy cannot be built without
+    it: there is no optional argument to forget."""
+
+    stages: GraduationStageView
+    acknowledgements: AcknowledgementView
+    risk_tier: RiskTier
+
+
+def paper_policy(book: VerdictBook, stages: GraduationStageView) -> LaunchPolicy:
+    """Paper may run what is graduated to PAPER, or what the operator names the standing of."""
+    return AllConditions(
+        [
+            AnyOf(
+                [
+                    GraduatedTo(GraduationStage.PAPER, stages),
+                    StandingAcknowledged(VerdictStanding(book)),
+                ]
+            )
+        ]
+    )
+
+
+def live_policy(
+    book: VerdictBook,
+    switch_enabled: bool,
+    kill_switch: SwitchView,
+    graduation: LiveGraduation,
+) -> LaunchPolicy:
     return AllConditions(
         [
             LiveTradingSwitch(switch_enabled),
             StrategyEnabled(),
             ValidatedForThisConfig(VerdictStanding(book)),
             KillSwitchClear(kill_switch),
+            GraduatedTo(GraduationStage.LIVE_CONSERVATIVE, graduation.stages),
+            FirstLiveAcknowledged(graduation.acknowledgements),
+            RiskTierMatchesStage(graduation.risk_tier, graduation.stages),
         ]
     )
 

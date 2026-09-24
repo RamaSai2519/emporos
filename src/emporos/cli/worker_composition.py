@@ -34,6 +34,7 @@ from emporos.broker.paper.costs import ScheduledCosts
 from emporos.broker.paper.factory import PaperBrokerConfig, PaperBrokerFactory
 from emporos.broker.paper.market import MarketDataSource
 from emporos.broker.ratelimit import GroupRateLimiter
+from emporos.cli.graduation_composition import live_graduation, stage_view
 from emporos.cli.paper_composition import PaperComposer
 from emporos.control.commands import CommandType
 from emporos.control.handlers import (
@@ -119,6 +120,7 @@ from emporos.portfolio.service import PortfolioService
 from emporos.portfolio.snapshots import SnapshotSchedule, SnapshotService
 from emporos.portfolio.sources import BrokerReconciliationSource
 from emporos.risk.assembly import MonitoredSystemFacts, SnapshotAssembler
+from emporos.risk.config import RiskTier
 from emporos.risk.engine import RiskEngine
 from emporos.risk.kill_switch import (
     TRIPWIRE_SETTER,
@@ -447,7 +449,7 @@ def paper_start_gate(
     """The rule for starting a strategy in paper: any may start, but one that is not validated for
     its current config needs its standing named."""
     book = MongoVerdictBook(database, verdicts)
-    return PolicyStartGate(paper_policy(book), ConfigLaunchFacts(configs))
+    return PolicyStartGate(paper_policy(book, stage_view(database)), ConfigLaunchFacts(configs))
 
 
 def live_start_gate(
@@ -455,6 +457,7 @@ def live_start_gate(
     configs: Sequence[ResolvedStrategyConfig],
     live_trading_enabled: bool,
     kill_switch: SwitchView,
+    risk_tier: RiskTier,
     verdicts: str = Collection.STRATEGY_VERDICTS,
 ) -> StartGate:
     """The rule for starting a strategy in live from the dashboard or API: every live condition
@@ -462,7 +465,8 @@ def live_start_gate(
     here."""
     book = MongoVerdictBook(database, verdicts)
     return PolicyStartGate(
-        live_policy(book, live_trading_enabled, kill_switch), ConfigLaunchFacts(configs)
+        live_policy(book, live_trading_enabled, kill_switch, live_graduation(database, risk_tier)),
+        ConfigLaunchFacts(configs),
     )
 
 
@@ -479,6 +483,7 @@ class LiveWorkerComposer:
     venue: SessionVenue
     health: VenueHealth
     live_trading_enabled: bool
+    risk_tier: RiskTier  # which tier `limits` was loaded from; the launch gate checks it
     bars: ClosedBarQueue
     registry: StrategyRegistry
     configs: Sequence[ResolvedStrategyConfig]
@@ -520,6 +525,7 @@ class LiveWorkerComposer:
                 list(loadable.values()),
                 self.live_trading_enabled,
                 _SwitchView(prelude.monitor),
+                self.risk_tier,
             ),  # fmt: skip
         )
         return await _assemble(self, seam, prelude)

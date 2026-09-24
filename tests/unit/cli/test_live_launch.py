@@ -5,9 +5,11 @@ from __future__ import annotations
 
 from emporos.cli.live_launch import LiveLaunchCheck, LiveLaunchOutcome
 from emporos.domain.experiments import Verdict
+from emporos.domain.graduation import GraduationStage
 from emporos.domain.verdicts import RecordedVerdict
-from emporos.session.launch_gate import ConfigLaunchFacts, live_policy
+from emporos.session.launch_gate import ConfigLaunchFacts, LiveGraduation, live_policy
 from emporos.strategies.snapshot import ConfigSnapshotter
+from tests.support.graduation import live_graduation
 from tests.unit.domain.test_verdicts import recorded
 from tests.unit.session.test_launch_gate import Book, Switch, shipped
 
@@ -18,8 +20,10 @@ def check(
     flag: bool = True,
     enabled: bool = True,
     halted: bool = False,
+    graduation: LiveGraduation | None = None,
 ) -> LiveLaunchCheck:
-    policy = live_policy(Book(verdict), flag, Switch(halted))
+    graduation = graduation or live_graduation()
+    policy = live_policy(Book(verdict), flag, Switch(halted), graduation)
     return LiveLaunchCheck(policy, ConfigLaunchFacts([shipped(enabled=enabled)]))
 
 
@@ -73,3 +77,29 @@ class TestEveryConditionMet:
         assert report.outcome is LiveLaunchOutcome.REFUSED
         assert any("not validated" in r or "different configuration" in r
                    for r in report.refusals["threshold"])  # fmt: skip
+
+
+class TestGraduationStandsBetweenAValidatedVerdictAndLive:
+    """EM-189: a VALIDATED verdict alone no longer lets a strategy go live."""
+
+    async def test_a_validated_strategy_not_at_live_conservative_is_refused_with_every_reason(
+        self,
+    ) -> None:
+        graduation = live_graduation(stage=GraduationStage.PAPER, acknowledged=False)
+
+        report = await check(validated_for_shipped(), graduation=graduation).run(["threshold"])
+
+        assert report.outcome is LiveLaunchOutcome.REFUSED
+        text = "\n".join(report.lines())
+        assert "threshold is at paper for this configuration" in text
+        assert "graduation acknowledge threshold" in text
+        assert report.exit_code == 1
+
+    async def test_the_default_state_of_a_checkout_names_the_graduation_reasons_too(self) -> None:
+        graduation = live_graduation(stage=GraduationStage.RESEARCH, acknowledged=False)
+
+        report = await check(None, flag=False, enabled=False, graduation=graduation).run(
+            ["threshold"]
+        )
+
+        assert len(report.refusals["threshold"]) == 5  # flag, enabled, verdict, stage, ack
