@@ -25,7 +25,7 @@ Feature versions:
 
 | what | value |
 |---|---|
-| behaviour hash | sha256:abababababababababababababababababababababababababababababababab |
+| behaviour hash (base config) | sha256:abababababababababababababababababababababababababababababababab |
 | dataset universe hash | sha256:0101010101010101010101010101010101010101010101010101010101010101 |
 | dataset calendar | sha256:0202020202020202020202020202020202020202020202020202020202020202 |
 | dataset quarantine hash | sha256:0303030303030303030303030303030303030303030303030303030303030303 |

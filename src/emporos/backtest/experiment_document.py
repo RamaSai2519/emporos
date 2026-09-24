@@ -258,7 +258,7 @@ class ExperimentDocument:
             schedule, benchmark = _text(cost.fee_schedule_id), _text(cost.benchmark_hash)
             slippage = _text(_s(cost.slippage_bps))
         rows = [
-            ("behaviour hash", _text(v.behaviour_hash)),
+            ("behaviour hash (base config)", _text(v.behaviour_hash)),
             ("dataset universe hash", universe),
             ("dataset calendar", calendar),
             ("dataset quarantine hash", quarantine),

@@ -168,6 +168,7 @@ class CurationRecord:
     robustness: RobustnessReport | None = None  # the three-way verdict and its evidence
     # EM-188: what the numbers were produced from, so a report can be compared and reproduced.
     provenance: ResearchProvenance | None = None  # the dataset: universe, calendar, quarantine
+    behaviour_hash: str | None = None  # of the base config, before any candidate's overrides
     behaviour_hashes: Mapping[str, str] = field(default_factory=dict)  # chosen candidate -> hash
     costs: CostBreakdown | None = None  # brokerage, statutory, spread and slippage, apart
 

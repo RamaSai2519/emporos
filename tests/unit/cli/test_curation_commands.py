@@ -84,3 +84,43 @@ class TestPlanCostModel:
         assert model.components_for(Exchange.NSE, 10, Money.of("100")).brokerage == (
             oldest.components_for(Exchange.NSE, 10, Money.of("100")).brokerage
         )
+
+
+class TestDeclaration:
+    def test_a_declaration_that_is_not_committed_is_refused_before_anything_runs(
+        self, tmp_path: Path
+    ) -> None:
+        declaration = tmp_path / "orb-test.yaml"
+        declaration.write_text(
+            "family: strategy\nslug: orb-test\nhypothesis: h\neconomic_rationale: r\n"
+            "falsification: f\ndeclared_at: 2026-09-24T09:00:00+05:30\n"
+        )
+
+        result = invoke(
+            "backtest", "curate", "--from", "2026-01-05", "--to", "2026-01-09",
+            "--declaration", str(declaration), "--only", "orb_v1",
+        )  # fmt: skip
+
+        assert result.exit_code == 1 and "not committed" in result.output
+
+    def test_a_declaration_describes_one_experiment_so_several_strategies_are_refused(
+        self,
+    ) -> None:
+        result = invoke(
+            "backtest", "curate", "--from", "2026-01-05", "--to", "2026-01-09",
+            "--declaration", "config/experiments/orb-v1-ten-year.yaml",
+            "--allow-uncommitted-declaration",
+        )  # fmt: skip
+
+        assert result.exit_code == 1 and "pick one with --only" in result.output
+
+    def test_an_invalid_declaration_is_refused(self, tmp_path: Path) -> None:
+        declaration = tmp_path / "bad.yaml"
+        declaration.write_text("slug: bad\n")
+
+        result = invoke(
+            "backtest", "curate", "--from", "2026-01-05", "--to", "2026-01-09",
+            "--declaration", str(declaration), "--allow-uncommitted-declaration",
+        )  # fmt: skip
+
+        assert result.exit_code == 1 and "curation failed" in result.output

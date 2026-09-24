@@ -154,6 +154,7 @@ class CurationRun:
             record = replace(
                 record,
                 provenance=provenance,
+                behaviour_hash=ConfigSnapshotter().take(config).behaviour_hash,
                 behaviour_hashes=self._behaviour_hashes(config, result),
                 costs=None if self._costs is None else self._costs.of(record.pooled.trades),
             )

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -23,6 +24,10 @@ from emporos.backtest.curation import (
     StrategyCurator,
 )
 from emporos.backtest.curation_run import CurationRun, PlannedStrategy, WindowPlan
+from emporos.backtest.experiment_report import (
+    CurationExperimentReportBuilder,
+    ExperimentReportBuilder,
+)
 from emporos.backtest.parallel import default_workers
 from emporos.backtest.risk_gate import RiskGateFactory
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
@@ -46,15 +51,28 @@ from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger,
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
 from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
 from emporos.cli.backtest_runtime import candle_cache_root, open_backtest_runtime
+from emporos.cli.experiment_declarations import ExperimentDeclarationLoader
+from emporos.cli.experiment_provenance import CurationVersionStamp, GitRepository
+from emporos.cli.experiment_registry import (
+    DEFAULT_EXPERIMENTS_DIR,
+    ExperimentRegistry,
+    FileExperimentRegistry,
+    PublishOutcome,
+)
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
-from emporos.core.errors import EmporosError
+from emporos.core.errors import ConfigurationError, EmporosError
 from emporos.core.ids import IdGenerator
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import InstrumentResolver
 from emporos.domain.money import Money
-from emporos.domain.research_experiments import CostBreakdown
+from emporos.domain.research_experiments import (
+    CostBreakdown,
+    ExperimentDeclaration,
+    ExperimentReport,
+    VersionStamp,
+)
 from emporos.persistence.trial_ledger import MongoTrialLedger
 from emporos.portfolio.fee_schedules import FeeScheduleError, FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
@@ -89,6 +107,23 @@ _WORKERS = typer.Option(
     "1 runs them one after another in this process.",
 )
 _EXPERIMENT = typer.Option(None, help="Ledger experiment name (default: curation-<today>).")
+_DECLARATION = typer.Option(
+    None,
+    exists=True,
+    dir_okay=False,
+    help="Experiment declaration (config/experiments/<slug>.yaml), committed BEFORE the run: on "
+    "completion the result is published as an experiment report and the index rebuilt. "
+    "Describes one experiment, so pick one strategy with --only.",
+)
+_EXPERIMENTS_DIR = typer.Option(
+    DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live."
+)
+_UNCOMMITTED = typer.Option(
+    False,
+    "--allow-uncommitted-declaration",
+    help="Publish even though the declaration is not committed (it then proves nothing about "
+    "having been declared before the run).",
+)
 
 
 def _record_document(record: CurationRecord) -> dict[str, Any]:
@@ -183,15 +218,43 @@ class PlanCostModel:
     benchmark's spread and slippage."""
 
     @staticmethod
+    def schedule(library: FeeScheduleLibrary, last_day: date) -> FeeSchedule:
+        try:
+            return library.for_date(last_day)
+        except FeeScheduleError:
+            return library.earliest
+
+    @staticmethod
     def of(
         library: FeeScheduleLibrary, benchmark: BenchmarkConfig, last_day: date
     ) -> PortfolioCostModel:
-        schedule: FeeSchedule
-        try:
-            schedule = library.for_date(last_day)
-        except FeeScheduleError:
-            schedule = library.earliest
+        schedule = PlanCostModel.schedule(library, last_day)
         return PortfolioCostModel(schedule, benchmark.spread_bps, benchmark.slippage_bps)
+
+
+class CurationPublication:
+    """Turns a finished curation into a published experiment report and refreshes the index."""
+
+    def __init__(
+        self, builder: ExperimentReportBuilder[CurationRecord], registry: ExperimentRegistry
+    ) -> None:
+        self._builder = builder
+        self._registry = registry
+
+    def publish(
+        self, record: CurationRecord, declaration: ExperimentDeclaration, versions: VersionStamp
+    ) -> tuple[ExperimentReport, PublishOutcome]:
+        report = self._builder.build(record, declaration, versions)
+        outcome = self._registry.publish(report)
+        self._registry.rebuild_index()
+        return report, outcome
+
+
+@dataclass(frozen=True)
+class CurationOutcome:
+    records: list[CurationRecord]
+    criteria: SelectionCriteria
+    versions: VersionStamp  # what every strategy of this run shares: cost model and code
 
 
 async def _curate(
@@ -205,7 +268,8 @@ async def _curate(
     record_trials: bool,
     experiment: str | None,
     workers: int,
-) -> tuple[list[CurationRecord], SelectionCriteria]:
+    single_experiment: bool = False,
+) -> CurationOutcome:
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     if plan.get("objective") != "sharpe":
         raise ValueError("the plan's objective must be sharpe (the only one pre-registered)")
@@ -215,6 +279,12 @@ async def _curate(
         raise ValueError(
             f"--only names not in {plan_path}: {', '.join(unknown)} "
             f"(available: {', '.join(sorted(known))})"
+        )
+    selected = [e for e in plan["strategies"] if not only or e["name"] in only]
+    if single_experiment and len(selected) != 1:
+        raise ValueError(
+            f"a declaration describes one experiment, but {len(selected)} strategies would run: "
+            "pick one with --only"
         )
     windows = plan["windows"]
     holdout = PlanHoldout.reservation(plan)
@@ -299,7 +369,7 @@ async def _curate(
                 holdout=holdout, costs=CostBreakdownCalculator(cost_model),
             )  # fmt: skip
             records = await run.run(
-                [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],
+                [strategy(e) for e in selected],
                 window_plan,
                 Money.of(cash or str(benchmark.capital)),
                 progress=lambda message: typer.echo(message),
@@ -315,7 +385,10 @@ async def _curate(
                     experiment or f"curation-{datetime.now(UTC):%Y-%m-%d}",
                 )
                 typer.echo(f"{len(recorded)} verdict(s) recorded")
-    return records, criteria
+    versions = CurationVersionStamp(GitRepository()).of(
+        benchmark_path, benchmark, PlanCostModel.schedule(library, last.date())
+    )
+    return CurationOutcome(records, criteria, versions)
 
 
 def _recorder(
@@ -347,10 +420,14 @@ def backtest_curate(
     record_trials: bool = _RECORD,
     experiment: str | None = _EXPERIMENT,
     workers: int | None = _WORKERS,
+    declaration: Path | None = _DECLARATION,
+    experiments_dir: Path = _EXPERIMENTS_DIR,
+    allow_uncommitted_declaration: bool = _UNCOMMITTED,
 ) -> None:  # fmt: skip
     """Walk-forward every strategy in PLAN at the benchmark capital; classify each, failures too."""
     try:
-        records, criteria = asyncio.run(
+        declared = _declared(declaration, allow_uncommitted_declaration)
+        outcome = asyncio.run(
             _curate(
                 plan,
                 benchmark,
@@ -362,14 +439,16 @@ def backtest_curate(
                 record_trials,
                 experiment,
                 workers or default_workers(),
+                single_experiment=declared is not None,
             )
         )
     except (EmporosError, ValueError, LookupError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"curation failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
+    records = outcome.records
     report.parent.mkdir(parents=True, exist_ok=True)
-    report.write_text(CurationReport().render(records, criteria) + "\n", encoding="utf-8")
+    report.write_text(CurationReport().render(records, outcome.criteria) + "\n", encoding="utf-8")
     record.write_text(
         json.dumps([_record_document(r) for r in records], indent=2) + "\n", encoding="utf-8"
     )
@@ -379,3 +458,39 @@ def backtest_curate(
         )
         typer.echo(f"{r.strategy}: {'PASSED' if r.verdict.passed else 'FAILED'}{verdict}")
     typer.echo(f"report: {report}\nrecord: {record}")
+    if declared is not None:
+        _publish(records[0], declared, outcome.versions, experiments_dir)
+
+
+def _declared(declaration: Path | None, allow_uncommitted: bool) -> ExperimentDeclaration | None:
+    """The declaration, refused before anything runs unless it was committed first: a claim that
+    can be edited after the result is known is not a pre-declaration."""
+    if declaration is None:
+        return None
+    declared = ExperimentDeclarationLoader().load(declaration)
+    if not allow_uncommitted and not GitRepository().is_committed(declaration):
+        raise ConfigurationError(
+            f"{declaration} is not committed: commit the declaration before the run "
+            "(or pass --allow-uncommitted-declaration, which forfeits the proof)"
+        )
+    return declared
+
+
+def _publish(
+    record: CurationRecord,
+    declaration: ExperimentDeclaration,
+    versions: VersionStamp,
+    experiments_dir: Path,
+) -> None:
+    publication = CurationPublication(
+        CurationExperimentReportBuilder(), FileExperimentRegistry(experiments_dir)
+    )
+    try:
+        report, outcome = publication.publish(record, declaration, versions)
+    except EmporosError as error:
+        typer.secho(f"experiment not published: {error.message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(
+        f"experiment {report.experiment_id}: {report.outcome.value.upper()} ({outcome.value}) "
+        f"in {experiments_dir}"
+    )

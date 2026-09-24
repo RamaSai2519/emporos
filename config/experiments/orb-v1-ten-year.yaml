@@ -1,0 +1,22 @@
+# Declared BEFORE any run (EM-188). Not yet run: the ten-year bars (EM-132) were never used for
+# orb_v1, whose one-year curation is spent (docs/strategies/README.md), so this is its first look
+# at data it has not seen, with a final holdout reserved (config/curation/plan.yaml holdout_days).
+family: strategy
+slug: orb-v1-ten-year
+hypothesis: >-
+  An opening-range breakout with an ATR stop and a fixed R target has a positive net expectancy on
+  the 29-symbol liquid universe across the ten years of 5-minute bars, in more than one regime.
+economic_rationale: >-
+  Overnight news and the opening auction leave a burst of one-sided order flow that institutions
+  work through the first hours; a break of the first range in the same direction catches the
+  continuation before it is priced in. Whoever fades the break is the counterparty who pays for it.
+falsification: >-
+  The standard verdict is REJECTED, or INCONCLUSIVE on the profit-after-costs, Deflated Sharpe or
+  regime gates, on the walk-forward out-of-sample windows of the ten-year history.
+parameter_grid:
+  range_bars: [3, 6]
+  target_r: ["1.5", "2.0", "3.0"]
+  stop_atr_mult: ["1.0", "1.5"]
+feature_versions:
+  opening_range: 1
+declared_at: 2026-09-24T09:00:00+05:30

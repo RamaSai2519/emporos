@@ -171,6 +171,7 @@ class CurationExperimentReportBuilder:
     def _versions(versions: VersionStamp, record: CurationRecord) -> VersionStamp:
         return replace(
             versions,
+            behaviour_hash=versions.behaviour_hash or record.behaviour_hash,
             candidate_behaviour_hashes=versions.candidate_behaviour_hashes
             or dict(record.behaviour_hashes),
             dataset=versions.dataset or CurationExperimentReportBuilder._dataset(record.provenance),
