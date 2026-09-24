@@ -39,6 +39,8 @@ from emporos.research.partition import DISCOVERY, DataSplit
 from emporos.research.scans.base import ScanExecution, SignalScan
 from emporos.research.scans.orb_rvol import OrbRvolParameters, orb_rvol_scan
 from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
+from emporos.research.scans.range_compression import CompressionParameters, range_compression_scan
+from emporos.research.scans.range_compression import declared_arms as compression_arms
 from emporos.research.scans.raw_gap import RawGapParameters, declared_arms, raw_gap_scan
 from emporos.research.scans.shock_reversal import ShockReversalParameters, shock_reversal_scan
 from emporos.research.scans.shock_reversal import declared_arms as shock_reversal_arms
@@ -124,6 +126,21 @@ class ShockReversalCell:
         return f"gap>={point['gap_threshold_pct']}% retrace>={point['retrace_min']}"
 
 
+class CompressionCell:
+    """The recipe for cell L4-nr7-inside-day-breakout."""
+
+    slug = "l4-nr7-inside-day-breakout"
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in compression_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        return range_compression_scan(CompressionParameters.from_point(point), execution)
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"{point['condition']} break buffer {point['buffer_bps']}bps"
+
+
 CELLS: Mapping[str, ScreenCell] = {
     c.slug: c
     for c in (
@@ -131,6 +148,7 @@ CELLS: Mapping[str, ScreenCell] = {
         OrbRvolCell(),
         ShockReversalCell("l3-first-hour-shock-reversal"),
         ShockReversalCell("l3-first-hour-reversal-large-gap"),
+        CompressionCell(),
     )
 }
 
