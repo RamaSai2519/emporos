@@ -229,8 +229,8 @@ out. Fixtures are in `tests/fixtures/angelone/live_recordings/`; tests are
 
 * **Frames and timestamps: PASS.** 296 real 123-byte QUOTE frames; our decoder equals the pinned SDK
   on every sampled frame; `exchange_ts` is **UTC epoch millis** (arrival lag 0.03-6.5 s, median
-  0.5 s; the IST-wall-clock reading is exactly 19800 s off). Ticks arrive roughly every 6 s per
-  instrument in this window, not every second.
+  0.5 s; the IST-wall-clock reading is exactly 19800 s off). About 74 frames per instrument in 200 s
+  (roughly one every 2.7 s), not one per second.
 * **Reconnect: PASS.** Controlled close at 15:23:20: `disconnected` at +0.03 s, reconnected and
   resubscribed at +1.0 s, frames resumed, no lockout. Heartbeat: 18 pongs in 3.3 min, 0 timeouts.
 * **Candle comparison: FAIL / unresolved.** Replaying the recording through our parser, normalizer
