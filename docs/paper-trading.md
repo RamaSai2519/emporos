@@ -92,3 +92,11 @@ a separate action (Close position, or Square off all).
 - The worker prints its final state when it ends. A non-zero exit means it failed; read the message.
 - Controls are paused on the dashboard when the worker's state is stale: start the worker.
 - `emporos backtest verdicts list` says `stale` for a strategy you just edited: expected.
+
+## Did paper behave like the backtest? (parity)
+
+After close-out the worker compares each strategy's day with a backtest of the identical config over
+the same session and stores a daily report (a weekly one on the week's last session, and a
+cumulative one that graduation reads). It is read-only, time-boxed and cannot affect the session;
+`--no-parity` turns it off. See [paper-parity.md](paper-parity.md), and
+`emporos paper parity daily|weekly|show|export`.
