@@ -214,6 +214,13 @@ PLATFORM_SCHEMA = Schema(
             IndexSpec.on("strategy", "behaviour_hash", "period", "kind", unique=True),
             IndexSpec.on("strategy", "behaviour_hash", "kind", "recorded_at"),
         ),
+        # Jev's recorded answers (EM-187): append-only and replayed forever, so no TTL. The unique
+        # key is the question's identity: a changed prompt or model is a new question.
+        _spec(
+            Collection.JEV_DECISIONS,
+            IndexSpec.on("request_hash", "prompt_hash", "model", unique=True),
+            IndexSpec.on("as_of"),
+        ),
         _spec(
             Collection.SYSTEM_EVENTS,
             IndexSpec.on("correlation_id"),

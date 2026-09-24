@@ -382,6 +382,26 @@ class ParityReportRecord(Record):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
+class JevDecisionDocument(Record):
+    """One answer the Jev model gave, append-only (`emporos.domain.jev_records.JevDecisionRecord`).
+    Confidence is stored as its decimal string, like every other exact number outside money."""
+
+    request_hash: str
+    as_of: datetime
+    symbol: str
+    strategy: str
+    mode: str
+    decision: str
+    confidence: str | None = None
+    provider: str
+    model: str
+    prompt_version: str
+    prompt_hash: str
+    tokens_used: int | None = None
+    latency_ms: int
+    recorded_at: datetime
+
+
 class SystemEventRecord(Record):
     type: str
     correlation_id: str | None = None
