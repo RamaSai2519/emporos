@@ -38,6 +38,12 @@ class ReasonCode(StrEnum):
     HOLDOUT_NOT_RESERVED = "holdout_not_reserved"
     HOLDOUT_NOT_EVALUATED = "holdout_not_evaluated"
     NOT_PREDECLARED = "not_predeclared"
+    # Jev incremental-signal experiments (EM-187)
+    JEV_BASELINE_NOT_VALIDATED = "jev_baseline_not_validated"
+    JEV_TREATMENT_NOT_VALIDATED = "jev_treatment_not_validated"
+    JEV_NO_NET_EXPECTANCY_LIFT = "jev_no_net_expectancy_lift"
+    JEV_LIFT_NOT_SIGNIFICANT = "jev_lift_not_significant"
+    JEV_DRAWDOWN_WORSE = "jev_drawdown_worse"
 
 
 # ---------------------------------------------------------------------------------------------
