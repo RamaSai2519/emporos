@@ -16,6 +16,7 @@ from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
 from emporos.cli.d1_universe_commands import research_d1_universe
+from emporos.cli.daily_bars_commands import research_build_daily_bars
 from emporos.cli.experiment_backfill import (
     DEFAULT_STRATEGIES_DIR,
     BackfillSources,
@@ -66,6 +67,7 @@ research_app.command("collect-results")(research_collect_results)
 research_app.command("collect-fo-archive")(research_collect_fo_archive)
 research_app.command("build-fo-specs")(research_build_fo_specs)
 research_app.command("d1-universe")(research_d1_universe)
+research_app.command("build-daily-bars")(research_build_daily_bars)
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")
 _DECLARATION = typer.Argument(..., exists=True, dir_okay=False, help="An experiment declaration.")
