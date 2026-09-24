@@ -1,0 +1,14 @@
+# Where the D1 constituent lists came from (EDGE_SEARCH_PLAN.md §4.2 D1, EM-191).
+# Two public files NSE Indices publishes for download, fetched once on 2026-09-24 with a plain GET.
+# They are the CURRENT constituents. Projected back to 2016 they carry survivorship bias: names that
+# grew into the index are included for years they were not in it. Every D1 cell must use the EM-177
+# as-of rules or declare the bias (review-1 §4.1). Names delisted since 2016 are absent altogether.
+fetched_on: 2026-09-24
+lists:
+  - file: nifty100.csv
+    index: NIFTY 100
+    url: https://www.niftyindices.com/IndexConstituent/ind_nifty100list.csv
+  - file: niftymidcap150.csv
+    index: NIFTY Midcap 150
+    url: https://www.niftyindices.com/IndexConstituent/ind_niftymidcap150list.csv
+# The Industry column is NSE's classification as of the fetch date: a first source for D3.

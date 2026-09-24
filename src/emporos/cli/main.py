@@ -24,6 +24,7 @@ from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_probe_commands import history_probe_depth
 from emporos.cli.history_reference_commands import history_fetch_reference
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
+from emporos.cli.history_universe_commands import history_fetch_universe
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
 from emporos.cli.parity_commands import paper_app
 from emporos.cli.quality_commands import history_check, history_quarantine
@@ -277,6 +278,7 @@ def history_fetch_bars(
 
 
 history_app.command("fetch-reference")(history_fetch_reference)
+history_app.command("fetch-universe")(history_fetch_universe)
 
 
 @history_app.command("reconcile")
