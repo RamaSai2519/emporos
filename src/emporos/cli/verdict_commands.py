@@ -72,8 +72,9 @@ class VerdictSubjects:
         notes: tuple[str, ...] = ()
         if judged != config.risk.max_position_value:
             notes = (
-                f"Judged with each position sized to ₹{_plain(judged)} (the benchmark's share of "
-                f"its capital) and the platform's limits scaled to match; this config sizes each "
+                f"Judged with each position sized to ₹{_plain(judged)} (the run's position "
+                f"value: the benchmark's share of its capital unless declared) and the platform's "
+                f"limits scaled to match; this config sizes each "
                 f"position at ₹{_plain(config.risk.max_position_value)} under the real limits.",
             )
         return ConfigSnapshotter().take(config).behaviour_hash, notes
@@ -126,10 +127,14 @@ async def record_curation(
     last_day: str,
     experiment: str,
     clock: Clock | None = None,
+    position_value: Decimal | None = None,
 ) -> list[RecordedVerdict]:
-    """Record what a curation just concluded, bound to each strategy's config as it stands now."""
+    """Record what a curation just concluded, bound to each strategy's config as it stands now.
+    `position_value` is the size the curation was judged at (default: the benchmark's share)."""
     benchmark = BenchmarkLoader(benchmark_file).load()
-    subjects = VerdictSubjects(BenchmarkScaler(benchmark), await current_instruments(database))
+    subjects = VerdictSubjects(
+        BenchmarkScaler(benchmark, position_value), await current_instruments(database)
+    )
     now = (clock or SystemClock()).now()
     verdicts = []
     for record in records:

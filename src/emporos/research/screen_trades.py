@@ -17,6 +17,7 @@ from typing import Protocol
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
+from emporos.domain.sizing import DeclaredSize
 
 __all__ = ["DeclaredValueSizer", "PositionSizer", "ScreenTrade"]
 
@@ -54,13 +55,11 @@ class PositionSizer(Protocol):
 
 class DeclaredValueSizer:
     def __init__(self, position_value: Decimal) -> None:
-        if position_value <= 0:
-            raise ValueError("the declared position value must be positive")
-        self._value = position_value
+        self._size = DeclaredSize(position_value)
 
     @property
     def position_value(self) -> Decimal:
-        return self._value
+        return self._size.position_value
 
     def quantity(self, price: Money) -> int:
-        return int(self._value // price.amount)
+        return self._size.quantity_at(price)

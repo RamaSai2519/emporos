@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import replace
+from decimal import Decimal
 
 from emporos.backtest.experiment_document import NOT_APPLICABLE, ExperimentDocument
 from emporos.domain.research_experiments import (
@@ -124,3 +125,24 @@ class TestJson:
         b = json.dumps(ExperimentDocument().to_json(sample_report()), indent=2)
 
         assert a == b
+
+
+class TestDeclaredSize:
+    """EM-191 F4: the declared position value is part of the rendered declaration."""
+
+    def test_a_declared_value_is_in_both_renderings(self) -> None:
+        report = sample_report()
+        sized = replace(
+            report, declaration=replace(report.declaration, position_value=Decimal(25000))
+        )
+
+        document = ExperimentDocument()
+
+        assert document.to_json(sized)["declaration"]["position_value"] == "25000"
+        assert "Declared position value: ₹25,000.00" in document.markdown(sized)
+
+    def test_an_undeclared_value_adds_nothing_so_older_reports_render_as_they_did(self) -> None:
+        document = ExperimentDocument()
+
+        assert "position_value" not in document.to_json(sample_report())["declaration"]
+        assert "position value" not in document.markdown(sample_report())

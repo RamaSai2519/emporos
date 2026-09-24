@@ -192,8 +192,14 @@ class ExperimentDeclaration:
     parameter_grid: Mapping[str, tuple[str, ...]]  # parameter -> the canonical values in the grid
     feature_versions: Mapping[str, str]  # feature -> its definition version
     declared_at: datetime
+    # Rupees per position the run is judged at (EM-191 F4). None: not declared, so the run takes the
+    # risk limits' max_position_value and its report says so. Part of the claim (and of the id)
+    # only when stated, so declarations made before this field keep their ids.
+    position_value: Decimal | None = None
 
     def __post_init__(self) -> None:
+        if self.position_value is not None and self.position_value <= 0:
+            raise ValueError("a declared position value must be positive")
         if not _SLUG.match(self.slug):
             raise ValueError(
                 f"an experiment slug is lowercase words joined by - or _: {self.slug!r}"
@@ -217,7 +223,7 @@ class ExperimentDeclaration:
         """The declaration as JSON-safe content, the input to its id."""
         grid: dict[str, JsonValue] = {k: list(v) for k, v in sorted(self.parameter_grid.items())}
         features: dict[str, JsonValue] = dict(sorted(self.feature_versions.items()))
-        return {
+        content: dict[str, JsonValue] = {
             "family": self.family.value,
             "slug": self.slug,
             "hypothesis": self.hypothesis,
@@ -227,6 +233,9 @@ class ExperimentDeclaration:
             "feature_versions": features,
             "declared_at": self.declared_at.isoformat(),
         }
+        if self.position_value is not None:
+            content["position_value"] = str(self.position_value)
+        return content
 
 
 @dataclass(frozen=True)

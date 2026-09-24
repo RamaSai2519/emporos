@@ -26,15 +26,20 @@ from emporos.domain.research_experiments import (
     ReasonCode,
     VersionStamp,
 )
+from emporos.domain.sizing import DeclaredSize, SizeSource
 from tests.support.backtest_engine import FixedSchedule
 from tests.support.experiment_reports import sample_declaration
 from tests.unit.backtest.test_curation_run import FIRST_DAY, HOLDOUT_DAYS, curate, reservation
 
 DECLARATION = sample_declaration()
+RISK_LIMIT = Decimal(25_000)
+SIZE = DeclaredSize(RISK_LIMIT, SizeSource.RISK_DEFAULT)
 
 
 def build(record: CurationRecord, versions: VersionStamp | None = None):  # type: ignore[no-untyped-def]
-    return CurationExperimentReportBuilder().build(record, DECLARATION, versions or VersionStamp())
+    return CurationExperimentReportBuilder(SIZE, RISK_LIMIT).build(
+        record, DECLARATION, versions or VersionStamp()
+    )
 
 
 def validated(record: CurationRecord) -> CurationRecord:
@@ -49,7 +54,9 @@ def validated(record: CurationRecord) -> CurationRecord:
 
 
 def test_the_builder_is_the_family_neutral_seam() -> None:
-    builder: ExperimentReportBuilder[CurationRecord] = CurationExperimentReportBuilder()
+    builder: ExperimentReportBuilder[CurationRecord] = CurationExperimentReportBuilder(
+        SIZE, RISK_LIMIT
+    )
 
     assert builder is not None
 
@@ -137,7 +144,7 @@ class TestOutcomeAndReasons:
         record, _ = await curate(reservation())
 
         with pytest.raises(ValueError):
-            CurationExperimentReportBuilder().build(
+            CurationExperimentReportBuilder(SIZE, RISK_LIMIT).build(
                 record, sample_declaration(family=ExperimentFamily.FEATURE), VersionStamp()
             )
 
@@ -248,5 +255,33 @@ class TestVersionsAndIdentity:
 
         supporting = build(record).supporting
 
-        assert set(supporting) == {"robustness"}
+        assert set(supporting) == {"robustness", "sizing"}
         assert "monte_carlo" in supporting["robustness"]  # type: ignore[operator]
+
+    async def test_the_report_states_the_size_it_was_judged_at(self) -> None:
+        record, _ = await curate(reservation())
+
+        report = build(record)
+
+        assert report.supporting["sizing"] == {
+            "position_value": "25000",
+            "source": "risk_default",
+            "risk_limit": "25000",
+            "requires_operator_risk_change": False,
+        }
+        assert any("position value of 25,000.00 rupees (not declared" in n for n in report.notes)
+
+    async def test_a_size_above_the_risk_limit_is_flagged_as_needing_an_operator_decision(
+        self,
+    ) -> None:
+        record, _ = await curate(reservation())
+        big = DeclaredSize(Decimal(100_000))
+
+        report = CurationExperimentReportBuilder(big, RISK_LIMIT).build(
+            record, DECLARATION, VersionStamp()
+        )
+
+        assert report.supporting["sizing"]["requires_operator_risk_change"] is True  # type: ignore[index]
+        assert any(
+            "declared before the run" in n and "operator risk change" in n for n in report.notes
+        )

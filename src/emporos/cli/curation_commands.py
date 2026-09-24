@@ -7,7 +7,7 @@ import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +69,7 @@ from emporos.domain.research_experiments import (
     ExperimentDeclaration,
     VersionStamp,
 )
+from emporos.domain.sizing import DeclaredSize, SizeResolver
 from emporos.persistence.trial_ledger import MongoTrialLedger
 from emporos.portfolio.fee_schedules import FeeScheduleError, FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
@@ -113,6 +114,12 @@ _DECLARATION = typer.Option(
 )
 _EXPERIMENTS_DIR = typer.Option(
     DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live."
+)
+_POSITION_VALUE = typer.Option(
+    None,
+    help="Rupees per position to judge at, a quoted number. Default: the declaration's "
+    "position_value, else config/risk.yaml's max_position_value. A declaration that states one "
+    "fixes it: a different value here is refused.",
 )
 _UNCOMMITTED = typer.Option(
     False,
@@ -246,6 +253,7 @@ async def _curate(
     record_trials: bool,
     experiment: str | None,
     workers: int,
+    size: DeclaredSize,
     single_experiment: bool = False,
 ) -> CurationOutcome:
     plan: dict[str, Any] = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
@@ -272,7 +280,7 @@ async def _curate(
             fg=typer.colors.YELLOW,
         )
     benchmark = BenchmarkLoader(benchmark_path).load()
-    scaler = BenchmarkScaler(benchmark)
+    scaler = BenchmarkScaler(benchmark, size.position_value)
     registry = build_registry()
     library = FeeScheduleLibrary.from_directory()
 
@@ -361,6 +369,7 @@ async def _curate(
                     first.date().isoformat(),
                     last.date().isoformat(),
                     experiment or f"curation-{datetime.now(UTC):%Y-%m-%d}",
+                    position_value=size.position_value,
                 )
                 typer.echo(f"{len(recorded)} verdict(s) recorded")
     versions = CurationVersionStamp(GitRepository()).of(
@@ -401,10 +410,14 @@ def backtest_curate(
     declaration: Path | None = _DECLARATION,
     experiments_dir: Path = _EXPERIMENTS_DIR,
     allow_uncommitted_declaration: bool = _UNCOMMITTED,
+    position_value: str | None = _POSITION_VALUE,
 ) -> None:  # fmt: skip
     """Walk-forward every strategy in PLAN at the benchmark capital; classify each, failures too."""
     try:
         declared = _declared(declaration, allow_uncommitted_declaration)
+        risk_limit = RiskLimitsLoader().load().max_position_value
+        size = _size_of(declared, position_value, risk_limit)
+        typer.echo(f"judged at {size.position_value} rupees per position ({size.source.value})")
         outcome = asyncio.run(
             _curate(
                 plan,
@@ -417,6 +430,7 @@ def backtest_curate(
                 record_trials,
                 experiment,
                 workers or default_workers(),
+                size,
                 single_experiment=declared is not None,
             )
         )
@@ -437,7 +451,21 @@ def backtest_curate(
         typer.echo(f"{r.strategy}: {'PASSED' if r.verdict.passed else 'FAILED'}{verdict}")
     typer.echo(f"report: {report}\nrecord: {record}")
     if declared is not None:
-        _publish(records[0], declared, outcome.versions, experiments_dir)
+        _publish(records[0], declared, outcome.versions, experiments_dir, size, risk_limit)
+
+
+def _size_of(
+    declared: ExperimentDeclaration | None, override: str | None, risk_limit: Decimal
+) -> DeclaredSize:
+    """The size every window, perturbation and baseline of this run is judged at: what the
+    declaration fixed, or the command line, or the platform's own limit. Never chosen afterwards."""
+    try:
+        stated = None if override is None else Decimal(override)
+    except InvalidOperation:
+        raise ValueError(f"--position-value is not a number: {override!r}") from None
+    return SizeResolver(risk_limit).resolve(
+        declared=None if declared is None else declared.position_value, override=stated
+    )
 
 
 def _declared(declaration: Path | None, allow_uncommitted: bool) -> ExperimentDeclaration | None:
@@ -452,9 +480,11 @@ def _publish(
     declaration: ExperimentDeclaration,
     versions: VersionStamp,
     experiments_dir: Path,
+    size: DeclaredSize,
+    risk_limit: Decimal,
 ) -> None:
     publication = ExperimentPublication(
-        CurationExperimentReportBuilder(), FileExperimentRegistry(experiments_dir)
+        CurationExperimentReportBuilder(size, risk_limit), FileExperimentRegistry(experiments_dir)
     )
     try:
         report, outcome = publication.publish(record, declaration, versions)

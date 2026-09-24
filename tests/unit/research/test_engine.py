@@ -5,13 +5,13 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-import pytest
 from tests.unit.research.conftest import bar
 
 from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.engine import AlphaDiscoveryEngine
 from emporos.research.features import CausalHistory
@@ -60,6 +60,9 @@ class AlternatingAxis:
         return "even" if self._count % 2 == 0 else "odd"
 
 
+SIZE = DeclaredSize(Decimal(10_000))  # about 100 shares at the test prices
+
+
 def uptrend(n: int) -> list[Candle]:
     return [bar(i, 100 + i) for i in range(n)]
 
@@ -68,7 +71,7 @@ def engine(
     cost_model: TransactionCostModel = FREE, regime_axes: list[type] | None = None
 ) -> AlphaDiscoveryEngine:
     return AlphaDiscoveryEngine(
-        ForwardReturnCalculator(Timeframe.M5), cost_model, Exchange.NSE, 100,
+        ForwardReturnCalculator(Timeframe.M5), cost_model, Exchange.NSE, SIZE,
         regime_axes=regime_axes or [],
     )  # fmt: skip
 
@@ -121,6 +124,14 @@ def test_the_cost_model_label_is_exposed_for_the_ledger() -> None:
     assert engine().cost_model_label == FREE.label
 
 
-def test_quantity_must_be_positive() -> None:
-    with pytest.raises(ValueError, match="quantity"):
-        AlphaDiscoveryEngine(ForwardReturnCalculator(Timeframe.M5), FREE, Exchange.NSE, 0)
+def test_the_declared_size_is_exposed_for_the_report() -> None:
+    assert engine().size == SIZE
+
+
+def test_a_bar_priced_above_the_declared_size_is_not_an_observation() -> None:
+    # one share at 100 + i costs more than 50 rupees, so nothing here could be traded
+    tiny = AlphaDiscoveryEngine(
+        ForwardReturnCalculator(Timeframe.M5), FREE, Exchange.NSE, DeclaredSize(Decimal(50))
+    )
+
+    assert tiny.evaluate(AlwaysOn(), uptrend(20)) == []

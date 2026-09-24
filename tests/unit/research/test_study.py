@@ -15,6 +15,7 @@ from emporos.domain.fees import FeeSchedule
 from emporos.domain.hypotheses import HypothesisDeclaration
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.engine import AlphaDiscoveryEngine
 from emporos.research.features import CausalHistory, FeatureDefinition
@@ -49,7 +50,10 @@ def uptrend(n: int) -> list[Candle]:
 
 def study() -> tuple[FeatureStudy, InMemoryFeatureTrialLedger]:
     engine = AlphaDiscoveryEngine(
-        ForwardReturnCalculator(Timeframe.M5), TransactionCostModel(SCHEDULE), Exchange.NSE, 100
+        ForwardReturnCalculator(Timeframe.M5),
+        TransactionCostModel(SCHEDULE),
+        Exchange.NSE,
+        DeclaredSize(Decimal(10_000)),
     )
     ledger = InMemoryFeatureTrialLedger()
     return FeatureStudy(engine, ledger, FixedClock(NOW)), ledger

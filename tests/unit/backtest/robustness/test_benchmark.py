@@ -125,6 +125,22 @@ class TestScaler:
         assert scaled.max_strategy_loss == D(300)
         assert scaled.max_capital_deployed == D(20000)
 
+    def test_a_declared_position_value_replaces_the_benchmarks_share_everywhere(self) -> None:
+        from tests.unit.session.test_shipped_strategy_configs import _loader
+
+        scaler = BenchmarkScaler(BenchmarkLoader().load(), D(25000))
+        config = _loader().load_file(Path("config/strategies/orb_v1.yaml"))
+        base = RiskLimitsLoader().load()
+
+        assert scaler.strategy(config).risk.max_position_value == D(25000)
+        assert scaler.limits(base).max_position_value == D(25000)
+        # only the position size moved: the loss caps still follow the benchmark's capital
+        assert scaler.limits(base).max_daily_loss == D(1000)
+
+    def test_a_position_value_that_is_not_positive_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="positive"):
+            BenchmarkScaler(BenchmarkLoader().load(), D(0))
+
     def test_a_strategy_is_sized_to_the_benchmark_position(self) -> None:
         from tests.unit.session.test_shipped_strategy_configs import _loader
 

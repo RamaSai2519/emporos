@@ -16,8 +16,16 @@ parameter_grid:             # every parameter the run may vary, with every value
   target_r: ["1.5", "3.0"]
 feature_versions:           # the version of each feature definition the run reads
   opening_range: 1
+position_value: "25000"     # optional: rupees per position the run is judged at (EM-191 F4)
 declared_at: 2026-09-24T09:00:00+05:30   # ISO-8601 with a UTC offset
 ```
+
+`position_value` fixes the size before the run, because cost depends on it (0.371% round trip at
+Rs 5,000, 0.324% at Rs 25,000). Leave it out and the run uses `config/risk.yaml`'s
+`max_position_value` and says so in its report; `--position-value` on the command line may set it
+only when the declaration does not, and a value that disagrees with the declaration is refused. A
+size above the risk limit is reported as needing an operator risk change and cannot trade as is.
+Stating it changes the experiment id, so declarations made before this field keep theirs.
 
 Unknown keys are refused. Validate a file and see its id (no run needed):
 

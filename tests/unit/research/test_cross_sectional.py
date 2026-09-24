@@ -13,6 +13,7 @@ from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.cross_sectional import CrossSectionalEngine, Tail
 from emporos.research.factors import AlignedUniverse, BetaEstimator
@@ -98,6 +99,7 @@ def _engine(**overrides: object) -> CrossSectionalEngine:
         cost_model=FREE,
         exchange=Exchange.NSE,
         capital=Money.of(Decimal(50_000)),
+        size=DeclaredSize(Decimal(12_500)),
         tail_fraction=Decimal("0.5"),
     )
     defaults.update(overrides)
@@ -116,9 +118,16 @@ def test_tail_fraction_must_lie_in_zero_to_half() -> None:
         _engine(tail_fraction=Decimal("0"))
 
 
-def test_capital_must_be_positive() -> None:
-    with pytest.raises(ValueError, match="capital"):
-        _engine(capital=Money.zero())
+def test_the_declared_size_is_exposed_for_the_report() -> None:
+    assert _engine().size == DeclaredSize(Decimal(12_500))
+
+
+def test_a_book_that_cannot_be_held_at_the_declared_size_is_refused_not_shrunk() -> None:
+    # two tails of two names are four legs; at 25,000 each that is 100,000 against 50,000 capital
+    engine = _engine(size=DeclaredSize(Decimal(25_000)))
+
+    with pytest.raises(ValueError, match="declare a smaller size"):
+        engine.evaluate(_four_instrument_universe())
 
 
 def test_cost_model_label_is_exposed() -> None:

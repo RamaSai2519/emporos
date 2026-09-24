@@ -12,6 +12,7 @@ from emporos.domain.candles import Candle
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.horizons import Horizon
 from emporos.research.lead_lag import LATE_SESSION, LeadLagEngine
@@ -46,7 +47,7 @@ def _engine(**overrides: object) -> LeadLagEngine:
         target_horizons=[TARGET],
         cost_model=FREE,
         exchange=Exchange.NSE,
-        capital=Money.of(Decimal(50_000)),
+        size=DeclaredSize(Decimal(50_000)),
     )
     defaults.update(overrides)
     return LeadLagEngine(**defaults)  # type: ignore[arg-type]
@@ -74,9 +75,8 @@ def test_at_least_one_early_horizon_is_required() -> None:
         _engine(early_horizons=[])
 
 
-def test_capital_must_be_positive() -> None:
-    with pytest.raises(ValueError, match="capital"):
-        _engine(capital=Money.zero())
+def test_the_declared_size_is_exposed_for_the_report() -> None:
+    assert _engine().size == DeclaredSize(Decimal(50_000))
 
 
 def test_cost_model_label_is_exposed() -> None:

@@ -78,6 +78,7 @@ class ExperimentDocument:
                 "parameter_grid": {k: list(v) for k, v in sorted(d.parameter_grid.items())},
                 "feature_versions": dict(sorted(d.feature_versions.items())),
                 "declared_at": d.declared_at.isoformat(),
+                **({} if d.position_value is None else {"position_value": str(d.position_value)}),
             },
             "versions": self._versions(report.versions),
             "periods": {
@@ -187,6 +188,8 @@ class ExperimentDocument:
             f"- Economic rationale: {d.economic_rationale}",
             f"- Falsified by: {d.falsification}",
         ]
+        if d.position_value is not None:  # absent before F4: those reports render as they did
+            lines.append(f"- Declared position value: ₹{d.position_value:,.2f}")
         lines += ["", "Parameter grid:", ""]
         lines += self._table(
             ("parameter", "values"),

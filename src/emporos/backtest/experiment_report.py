@@ -47,6 +47,7 @@ from emporos.domain.research_experiments import (
     WindowMetrics,
     outcome_of,
 )
+from emporos.domain.sizing import DeclaredSize, SizeSource
 
 SourceT_contra = TypeVar("SourceT_contra", contravariant=True)
 
@@ -142,7 +143,13 @@ class CalendarDays:
 
 
 class CurationExperimentReportBuilder:
-    def __init__(self, minter: ExperimentIdMinter | None = None) -> None:
+    def __init__(
+        self, size: DeclaredSize, risk_limit: Decimal, minter: ExperimentIdMinter | None = None
+    ) -> None:
+        """`size` is the position value the run was judged at and `risk_limit` the platform's own
+        max_position_value: a report always says what size it is about (EM-191 F4)."""
+        self._size = size
+        self._risk_limit = risk_limit
         self._minter = minter or ExperimentIdMinter()
 
     def build(
@@ -167,6 +174,7 @@ class CurationExperimentReportBuilder:
                 "own quantity and entry price; simulated slippage is already inside the fill "
                 "prices, so gross P&L is after slippage and before charges"
             )
+        notes.append(self._size_note())
         outcome, reasons, notes_ = PredeclarationCap().apply(
             declaration, outcome, reasons, tuple(notes)
         )
@@ -181,6 +189,21 @@ class CurationExperimentReportBuilder:
             notes=notes_,
             supporting=self._supporting(robustness),
         )
+
+    def _size_note(self) -> str:
+        size = self._size
+        origin = (
+            "declared before the run"
+            if size.source is SizeSource.DECLARED
+            else "not declared, so the risk limits' max_position_value"
+        )
+        note = f"judged at a position value of {size.position_value:,.2f} rupees ({origin})"
+        if size.exceeds(self._risk_limit):
+            note += (
+                f"; that is above the platform's {self._risk_limit:,.2f}, so it cannot trade "
+                "without an operator risk change (EDGE_SEARCH_PLAN §8)"
+            )
+        return note
 
     @staticmethod
     def _verdict(
@@ -292,9 +315,15 @@ class CurationExperimentReportBuilder:
             found.append(WindowMetrics(w.index, days.first, days.last, w.net_pnl))
         return tuple(found)
 
-    @staticmethod
-    def _supporting(robustness: RobustnessReport | None) -> dict[str, JsonValue]:
-        if robustness is None:
-            return {}
-        document: dict[str, Any] = RobustnessDocument().of(robustness)
-        return {"robustness": document}
+    def _supporting(self, robustness: RobustnessReport | None) -> dict[str, JsonValue]:
+        sizing: dict[str, JsonValue] = {
+            "position_value": str(self._size.position_value),
+            "source": self._size.source.value,
+            "risk_limit": str(self._risk_limit),
+            "requires_operator_risk_change": self._size.exceeds(self._risk_limit),
+        }
+        supporting: dict[str, JsonValue] = {"sizing": sizing}
+        if robustness is not None:
+            document: dict[str, Any] = RobustnessDocument().of(robustness)
+            supporting["robustness"] = document
+        return supporting

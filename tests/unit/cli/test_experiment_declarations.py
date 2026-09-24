@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
+from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.cli.experiment_declarations import (
     DEFAULT_DECLARATIONS_DIR,
     ExperimentDeclarationLoader,
@@ -103,3 +105,41 @@ def test_every_shipped_declaration_is_valid() -> None:
     assert files, "the repository ships at least one declaration"
     for path in files:
         assert ExperimentDeclarationLoader().load(path).slug == path.stem
+
+
+class TestDeclaredPositionValue:
+    """EM-191 F4: the size a run is judged at is part of what is declared before it."""
+
+    def test_it_is_optional_and_absent_by_default(self, tmp_path: Path) -> None:
+        declared = ExperimentDeclarationLoader().load(write(tmp_path, VALID))
+
+        assert declared.position_value is None
+
+    def test_a_quoted_value_or_an_integer_is_read_exactly(self, tmp_path: Path) -> None:
+        loader = ExperimentDeclarationLoader()
+
+        (tmp_path / "a").mkdir()
+        (tmp_path / "b").mkdir()
+        quoted = loader.load(write(tmp_path / "a", VALID + 'position_value: "25000.50"\n'))
+        whole = loader.load(write(tmp_path / "b", VALID + "position_value: 50000\n"))
+
+        assert quoted.position_value == Decimal("25000.50")
+        assert whole.position_value == Decimal(50000)
+
+    @pytest.mark.parametrize("bad", ["25000.5", "abc", "0", '"-5"', "true"])
+    def test_a_float_text_zero_or_negative_is_refused(self, tmp_path: Path, bad: str) -> None:
+        with pytest.raises(ConfigurationError):
+            ExperimentDeclarationLoader().load(write(tmp_path, VALID + f"position_value: {bad}\n"))
+
+    def test_stating_a_size_changes_the_id_and_not_stating_one_leaves_it_alone(
+        self, tmp_path: Path
+    ) -> None:
+        loader = ExperimentDeclarationLoader()
+        (tmp_path / "a").mkdir()
+        (tmp_path / "b").mkdir()
+        plain = loader.load(write(tmp_path / "a", VALID))
+        sized = loader.load(write(tmp_path / "b", VALID + 'position_value: "25000"\n'))
+
+        assert "position_value" not in plain.canonical()
+        assert sized.canonical()["position_value"] == "25000"
+        assert ExperimentIdMinter().mint(plain) != ExperimentIdMinter().mint(sized)

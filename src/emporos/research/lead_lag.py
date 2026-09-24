@@ -23,6 +23,7 @@ from decimal import Decimal
 from emporos.domain.candles import Candle
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.engine import RegimeAxisFactory
 from emporos.research.horizons import Horizon
@@ -53,7 +54,7 @@ class LeadLagEngine:
         target_horizons: Sequence[Horizon],
         cost_model: TransactionCostModel,
         exchange: Exchange,
-        capital: Money,
+        size: DeclaredSize,
         include_late_session: bool = True,
         conditioning_axes: Sequence[RegimeAxisFactory] = (),
     ) -> None:
@@ -61,15 +62,17 @@ class LeadLagEngine:
             raise ValueError("at least one early horizon is required")
         if not target_horizons and not include_late_session:
             raise ValueError("at least one target horizon (or late-session) is required")
-        if capital <= Money.zero():
-            raise ValueError("capital must be positive")
         self._early_horizons = tuple(early_horizons)
         self._target_horizons = tuple(target_horizons)
         self._cost_model = cost_model
         self._exchange = exchange
-        self._capital = capital
+        self._size = size
         self._include_late_session = include_late_session
         self._conditioning_axes = tuple(conditioning_axes)
+
+    @property
+    def size(self) -> DeclaredSize:
+        return self._size
 
     @property
     def cost_model_label(self) -> str:
@@ -162,7 +165,7 @@ class LeadLagEngine:
         price = price_by_day[day]
         if price.amount <= _ZERO:
             return gross
-        quantity = int(self._capital.amount // price.amount)
+        quantity = self._size.quantity_at(price)
         if quantity < 1:
             return gross
         return self._cost_model.adjusted_return(gross, self._exchange, quantity, price)

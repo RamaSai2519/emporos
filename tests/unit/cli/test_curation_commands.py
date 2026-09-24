@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -13,11 +14,12 @@ from typer.testing import CliRunner
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.holdout import FinalHoldoutReservation
 from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
-from emporos.cli.curation_commands import PlanCostModel, PlanHoldout
+from emporos.cli.curation_commands import PlanCostModel, PlanHoldout, _size_of
 from emporos.cli.main import app
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from tests.support.experiment_reports import sample_declaration
 
 runner = CliRunner()
 
@@ -124,3 +126,32 @@ class TestDeclaration:
         )  # fmt: skip
 
         assert result.exit_code == 1 and "curation failed" in result.output
+
+
+class TestPositionValue:
+    """EM-191 F4: every curation is judged at a size stated before the run, or the risk limit."""
+
+    def test_with_nothing_stated_the_risk_limit_is_the_size(self) -> None:
+        size = _size_of(None, None, Decimal(25_000))
+
+        assert (size.position_value, size.source.value) == (Decimal(25_000), "risk_default")
+
+    def test_the_declaration_fixes_the_size(self) -> None:
+        declared = replace(sample_declaration(), position_value=Decimal(50_000))
+
+        size = _size_of(declared, None, Decimal(25_000))
+
+        assert (size.position_value, size.source.value) == (Decimal(50_000), "declared")
+
+    def test_a_command_line_value_cannot_contradict_the_declaration(self) -> None:
+        declared = replace(sample_declaration(), position_value=Decimal(50_000))
+
+        with pytest.raises(ValueError, match="declaration fixes"):
+            _size_of(declared, "5000", Decimal(25_000))
+
+    def test_a_command_line_value_is_the_size_when_nothing_was_declared(self) -> None:
+        assert _size_of(None, "5000", Decimal(25_000)).position_value == Decimal(5000)
+
+    def test_a_value_that_is_not_a_number_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="not a number"):
+            _size_of(None, "lots", Decimal(25_000))

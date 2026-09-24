@@ -15,6 +15,7 @@ from emporos.domain.fees import FeeSchedule
 from emporos.domain.hypotheses import HypothesisDeclaration
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.horizons import Horizon
 from emporos.research.hypotheses import HoldoutViolation
@@ -60,7 +61,7 @@ def study() -> tuple[LeadLagStudy, InMemoryLeadLagTrialLedger]:
     engine = LeadLagEngine(
         early_horizons=[EARLY], target_horizons=[TARGET],
         cost_model=TransactionCostModel(SCHEDULE), exchange=Exchange.NSE,
-        capital=Money.of(Decimal(50_000)),
+        size=DeclaredSize(Decimal(50_000)),
     )  # fmt: skip
     ledger = InMemoryLeadLagTrialLedger()
     return LeadLagStudy(engine, ledger, FixedClock(NOW)), ledger

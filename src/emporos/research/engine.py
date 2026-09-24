@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from emporos.domain.candles import Candle
 from emporos.domain.instruments import Exchange
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.features import Feature, FeatureSeries
 from emporos.research.horizons import ForwardReturnCalculator, Horizon
@@ -42,16 +43,21 @@ class AlphaDiscoveryEngine:
         forward_returns: ForwardReturnCalculator,
         cost_model: TransactionCostModel,
         exchange: Exchange,
-        quantity: int,
+        size: DeclaredSize,
         regime_axes: Sequence[RegimeAxisFactory] = (),
     ) -> None:
-        if quantity <= 0:
-            raise ValueError("quantity must be positive")
+        """`size` is the position value every observation is costed at: cost is a function of
+        size, so a study states it up front (EM-191 F4). A bar whose price is above it (not even
+        one share fits) is not an observation, since that trade could not be taken."""
         self._forward_returns = forward_returns
         self._cost_model = cost_model
         self._exchange = exchange
-        self._quantity = quantity
+        self._size = size
         self._regime_axes = tuple(regime_axes)
+
+    @property
+    def size(self) -> DeclaredSize:
+        return self._size
 
     @property
     def cost_model_label(self) -> str:
@@ -65,11 +71,14 @@ class AlphaDiscoveryEngine:
         for index, value in enumerate(values):
             if value is None:
                 continue
+            quantity = self._size.quantity_at(bars[index].close)
+            if quantity < 1:
+                continue
             for horizon, forward in self._forward_returns.returns_at(bars, index).items():
                 if forward is None:
                     continue
                 adjusted = self._cost_model.adjusted_return(
-                    forward, self._exchange, self._quantity, bars[index].close
+                    forward, self._exchange, quantity, bars[index].close
                 )
                 per_horizon[horizon].append((index, Observation(value, forward, adjusted)))
 

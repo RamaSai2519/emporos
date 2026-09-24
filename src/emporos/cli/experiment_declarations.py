@@ -9,6 +9,7 @@ exactly what it says), and the file's name must be its slug (one file, one exper
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -31,9 +32,10 @@ _KEYS = frozenset(
         "parameter_grid",
         "feature_versions",
         "declared_at",
+        "position_value",
     }
 )
-_REQUIRED = _KEYS - {"parameter_grid", "feature_versions"}
+_REQUIRED = _KEYS - {"parameter_grid", "feature_versions", "position_value"}
 
 
 class ExperimentDeclarationLoader:
@@ -61,6 +63,7 @@ class ExperimentDeclarationLoader:
                 parameter_grid=self._grid(path, document.get("parameter_grid") or {}),
                 feature_versions=self._versions(path, document.get("feature_versions") or {}),
                 declared_at=self._moment(path, document["declared_at"]),
+                position_value=self._money(path, document.get("position_value")),
             )
         except ValueError as error:
             raise ConfigurationError(f"{path}: {error}") from error
@@ -116,6 +119,14 @@ class ExperimentDeclarationLoader:
             str(name): self._scalar(path, f"feature_versions.{name}", version)
             for name, version in raw.items()
         }
+
+    def _money(self, path: Path, value: object) -> Decimal | None:
+        if value is None:
+            return None
+        try:
+            return Decimal(self._scalar(path, "position_value", value))
+        except InvalidOperation:
+            raise ConfigurationError(f"{path}: position_value is not a number: {value!r}") from None
 
     @staticmethod
     def _moment(path: Path, value: object) -> datetime:

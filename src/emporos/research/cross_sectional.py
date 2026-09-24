@@ -19,6 +19,7 @@ from enum import StrEnum
 from emporos.backtest.metrics.decimal_math import DecimalMath
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.engine import RegimeAxisFactory
 from emporos.research.factors import (
@@ -96,7 +97,11 @@ class TailSegment:
 class CrossSectionalEngine:
     """Evaluates cross-sectional residual momentum over an already-aligned universe: pure,
     I/O-free, like `AlphaDiscoveryEngine`. Fetching aligned bars and recording results is the
-    composition root's / `CrossSectionalStudy`'s job."""
+    composition root's / `CrossSectionalStudy`'s job.
+
+    Every leg trades at the declared `size`, so a book of `2 * tail` legs deploys `2 * tail * size`
+    and that must fit `capital` (the platform's capital-deployed limit): a study whose tails cannot
+    be held at the declared size is refused, not quietly shrunk (EM-191 F4)."""
 
     def __init__(
         self,
@@ -106,6 +111,7 @@ class CrossSectionalEngine:
         cost_model: TransactionCostModel,
         exchange: Exchange,
         capital: Money,
+        size: DeclaredSize,
         tail_fraction: Decimal = Decimal("0.2"),
         sectors: SectorLookup | None = None,
         conditioning_axes: Sequence[RegimeAxisFactory] = (),
@@ -122,9 +128,23 @@ class CrossSectionalEngine:
         self._cost_model = cost_model
         self._exchange = exchange
         self._capital = capital
+        self._size = size
         self._tail_fraction = tail_fraction
         self._sectors = sectors
         self._conditioning_axes = tuple(conditioning_axes)
+
+    @property
+    def size(self) -> DeclaredSize:
+        return self._size
+
+    def _require_deployable(self, tail_size: int) -> None:
+        deployed = self._size.position_value * 2 * tail_size
+        if deployed > self._capital.amount:
+            raise ValueError(
+                f"{2 * tail_size} legs at {self._size.position_value} each deploy {deployed}, "
+                f"above the {self._capital.amount} capital: declare a smaller size or a smaller "
+                "tail_fraction"
+            )
 
     @property
     def cost_model_label(self) -> str:
@@ -191,13 +211,13 @@ class CrossSectionalEngine:
             return
         ranked = sorted(signals.items(), key=lambda kv: kv[1], reverse=True)
         top, bottom = ranked[:tail_size], ranked[-tail_size:]
-        capital_per_position = DecimalMath.divide(self._capital.amount, Decimal(2 * tail_size))
+        self._require_deployable(tail_size)
 
         for tail, members in ((Tail.TOP, top), (Tail.BOTTOM, bottom)):
             for instrument_id, _ in members:
                 self._record_member(
                     universe, instrument_id, index, tail, signal_horizon,
-                    capital_per_position, labels, accumulator,
+                    labels, accumulator,
                 )  # fmt: skip
 
     def _record_member(
@@ -207,7 +227,6 @@ class CrossSectionalEngine:
         index: int,
         tail: Tail,
         signal_horizon: Horizon,
-        capital_per_position: Decimal,
         labels: dict[str, dict[str, list[str | None]]],
         accumulator: dict[
             tuple[Tail, Horizon, Horizon, str | None, str | None], list[tuple[Decimal, Decimal]]
@@ -217,7 +236,7 @@ class CrossSectionalEngine:
         price = bars[index].close
         if price.amount <= _ZERO:
             return
-        quantity = int(capital_per_position // price.amount)
+        quantity = self._size.quantity_at(price)
         if quantity < 1:
             return
         for holding_horizon, gross in self._holding_returns.returns_at(bars, index).items():

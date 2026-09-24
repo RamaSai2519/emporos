@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -16,10 +17,13 @@ from emporos.cli.experiment_registry import (
 )
 from emporos.cli.main import app
 from emporos.domain.research_experiments import ExperimentOutcomeLabel, VersionStamp
+from emporos.domain.sizing import DeclaredSize, SizeSource
 from tests.support.experiment_reports import sample_declaration, sample_report
 from tests.unit.backtest.test_curation_run import curate, reservation
 
 runner = CliRunner()
+RISK_LIMIT = Decimal(25_000)
+SIZE = DeclaredSize(RISK_LIMIT, SizeSource.RISK_DEFAULT)
 
 
 class TestDeclare:
@@ -55,7 +59,7 @@ class TestExperimentPublication:
     async def test_a_finished_curation_is_published_and_indexed(self, tmp_path: Path) -> None:
         record, _ = await curate(reservation())
         publication = ExperimentPublication(
-            CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
+            CurationExperimentReportBuilder(SIZE, RISK_LIMIT), FileExperimentRegistry(tmp_path)
         )
 
         report, outcome = publication.publish(record, sample_declaration(), VersionStamp())
@@ -70,7 +74,7 @@ class TestExperimentPublication:
     async def test_publishing_the_same_curation_again_changes_nothing(self, tmp_path: Path) -> None:
         record, _ = await curate(reservation())
         publication = ExperimentPublication(
-            CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
+            CurationExperimentReportBuilder(SIZE, RISK_LIMIT), FileExperimentRegistry(tmp_path)
         )
         publication.publish(record, sample_declaration(), VersionStamp())
 
@@ -83,7 +87,7 @@ class TestExperimentPublication:
     ) -> None:
         record, _ = await curate(reservation())
         publication = ExperimentPublication(
-            CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
+            CurationExperimentReportBuilder(SIZE, RISK_LIMIT), FileExperimentRegistry(tmp_path)
         )
 
         report, _ = publication.publish(

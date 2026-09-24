@@ -144,16 +144,25 @@ class BenchmarkLoader:
 
 
 class BenchmarkScaler:
-    """Sizes the platform's limits and a strategy's positions to the benchmark's capital."""
+    """Sizes the platform's limits and a strategy's positions to the benchmark's capital.
 
-    def __init__(self, benchmark: BenchmarkConfig) -> None:
+    A position is the benchmark's share of its capital unless a run declares its own size
+    (EM-191 F4): then `position_value` replaces that share, in the limits and the strategy alike, so
+    the risk gate and the strategy agree on what one position is."""
+
+    def __init__(self, benchmark: BenchmarkConfig, position_value: Decimal | None = None) -> None:
+        if position_value is not None and position_value <= 0:
+            raise ValueError("the position value must be positive")
         self._benchmark = benchmark
+        self._position_value = (
+            benchmark.max_position_value if position_value is None else position_value
+        )
 
     def limits(self, base: RiskLimits) -> RiskLimits:
         b = self._benchmark
         return base.model_copy(
             update={
-                "max_position_value": b.max_position_value,
+                "max_position_value": self._position_value,
                 "max_daily_loss": b.max_daily_loss,
                 "max_strategy_loss": min(base.max_strategy_loss, b.max_daily_loss),
                 "max_capital_deployed": min(base.max_capital_deployed, b.capital),
@@ -161,7 +170,5 @@ class BenchmarkScaler:
         )
 
     def strategy(self, config: ResolvedStrategyConfig) -> ResolvedStrategyConfig:
-        risk = config.risk.model_copy(
-            update={"max_position_value": self._benchmark.max_position_value}
-        )
+        risk = config.risk.model_copy(update={"max_position_value": self._position_value})
         return config.model_copy(update={"risk": risk})

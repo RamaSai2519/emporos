@@ -15,6 +15,7 @@ from emporos.domain.fees import FeeSchedule
 from emporos.domain.hypotheses import HypothesisDeclaration
 from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
+from emporos.domain.sizing import DeclaredSize
 from emporos.research.costs import TransactionCostModel
 from emporos.research.cross_sectional import CrossSectionalEngine
 from emporos.research.cross_sectional_ledger import InMemoryCrossSectionalTrialLedger
@@ -70,6 +71,7 @@ def study() -> tuple[CrossSectionalStudy, InMemoryCrossSectionalTrialLedger]:
         cost_model=TransactionCostModel(SCHEDULE),
         exchange=Exchange.NSE,
         capital=Money.of(Decimal(50_000)),
+        size=DeclaredSize(Decimal(12_500)),
         tail_fraction=Decimal("0.5"),
     )
     ledger = InMemoryCrossSectionalTrialLedger()
