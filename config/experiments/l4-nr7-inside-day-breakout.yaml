@@ -1,0 +1,47 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-205, search-map cell
+# L4-nr7-inside-day-breakout. Not yet run: no result of this cell has been seen.
+#
+# What is run: one trade per name per day. The condition is read off the PREVIOUS sessions' daily
+# high and low (built from the 5m bars themselves; a session with fewer than 70 of its 75 bars is not
+# used as a day and breaks the run of days). `nr4` / `nr7`: the previous session's range (high - low,
+# as a share of its close) is strictly the smallest of the last 4 / 7 sessions including it.
+# `inside`: the previous session's high is below the one before it and its low above it. On a day
+# that meets the condition, the first bar (from 09:15, entries before 14:45) that CLOSES beyond the
+# previous session's high by `buffer_bps` is a long, and beyond its low by `buffer_bps` is a short;
+# enter at that close and hold to the 15:15 square-off with no stop and no target. Otherwise no trade.
+# One arm is one (condition, buffer_bps) pair: 3 x 2 = 6 arms, every one a counted look.
+#
+# Data: Discovery only (start of data to 2024-12-31), the 29 names with ten years of 5m bars, the 7
+# audit-quarantined corporate-action days excluded. Confirmation and the vault are not touched.
+#
+# Stages (§6): S1 median absolute move at least 2x the adverse round-trip cost at Rs 25,000 (§3.5);
+# S2 net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no instrument > 50% of net, net
+# expectancy > 0 at benchmark costs, gross >= the adverse break-even.
+family: strategy
+slug: l4-nr7-inside-day-breakout
+hypothesis: >-
+  After a session whose range was the narrowest of the last 4 or 7, or wholly inside the session
+  before it, a break of that session's high or low on the next day is followed to the close by a move
+  whose mean gross return exceeds the 0.636% adverse cost at Rs 25,000, because compressed ranges
+  are followed by expansion.
+economic_rationale: >-
+  A narrow or inside day is a day on which the two sides balanced. Resting orders and stops
+  accumulate just beyond its extremes, so the first break releases them together and the move
+  extends as the stops trigger; the price has to travel further than on an ordinary day because the
+  compression stored the range. The cost of a round trip is fixed in percent, so the setup only pays
+  if the expansion is large.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the breakout entry to
+  the close on the conditioning days is below 2x the mean adverse round-trip cost (about 1.27%): that
+  arm is INFEASIBLE. S2: net t >= 3.0, at least 300 trades, net positive in at least 60% of calendar
+  years, no instrument above 50% of net profit, net expectancy > 0 at benchmark costs and mean gross
+  at least the adverse break-even. If no arm passes S2 the cell is SCREEN_REJECT. An arm that passes
+  at one grid point and not its neighbours is overfit (§3.8). All 6 arms are counted in the
+  program-wide trial count. The scan is advisory (no engine strategy to prove parity against).
+parameter_grid:
+  condition: [nr4, nr7, inside]
+  buffer_bps: ["5", "25"]
+feature_versions:
+  prior_day_range_state: 1
+position_value: "25000"
+declared_at: 2026-09-24T20:20:00+05:30
