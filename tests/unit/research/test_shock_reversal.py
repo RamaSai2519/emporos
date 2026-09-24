@@ -30,8 +30,9 @@ def session(
     day: date, *, open_: str, at_hour: str, close: str, skip_bar: int | None = None,
 ) -> list[Candle]:  # fmt: skip
     """A session of 5m bars from 09:15 IST. Bar 1 opens at `open_`; bars 2..11 close at `open_`;
-    bar 12 (starts 10:10, the end of the first hour) closes at `at_hour`; bar 13 opens where bar 12 closed (so an order
-    placed at 10:15 can trade), later bars close at `close`. A rupee of range either side lets orders trade through."""
+    bar 12 (starts 10:10, the end of the first hour) closes at `at_hour`; bar 13 opens where bar 12
+    closed (so an order placed at 10:15 can trade); later bars close at `close`. A rupee of range
+    either side lets orders trade through."""
     start = datetime(day.year, day.month, day.day, 3, 45, tzinfo=UTC)
     out: list[Candle] = []
     for i in range(75):

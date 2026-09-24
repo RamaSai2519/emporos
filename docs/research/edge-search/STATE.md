@@ -5,15 +5,30 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 10 (2026-09-24) |
-| Last completed | **L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **L3-first-hour-shock-reversal**, then L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter and the children L4-gap-fade-expected-range and L3-orb-extreme-rvol (volume multiples 4x and up, the one monotone trend the ORB screen showed). D2 cells are open: L3-idio-gap-continuation, L3-idio-gap-fade, L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
-| Global N | **14,056** on 2026-09-24 (14,044 plus the 12 arms of L3-orb-high-rvol-wide-range) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 11 (2026-09-24) |
+| Last completed | **L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **L3-first-hour-reversal-large-gap** (child: gap 2.5% and up, retrace 0.25; watch the 300-trade floor), then L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter, and the children L4-gap-fade-expected-range and L3-orb-extreme-rvol. D2 cells are open: L3-idio-gap-continuation, L3-idio-gap-fade, L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
+| Global N | **14,062** on 2026-09-24 (14,056 plus the 6 arms of L3-first-hour-shock-reversal) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 42 TODO, 2 terminal (both SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 42 TODO, 3 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 11 (2026-09-24): L3-first-hour-shock-reversal (EM-203)
+Declared and committed first (1583988): a raw gap of at least 1/1.5/2%, then at the close of the 10:10
+bar (end of the first hour) the retrace (open minus close over open minus previous close) must be at
+least 0.25 or 0.5; if so, trade the retrace direction from that close to the 15:15 square-off, no stop.
+6 arms, Rs 25,000, Discovery only. Scan `scans/shock_reversal.py`, 17 tests, recipe in `CELLS`.
+
+**Result: every arm INFEASIBLE** (median |move| 0.85-1.23%, bar about 1.27%). But this is the nearest
+miss so far: waiting for the retrace lifts the fade's gross from under 0.1% (EM-201's blind 09:15 entry)
+to 0.17-0.35%, and gross rises with gap size (0.188, 0.257, 0.351% at 1/1.5/2% with retrace 0.25).
+The 2% gap at retrace 0.25 is the only net-positive arm (+0.023%, t 0.24, 809 trades: noise). A looser
+retrace floor did better than a stricter one. Child per §7.4 (gross positive, net negative: restrict to
+the days that can pay): L3-first-hour-reversal-large-gap, gaps of 2.5% and up. Not a fit-to-the-grid
+child: it follows the monotone trend in gap size that three thresholds showed, and its trade count is
+the risk (the 2% arm has 809, so 3% may have only a few hundred).
 
 ## Iteration 10 (2026-09-24): L3-orb-high-rvol-wide-range (EM-202)
 Declared and committed first (`config/experiments/l3-orb-high-rvol-wide-range.yaml`, 863e627): opening
