@@ -21,8 +21,10 @@ from emporos.backtest.engine import BacktestResult
 from emporos.backtest.job import BacktestJob, BacktestRequest
 from emporos.backtest.progress import BacktestProgressSink
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
+from emporos.backtest.vault import VaultedCandleReader
 from emporos.cli.cold_storage import cold_archive
 from emporos.cli.strategy_composition import build_registry
+from emporos.cli.vault_files import VaultFiles
 from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
 from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
@@ -95,14 +97,17 @@ async def open_backtest_runtime(settings: Settings) -> AsyncIterator[BacktestRun
     try:
         database = mongo.database()
         repository = CandleRepository(MongoCandleStore(database), cold_archive(settings))
-        reader = CachingCandleReader(
+        cache = CachingCandleReader(
             repository, CandleCacheFiles(candle_cache_root(settings)), SystemClock()
         )
+        # Analysis reads through the vault: it cannot see the sealed days (EM-191 §4.3). The
+        # cache itself stays open for warming and prefetching, which produce no result.
+        reader = VaultedCandleReader(cache, VaultFiles().load())
         eras = await InstrumentErasReader(database).read()
         calendar = await StoredTradingCalendar.from_store(MongoCalendarStore(database))
         quarantine = CorporateActionQuarantine(await MongoQuarantineStore(database).load_all())
         yield BacktestRuntime(
-            reader, AsOfInstruments(eras), database, reader, tuple(eras), calendar, quarantine
+            reader, AsOfInstruments(eras), database, cache, tuple(eras), calendar, quarantine
         )
     finally:
         await mongo.close()

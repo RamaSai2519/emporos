@@ -4,12 +4,13 @@ builds reads candles from files only (it has no database to reach)."""
 from __future__ import annotations
 
 import pickle
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 
 from emporos.backtest.engine import BacktestEngine
 from emporos.backtest.universe import InstrumentEra
+from emporos.backtest.vault import VaultGate, VaultSeal
 from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
 from emporos.domain.instruments import Exchange, Instrument
 from emporos.domain.money import Money
@@ -30,6 +31,7 @@ def recipe(tmp_path: Path) -> CurationRecipe:
         assume_current_universe=True,
         assume_fees=True,
         limits=RiskLimitsLoader().load(),
+        vault=VaultGate(VaultSeal(date(2026, 3, 19), date(2026, 9, 18), None)),
     )
 
 

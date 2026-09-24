@@ -1,0 +1,14 @@
+# The one-shot vault (EDGE_SEARCH_PLAN.md §3.6, §4.3). Sealed BEFORE any lane ran.
+#
+# Nothing that produces a result may read these days: emporos.backtest.vault.VaultedCandleReader
+# refuses the read unless a committed unseal record in vault-opens/ admits it, for one frozen
+# candidate, at most three times in the whole program. The agent may not edit this file to shrink
+# the vault; a change is the operator's, in a commit that says why (a pinned test guards the range).
+#
+# Until D1 (a wider universe) lands the vault is time-only over the current names, which the last
+# year of research has already touched, so forward paper results carry extra weight (§4.3).
+# D1 re-seals with a sealed instrument set: that is a new seal hash, and old opens do not carry over.
+first_day: 2026-03-19
+last_day: 2026-09-18
+instruments: all
+max_opens: 3

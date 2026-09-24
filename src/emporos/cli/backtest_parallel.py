@@ -22,6 +22,7 @@ from emporos.backtest.job import ResolverTickSizes
 from emporos.backtest.parallel import PrefetchingBatch, ProcessPoolBatch, SpecNeeds
 from emporos.backtest.risk_gate import RiskGateFactory
 from emporos.backtest.universe import AsOfInstruments, InstrumentEra
+from emporos.backtest.vault import VaultedCandleReader, VaultGate
 from emporos.cli.strategy_composition import build_registry
 from emporos.persistence.candle_cache import (
     CachingCandleReader,
@@ -29,6 +30,7 @@ from emporos.persistence.candle_cache import (
     CandlePrefetcher,
     FileCandleReader,
 )
+from emporos.persistence.candles import CandleReader
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.risk.limits import RiskLimits
 
@@ -44,6 +46,16 @@ class CurationRecipe:
     assume_current_universe: bool
     assume_fees: bool
     limits: RiskLimits
+    vault: VaultGate  # a worker is a process of its own: it must carry the seal with it
+
+    def candle_reader(self) -> CandleReader:
+        """What the worker reads bars through: cache files only, and never the vault."""
+        return VaultedCandleReader(
+            FileCandleReader(
+                [CandleCacheFiles(self.cache_root), CandleCacheFiles(self.snapshot_root)]
+            ),
+            self.vault,
+        )
 
     def build(self) -> Backtester:
         universe = AsOfInstruments(self.eras).as_of(
@@ -56,11 +68,8 @@ class CurationRecipe:
                 return EarliestBeforeFirst(library)
             return StrictSchedules(library)
 
-        reader = FileCandleReader(
-            [CandleCacheFiles(self.cache_root), CandleCacheFiles(self.snapshot_root)]
-        )
         return BacktestEngine(
-            reader, build_registry(), ResolverTickSizes(universe.resolver), schedules,
+            self.candle_reader(), build_registry(), ResolverTickSizes(universe.resolver), schedules,
             gate=RiskGateFactory(self.limits),
         )  # fmt: skip
 

@@ -70,7 +70,9 @@ async def _warm(
         async def read(instrument: str, timeframe) -> None:  # type: ignore[no-untyped-def]
             nonlocal bars
             async with gate:
-                got = await runtime.reader.get_range(
+                # warming copies bars into the cache and produces no result, so it reads the
+                # cache directly rather than through the vault
+                got = await (runtime.cache or runtime.reader).get_range(
                     instrument, timeframe, start - DEFAULT_WARMUP_LOOKBACK, end
                 )
             bars += len(got)

@@ -28,6 +28,7 @@ from emporos.cli.experiment_registry import (
     ExperimentPublication,
     FileExperimentRegistry,
 )
+from emporos.cli.vault_commands import vault_app
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.domain.research_experiments import (
@@ -53,6 +54,7 @@ experiments_app = typer.Typer(
     help="Experiment declarations, reports and the registry.", no_args_is_help=True
 )
 research_app.add_typer(experiments_app, name="experiments")
+research_app.add_typer(vault_app, name="vault")
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")
 _DECLARATION = typer.Argument(..., exists=True, dir_okay=False, help="An experiment declaration.")

@@ -57,6 +57,7 @@ from emporos.cli.experiment_registry import (
 )
 from emporos.cli.program_trials import ProgramTrialCountFactory
 from emporos.cli.strategy_composition import build_registry
+from emporos.cli.vault_files import VaultFiles
 from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
@@ -319,6 +320,7 @@ async def _curate(
             timedelta(days=windows["embargo_days"]),
         )
         limits = scaler.limits(RiskLimitsLoader().load())
+        vault = VaultFiles().load()
         cache_root = candle_cache_root(settings)
         if runtime.cache is None:
             raise ValueError("the backtest runtime has no candle cache")
@@ -326,7 +328,7 @@ async def _curate(
         def recipe(snapshot: Path) -> CurationRecipe:
             return CurationRecipe(
                 cache_root, snapshot, runtime.eras, window_plan.bounds()[0], True, assume_fees,
-                limits,
+                limits, vault,
             )  # fmt: skip
 
         with curation_batch(workers, runtime.cache, cache_root, recipe) as batch:
