@@ -167,3 +167,24 @@ follow these rules while collecting:
 - Never from the production host or its broker-registered static IP (EM-211, EM-218): a block
   must not touch order placement. Run collection from the development machine.
 - Record the source URL and fetch date for every file; the data stays local and is not shared.
+
+## 9. Operating model (operator, 2026-09-25): a combination, not one strategy
+
+The program is building a book of several sleeves plus a daily allocator, not a single strategy.
+The platform (delivery, F&O, multi-day risk) is built only after research has found the sleeves.
+Every sleeve is designed and judged as a component of this book:
+
+- **Three postures per day, decided by rules declared in advance:**
+  - **Hold** (cash): no sleeve has a qualifying signal, or a risk rule (§3.5) is tripped. Expected
+    to be common, and a correct outcome, not a failure.
+  - **Normal:** a sleeve's signal qualifies, sized at its declared base size.
+  - **Aggressive:** only when conviction is high by an OBJECTIVE, pre-declared measure. Examples:
+    the signal is in its top decile of historical strength, two independent sleeves agree, and the
+    regime filter is favourable. Size steps up (for example 1.5-2x) within §3.4's ruin limit.
+    "Sure" is never a feeling: the conviction rule is part of the declaration, and the aggressive
+    tier is screened as its own arm, so it has to earn its size in Discovery.
+- **Small intraday trades (scalping) on quiet days** are a candidate sleeve, subject to the same
+  cost wall as Track C: at Rs 50,000 a round trip costs about 0.23-0.5%, so a scalp must plausibly
+  clear that per trade. It is researched under Track C; it earns a place only by passing S2.
+- **Each sleeve reports its daily P&L series,** so the combination (Track A4, EDGE_SEARCH_PLAN L10)
+  can be built from correlations and the §3.2 monthly bars applied to the whole book.
