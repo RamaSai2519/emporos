@@ -29,6 +29,7 @@ from emporos.cli.experiment_registry import (
     ExperimentPublication,
     FileExperimentRegistry,
 )
+from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
 from emporos.cli.screen_commands import research_screen
 from emporos.cli.vault_commands import vault_app
@@ -59,6 +60,7 @@ experiments_app = typer.Typer(
 research_app.add_typer(experiments_app, name="experiments")
 research_app.add_typer(vault_app, name="vault")
 research_app.command("screen")(research_screen)
+research_app.command("screen-ranked")(research_screen_ranked)
 research_app.command("collect-results")(research_collect_results)
 research_app.command("d1-universe")(research_d1_universe)
 
