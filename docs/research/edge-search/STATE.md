@@ -7,7 +7,7 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 |---|---|
 | Iteration | 3 (2026-09-24) |
 | Last completed | F2B: documented EM-178..EM-181 grids counted into N (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **F3** fast screener with the curate-parity test (needs a Jira subtask first). Then F4, vault seal; D7 quote recording and D1 in the background |
+| Next | **F3** fast screener with the curate-parity test (EM-195, To Do). Then F4, vault seal; D7 quote recording and D1 in the background |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3 (vault not yet sealed) |
 | Cells | 42 TODO, 0 terminal; no lane may run before F3, F4 and VAULT are DONE |

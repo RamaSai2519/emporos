@@ -30,7 +30,7 @@ foundations:
   - {id: F1,    name: "Search map, STATE.md and typed loader/validator", status: DONE, ticket: EM-192}
   - {id: F2,    name: "Global trial counter (program-wide N into S4/S5 DSR)", status: DONE, ticket: EM-193}
   - {id: F2B,   name: "Backfill EM-178..EM-181 research grids so N is complete", status: DONE, ticket: EM-194}
-  - {id: F3,    name: "Fast screener with curate-parity test", status: TODO}
+  - {id: F3,    name: "Fast screener with curate-parity test", status: TODO, ticket: EM-195}
   - {id: F4,    name: "Size-aware evaluation (declared position value)", status: TODO}
   - {id: VAULT, name: "Vault seal (vault.yaml + VaultGate)", status: TODO}
   - {id: D1,    name: "Wider universe (NIFTY 100, liquid NIFTY 200)", status: TODO}
