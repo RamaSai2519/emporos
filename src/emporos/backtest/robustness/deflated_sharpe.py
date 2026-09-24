@@ -17,10 +17,12 @@ itself stay in `Decimal` under the metrics' fixed context.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from statistics import NormalDist
+from types import MappingProxyType
+from typing import Protocol
 
 from emporos.backtest.metrics.decimal_math import CONTEXT, ONE, ZERO, DecimalMath
 from emporos.backtest.robustness.trials import TrialStatistics
@@ -132,11 +134,59 @@ class SharpeConfidence:
             return NormalCurve.cdf((sharpe - benchmark) * scale)
 
 
+class TrialSpread(Protocol):
+    """How widely a skill-less trial's Sharpe would scatter: the scale of the luck benchmark.
+
+    Returns the spread (a daily-Sharpe standard deviation) or, when it cannot be known, why."""
+
+    def of(self, trials: TrialStatistics, moments: ReturnMoments) -> Decimal | str: ...
+
+
+class ObservedTrialSpread:
+    """The standard deviation of the recorded trials' own Sharpes (the paper's empirical form).
+
+    Sound when every trial was measured over the same span as the candidate. When the trials are
+    shorter, or differ in their true means, the spread is wider than luck alone and does not shrink
+    as the candidate's record grows."""
+
+    def of(self, trials: TrialStatistics, moments: ReturnMoments) -> Decimal | str:
+        if trials.count < 1:
+            return "no trials are recorded, so the search size is unknown"
+        if trials.count == 1:
+            return ZERO
+        if trials.sharpe_variance is None:
+            return (
+                f"{trials.count} trials but only {trials.scored} carry a Sharpe ratio: "
+                "their spread, which sets the luck benchmark, cannot be measured"
+            )
+        return DecimalMath.sqrt(trials.sharpe_variance)
+
+
+class NullTrialSpread:
+    """The scatter of a zero-edge Sharpe estimated over the candidate's own days: 1/sqrt(T-1)
+    (EM-206). It is the spread the paper's empirical variance would take if all N trials were
+    skill-less and measured on the candidate's span. N stays the full program-wide count, so the
+    hurdle stays near the Bonferroni z for N, and it tightens as the record lengthens instead of
+    staying fixed at the trials' average length."""
+
+    def of(self, trials: TrialStatistics, moments: ReturnMoments) -> Decimal | str:
+        if trials.count < 1:
+            return "no trials are recorded, so the search size is unknown"
+        with localcontext(CONTEXT):
+            return ONE / Decimal(moments.observations - 1).sqrt()
+
+
+TRIAL_SPREADS: Mapping[str, TrialSpread] = MappingProxyType(
+    {"observed": ObservedTrialSpread(), "null_hypothesis": NullTrialSpread()}
+)
+
+
 class DeflatedSharpe:
-    def __init__(self, annualisation_days: int = 252) -> None:
+    def __init__(self, annualisation_days: int = 252, spread: TrialSpread | None = None) -> None:
         if annualisation_days <= 0:
             raise ValueError("annualisation days must be positive")
         self._root_days = DecimalMath.sqrt(Decimal(annualisation_days))
+        self._spread = spread or ObservedTrialSpread()
 
     def evaluate(
         self, daily_returns: Sequence[Decimal], trials: TrialStatistics
@@ -150,7 +200,7 @@ class DeflatedSharpe:
             return self._missing(n, trials, "the returns do not vary, so there is no Sharpe ratio")
         with localcontext(CONTEXT):
             annualised = moments.sharpe * self._root_days
-        spread = self._trial_spread(trials)
+        spread = self._spread.of(trials, moments)
         if isinstance(spread, str):
             return self._missing(n, trials, spread, moments.sharpe, annualised)
         benchmark = LuckBenchmark.of(trials.count, spread)
@@ -162,20 +212,6 @@ class DeflatedSharpe:
         return DeflatedSharpeReport(
             n, trials.count, moments.sharpe, annualised, benchmark, psr, dsr, None
         )
-
-    @staticmethod
-    def _trial_spread(trials: TrialStatistics) -> Decimal | str:
-        """The standard deviation of the trials' Sharpes, or why it cannot be known."""
-        if trials.count < 1:
-            return "no trials are recorded, so the search size is unknown"
-        if trials.count == 1:
-            return ZERO
-        if trials.sharpe_variance is None:
-            return (
-                f"{trials.count} trials but only {trials.scored} carry a Sharpe ratio: "
-                "their spread, which sets the luck benchmark, cannot be measured"
-            )
-        return DecimalMath.sqrt(trials.sharpe_variance)
 
     @staticmethod
     def _missing(

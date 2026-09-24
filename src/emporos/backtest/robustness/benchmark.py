@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from emporos.backtest.robustness.deflated_sharpe import TRIAL_SPREADS
 from emporos.core.config import CONFIG_DIR
 from emporos.core.errors import ConfigurationError
 from emporos.risk.limits import RiskLimits
@@ -78,11 +79,23 @@ class VerdictThresholds(_Frozen):
     # 1 (the gate treats <=1 as an explicit, visible opt-out, not a value nobody chose);
     # `RegimeDiversity` exempts a strategy declared `regime_specific` regardless of this number.
     min_regimes: PositiveInt
+    # EM-206: which spread scales the Deflated Sharpe's luck benchmark, a name in
+    # `deflated_sharpe.TRIAL_SPREADS`. "observed" (the default, so older files keep their meaning)
+    # is the recorded trials' own Sharpe spread; "null_hypothesis" is a skill-less Sharpe's scatter
+    # over the candidate's own days. Either way the trial count is the full program-wide N.
+    deflated_sharpe_spread: str = "observed"
 
     @model_validator(mode="after")
     def _reject_below_validate(self) -> VerdictThresholds:
         if self.max_probability_net_positive_to_reject >= self.min_probability_net_positive:
             raise ValueError("the rejection line must sit below the line for calling a profit real")
+        return self
+
+    @model_validator(mode="after")
+    def _known_spread(self) -> VerdictThresholds:
+        if self.deflated_sharpe_spread not in TRIAL_SPREADS:
+            known = ", ".join(sorted(TRIAL_SPREADS))
+            raise ValueError(f"deflated_sharpe_spread must be one of: {known}")
         return self
 
 

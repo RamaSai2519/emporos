@@ -7,9 +7,12 @@ import pytest
 
 from emporos.backtest.robustness.deflated_sharpe import (
     MIN_OBSERVATIONS,
+    TRIAL_SPREADS,
     DeflatedSharpe,
     LuckBenchmark,
     NormalCurve,
+    NullTrialSpread,
+    ObservedTrialSpread,
     ReturnMoments,
     SharpeConfidence,
 )
@@ -126,6 +129,50 @@ class TestWhenItCannotBeComputed:
         impossible = ReturnMoments(20, D("0.01"), D(1), D(3), D(1))
 
         assert SharpeConfidence.of(impossible, D(0)) is None
+
+
+class TestNullTrialSpread:
+    """EM-206: the luck benchmark scaled by a skill-less Sharpe's scatter over the record."""
+
+    def test_the_spread_is_one_over_root_t_minus_one_and_needs_no_trial_sharpes(self) -> None:
+        moments = ReturnMoments.of(RETURNS)
+        assert moments is not None
+
+        spread = NullTrialSpread().of(TrialStatistics(35, 0, None), moments)
+
+        close(spread, str(1 / 9**0.5), "1e-12")  # type: ignore[arg-type]
+
+    def test_the_benchmark_is_the_expected_maximum_z_over_root_t_minus_one(self) -> None:
+        null = DeflatedSharpe(spread=NullTrialSpread())
+
+        report = null.evaluate(RETURNS, TrialStatistics(10, 0, None))
+
+        close(report.expected_max_sharpe, str(1.57459830134575 / 3), "1e-9")
+        assert report.computed
+
+    def test_a_longer_record_lowers_the_benchmark_but_more_trials_still_raise_it(self) -> None:
+        null = DeflatedSharpe(spread=NullTrialSpread())
+        short = null.evaluate(RETURNS, TrialStatistics(100, 0, None))
+        long = null.evaluate(RETURNS * 4, TrialStatistics(100, 0, None))
+        wider = null.evaluate(RETURNS * 4, TrialStatistics(10_000, 0, None))
+
+        assert long.expected_max_sharpe < short.expected_max_sharpe  # type: ignore[operator]
+        assert wider.expected_max_sharpe > long.expected_max_sharpe  # type: ignore[operator]
+
+    def test_no_trials_recorded_is_still_refused(self) -> None:
+        report = DeflatedSharpe(spread=NullTrialSpread()).evaluate(
+            RETURNS, TrialStatistics(0, 0, None)
+        )
+
+        assert not report.computed and report.reason is not None and "no trials" in report.reason
+
+
+def test_the_default_spread_is_the_observed_one_and_both_are_named() -> None:
+    by_default = DeflatedSharpe().evaluate(RETURNS, stats(10, "0.01"))
+    observed = DeflatedSharpe(spread=ObservedTrialSpread()).evaluate(RETURNS, stats(10, "0.01"))
+
+    assert by_default == observed
+    assert set(TRIAL_SPREADS) == {"observed", "null_hypothesis"}
 
 
 class TestLuckBenchmark:

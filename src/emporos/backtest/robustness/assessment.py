@@ -35,7 +35,11 @@ from emporos.backtest.portfolio import ClosedTrade, TradeDirection
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
 from emporos.backtest.robustness.concentration import ConcentrationCheck, ConcentrationReport
 from emporos.backtest.robustness.cost_sensitivity import CostSensitivity, ScenarioOutcome
-from emporos.backtest.robustness.deflated_sharpe import DeflatedSharpe, DeflatedSharpeReport
+from emporos.backtest.robustness.deflated_sharpe import (
+    TRIAL_SPREADS,
+    DeflatedSharpe,
+    DeflatedSharpeReport,
+)
 from emporos.backtest.robustness.holdout import CurationProvenance
 from emporos.backtest.robustness.monte_carlo import MonteCarlo, MonteCarloConfig, MonteCarloReport
 from emporos.backtest.robustness.pbo import CSCV, PBOReport
@@ -148,7 +152,8 @@ class RobustnessAssessor:
         returns = tuple(r for o in result.outcomes for r in o.test.metrics.daily_returns)
         costs = tuple(CostSensitivity().evaluate(trades, self._benchmark.cost_scenarios))
         monte_carlo = MonteCarlo(self._monte_carlo_config()).run(trades)
-        deflated = DeflatedSharpe().evaluate(returns, await self._trials.statistics())
+        spread = TRIAL_SPREADS[thresholds.deflated_sharpe_spread]
+        deflated = DeflatedSharpe(spread=spread).evaluate(returns, await self._trials.statistics())
         pbo = CSCV().evaluate(self._candidate_scores(result))
         observed_edge, minimum_edge = self._edge_evidence(trades)
         concentration = ConcentrationCheck(thresholds.concentration.top_trades).measure(trades)

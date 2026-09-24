@@ -35,6 +35,13 @@ verdict:
   min_positive_window_share: "0.6"
   max_window_drawdown: "0.10"              # a fraction of capital: the risk budget
   min_deflated_sharpe: "0.95"
+  # EM-206 (operator-approved 2026-09-24): the luck benchmark's spread is a skill-less Sharpe's
+  # scatter over the candidate's own days, not the spread of the recorded trials' Sharpes. N stays
+  # the full program-wide count (14,072 then), so DSR 0.95 needs z of about 5.6: an annualised Sharpe
+  # of about 2.0 over 2,000 walk-forward days, or 4.0 over 500. The observed spread (0.0796 daily,
+  # from 610 shorter trials whose means differ) set a fixed annualised hurdle of about 5 that no
+  # record length could clear. Thresholds are unchanged.
+  deflated_sharpe_spread: null_hypothesis
   concentration:
     max_top_instrument_share: "0.5"        # of net profit
     max_top_month_share: "0.5"

@@ -36,6 +36,9 @@ class TestShippedFile:
         assert b.slippage_bps == D(5)
         assert (b.max_position_value, b.max_daily_loss) == (D(5000), D(1000))
 
+    def test_prices_the_deflated_sharpe_at_a_skill_less_sharpes_spread(self) -> None:
+        assert BenchmarkLoader().load().verdict.deflated_sharpe_spread == "null_hypothesis"
+
     def test_covers_lower_and_higher_slippage_and_dearer_fees(self) -> None:
         b = BenchmarkLoader().load()
 
@@ -83,6 +86,16 @@ class TestRefusals:
 
         with pytest.raises(ValueError, match="rejection line"):
             build(shipped() | {"verdict": verdict})
+
+    def test_an_unknown_deflated_sharpe_spread_is_refused_and_omitting_it_means_observed(
+        self,
+    ) -> None:
+        verdict = dict(shipped()["verdict"])  # type: ignore[call-overload]
+
+        with pytest.raises(ValueError, match="deflated_sharpe_spread"):
+            build(shipped() | {"verdict": verdict | {"deflated_sharpe_spread": "lenient"}})
+        del verdict["deflated_sharpe_spread"]
+        assert build(shipped() | {"verdict": verdict}).verdict.deflated_sharpe_spread == "observed"
 
     def test_the_loader_reports_a_missing_or_broken_file_as_configuration_errors(
         self, tmp_path: Path
