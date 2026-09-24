@@ -1,0 +1,19 @@
+# Looks the research studies took before their ledgers were kept in Mongo (EM-191 F2B / EM-194).
+#
+# EM-178..EM-181 ran their grids against the local Parquet cache with in-memory ledgers ("zero
+# Mongo"), so the Mongo feature / cross-sectional / lead-lag ledgers are empty and program-wide N
+# (EDGE_SEARCH_PLAN.md §3.2) saw each study as one registry row. Each row below is one published
+# proof run and the number of trials its report says it recorded. `evidence` is a phrase that must
+# appear verbatim in `source`; a test fails if the report and this file drift apart.
+#
+# Append-only. A row is only ever added, never edited: a re-run of a study is new looks, and it
+# lands in its Mongo ledger, which is counted separately. These are documented runs only, so N stays
+# a lower bound: any grid a report does not state is not here.
+#
+# family: feature | cross_sectional | lead_lag
+
+grids:
+  - {id: em178-nbar-momentum-proof,   family: feature,         ticket: EM-178, trials: 140,    source: docs/research/feature-engine.md,         evidence: "140 trials recorded from one run"}
+  - {id: em179-residual-momentum,     family: cross_sectional, ticket: EM-179, trials: 252,    source: docs/research/cross-sectional-momentum.md, evidence: "252 trials recorded"}
+  - {id: em180-lead-lag,              family: lead_lag,        ticket: EM-180, trials: 2016,   source: docs/research/lead-lag.md,               evidence: "2,016 trials recorded"}
+  - {id: em181-order-flow-proxies,    family: feature,         ticket: EM-181, trials: 10880,  source: docs/research/order-flow.md,             evidence: "= 10,880 total"}
