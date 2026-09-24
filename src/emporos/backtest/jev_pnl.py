@@ -71,6 +71,24 @@ class JevPnlComparison:
         return self.treatment.metrics.trades.count - self.baseline.metrics.trades.count
 
 
+class ArmVerification:
+    """Checks that two finished arms really ran under the assumptions the fingerprint names."""
+
+    def check(
+        self,
+        fingerprint: ExperimentFingerprint,
+        context: FingerprintContext,
+        baseline: MultiStrategyBacktestResult,
+        treatment: MultiStrategyBacktestResult,
+    ) -> None:
+        for arm in (baseline, treatment):
+            fingerprint.verify(arm.spec, context)
+        if baseline.strategies != treatment.strategies or baseline.risk_gate != treatment.risk_gate:
+            raise FingerprintMismatch(
+                "the two arms ran different strategies or a different risk gate"
+            )
+
+
 class JevOnOffBacktestExperiment:
     """`baseline` and `treatment` are the two arms. Prefer `from_factory`, which builds both from
     one `EngineFactory` so they can only differ in `jev_filter`; the plain constructor remains for
@@ -102,10 +120,5 @@ class JevOnOffBacktestExperiment:
         fingerprint = self._fingerprinter.fingerprint(spec, context)
         baseline = await self._baseline.run(spec)
         treatment = await self._treatment.run(spec)
-        for arm in (baseline, treatment):
-            fingerprint.verify(arm.spec, context)
-        if baseline.strategies != treatment.strategies or baseline.risk_gate != treatment.risk_gate:
-            raise FingerprintMismatch(
-                "the two arms ran different strategies or a different risk gate"
-            )
+        ArmVerification().check(fingerprint, context, baseline, treatment)
         return JevPnlComparison(baseline, treatment, fingerprint)

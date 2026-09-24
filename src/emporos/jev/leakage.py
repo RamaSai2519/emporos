@@ -166,10 +166,13 @@ class SymbolAnonymiser:
 
 
 def _identifying_names(symbol: str) -> tuple[str, ...]:
-    """`NSE:RELIANCE-EQ` is identified by the whole id and by the bare `RELIANCE`."""
+    """`NSE:RELIANCE-EQ` is identified by the whole id and by the bare `RELIANCE`. A bare token
+    that is only digits (the `NSE:2885` form a resolved instrument id takes) names nothing on its
+    own and would match every price containing those digits, so only the whole id is checked."""
     bare = re.sub(r"^[A-Za-z]+:", "", symbol)
     bare = re.sub(r"-[A-Za-z]{1,3}$", "", bare)
-    return tuple(name.lower() for name in {symbol, bare} if len(name) >= 2)
+    names = {symbol} | (set() if bare.isdigit() else {bare})
+    return tuple(name.lower() for name in names if len(name) >= 2)
 
 
 def _mentions(text: str, names: tuple[str, ...]) -> bool:

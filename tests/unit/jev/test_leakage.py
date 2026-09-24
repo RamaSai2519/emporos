@@ -146,3 +146,13 @@ def test_a_short_ticker_does_not_trip_on_an_unrelated_word() -> None:
     anonymiser = SymbolAnonymiser(RecordingProvider(), salt="s")
 
     anonymiser.anonymise(make_jev_request(symbol="NSE:IT-EQ", strategy_name="momentum_v1"))
+
+
+def test_a_numeric_instrument_id_does_not_trip_on_a_price_with_the_same_digits() -> None:
+    anonymiser = SymbolAnonymiser(RecordingProvider(), salt="s")
+
+    cleaned = anonymiser.anonymise(
+        make_jev_request(symbol="NSE:1001", entry=Decimal("1001.5"), target=Decimal("1010"))
+    )
+
+    assert cleaned.symbol.startswith("INSTR_")

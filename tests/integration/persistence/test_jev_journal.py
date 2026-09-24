@@ -83,3 +83,19 @@ async def test_a_different_model_is_a_different_question(journal: MongoJevDecisi
 
 async def test_an_unknown_question_is_none(journal: MongoJevDecisionJournal) -> None:
     assert await journal.get(PREFIX + "missing", PREFIX + "prompt", "vendor/model-a") is None
+
+
+async def test_the_records_of_one_model_and_prompt_are_listed_in_time_order(
+    journal: MongoJevDecisionJournal,
+) -> None:
+    later = replace(record(PREFIX + "b"), as_of=NOW.replace(hour=5))
+    await journal.append(later)
+    await journal.append(record(PREFIX + "a"))
+    await journal.append(record(PREFIX + "c", model="vendor/model-b"))
+
+    listed = await journal.records("vendor/model-a", PREFIX + "prompt")
+
+    assert [r.request_hash for r in listed if r.request_hash.startswith(PREFIX)] == [
+        PREFIX + "a",
+        PREFIX + "b",
+    ]

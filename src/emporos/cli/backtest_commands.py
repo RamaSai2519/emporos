@@ -24,6 +24,7 @@ from emporos.backtest.summary import BacktestSummary
 from emporos.cli.backtest_runtime import run_backtest
 from emporos.cli.cache_commands import cache_app
 from emporos.cli.curation_commands import backtest_curate
+from emporos.cli.jev_commands import backtest_jev_compare
 from emporos.cli.progress import ConsoleBacktestProgressSink
 from emporos.cli.trial_commands import trials_app
 from emporos.cli.verdict_commands import verdicts_app
@@ -33,6 +34,7 @@ from emporos.domain.money import Money
 
 backtest_app = typer.Typer(help="Backtest a strategy over stored history.", no_args_is_help=True)
 backtest_app.command("curate")(backtest_curate)
+backtest_app.command("jev-compare")(backtest_jev_compare)
 backtest_app.add_typer(trials_app, name="trials")
 backtest_app.add_typer(verdicts_app, name="verdicts")
 backtest_app.add_typer(cache_app, name="cache")

@@ -14,6 +14,7 @@ from emporos.jev.replay import (
     NOT_RECORDED,
     InMemoryJevDecisionJournal,
     RecordingJevProvider,
+    RecordMissesJevProvider,
     ReplayJevProvider,
 )
 from tests.support.fakes import AdvancingSleeper, FixedJitter, ScriptedHttpServer
@@ -172,3 +173,33 @@ async def test_recording_a_decision_without_provenance_is_refused() -> None:
         await RecordingJevProvider(
             RecordingProvider(unprovenanced), InMemoryJevDecisionJournal(), "m"
         ).decide(request)
+
+
+async def test_record_mode_asks_the_model_once_per_distinct_question() -> None:
+    journal = InMemoryJevDecisionJournal()
+    live = _server().queue(_reply())  # one reply only: a second live call would fail loudly
+    provider = RecordMissesJevProvider(
+        journal, _client(live), DEFAULT_PROMPT, MODEL, "confirmation"
+    )
+    request = make_jev_request()
+
+    first = await provider.decide(request)
+    second = await provider.decide(request)
+
+    assert first == second
+    assert len(live.requests) == 1
+    assert len(journal) == 1
+
+
+async def test_record_mode_serves_an_already_recorded_question_without_the_model() -> None:
+    journal = InMemoryJevDecisionJournal()
+    request = make_jev_request()
+    await RecordingJevProvider(_client(_server().queue(_reply())), journal, "m").decide(request)
+    silent = _server()
+
+    decision = await RecordMissesJevProvider(
+        journal, _client(silent), DEFAULT_PROMPT, MODEL, "ranking"
+    ).decide(request)
+
+    assert decision.ok
+    assert silent.requests == []

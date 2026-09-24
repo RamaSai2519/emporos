@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
 
-from emporos.backtest.feed import FeedWindow
 from emporos.backtest.fingerprint import FingerprintMismatch
 from emporos.backtest.jev_pnl import BacktestRunner, JevOnOffBacktestExperiment
 from emporos.backtest.multi_engine import (
@@ -16,90 +15,14 @@ from emporos.backtest.multi_engine import (
     MultiStrategyBacktestResult,
     MultiStrategyBacktestSpec,
 )
-from emporos.domain.candles import Candle, Timeframe
 from emporos.domain.money import Money
 from emporos.jev.config import JevConfig
 from emporos.jev.models import CONFIRM, CONFIRMATION, REJECT, JevDecision, JevRequest
-from emporos.opportunity.allocator import AllocationConstraints
 from emporos.opportunity.jev_filter import JevMetaDecisionFilter
-from emporos.strategies.config import ResolvedStrategyConfig, SessionSettings
-from tests.support.backtest import InMemoryCandles
-from tests.support.backtest_engine import (
-    WORKED_DAY,
-    BuyThenSell,
-    BuyThenSellParameters,
-    FixedSchedule,
-    FixedTicks,
-    bars,
-    registry,
-)
-from tests.support.strategies import INSTRUMENT, T0, make_config
+from tests.support.backtest_engine import BuyThenSell
+from tests.support.jev_backtest import scenario_engine, scenario_spec
 
 DECIDED_AT = datetime(2026, 1, 5, 3, 46, tzinfo=UTC)
-_GENEROUS = AllocationConstraints(
-    production_capital=Money.of("5000"),
-    max_simultaneous_positions=5,
-    max_risk_per_trade=Money.of("500"),
-    max_portfolio_risk=Money.of("2000"),
-)
-# Same recipe as test_multi_engine.py: clears MarketRegimeClassifier's ~74-bar warm-up.
-_TREND_DAYS = 90
-
-
-def _trend_daily_bars(instrument_id: str) -> list[Candle]:
-    base = T0.astimezone(UTC).date() - timedelta(days=_TREND_DAYS)
-    closes = [Decimal("1000") + Decimal("0.4") * i for i in range(1, _TREND_DAYS + 1)]
-    widths = [Decimal("1.0") if i % 2 == 0 else Decimal("1.2") for i in range(_TREND_DAYS)]
-    out = []
-    for day, (close, width) in enumerate(zip(closes, widths, strict=True), start=1):
-        half = width / 2
-        ts = datetime(base.year, base.month, base.day, tzinfo=UTC) + timedelta(days=day)
-        out.append(
-            Candle(
-                instrument_id=instrument_id, timeframe=Timeframe.D1, ts=ts,
-                open=Money(close), high=Money(close + half), low=Money(close - half),
-                close=Money(close), volume=1000,
-            )
-        )  # fmt: skip
-    return out
-
-
-def _config() -> ResolvedStrategyConfig:
-    # sell_at=0: the strategy never emits its own exit, so the only way a round trip closes is
-    # the broker's forced end-of-day square-off — and the only way one OPENS, when Jev is
-    # reviewing, is a confirmed entry. A rejected entry then means truly zero trades, not a
-    # naked short from an exit signal fired with nothing open to exit (BuyThenSell counts bars,
-    # not positions).
-    base = make_config(
-        name="buy_then_sell",
-        instruments=(INSTRUMENT,),
-        parameters=BuyThenSellParameters(buy_at=2, sell_at=0),
-        timeframe=Timeframe.M5,
-    )
-    session = SessionSettings.model_validate(
-        {"no_new_entries_after": "15:00", "square_off_at": "15:15"}
-    )
-    return base.model_copy(update={"session": session})
-
-
-def _candles() -> list[Candle]:
-    return [*bars(WORKED_DAY, instrument_id=INSTRUMENT), *_trend_daily_bars(INSTRUMENT)]
-
-
-def _engine(jev_filter: JevMetaDecisionFilter | None) -> MultiStrategyBacktestEngine:
-    reader = InMemoryCandles(_candles())
-    return MultiStrategyBacktestEngine(
-        reader, registry(), FixedTicks(), lambda: FixedSchedule(), jev_filter=jev_filter
-    )
-
-
-def _spec() -> MultiStrategyBacktestSpec:
-    return MultiStrategyBacktestSpec(
-        configs=[_config()],
-        window=FeedWindow(T0 - timedelta(hours=1), T0 + timedelta(hours=10)),
-        starting_cash=Money.of("100000"),
-        constraints=_GENEROUS,
-    )
 
 
 class _AlwaysConfirms:
@@ -124,9 +47,11 @@ class TestJevOnOffBacktestExperiment:
         treatment_filter = JevMetaDecisionFilter(
             _AlwaysConfirms(), JevConfig(enabled=True, mode=CONFIRMATION)
         )
-        experiment = JevOnOffBacktestExperiment(_engine(None), _engine(treatment_filter))
+        experiment = JevOnOffBacktestExperiment(
+            scenario_engine(None), scenario_engine(treatment_filter)
+        )
 
-        comparison = await experiment.run(_spec())
+        comparison = await experiment.run(scenario_spec())
 
         assert comparison.trade_count_delta == 0
         assert comparison.net_pnl_delta == Money.zero()
@@ -141,9 +66,11 @@ class TestJevOnOffBacktestExperiment:
         treatment_filter = JevMetaDecisionFilter(
             _AlwaysRejects(), JevConfig(enabled=True, mode=CONFIRMATION)
         )
-        experiment = JevOnOffBacktestExperiment(_engine(None), _engine(treatment_filter))
+        experiment = JevOnOffBacktestExperiment(
+            scenario_engine(None), scenario_engine(treatment_filter)
+        )
 
-        comparison = await experiment.run(_spec())
+        comparison = await experiment.run(scenario_spec())
 
         assert comparison.baseline.metrics.trades.count == 1
         assert comparison.treatment.metrics.trades.count == 0
@@ -161,7 +88,7 @@ class _Factory:
 
     def build(self, jev_filter: JevMetaDecisionFilter | None) -> BacktestRunner:
         self.built_with.append(jev_filter)
-        return _engine(jev_filter)
+        return scenario_engine(jev_filter)
 
 
 class _RewritesTheSpec:
@@ -184,7 +111,7 @@ class TestIdenticalByConstruction:
         )
 
         comparison = await JevOnOffBacktestExperiment.from_factory(factory, treatment_filter).run(
-            _spec()
+            scenario_spec()
         )
 
         assert factory.built_with == [None, treatment_filter]
@@ -194,29 +121,31 @@ class TestIdenticalByConstruction:
         self,
     ) -> None:
         BuyThenSell.reset()
-        experiment = JevOnOffBacktestExperiment(_engine(None), _engine(None))
+        experiment = JevOnOffBacktestExperiment(scenario_engine(None), scenario_engine(None))
 
-        comparison = await experiment.run(_spec())
+        comparison = await experiment.run(scenario_spec())
 
         assert comparison.fingerprint.digest.startswith("sha256:")
 
     async def test_an_arm_that_ran_a_different_spec_is_refused(self) -> None:
         BuyThenSell.reset()
-        experiment = JevOnOffBacktestExperiment(_engine(None), _RewritesTheSpec(_engine(None)))
+        experiment = JevOnOffBacktestExperiment(
+            scenario_engine(None), _RewritesTheSpec(scenario_engine(None))
+        )
 
         with pytest.raises(FingerprintMismatch, match="different assumptions"):
-            await experiment.run(_spec())
+            await experiment.run(scenario_spec())
 
     async def test_arms_that_ran_different_strategies_are_refused(self) -> None:
         BuyThenSell.reset()
 
         class _OtherStrategy:
             async def run(self, spec: MultiStrategyBacktestSpec) -> MultiStrategyBacktestResult:
-                result = await _engine(None).run(spec)
+                result = await scenario_engine(None).run(spec)
                 identity = replace(result.strategies[0], config_hash="sha256:other")
                 return replace(result, strategies=(identity,))
 
-        experiment = JevOnOffBacktestExperiment(_engine(None), _OtherStrategy())
+        experiment = JevOnOffBacktestExperiment(scenario_engine(None), _OtherStrategy())
 
         with pytest.raises(FingerprintMismatch, match="different strategies"):
-            await experiment.run(_spec())
+            await experiment.run(scenario_spec())

@@ -1,0 +1,35 @@
+# Declared BEFORE any run (EM-187, EM-188). Not yet run, and deliberately not run with the record
+# provider yet: no strategy currently has a VALIDATED baseline (every docs/strategies verdict is
+# REJECTED), so the expected outcome is "Jev is not eligible to lift anything". The value of the
+# experiment today is the harness and its guardrails; do not spend LLM budget before a baseline
+# validates.
+family: jev_incremental
+slug: jev_incremental_v1
+hypothesis: >-
+  Asking an LLM to confirm or re-rank the entries of a portfolio that already has a validated
+  baseline raises its net expectancy per trade, after the LLM's own cost, by an amount whose paired
+  day-level 95% interval is entirely above zero, without a deeper maximum drawdown.
+economic_rationale: >-
+  A language model reads the structured context of a candidate (regime, direction, stop and target
+  distances, the strategy's own conditional performance) and may recognise setups that the rule
+  cannot express, so it could remove entries with a poor risk context. The counter-claim this tests
+  is that it only trims the losers of a losing strategy, which is not an edge: hence Jev is
+  compared with the identical portfolio without it, and is not eligible at all unless that
+  baseline validates on its own.
+falsification: >-
+  Jev is REJECTED, or INCONCLUSIVE, if the baseline is not VALIDATED, or the expectancy gain net of
+  Jev's cost is not positive, or its paired interval includes zero, or the maximum drawdown is
+  deeper, or the reserved holdout does not confirm the chosen variant.
+parameter_grid:
+  model: ["openai/gpt-4o-mini"]
+  model_knowledge_cutoff: ["2023-10-01"]
+  cutoff_source:
+    - "OpenAI model page https://developers.openai.com/api/docs/models/gpt-4o-mini states 'Oct 01, 2023 knowledge cutoff'; checked 2026-09-24"
+  inr_per_1k_tokens: ["0.05"]   # a deliberately high round-up of the gateway price; check the invoice
+  prompt_version: ["v1"]
+  prompt_hash: ["6e418c1196e333ab95f7b65e3cef11d26d811aa958282cdd6c2fa46afc9555e5"]
+  mode: ["confirmation", "ranking"]
+  threshold: ["0.5", "0.6", "0.7"]
+feature_versions:
+  jev_request_payload: 1
+declared_at: 2026-09-24T18:00:00+05:30

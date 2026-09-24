@@ -54,6 +54,9 @@ class InMemoryJevDecisionJournal:
     def __len__(self) -> int:
         return len(self._records)
 
+    def records(self) -> list[JevDecisionRecord]:
+        return sorted(self._records.values(), key=lambda r: (r.as_of, r.request_hash))
+
 
 class RecordingJevProvider:
     """A `JevProvider` decorator: passes the request through and journals the model's answer.
@@ -126,3 +129,26 @@ class ReplayJevProvider:
             prompt_hash=record.prompt_hash,
             request_hash=record.request_hash,
         )
+
+
+class RecordMissesJevProvider:
+    """Record mode: a question already in the journal is answered from it, and only a question
+    never asked reaches the model (and is journalled). Running several variants of one experiment
+    through this pays for each distinct question once."""
+
+    def __init__(
+        self,
+        journal: JevDecisionJournal,
+        inner: JevProvider,
+        prompt: JevPrompt,
+        model: str,
+        mode: str,
+    ) -> None:
+        self._replay = ReplayJevProvider(journal, prompt, model)
+        self._record = RecordingJevProvider(inner, journal, mode)
+
+    async def decide(self, request: JevRequest) -> JevDecision:
+        recorded = await self._replay.decide(request)
+        if recorded.ok:
+            return recorded
+        return await self._record.decide(request)

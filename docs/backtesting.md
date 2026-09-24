@@ -325,6 +325,16 @@ shared database holds no feature, cross-sectional or lead-lag trials, so none is
 pinned by a golden (`tests/fixtures/experiments/`), regenerated only deliberately with
 `python -m tests.regression.regenerate_goldens --write`.
 
+### Jev incremental experiments (EM-187)
+
+`emporos backtest jev-compare` runs one portfolio twice over identical data, costs, capital and
+holdout (Jev off, Jev on for each declared mode and threshold) and publishes a `jev_incremental`
+experiment report. Jev is judged as an *increment*: it cannot graduate a strategy whose baseline is
+not VALIDATED, its cost in rupees is subtracted from its gain, and a model-knowledge cutoff (declared,
+with its source) keeps every window and every request after what the model may remember. Decisions
+are recorded once in the `jev_decisions` journal and replayed for free. See
+`docs/research/jev-incremental.md`.
+
 ## What exists and what does not
 
 - **Paper trading on live data is wired, and not yet run on a live market.** `emporos worker run`

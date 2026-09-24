@@ -48,6 +48,14 @@ class MongoJevDecisionJournal:
         )
         return self._record(found[0]) if found else None
 
+    async def records(self, model: str, prompt_hash: str) -> list[JevDecisionRecord]:
+        """Every answer of one model to one prompt, oldest question first: what a research study
+        reads, never the live model."""
+        found = await self._records.find(
+            {"model": model, "prompt_hash": prompt_hash}, sort=[("as_of", 1)]
+        )
+        return [self._record(d) for d in found]
+
     @staticmethod
     def _document(record: JevDecisionRecord) -> JevDecisionDocument:
         return JevDecisionDocument(

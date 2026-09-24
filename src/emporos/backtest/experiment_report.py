@@ -84,6 +84,24 @@ class PredeclarationCap:
         return ExperimentOutcomeLabel.INCONCLUSIVE, (*reasons, finding), notes
 
 
+class HoldoutRequirement:
+    """A run that reserved no holdout can never be ACCEPTED: nothing shows the result was not tuned
+    on every day it saw. It says so as a finding, and an ACCEPTED outcome is capped, never kept."""
+
+    def apply(
+        self, outcome: ExperimentOutcomeLabel, reasons: tuple[ReasonFinding, ...]
+    ) -> tuple[ExperimentOutcomeLabel, tuple[ReasonFinding, ...]]:
+        finding = ReasonFinding(
+            ReasonCode.HOLDOUT_NOT_RESERVED,
+            "a final holdout was reserved",
+            FindingOutcome.UNKNOWN,
+            "the run reserved no holdout, so nothing shows the result was not tuned on every day",
+        )
+        if outcome is ExperimentOutcomeLabel.ACCEPTED:
+            outcome = ExperimentOutcomeLabel.INCONCLUSIVE
+        return outcome, (*reasons, finding)
+
+
 class RegimePooling:
     """Adds each regime's slices across walk-forward windows. Counts and net P&L add; a win rate
     is rebuilt from the whole wins each slice's rate stands for, so it is a real pooled rate, not
@@ -192,15 +210,7 @@ class CurationExperimentReportBuilder:
     def _without_holdout(
         outcome: ExperimentOutcomeLabel, reasons: tuple[ReasonFinding, ...]
     ) -> tuple[ExperimentOutcomeLabel, tuple[ReasonFinding, ...]]:
-        finding = ReasonFinding(
-            ReasonCode.HOLDOUT_NOT_RESERVED,
-            "a final holdout was reserved",
-            FindingOutcome.UNKNOWN,
-            "the run reserved no holdout, so nothing shows the result was not tuned on every day",
-        )
-        if outcome is ExperimentOutcomeLabel.ACCEPTED:
-            outcome = ExperimentOutcomeLabel.INCONCLUSIVE
-        return outcome, (*reasons, finding)
+        return HoldoutRequirement().apply(outcome, reasons)
 
     @staticmethod
     def _periods(robustness: RobustnessReport | None) -> ExperimentPeriods:

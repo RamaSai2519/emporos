@@ -1,0 +1,17 @@
+# The portfolio `emporos backtest jev-compare` runs with Jev off and on (EM-187).
+#
+# One strategy on purpose: the multi-strategy engine documents that two strategies trading the same
+# instrument can see each other's position, and every shipped strategy shares the liquid universe.
+# Add a strategy only with a disjoint universe. Money is an integer or a QUOTED string.
+#
+# The capital is the benchmark's (config/robustness/benchmark.yaml), not set here, so a Jev result
+# is judged at the same size as every other experiment.
+strategies:
+  - config/strategies/orb_v1.yaml
+constraints:
+  max_simultaneous_positions: 3     # what orb_v1's own risk.max_open_positions allows
+  max_risk_per_trade: "500"         # 1% of the 50,000 benchmark capital
+  max_portfolio_risk: "1500"        # summed stop-loss risk across open positions
+# The last days of the requested range are reserved and never read by the experiment: the run
+# tries several modes and thresholds, so it selects, and a selection needs a confirming holdout.
+holdout_days: 42
