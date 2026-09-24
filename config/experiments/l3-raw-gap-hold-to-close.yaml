@@ -1,0 +1,51 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-201, search-map cell
+# L3-raw-gap-hold-to-close. Not yet run: no result of this cell has been seen.
+#
+# What is run: a single trade per name per day. If a name's first bar opens far from the previous
+# close (the raw overnight gap), enter at the close of the entry bar in the declared direction and
+# hold to the session square-off at 15:15 (no stop, no target, no time stop). One arm is one
+# (gap_threshold_pct, direction, entry_bar) triple: 4 x 2 x 2 = 16 arms, every one a counted look.
+#
+# Data: the Discovery split only (start of data to 2024-12-31, EDGE_SEARCH_PLAN.md §4.3), the 29
+# names with ten years of 5m bars (docs/data/history-quality.md). Days quarantined by the history
+# audit as unadjusted corporate actions (docs/data/known-limitations.md, 7 of them) are excluded, so
+# a split cannot pose as a gap. Confirmation and the vault are not touched by this declaration.
+#
+# Stages, each run only while the previous passes (§6): S1 median absolute move over the hold at
+# least 2x the adverse round-trip cost at the declared size (§3.5); S2 the fixed screen bar
+# (net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no instrument > 50% of net, net
+# expectancy > 0 at benchmark costs, gross >= the adverse break-even).
+family: strategy
+slug: l3-raw-gap-hold-to-close
+hypothesis: >-
+  When a large-cap NSE name opens at least 1% away from the previous close, the move from the first
+  minutes of the session to the 15:15 close, held as one position, has a mean gross return large
+  enough to pay the round-trip cost at Rs 25,000 (0.324% at benchmark, 0.636% adverse), in a
+  direction that is stable across years and names.
+economic_rationale: >-
+  Overnight information (results, global cues, news) is priced by a thin opening auction, and the
+  capital that must act on it (funds working orders through the day, retail chasing headlines) is
+  slow. Two opposite mechanisms are declared as separate arms because the sign is not known ahead:
+  continuation (the auction under-reacts, so the counterparty who sells into the gap-up or buys the
+  gap-down is a liquidity provider or a fader who loses to the flow still arriving) and fade (the
+  auction over-reacts to a headline, so the counterparty who buys the gap-up is a momentum chaser
+  who loses when liquidity providers and value buyers take the other side through the day). A gap
+  small enough to sit inside ordinary noise carries neither mechanism, hence the thresholds.
+falsification: >-
+  The cell is REJECTED at the first stage it fails. S1: for a threshold and entry bar, the median
+  absolute gross move from entry to 15:15 on the conditioning days is below 2x the mean adverse
+  round-trip cost at Rs 25,000 (about 1.27%), so no direction could pay for itself; both arms of
+  that pair are INFEASIBLE. S2: an arm needs net t >= 3.0 (Harvey-Liu-Zhu, fixed), at least 300
+  trades, net positive in at least 60% of calendar years, no instrument above 50% of net profit,
+  net expectancy > 0 at benchmark costs and mean gross return at least the adverse break-even. If no
+  arm passes S2 the cell is SCREEN_REJECT. An arm that passes only at one threshold and not its
+  neighbours is treated as overfit, not tuned around (§3.8). Every one of the 16 arms is counted in
+  the program-wide trial count whether it passes or not.
+parameter_grid:
+  gap_threshold_pct: ["1.0", "1.5", "2.0", "3.0"]
+  direction: [continuation, fade]
+  entry_bar: [1, 3]
+feature_versions:
+  raw_overnight_gap: 1
+position_value: "25000"
+declared_at: 2026-09-24T18:40:00+05:30
