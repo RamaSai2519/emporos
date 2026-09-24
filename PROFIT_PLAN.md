@@ -150,3 +150,20 @@ report §3.4. Iteration budget: one cell per wake, 2-6 arms.
 - **No live orders, ever**, from any worker. Paper only. Going live is the operator's decision.
 - After each ticket, the worker sends the head a short report: what was built or run, the numbers,
   and the next step it proposes. The head decides the next cell; workers do not choose children.
+
+## 8. Data sourcing decision (operator, 2026-09-25)
+
+The operator ruled that public market data may be collected from the internet for this program's
+private, personal, non-commercial research, accepting the terms-of-use risk of the source sites
+(including NSE's clause against automated collection), and that no data is purchased. Workers
+follow these rules while collecting:
+- Only files and pages that are publicly posted for download (daily bhavcopies, corporate-action
+  and index-change notices, published constituent files). Never defeat an access control: no
+  disguised user agents to get past a block, no captcha or bot-protection bypass, no logins.
+  If a source blocks automated access, move to another public source (BSE, niftyindices.com,
+  public datasets) and report it.
+- Polite: one request at a time, a few seconds apart, resumable, no retry storms; stop on 401,
+  403 or 429.
+- Never from the production host or its broker-registered static IP (EM-211, EM-218): a block
+  must not touch order placement. Run collection from the development machine.
+- Record the source URL and fetch date for every file; the data stays local and is not shared.
