@@ -7,8 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.core.errors import ConfigurationError
-from emporos.risk.config import DEFAULT_RISK_FILE, RiskLimitsLoader
+from emporos.risk.config import DEFAULT_RISK_FILE, RiskLimitsLoader, RiskTier
 
 VALID = """
 max_daily_loss: "2000"
@@ -33,7 +34,7 @@ def load(tmp_path: Path, text: str):  # type: ignore[no-untyped-def]
 
 def test_the_shipped_file_loads_and_is_a_complete_set_of_limits() -> None:
     limits = RiskLimitsLoader(DEFAULT_RISK_FILE).load()
-    assert limits.max_daily_loss == Decimal("2000") and limits.max_open_positions == 3
+    assert limits.max_daily_loss == Decimal("1000") and limits.max_open_positions == 3
 
 
 def test_a_valid_file_loads_exact_decimals(tmp_path: Path) -> None:
@@ -79,3 +80,44 @@ def test_a_missing_file_a_broken_file_and_a_non_mapping_are_configuration_errors
         load(tmp_path, "a: [unclosed")
     with pytest.raises(ConfigurationError, match="mapping"):
         load(tmp_path, "- a\n- b\n")
+
+
+def test_the_shipped_limits_fit_the_production_capital() -> None:
+    limits = RiskLimitsLoader(DEFAULT_RISK_FILE).load()
+    benchmark = BenchmarkLoader().load()
+
+    assert limits.account_capital == benchmark.capital
+    assert limits.max_capital_deployed <= benchmark.capital
+    assert limits.max_daily_loss <= benchmark.max_daily_loss
+
+
+def test_the_conservative_tier_loads_and_is_within_the_standard_tier() -> None:
+    standard = RiskLimitsLoader.for_tier(RiskTier.STANDARD).load()
+    conservative = RiskLimitsLoader.for_tier(RiskTier.LIVE_CONSERVATIVE).load()
+
+    assert conservative.is_within(standard) and not standard.is_within(conservative)
+    assert conservative.max_capital_deployed == Decimal("10000")
+
+
+def test_a_tier_that_raises_a_cap_above_the_standard_limits_is_refused(tmp_path: Path) -> None:
+    (tmp_path / "risk.yaml").write_text(VALID.replace('"60000"', '"50000"'))
+    (tmp_path / "risk.live_conservative.yaml").write_text(VALID.replace('"60000"', '"55000"'))
+
+    with pytest.raises(ConfigurationError, match="looser"):
+        RiskLimitsLoader.for_tier(RiskTier.LIVE_CONSERVATIVE, tmp_path).load()
+
+
+def test_capital_deployed_above_the_account_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="max_capital_deployed"):
+        load(tmp_path, VALID + 'account_capital: "50000"\n')
+
+
+def test_a_daily_loss_above_the_account_is_refused(tmp_path: Path) -> None:
+    text = VALID.replace('"2000"', '"90000"').replace('"60000"', '"50000"')
+    with pytest.raises(ConfigurationError, match="max_daily_loss"):
+        load(tmp_path, text + 'account_capital: "50000"\n')
+
+
+def test_a_position_cap_above_the_deployment_cap_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="max_position_value"):
+        load(tmp_path, VALID.replace('"25000"', '"70000"'))

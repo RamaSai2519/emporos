@@ -1,0 +1,21 @@
+# The LIVE_CONSERVATIVE risk tier (EM-189, plan 2d): what a strategy's first live deployment
+# trades under. It must sit within config/risk.yaml on every cap; the loader refuses a tier that
+# raises one.
+#
+# PROPOSED, NOT APPROVED: these numbers are the EM-189 plan's example values. The operator has not
+# signed them off; confirm or change them before the first live deployment.
+#   capital deployed 10000 = 20% of Rs 50,000 (DEFAULT_CONSERVATIVE_FRACTION)
+#   daily loss 500 = 1% of capital; strategy loss 300; risk per trade 150 (0.3% of capital)
+
+account_capital: "50000"
+max_daily_loss: "500"
+max_strategy_loss: "300"
+max_position_value: "5000"
+max_open_positions: 2
+max_capital_deployed: "10000"
+max_order_quantity: 500
+max_price_deviation_pct: "2"
+max_spread_bps: "20"
+duplicate_window_seconds: 5
+max_orders_per_second: 2
+max_orders_per_minute: 60

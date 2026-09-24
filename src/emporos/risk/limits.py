@@ -26,3 +26,36 @@ class RiskLimits(BaseModel):
     duplicate_window_seconds: PositiveInt
     max_orders_per_second: PositiveInt
     max_orders_per_minute: PositiveInt
+    # The account the caps are sized against. Optional so a limits document that does not know its
+    # account still loads, but when it is stated every cap is checked against it (EM-189): a cap
+    # above the money that exists is not a cap.
+    account_capital: ExactDecimal | None = Field(default=None, gt=0)
+
+    def consistency_problems(self) -> list[str]:
+        """Caps that contradict each other. Checked when a limits FILE loads (EM-189), not when
+        an in-memory value is built, so a test can still construct a deliberately extreme one."""
+        problems: list[str] = []
+        if self.max_position_value > self.max_capital_deployed:
+            problems.append("max_position_value must not exceed max_capital_deployed")
+        if self.account_capital is not None:
+            if self.max_capital_deployed > self.account_capital:
+                problems.append("max_capital_deployed must not exceed account_capital")
+            if self.max_daily_loss > self.account_capital:
+                problems.append("max_daily_loss must not exceed account_capital")
+        return problems
+
+    def is_within(self, ceiling: RiskLimits) -> bool:
+        """True when no cap here is looser than the same cap in `ceiling` (a stricter tier)."""
+        return (
+            self.max_daily_loss <= ceiling.max_daily_loss
+            and self.max_strategy_loss <= ceiling.max_strategy_loss
+            and self.max_position_value <= ceiling.max_position_value
+            and self.max_open_positions <= ceiling.max_open_positions
+            and self.max_capital_deployed <= ceiling.max_capital_deployed
+            and self.max_order_quantity <= ceiling.max_order_quantity
+            and self.max_price_deviation_pct <= ceiling.max_price_deviation_pct
+            and self.max_spread_bps <= ceiling.max_spread_bps
+            and self.max_orders_per_second <= ceiling.max_orders_per_second
+            and self.max_orders_per_minute <= ceiling.max_orders_per_minute
+            and self.duplicate_window_seconds >= ceiling.duplicate_window_seconds
+        )
