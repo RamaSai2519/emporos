@@ -83,10 +83,12 @@ cells:
     lesson: "6 arms on Discovery, all INFEASIBLE (median |move| 0.85-1.23% vs 1.27%): waiting for a first-hour retrace lifts the fade's gross from <0.1% (EM-201) to 0.17-0.35%, rising with gap size (0.19, 0.26, 0.35% at 1/1.5/2% gaps, retrace 0.25), but only the 2% gap at retrace 0.25 nets positive (+0.02%, t 0.24, 809 trades); a looser retrace floor beats a stricter one (advisory scan)"
   - id: L3-first-hour-reversal-large-gap
     lane: L3
-    hypothesis: first-hour-reversal-large-gap
+    hypothesis: l3-first-hour-reversal-large-gap
     parent: L3-first-hour-shock-reversal
-    status: TODO
+    status: SCREEN_REJECT
     requires: [F2, F2B, F3, F3B, F4, VAULT]
+    experiments: [EXP-20260924-l3-first-hour-reversal-large-gap-b481b077]
+    lesson: "4 arms on Discovery, all feasible (median |move| 1.39-1.70%) but none passes: gross 0.43% (2.5% gap) and 0.39% (3%) at retrace 0.25 clears the 0.324% benchmark cost yet not the 0.636% adverse break-even, net +0.10% t 0.77 and +0.06% t 0.33; a 0.5 retrace floor halves gross; trades 504/301 at retrace 0.25 sit at the floor. The fade-after-a-gap family is closed on Discovery; the only route is D1's wider universe, not a looser filter (advisory scan)"
   - {id: L4-nr7-inside-day-breakout,    lane: L4, hypothesis: nr7-inside-day-breakout,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - id: L4-gap-fade-expected-range
     lane: L4
