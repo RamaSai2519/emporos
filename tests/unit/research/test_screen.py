@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import random
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -20,7 +21,12 @@ from emporos.domain.money import Money
 from emporos.domain.orders import OrderSide
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
-from emporos.research.screen_evaluator import ScreenBar, ScreenEvaluator, ScreenResult
+from emporos.research.screen_evaluator import (
+    ScreenBar,
+    ScreenEvaluator,
+    ScreenResult,
+    ScreenVerdict,
+)
 from emporos.research.screen_ledger import (
     InMemoryScreenLedger,
     JsonlScreenLedger,
@@ -149,6 +155,7 @@ def test_a_scenario_cannot_have_a_zero_fee_multiplier() -> None:
 def test_the_s2_bar_is_the_plans_numbers() -> None:
     bar = ScreenBar()
 
+    assert bar.feasibility_multiple == Decimal(2)  # §3.5
     assert bar.min_net_t == Decimal(3)
     assert bar.min_trades == 300
     assert bar.min_positive_year_share == Decimal("0.6")
@@ -397,3 +404,64 @@ def test_the_screener_agrees_with_curates_adverse_repricing_too() -> None:
     assert screened.net_mean is not None
     tolerance = max(abs(curate_adverse) * Decimal("0.10"), Decimal("0.0002"))
     assert abs(screened.net_mean - curate_adverse) <= tolerance
+
+
+# --- S1 feasibility (§3.5) ----------------------------------------------------------------------
+
+
+def test_a_scan_whose_typical_move_is_below_twice_the_adverse_cost_is_infeasible() -> None:
+    small = [
+        trade("0.006", day=date(2024 + i % 3, 3, 4), instrument=f"NSE:{i % 4}") for i in range(600)
+    ]
+
+    result = screen(small)
+
+    assert result.verdict is ScreenVerdict.INFEASIBLE
+    assert result.checks[0].name.startswith("S1")
+    assert result.median_abs_move == Decimal("0.006")
+    assert result.feasibility_bar is not None and result.feasibility_bar > Decimal(
+        "0.012"
+    )  # ~1.27%
+
+
+def test_the_median_not_the_mean_decides_feasibility() -> None:
+    """A few huge moves must not make a set feasible whose typical move is tiny."""
+    trades = [trade("0.002", instrument=f"NSE:{i % 4}") for i in range(500)]
+    trades += [trade("0.5", instrument=f"NSE:{i % 4}") for i in range(20)]
+
+    assert screen(trades).verdict is ScreenVerdict.INFEASIBLE
+
+
+def test_a_feasible_scan_that_fails_a_later_check_is_a_screen_reject_not_infeasible() -> None:
+    lopsided = [trade("0.02", day=date(2024 + i % 3, 3, 4), instrument="NSE:1") for i in range(390)]
+    lopsided += [trade("0.0001", instrument=f"NSE:{2 + i}") for i in range(10)]
+
+    result = screen(lopsided)
+
+    assert result.checks[0].passed and result.verdict is ScreenVerdict.SCREEN_REJECT
+
+
+def test_a_broad_strong_scan_passes_both_stages() -> None:
+    assert screen(winners()).verdict is ScreenVerdict.PASS
+
+
+def test_no_trades_is_a_reject_with_no_feasibility_numbers() -> None:
+    result = screen([])
+
+    assert result.verdict is ScreenVerdict.SCREEN_REJECT and result.median_abs_move is None
+
+
+def test_the_median_of_an_even_count_is_the_middle_pair_mean() -> None:
+    trades = [trade(m) for m in ("0.01", "0.02", "0.03", "0.04")]
+
+    assert screen(trades).median_abs_move == Decimal("0.025")
+
+
+def test_the_ledger_line_carries_the_verdict_and_the_s1_numbers(tmp_path: Path) -> None:
+    path = tmp_path / "screens.jsonl"
+    Screener(evaluator(), JsonlScreenLedger(path), FixedClock()).screen(identity(), winners())
+
+    line = json.loads(path.read_text().splitlines()[0])
+
+    assert line["verdict"] == "PASS" and line["median_abs_move"] is not None
+    assert line["gross_mean"] is not None

@@ -1,0 +1,135 @@
+"""`emporos research screen <slug>` — S1 and S2 for one declared search-map cell (EM-191 §7.3).
+
+Reads only the local candle cache, through the vault, over the Discovery split; the declaration must
+be committed first. Every arm is a counted look: it is appended to
+`docs/research/edge-search/screens.jsonl` (one line per arm, once), which program-wide N counts."""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Mapping
+from datetime import datetime, time, timedelta
+from pathlib import Path
+
+import typer
+
+from emporos.backtest.costs import EarliestBeforeFirst
+from emporos.backtest.robustness.benchmark import BenchmarkLoader
+from emporos.backtest.vault import VaultedCandleReader
+from emporos.cli.backtest_runtime import candle_cache_root
+from emporos.cli.experiment_declarations import (
+    DEFAULT_DECLARATIONS_DIR,
+    DeclarationGate,
+    ExperimentDeclarationLoader,
+)
+from emporos.cli.experiment_provenance import GitRepository
+from emporos.cli.vault_files import VaultFiles
+from emporos.core.clock import IST, SystemClock
+from emporos.core.config import Settings
+from emporos.core.errors import EmporosError
+from emporos.domain.candles import Candle, Timeframe
+from emporos.domain.research_experiments import ExperimentDeclaration
+from emporos.domain.sizing import SizeResolver
+from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
+from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.research.cell_run import ArmResult, CellScreenRun, ScanFactory
+from emporos.research.history_audit import HistoryAudit
+from emporos.research.partition import DISCOVERY, DataSplit
+from emporos.research.scans.base import ScanExecution, SignalScan
+from emporos.research.scans.raw_gap import RawGapParameters, declared_arms, raw_gap_scan
+from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
+from emporos.research.screen_evaluator import ScreenEvaluator
+from emporos.research.screen_ledger import JsonlScreenLedger
+from emporos.risk.config import RiskLimitsLoader
+
+DEFAULT_SCREENS_FILE = Path("docs/research/edge-search/screens.jsonl")
+_SLUG = typer.Argument(..., help="A declared cell: config/experiments/<slug>.yaml")
+_LEDGER = typer.Option(DEFAULT_SCREENS_FILE, help="The append-only screen ledger.")
+
+
+class LocalBars:
+    """5m bars from the local candle cache, through the vault, for one split at a time."""
+
+    def __init__(self, reader: VaultedCandleReader) -> None:
+        self._reader = reader
+
+    def bars(self, instrument_id: str, split: DataSplit) -> list[Candle]:
+        start = datetime.combine(split.first, time(0, 0), tzinfo=IST)
+        end = datetime.combine(split.last + timedelta(days=1), time(0, 0), tzinfo=IST)
+        return asyncio.run(self._reader.get_range(instrument_id, Timeframe.M5, start, end))
+
+
+class RawGapCell:
+    """The recipe for cell L3-raw-gap-hold-to-close."""
+
+    slug = "l3-raw-gap-hold-to-close"
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in declared_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        return raw_gap_scan(RawGapParameters.from_point(point), execution)
+
+
+CELLS: Mapping[str, RawGapCell] = {RawGapCell.slug: RawGapCell()}
+
+
+def _table(results: list[ArmResult]) -> list[str]:
+    lines = [
+        f"{'arm':<40} {'verdict':<14} {'trades':>6} {'gross%':>8} {'net%':>8} {'t':>7} "
+        f"{'med|mv|%':>9}"
+    ]
+    for r in results:
+        p, x = r.parameters, r.result
+        name = f"{p['gap_threshold_pct']}% {p['direction']} bar{p['entry_bar']}"
+
+        def pct(v: object) -> str:
+            return "n/a" if v is None else f"{float(v) * 100:.3f}"  # type: ignore[arg-type]
+
+        lines.append(
+            f"{name:<40} {x.verdict.value:<14} {x.trades:>6} {pct(x.gross_mean):>8} "
+            f"{pct(x.net_mean):>8} {'n/a' if x.net_t is None else f'{float(x.net_t):.2f}':>7} "
+            f"{pct(x.median_abs_move):>9}"
+        )
+    return lines
+
+
+def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
+    """Run S1 and S2 for every arm of a declared cell over the Discovery split."""
+    try:
+        recipe = CELLS.get(slug)
+        if recipe is None:
+            raise ValueError(f"no cell recipe for {slug!r} (known: {', '.join(sorted(CELLS))})")
+        declaration = DeclarationGate(ExperimentDeclarationLoader(), GitRepository()).load(
+            DEFAULT_DECLARATIONS_DIR / f"{slug}.yaml"
+        )
+        size = SizeResolver(RiskLimitsLoader().load().max_position_value).resolve(
+            declared=declaration.position_value
+        )
+        config = BenchmarkLoader().load()
+        evaluator = ScreenEvaluator(
+            ScreenCostModel(EarliestBeforeFirst(FeeScheduleLibrary.from_directory())),
+            ScreenCostScenario.from_benchmark(config, "benchmark"),
+            ScreenCostScenario.from_benchmark(config, config.adverse_scenario),
+        )
+        reader = VaultedCandleReader(
+            FileCandleReader([CandleCacheFiles(candle_cache_root(Settings.default()))]),
+            VaultFiles().load(),
+        )
+        factory: ScanFactory = recipe.scan
+        run = CellScreenRun(
+            factory, evaluator, JsonlScreenLedger(ledger), SystemClock(), HistoryAudit.load()
+        )
+        typer.echo(
+            f"{slug}: {DISCOVERY.first}..{DISCOVERY.last}, "
+            f"{size.position_value} rupees per position"
+        )
+        results = run.run(slug, recipe.arms(declaration), LocalBars(reader), size)
+    except (EmporosError, ValueError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"screen failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for line in _table(results):
+        typer.echo(line)
+    if any(r.result.advisory for r in results):
+        typer.echo("advisory: this scan is not parity-proven against an engine strategy (F3b)")

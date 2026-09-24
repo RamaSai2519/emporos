@@ -13,24 +13,34 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from decimal import Decimal
+from enum import StrEnum
 
 from emporos.backtest.metrics.decimal_math import DecimalMath
 from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
 from emporos.research.screen_trades import PositionSizer, ScreenTrade
 
-__all__ = ["ScreenBar", "ScreenCheck", "ScreenEvaluator", "ScreenResult"]
+__all__ = ["ScreenBar", "ScreenCheck", "ScreenEvaluator", "ScreenResult", "ScreenVerdict"]
 
 _ZERO = Decimal(0)
 
 
 @dataclass(frozen=True)
 class ScreenBar:
-    """Plan §6 stage S2. All conditions must hold."""
+    """Plan §6 stages S1 and S2. All conditions must hold."""
 
+    # S1 (§3.5): the median absolute move over the hold must be at least this many times the mean
+    # adverse round-trip cost at the declared size, or no direction could pay for itself.
+    feasibility_multiple: Decimal = Decimal(2)
     min_net_t: Decimal = Decimal(3)  # Harvey-Liu-Zhu hurdle for a new factor
     min_trades: int = 300
     min_positive_year_share: Decimal = Decimal("0.6")
     max_top_instrument_share: Decimal = Decimal("0.5")  # of net profit
+
+
+class ScreenVerdict(StrEnum):
+    INFEASIBLE = "INFEASIBLE"  # S1: the move is too small to pay the costs, whatever the hit rate
+    SCREEN_REJECT = "SCREEN_REJECT"  # S2 failed
+    PASS = "PASS"  # both stages passed: the cell goes on to S3
 
 
 @dataclass(frozen=True)
@@ -52,6 +62,17 @@ class ScreenResult:
     top_instrument_share: Decimal | None
     checks: tuple[ScreenCheck, ...]
     advisory: bool
+    median_abs_move: Decimal | None = None  # S1: the conditioning set's typical size of move
+    feasibility_bar: Decimal | None = None  # S1: what that must reach (a multiple of adverse cost)
+
+    @property
+    def verdict(self) -> ScreenVerdict:
+        """The search-map status this screen implies: stages run in order, S1 first (§6)."""
+        if not self.checks:
+            return ScreenVerdict.SCREEN_REJECT
+        if not self.checks[0].passed:
+            return ScreenVerdict.INFEASIBLE
+        return ScreenVerdict.PASS if self.passed else ScreenVerdict.SCREEN_REJECT
 
     @property
     def passed(self) -> bool:
@@ -103,6 +124,8 @@ class ScreenEvaluator:
             ),
             checks=(),
             advisory=advisory,
+            median_abs_move=self._median([abs(g) for g in gross]),
+            feasibility_bar=self._bar.feasibility_multiple * DecimalMath.mean(adverse_cost),
         )
         return replace(result, checks=self._checks(result))
 
@@ -111,7 +134,13 @@ class ScreenEvaluator:
             r.net_mean is not None and r.gross_mean is not None and r.adverse_break_even is not None
         )
         bar = self._bar
+        assert r.median_abs_move is not None and r.feasibility_bar is not None
         return (
+            ScreenCheck(
+                f"S1 median |move| >= {bar.feasibility_multiple}x adverse cost",
+                r.median_abs_move >= r.feasibility_bar,
+                f"{r.median_abs_move:.6f} vs {r.feasibility_bar:.6f}",
+            ),
             ScreenCheck("net expectancy > 0", r.net_mean > _ZERO, f"{r.net_mean:.6f}"),
             ScreenCheck(
                 "gross >= adverse break-even",
@@ -137,6 +166,14 @@ class ScreenEvaluator:
                 str(r.top_instrument_share),
             ),
         )
+
+    @staticmethod
+    def _median(values: Sequence[Decimal]) -> Decimal:
+        ordered = sorted(values)
+        middle = len(ordered) // 2
+        if len(ordered) % 2:
+            return ordered[middle]
+        return (ordered[middle - 1] + ordered[middle]) / 2
 
     @staticmethod
     def _t_statistic(values: Sequence[Decimal]) -> Decimal | None:
