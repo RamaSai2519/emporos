@@ -7,7 +7,7 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 |---|---|
 | Iteration | 6 (2026-09-24) |
 | Last completed | F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **VAULT** seal (§4.3): needs a ticket, `vault.yaml`, and a `VaultGate` in `emporos.backtest.integrity` style with a look-ahead-style test. Then lanes open, except those waiting on D-frontiers; D7 quote recording and D1 in the background |
+| Next | **VAULT** seal (§4.3, EM-199): `vault.yaml` and a `VaultGate` in `emporos.backtest.integrity` style with a look-ahead-style test. Then lanes open, except those waiting on D-frontiers; D7 quote recording and D1 in the background |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3 (vault not yet sealed) |
 | Cells | 42 TODO, 0 terminal; no lane may run before VAULT is DONE |
