@@ -5,15 +5,37 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 7 (2026-09-24) |
-| Last completed | VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **D2** index and INDIA VIX series (EM-200): it unlocks 6 cells (L3 idio gap x2, L4 VIX, L5, L7 x2), the cheapest frontier via `emporos history fetch-bars`. Then D5 (event calendar, unlocks 8 incl. all of L2), D3 (sector taxonomy, 5), D1 (wider universe, 3). Cells with no D-dependency are open now (L3-raw-gap-hold-to-close, L3-orb-high-rvol-wide-range, L3-first-hour-shock-reversal, L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter) and interleave per §7.2. D7 quote recording starts at the first market session that allows it |
+| Iteration | 8 (2026-09-24) |
+| Last completed | D2 tooling and fetch started (EM-200, data still landing); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **D2 verification** once the background fetch ends (see Iteration 8): check bars per day and the coverage, `emporos backtest cache warm-reference`, close EM-200. In the meantime run the no-dependency P1 cells, starting with **L3-raw-gap-hold-to-close** (declare, S1, S2), then L3-orb-high-rvol-wide-range, L3-first-hour-shock-reversal, L4 cells. Then D5 (unlocks 8), D3 (5), D1 (3; it needs the broker session, so not while a fetch runs). D7 quote recording starts at the first market session that allows it |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
 | Cells | 42 TODO, 0 terminal; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 8 (2026-09-24): D2 index and INDIA VIX series (EM-200)
+Indices are not instruments: the master drops `AMXIDX` rows on purpose. `emporos.domain.reference_series`
+adds `ReferenceSeries` (token, symbol, name, kind) as a separate, non-tradable thing; its candles
+are stored under `NSE:<token>` through the ordinary `CandleRepository`, and only a private
+`fetch_handle()` gives the bar fetcher an `Instrument` to ask the broker with. A test proves every
+declared index row is rejected by `CashSegmentFilter`, so none can reach anything that sizes or
+orders. `config/reference_series.yaml` declares 15 series (NIFTY 50, BANK, FIN SERVICE, INDIA VIX,
+and 11 sector indices), checked against a recorded copy of the scrip-master rows
+(`tests/fixtures/reference_series_master_rows.json`) and against the live master before every
+fetch: a moved or renamed token stops the run before any request. New: `emporos history
+fetch-reference` and `emporos backtest cache warm-reference`. Probe results (pre-vault months): 75
+five-minute bars a day (09:15..15:25), volume always 0 (indices carry none), sensible levels, and the
+broker serves back to at least 2016-10. Volume-based features cannot use these series.
+
+**The fetch is running in the background** (started 18:26, 5m, 2016-10-03..2026-09-18, all 15
+series, about 9 s per 28-day chunk, roughly 4-5 hours in all; log in the loop session's scratchpad
+`d2-fetch.log`, which prints only at the end). It holds the one Angel One session: do not start
+another broker command while it runs (a second login kills it). It is resumable: if it dies, run
+`pipenv run emporos history fetch-reference --from 2016-10-03 --to 2026-09-18` again and chunks
+already recorded are skipped. Progress shows as files in `~/.local/share/emporos/cold/candles/5m/
+NSE:999260xx/`. Daily bars are not stored: they are derivable from the 5m bars.
 
 ## Iteration 7 (2026-09-24): the vault seal (EM-199)
 `emporos.backtest.vault`: `VaultSeal` (days, instruments, at most 3 opens), `UnsealRecord` (open

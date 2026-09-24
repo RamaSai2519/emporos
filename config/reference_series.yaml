@@ -1,0 +1,24 @@
+# Non-tradable reference series (EM-191 D2, EDGE_SEARCH_PLAN.md §4.2): the market's own indices and
+# volatility, fetched as candles for regime conditioning, beta hedging and lead-lag. Tokens, symbols
+# and names are the Angel One scrip master's `AMXIDX` rows, checked against a recorded copy in
+# tests/fixtures/reference_series_master_rows.json and against the live master before every fetch.
+#
+# These are NOT instruments: the instrument master leaves index rows out on purpose, so no strategy
+# can resolve one and no order can name one. Declared BEFORE any data was fetched or used; adding a
+# series is a new commit that says why.
+series:
+  - {token: "99926000", symbol: "Nifty 50",          name: "NIFTY",             kind: index}
+  - {token: "99926009", symbol: "Nifty Bank",        name: "BANKNIFTY",         kind: index}
+  - {token: "99926037", symbol: "Nifty Fin Service", name: "FINNIFTY",          kind: index}
+  - {token: "99926017", symbol: "India VIX",         name: "INDIA VIX",         kind: volatility}
+  - {token: "99926008", symbol: "Nifty IT",          name: "NIFTY IT",          kind: index}
+  - {token: "99926029", symbol: "Nifty Auto",        name: "NIFTY AUTO",        kind: index}
+  - {token: "99926021", symbol: "Nifty FMCG",        name: "NIFTY FMCG",        kind: index}
+  - {token: "99926023", symbol: "Nifty Pharma",      name: "NIFTY PHARMA",      kind: index}
+  - {token: "99926030", symbol: "Nifty Metal",       name: "NIFTY METAL",       kind: index}
+  - {token: "99926020", symbol: "Nifty Energy",      name: "NIFTY ENERGY",      kind: index}
+  - {token: "99926018", symbol: "Nifty Realty",      name: "NIFTY REALTY",      kind: index}
+  - {token: "99926025", symbol: "Nifty PSU Bank",    name: "NIFTY PSU BANK",    kind: index}
+  - {token: "99926047", symbol: "Nifty Pvt Bank",    name: "NIFTY PVT BANK",    kind: index}
+  - {token: "99926031", symbol: "Nifty Media",       name: "NIFTY MEDIA",       kind: index}
+  - {token: "99926019", symbol: "Nifty Infra",       name: "NIFTY INFRA",       kind: index}

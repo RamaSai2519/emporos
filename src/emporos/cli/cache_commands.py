@@ -19,6 +19,9 @@ from emporos.cli.strategy_composition import build_registry
 from emporos.core.clock import IST
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.domain.candles import Timeframe
+from emporos.history.reference_fetch import ReferenceCacheWarm
+from emporos.instruments.reference_series import ReferenceSeriesCatalog
 from emporos.persistence.candle_cache import CandleCacheFiles
 from emporos.session.strategy_files import StrategyConfigLoader
 from emporos.strategies.resolution import StrategyConfigResolver
@@ -97,3 +100,38 @@ def cache_warm(
         typer.secho(f"cache warm failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
     typer.echo(f"warmed {instruments} instruments, {bars} bars")
+
+
+async def _warm_reference(
+    first: datetime, last: datetime, timeframe: Timeframe, symbols: list[str]
+) -> dict[str, int]:
+    async with open_backtest_runtime(Settings.default()) as runtime:
+        if runtime.cache is None:
+            raise ValueError("the backtest runtime has no candle cache")
+        warm = ReferenceCacheWarm(ReferenceSeriesCatalog.load(), runtime.cache)
+        return await warm.warm(first.date(), last.date(), timeframe, symbols)
+
+
+_REFERENCE_TIMEFRAME = typer.Option("5m", "--timeframe", "-t", help="The stored timeframe.")
+_REFERENCE_SERIES = typer.Option(
+    None, "--series", help="A declared series' symbol (default: every declared series)."
+)
+
+
+@cache_app.command("warm-reference")
+def cache_warm_reference(
+    first: datetime = _FIRST,
+    last: datetime = _LAST,
+    timeframe: str = _REFERENCE_TIMEFRAME,
+    series: list[str] = _REFERENCE_SERIES,
+) -> None:
+    """Read the declared index and INDIA VIX series for FROM..TO into the cache (EM-191 D2)."""
+    try:
+        found = asyncio.run(_warm_reference(first, last, Timeframe(timeframe), series or []))
+    except (EmporosError, ValueError, LookupError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"cache warm-reference failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for series_id, bars in found.items():
+        typer.echo(f"  {series_id}: {bars} bars")
+    typer.echo(f"warmed {len(found)} series, {sum(found.values())} bars")

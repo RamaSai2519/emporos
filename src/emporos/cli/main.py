@@ -22,6 +22,7 @@ from emporos.cli.experiment_commands import research_app
 from emporos.cli.graduation_commands import graduation_app
 from emporos.cli.history_composition import resolve_symbols
 from emporos.cli.history_probe_commands import history_probe_depth
+from emporos.cli.history_reference_commands import history_fetch_reference
 from emporos.cli.history_runtime import open_bar_fetch_runtime, open_history_runtime
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
 from emporos.cli.parity_commands import paper_app
@@ -273,6 +274,9 @@ def history_fetch_bars(
     typer.echo(outcome.summary)
     if not outcome.complete:
         raise typer.Exit(code=2)
+
+
+history_app.command("fetch-reference")(history_fetch_reference)
 
 
 @history_app.command("reconcile")
