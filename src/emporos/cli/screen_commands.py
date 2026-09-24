@@ -109,9 +109,10 @@ class OrbRvolCell:
 
 
 class ShockReversalCell:
-    """The recipe for cell L3-first-hour-shock-reversal."""
+    """The recipe for the first-hour gap-reversal cells: one scan, one declaration per cell."""
 
-    slug = "l3-first-hour-shock-reversal"
+    def __init__(self, slug: str) -> None:
+        self.slug = slug
 
     def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
         return [p.as_point() for p in shock_reversal_arms(declaration.parameter_grid)]
@@ -124,7 +125,13 @@ class ShockReversalCell:
 
 
 CELLS: Mapping[str, ScreenCell] = {
-    c.slug: c for c in (RawGapCell(), OrbRvolCell(), ShockReversalCell())
+    c.slug: c
+    for c in (
+        RawGapCell(),
+        OrbRvolCell(),
+        ShockReversalCell("l3-first-hour-shock-reversal"),
+        ShockReversalCell("l3-first-hour-reversal-large-gap"),
+    )
 }
 
 
