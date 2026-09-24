@@ -11,15 +11,29 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 13 (2026-09-24) |
-| Last completed | **L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | Per the steering note and review-1 §4: **D1** (wide and mid-cap universe, background fetch), then D5 and D7; mega-cap cells only where the conditioning selects large days by construction: L4-expected-range-filter, L4-india-vix-regime (top quintile), L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. L9, L11, L14 parked on the mega-caps. EM-206 and EM-207 are with the operator and are not implemented |
+| Iteration | 14 (2026-09-24) |
+| Last completed | **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | While the D1 fetch runs (about 5-6 hours, log `/tmp/claude-1000/d1/fetch.log`, resumable): **D5** event calendar (foreground, review-1 §4.2) and **D7** quote recording. When D1 lands: liquidity filter from Discovery-period bars, the unsigned-move table on the new names, vault instrument seal (§4.3), vectorised screen path (review-1 §4.7). Mega-cap cells meanwhile only if they select large days by construction: L4-expected-range-filter, L4-india-vix-regime (top quintile), L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. EM-206 and EM-207 are with the operator and are not implemented |
 | Global N | **14,072** on 2026-09-24 (14,066 plus the 6 arms of L4-nr7-inside-day-breakout) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
 | Cells | 40 TODO, 5 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 14 (2026-09-24): D1 wider universe started (EM-208)
+Lists: `config/universe/d1/nifty100.csv` and `niftymidcap150.csv`, one plain GET each from NSE Indices'
+published constituent files on 2026-09-24, with `SOURCE.yaml` recording the URLs and the caveat: they
+are the CURRENT constituents (survivorship bias when projected back to 2016; every D1 cell must use
+the EM-177 as-of rules or declare it). The Industry column is a first D3 source. 250 names, no overlap.
+`emporos.research.universe_lists` reads them (10 tests); `emporos history fetch-universe` resolves
+them against the instrument master (unknown ones are reported and skipped), then fetches in batches of
+5 through the same resumable fetcher as `fetch-bars`. Bars older than the hot retention go straight to
+the cold Parquet tier, so Atlas holds only the last two weeks: no broad Atlas load. Started with
+`--from 2016-10-03 --to 2026-09-18 --batch-size 5`; batch 1 took about 6 minutes for 533 chunks, 0
+failed, so the run is about 5-6 hours. Re-running the same command resumes (chunks already recorded are
+skipped). Liquidity is decided AFTER the fetch from Discovery-period bars, not before, because a
+liquidity pre-filter needs daily traded value which is not on hand.
 
 ## Iteration 13 (2026-09-24): L4-nr7-inside-day-breakout (EM-205)
 Declared and committed first (dae511a): the previous session was NR4, NR7 or inside; the first bar
