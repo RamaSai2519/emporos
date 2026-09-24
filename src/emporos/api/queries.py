@@ -14,6 +14,8 @@ from emporos.api.models import (
     CommandDto,
     CommandResultDto,
     ExecutionDto,
+    GraduationDto,
+    GraduationEventDto,
     KillSwitchDto,
     OrderDetailDto,
     OrderDto,
@@ -27,6 +29,7 @@ from emporos.api.models import (
     SystemEventDto,
     VerdictDto,
 )
+from emporos.domain.graduation import GraduationEvent, effective_stage
 from emporos.domain.money import Money
 from emporos.domain.verdicts import RecordedVerdict, standing_of
 from emporos.persistence.records import (
@@ -51,6 +54,10 @@ MAX_PAGE = 500
 
 class VerdictReader(Protocol):
     async def latest_of_each(self) -> dict[str, RecordedVerdict]: ...
+
+
+class GraduationReader(Protocol):
+    async def history(self, strategy: str) -> list[GraduationEvent]: ...
 
 
 class Reader(Protocol):
@@ -96,6 +103,7 @@ class QueryService:
         reconciliations: Reader,
         system_events: Reader,
         verdicts: VerdictReader,
+        graduation: GraduationReader,
         kill_switch: Reader,
         commands: Reader,
         results: Reader,
@@ -108,6 +116,7 @@ class QueryService:
         self._risk_events, self._reconciliations = risk_events, reconciliations
         self._system_events, self._kill_switch = system_events, kill_switch
         self._verdicts = verdicts
+        self._graduation = graduation
         self._commands, self._results = commands, results
         self._limits = risk_limits
 
@@ -250,6 +259,37 @@ class QueryService:
                 )
             )
         return result
+
+    async def strategy_graduation(self, name: str) -> GraduationDto | None:
+        """The stage of the strategy's CURRENT config, and every event that led there."""
+        rows: list[StrategyRecord] = await self._strategies.find({"name": name}, limit=1)
+        if not rows:
+            return None
+        behaviour_hash = rows[0].behaviour_hash
+        events = await self._graduation.history(name)
+        # A catalogue row from before behaviour hashes existed matches no stage: research.
+        stage = effective_stage(events[-1] if events else None, behaviour_hash or "")
+        return GraduationDto.model_validate(
+            {
+                "strategy": name,
+                "behaviour_hash": behaviour_hash,
+                "stage": stage.value,
+                "history": [self._graduation_event(e) for e in events],
+            }
+        )
+
+    @staticmethod
+    def _graduation_event(event: GraduationEvent) -> GraduationEventDto:
+        return GraduationEventDto(
+            seq=event.seq,
+            at=event.at,
+            kind=event.kind.value,
+            from_stage=event.from_stage.value,
+            to_stage=event.to_stage.value,
+            actor=event.actor,
+            reason=event.reason,
+            evidence=[f"{e.kind.value}:{e.ref}" for e in event.evidence],
+        )
 
     @staticmethod
     def _verdict_dto(verdict: RecordedVerdict) -> VerdictDto:

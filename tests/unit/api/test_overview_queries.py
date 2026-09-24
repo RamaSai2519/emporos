@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from emporos.api.queries import QueryService
+from emporos.domain.graduation import GraduationEvent
 from emporos.domain.money import Money
 from emporos.persistence.records import PortfolioSnapshotRecord, SystemEventRecord
 
@@ -81,6 +82,11 @@ def snapshot(account_id: str, ts: datetime, cash: str = "90000") -> PortfolioSna
     )
 
 
+class NoGraduation:
+    async def history(self, strategy: str) -> list[GraduationEvent]:
+        return []
+
+
 def service(
     account_id: str,
     system_events: list[SystemEventRecord],
@@ -92,7 +98,7 @@ def service(
         orders=none, events=none, executions=none, positions=none, snapshots=Rows(snapshots or []),
         strategies=none, runs=none, signals=none, risk_events=none,
         reconciliations=none, system_events=Rows(system_events), verdicts=Verdicts(),
-        kill_switch=none, commands=none, results=none, risk_limits={},
+        graduation=NoGraduation(), kill_switch=none, commands=none, results=none, risk_limits={},
     )  # fmt: skip
 
 

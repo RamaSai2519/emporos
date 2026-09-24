@@ -33,6 +33,11 @@ class ResearchProvenance:
     assumed_instrument_ids: tuple[str, ...]
 
 
+def quarantine_hash(quarantine: CorporateActionQuarantine) -> str:
+    """The content hash of a quarantine, as every research run stamps it (`quarantine_hash`)."""
+    return content_hash(ProvenanceSnapshotter.quarantine_document(quarantine))
+
+
 class ProvenanceSnapshotter:
     """`instrument_ids` is the run's OWN universe — the strategy config's resolved instruments, not
     every instrument the as-of resolver happens to carry (the resolver spans the whole instrument
@@ -56,7 +61,7 @@ class ProvenanceSnapshotter:
             dataset_last=last,
             universe_hash=content_hash(self._universe_document(universe, ids)),
             calendar_version=calendar_version,
-            quarantine_hash=content_hash(self._quarantine_document(quarantine)),
+            quarantine_hash=content_hash(self.quarantine_document(quarantine)),
             assumed_instrument_ids=tuple(sorted(ids & universe.assumed_ids)),
         )
 
@@ -66,7 +71,7 @@ class ProvenanceSnapshotter:
         return {"moment": universe.moment.isoformat(), "instrument_ids": instrument_ids}
 
     @staticmethod
-    def _quarantine_document(quarantine: CorporateActionQuarantine) -> dict[str, Canonical]:
+    def quarantine_document(quarantine: CorporateActionQuarantine) -> dict[str, Canonical]:
         entries: list[Canonical] = [
             {"instrument_id": e.instrument_id, "day": e.day.isoformat(), "source": e.source.value}
             for e in sorted(quarantine.all_entries(), key=lambda e: (e.instrument_id, e.day))

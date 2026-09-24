@@ -135,6 +135,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/strategies/{name}/graduation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Strategy Graduation */
+        get: operations["strategy_graduation_strategies__name__graduation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/risk": {
         parameters: {
             query?: never;
@@ -329,6 +346,49 @@ export interface components {
             outcome: "pass" | "fail" | "unknown";
             /** Detail */
             detail: string;
+        };
+        /**
+         * GraduationDto
+         * @description Read-only: where a strategy stands on the road to live. There is no write route; promotion
+         *     and the human acknowledgement are CLI only.
+         */
+        GraduationDto: {
+            /** Strategy */
+            strategy: string;
+            /** Behaviour Hash */
+            behaviour_hash: string | null;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "research" | "paper" | "live_conservative" | "production" | "retired";
+            /** History */
+            history: components["schemas"]["GraduationEventDto"][];
+        };
+        /** GraduationEventDto */
+        GraduationEventDto: {
+            /** Seq */
+            seq: number;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "promote" | "demote" | "retire";
+            /** From Stage */
+            from_stage: string;
+            /** To Stage */
+            to_stage: string;
+            /** Actor */
+            actor: string;
+            /** Reason */
+            reason: string;
+            /** Evidence */
+            evidence: string[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -862,6 +922,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StrategyDto"][];
+                };
+            };
+        };
+    };
+    strategy_graduation_strategies__name__graduation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraduationDto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -8,6 +8,7 @@ from typing import Any
 
 from emporos.api.queries import QueryService
 from emporos.domain.experiments import Verdict
+from emporos.domain.graduation import GraduationEvent
 from emporos.domain.verdicts import GateFinding, RecordedVerdict
 from emporos.persistence.records import StrategyRecord, StrategyRunRecord
 
@@ -74,6 +75,11 @@ def run(name: str, stopped: bool) -> StrategyRunRecord:
     )
 
 
+class NoGraduation:
+    async def history(self, strategy: str) -> list[GraduationEvent]:
+        return []
+
+
 def service(
     strategies: list[StrategyRecord],
     runs: list[StrategyRunRecord],
@@ -85,7 +91,7 @@ def service(
         orders=none, events=none, executions=none, positions=none, snapshots=none,
         strategies=Rows(strategies), runs=Rows(runs), signals=none, risk_events=none,
         reconciliations=none, system_events=none, verdicts=Verdicts(verdicts),
-        kill_switch=none, commands=none, results=none, risk_limits={},
+        graduation=NoGraduation(), kill_switch=none, commands=none, results=none, risk_limits={},
     )  # fmt: skip
 
 
@@ -135,3 +141,56 @@ async def test_enabled_comes_from_the_strategys_own_config() -> None:
     (dto,) = await service([strategy("orb_v1", enabled=True)], [], {}).strategies()
 
     assert dto.enabled is True
+
+
+class Ledger:
+    def __init__(self, events: list[GraduationEvent]) -> None:
+        self._events = events
+
+    async def history(self, strategy: str) -> list[GraduationEvent]:
+        return self._events
+
+
+def graduation_service(hash_: str | None, events: list[GraduationEvent]) -> QueryService:
+    none = Rows([])
+    record = strategy("orb_v1")
+    record = record.model_copy(update={"behaviour_hash": hash_})
+    return QueryService(
+        "paper",
+        orders=none, events=none, executions=none, positions=none, snapshots=none,
+        strategies=Rows([record]), runs=none, signals=none, risk_events=none,
+        reconciliations=none, system_events=none, verdicts=Verdicts({}),
+        graduation=Ledger(events), kill_switch=none, commands=none, results=none,
+        risk_limits={},
+    )  # fmt: skip
+
+
+def promoted(hash_: str) -> GraduationEvent:
+    from emporos.domain.graduation import (
+        EvidenceKind,
+        EvidenceRef,
+        GraduationStage,
+        TransitionKind,
+    )
+
+    return GraduationEvent(
+        "orb_v1", hash_, 1, GraduationStage.RESEARCH, GraduationStage.PAPER,
+        TransitionKind.PROMOTE, (EvidenceRef(EvidenceKind.VERDICT, "v-1"),), "rama", "ok", NOW,
+    )  # fmt: skip
+
+
+async def test_the_graduation_view_shows_the_stage_of_the_current_config_and_its_history() -> None:
+    dto = await graduation_service("h1", [promoted("h1")]).strategy_graduation("orb_v1")
+
+    assert dto is not None and dto.stage == "paper" and dto.behaviour_hash == "h1"
+    (event,) = dto.history
+    assert (event.seq, event.kind, event.evidence) == (1, "promote", ["verdict:v-1"])
+
+
+async def test_an_edited_config_reads_as_research_and_an_unknown_strategy_as_none() -> None:
+    stale = await graduation_service("h2", [promoted("h1")]).strategy_graduation("orb_v1")
+    assert stale is not None and stale.stage == "research" and len(stale.history) == 1
+
+    assert await graduation_service("h1", []).strategy_graduation("nobody") is None
+    unhashed = await graduation_service(None, [promoted("h1")]).strategy_graduation("orb_v1")
+    assert unhashed is not None and unhashed.stage == "research"

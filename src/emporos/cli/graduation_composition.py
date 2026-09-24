@@ -1,7 +1,8 @@
-"""Composition root for graduation: the only place its ports are bound to Mongo (EM-189).
-
-The launch gate, the worker and the `emporos graduation` commands all read the SAME ledger and
-acknowledgement book through here, so there is one answer to "what stage is this configuration at".
+"""Composition root for graduation's launch-gate seam: the ledger and acknowledgement book, bound to
+Mongo (EM-189). The launch gate, the worker and the `emporos graduation` commands all read the SAME
+ledger and acknowledgement book, so there is one answer to "what stage is this configuration at".
+The full console (evidence bindings) is `graduation_runtime.py`; this stays light because the worker
+composition imports it.
 """
 
 from __future__ import annotations

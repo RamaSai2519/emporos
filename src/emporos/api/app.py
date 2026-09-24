@@ -34,6 +34,7 @@ from emporos.api.models import (
     CommandDetailDto,
     CommandDto,
     ExecutionDto,
+    GraduationDto,
     HealthDto,
     LoginRequest,
     OrderDetailDto,
@@ -143,6 +144,13 @@ def create_app(services: ApiServices, lifespan: Lifespan[FastAPI] | None = None)
     @app.get("/strategies", response_model=list[StrategyDto])
     async def strategies(_: Authed) -> list[StrategyDto]:
         return await q.strategies()
+
+    @app.get("/strategies/{name}/graduation", response_model=GraduationDto)
+    async def strategy_graduation(_: Authed, name: str) -> GraduationDto:
+        found = await q.strategy_graduation(name)
+        if found is None:
+            raise HTTPException(404, "no such strategy")
+        return found
 
     @app.get("/risk", response_model=RiskDto)
     async def risk(_: Authed, limit: int = Query(50, ge=1, le=500)) -> RiskDto:

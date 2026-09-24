@@ -308,6 +308,45 @@
         }
       }
     },
+    "/strategies/{name}/graduation": {
+      "get": {
+        "summary": "Strategy Graduation",
+        "operationId": "strategy_graduation_strategies__name__graduation_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraduationDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/risk": {
       "get": {
         "summary": "Risk",
@@ -807,6 +846,109 @@
           "detail"
         ],
         "title": "GateDto"
+      },
+      "GraduationDto": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "behaviour_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behaviour Hash"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "research",
+              "paper",
+              "live_conservative",
+              "production",
+              "retired"
+            ],
+            "title": "Stage"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/GraduationEventDto"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy",
+          "behaviour_hash",
+          "stage",
+          "history"
+        ],
+        "title": "GraduationDto",
+        "description": "Read-only: where a strategy stands on the road to live. There is no write route; promotion\nand the human acknowledgement are CLI only."
+      },
+      "GraduationEventDto": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "promote",
+              "demote",
+              "retire"
+            ],
+            "title": "Kind"
+          },
+          "from_stage": {
+            "type": "string",
+            "title": "From Stage"
+          },
+          "to_stage": {
+            "type": "string",
+            "title": "To Stage"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "at",
+          "kind",
+          "from_stage",
+          "to_stage",
+          "actor",
+          "reason",
+          "evidence"
+        ],
+        "title": "GraduationEventDto"
       },
       "HTTPValidationError": {
         "properties": {

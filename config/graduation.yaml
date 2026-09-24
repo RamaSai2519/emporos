@@ -1,0 +1,9 @@
+# Graduation policy numbers (EM-189). Integers, or quoted strings; a YAML float is refused and so
+# is an unknown key. Nothing here loosens a gate: it only says how fresh evidence must be.
+
+# A broker verification PASS older than this no longer counts (EM-186 evidence goes stale).
+broker_verification_max_age_days: 7
+
+# Instruments a research run may have ASSUMED into its universe (could not be verified as listed)
+# and still count as clean data. Empty on purpose: every assumption needs a human decision.
+allowed_assumed_instruments: []

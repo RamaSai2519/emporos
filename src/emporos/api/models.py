@@ -148,6 +148,27 @@ class StrategyDto(_Dto):
     verdict: VerdictDto | None
 
 
+class GraduationEventDto(_Dto):
+    seq: int
+    at: datetime
+    kind: Literal["promote", "demote", "retire"]
+    from_stage: str
+    to_stage: str
+    actor: str
+    reason: str
+    evidence: list[str]  # `kind:ref` of each piece of evidence cited
+
+
+class GraduationDto(_Dto):
+    """Read-only: where a strategy stands on the road to live. There is no write route; promotion
+    and the human acknowledgement are CLI only."""
+
+    strategy: str
+    behaviour_hash: str | None  # the catalogue's hash of the current config
+    stage: Literal["research", "paper", "live_conservative", "production", "retired"]
+    history: list[GraduationEventDto]
+
+
 class RiskEventDto(_Dto):
     id: str
     ts: datetime

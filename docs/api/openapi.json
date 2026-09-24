@@ -226,6 +226,109 @@
         "title": "GateDto",
         "type": "object"
       },
+      "GraduationDto": {
+        "description": "Read-only: where a strategy stands on the road to live. There is no write route; promotion\nand the human acknowledgement are CLI only.",
+        "properties": {
+          "behaviour_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behaviour Hash"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/GraduationEventDto"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "stage": {
+            "enum": [
+              "research",
+              "paper",
+              "live_conservative",
+              "production",
+              "retired"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "strategy": {
+            "title": "Strategy",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy",
+          "behaviour_hash",
+          "stage",
+          "history"
+        ],
+        "title": "GraduationDto",
+        "type": "object"
+      },
+      "GraduationEventDto": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "from_stage": {
+            "title": "From Stage",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "promote",
+              "demote",
+              "retire"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "to_stage": {
+            "title": "To Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "kind",
+          "from_stage",
+          "to_stage",
+          "actor",
+          "reason",
+          "evidence"
+        ],
+        "title": "GraduationEventDto",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1612,6 +1715,45 @@
           }
         },
         "summary": "Strategies"
+      }
+    },
+    "/strategies/{name}/graduation": {
+      "get": {
+        "operationId": "strategy_graduation_strategies__name__graduation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraduationDto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Strategy Graduation"
       }
     },
     "/stream": {

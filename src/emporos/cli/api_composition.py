@@ -32,6 +32,7 @@ from emporos.core.alerts import AlertSink
 from emporos.core.clock import Clock, Sleeper
 from emporos.core.ids import IdGenerator
 from emporos.persistence.collections import Collection
+from emporos.persistence.graduation_store import MongoGraduationLedger
 from emporos.persistence.repositories import (
     CommandRepository,
     CommandResultRepository,
@@ -98,6 +99,7 @@ class ApiComposer:
                 reconciliations=ReconciliationRunRepository(db),
                 system_events=SystemEventRepository(db),
                 verdicts=MongoVerdictBook(db),
+                graduation=MongoGraduationLedger(db, IdGenerator()),
                 kill_switch=KillSwitchRepository(db, self.kill_switch_collection),
                 commands=commands,
                 results=CommandResultRepository(db),

@@ -35,3 +35,14 @@ def test_money_is_a_string_in_every_schema_that_carries_it() -> None:
         for field in ("limit_price", "average_price", "price", "realised_pnl"):
             if field in properties:
                 assert "string" in json.dumps(properties[field]), (name, field)
+
+
+def test_graduation_is_readable_through_the_api_and_never_writable() -> None:
+    """Promotion and the human acknowledgement are CLI only: the API has one read route."""
+    from emporos.api.app import openapi_document
+
+    paths = openapi_document()["paths"]
+    graduation = {p: sorted(ops) for p, ops in paths.items() if "graduation" in p}
+
+    assert graduation == {"/strategies/{name}/graduation": ["get"]}
+    assert not any("acknowledge" in p or "promote" in p for p in paths)
