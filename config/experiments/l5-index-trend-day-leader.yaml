@@ -1,0 +1,92 @@
+# Declared BEFORE any directional data run or any scan code (EDGE_SEARCH_PLAN.md §3.1). PROFIT_PLAN.md
+# §6 Track C, search-map cell L5-early-trend-day-leaders (lane L5, full-session trend days), design
+# reviewed and approved by the head session on 2026-09-25 (a change to the rank key, below). Not yet
+# run: no direction or P&L of this cell has been seen.
+#
+# What is tested. On a day the index trends hard in the first hour, is the name that has traded the
+# most volume in the index's direction still worked by the same flow, so that riding it from the
+# 10:10 close to the 15:15 square-off pays more than the adverse cost? The rule has four parts:
+# * Day gate. NIFTY 50 (D2 series NSE:99926000): the move from the 09:15 bar's open to the close of
+#   the bar starting 10:10 is at least `index_move_min_pct` in absolute size. Its sign is the day's
+#   direction. No other index feature is used (sector breadth needs D3 and is not declared).
+# * Candidate, per name per gated session. The name's own first-hour move (09:15 open to the close
+#   of the bar starting 10:10) has the index's sign and is LARGER than NIFTY's in absolute size, so
+#   the name is leading the index, not lagging it. The name must have a first-hour volume baseline:
+#   at least 10 of its previous 20 sessions with a complete first hour (12 bars). Today is never in
+#   its own baseline. Both arms of a rank key see the same candidates.
+# * Selection, per session. `DailyTopKSelection(1)` keeps the candidate with the largest score
+#   (ties: lower instrument id), chosen from SIGNALS before fills: a chosen order that does not fill
+#   leaves the day empty and the next candidate is not substituted. The score is the arm's
+#   `rank_key`:
+#     volume: the name's first-hour volume divided by the mean first-hour volume of its baseline
+#             sessions (participation, the mechanism's own variable);
+#     move:   the name's same-direction first-hour move (extension).
+# * Execution. Trade in the index's direction (long on an up day, short on a down day). The signal is
+#   the close of the bar starting 10:10; the shared IntradayScan order path (marketable limit on the
+#   next bar, 10% of bar volume, strictly-through fills); hold to the 15:15 square-off; no stop, no
+#   target. Rs 50,000.
+# 2 (index_move_min_pct 0.4, 0.5) x 2 (rank_key volume, move) = 4 arms, each a counted look.
+#
+# Why the rank key is an arm. The mechanism is about PARTICIPATION (the largest unfinished parent
+# order), so `volume` is the arm the hypothesis is about. `move` is kept on purpose as the direct
+# test of the program's own evidence: L17 (EM-216) found the day's most price-extended names REVERT,
+# so ranking by same-direction move should select the names most likely to fade. If `move` is worse
+# than `volume` that is the expected sign; if `move` is as good, participation adds nothing.
+#
+# Evidence used to choose thresholds (Discovery, UNSIGNED: the NIFTY series only, magnitudes, no
+# direction and no relation between the first hour and the later move was computed). Over the 2,027
+# Discovery sessions with a full day of 5m bars, NIFTY's |first-hour move| has quantiles 0.22, 0.40,
+# 0.61 and 0.77% at p50, p75, p90 and p95. The gate 0.4% keeps 514 sessions and 0.5% keeps 336; 0.75%
+# keeps 108 and is not declared (under the 300-trade floor). The median NIFTY |10:15 -> 15:15| move
+# on those gated days is 0.42% and 0.46%, and 0.58% at 0.75%.
+#
+# PRIOR, stated before the run: the chance any arm passes S2 is under 5%. Even on strong trend days
+# the index's own later move is a 0.42-0.58% median absolute size. A leading stock moves more, so
+# the median absolute move may clear S1's bar (about 0.99% at Rs 50,000), but mean gross of 0.5%
+# (the adverse break-even) on a median absolute move near 1% needs roughly a 75% hit rate for a
+# continuation. No rank-based cell so far has beaten +0.34% gross (L17), and the gap-continuation arms
+# of L3 and L2 were consistently negative. The cell is run because it is the next lane in
+# PROFIT_PLAN §6, not because the evidence favours it.
+#
+# Data: Discovery only (start of data to 2024-12-31). Universe: the committed D1 manifest
+# (config/universe/d1/universe.yaml, EM-214), `--universe d1` semantics (a rank over 29 names is not
+# the declared cell). Confirmation and the vault are not touched. KNOWN LIMITS, declared now: (a) D1
+# lists are the CURRENT NIFTY 100 and Midcap 150 (survivorship: a long-only side is flattered, so the
+# long and short sides are reported separately); (b) actions under 15% are not caught; (c) the scan
+# is advisory (no engine strategy to prove parity against), so S2 is triage; (d) spreads on mid-caps
+# are likely wider than the benchmark's 5 bps per side, which is why S2 requires gross at least the
+# ADVERSE break-even (15 bps per side).
+family: strategy
+slug: l5-index-trend-day-leader
+hypothesis: >-
+  On a session when NIFTY 50 moves at least 0.4% (or 0.5%) in its first hour, the D1 name leading the
+  index in the index's direction with the highest first-hour volume relative to its own recent
+  first hours is still being worked by an unfinished, index-linked order, and riding it from 10:15
+  to the 15:15 square-off earns more per trade than the adverse round-trip cost at Rs 50,000.
+economic_rationale: >-
+  Index-linked flows (ETF creation and redemption, index-futures arbitrage) and institutions'
+  parent orders (VWAP and TWAP slicing) are spread across the session rather than filled at the
+  open, so a strongly directional first hour marks a day on which one side is still working (Gao,
+  Han, Li and Zhou 2018 find the first half-hour return predicting the last half-hour return; Chan
+  2003 finds news-driven moves drifting). Unusual first-hour participation in a name that is already
+  leading the index is the footprint of a large unfinished order. The other side is liquidity
+  providers and short-horizon mean-reversion traders who fade the move too early, and slower
+  capital that reaches the name later in the day. The move-ranked arm is the control: it selects the
+  most extended name, which L17 found reverts.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the entry to the exit
+  on the traded days is below 2x the mean adverse round-trip cost at Rs 50,000: INFEASIBLE. S2: net
+  t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years, no instrument above
+  50% of net profit, net expectancy > 0 at benchmark costs and mean gross at least the adverse
+  break-even (about 0.495%). Fixed now, before the run: if neither volume-ranked arm has mean gross of
+  at least 0.25%, the index-trend continuation lane (L5) is closed and gets no child. No new index
+  threshold, no other rank key and no reversal of direction is tried from this cell's output (a
+  reversal is a new hypothesis with its own rationale, per EDGE_SEARCH_PLAN §3.7).
+parameter_grid:
+  index_move_min_pct: ["0.4", "0.5"]
+  rank_key: ["volume", "move"]
+feature_versions:
+  index_first_hour_move: 1
+  first_hour_volume_ratio: 1
+position_value: "50000"
+declared_at: 2026-09-25T04:55:00+05:30
