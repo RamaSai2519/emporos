@@ -38,20 +38,21 @@ foundations:
   - {id: D2,    name: "Index and INDIA VIX series", status: DONE, ticket: EM-200}
   - {id: D3,    name: "Sector taxonomy (versioned, append-only)", status: TODO}
   - {id: D4,    name: "Corporate-action adjusted series", status: TODO}
-  - {id: D5,    name: "Event calendar timestamped at publication", status: BLOCKED(EM-209)}
+  - {id: D5,    name: "Event calendar: results announcements timestamped at publication", status: DONE, ticket: EM-209}
+  - {id: D5b,   name: "Event calendar: ex-dates, bulk deals, index rebalances, F&O ban list", status: TODO, ticket: EM-212}
   - {id: D6,    name: "Daily bhavcopy delivery % and FII/DII flows", status: TODO}
   - {id: D7,    name: "Forward L1 quote recording", status: TODO}
   - {id: D8,    name: "Fee schedule reconciled against a contract note", status: DONE, ticket: EM-197}
 
 cells:
   # --- P1 ---------------------------------------------------------------------------------------
-  - {id: L2-pead-first-hour,            lane: L2, hypothesis: pead-first-hour,            status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-continuation,  lane: L2, hypothesis: earnings-gap-continuation,  status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-fade,          lane: L2, hypothesis: earnings-gap-fade,          status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-fno-ban-days,               lane: L2, hypothesis: fno-ban-entry-exit,         status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-pead-first-hour,            lane: L2, hypothesis: pead-first-hour,            status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-earnings-gap-continuation,  lane: L2, hypothesis: earnings-gap-continuation,  status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-earnings-gap-fade,          lane: L2, hypothesis: earnings-gap-fade,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
+  - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
+  - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
+  - {id: L2-fno-ban-days,               lane: L2, hypothesis: fno-ban-entry-exit,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - id: L3-raw-gap-hold-to-close
     lane: L3
     hypothesis: l3-raw-gap-hold-to-close
@@ -135,7 +136,7 @@ cells:
   - {id: L14-month-turn,                lane: L14, hypothesis: month-turn,                status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L14-pre-holiday,               lane: L14, hypothesis: pre-holiday,               status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L14-expiry-day,                lane: L14, hypothesis: expiry-day,                status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
-  - {id: L14-results-season,            lane: L14, hypothesis: results-season,            status: BLOCKED(EM-209), requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - {id: L14-results-season,            lane: L14, hypothesis: results-season,            status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
   - {id: L15-gbm-return-ranking,        lane: L15, hypothesis: gbm-return-ranking,        status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L15-deep-model,                lane: L15, hypothesis: deep-return-model,         status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D1]}
   - {id: L16-jev-meta-feature,          lane: L16, hypothesis: jev-meta-feature,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
