@@ -1,0 +1,52 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-203, search-map cell
+# L3-first-hour-shock-reversal. Not yet run: no result of this cell has been seen.
+#
+# What is run: one trade per name per day. The overnight shock is the raw gap: the session's first
+# bar opens at least `gap_threshold_pct` away from the previous close. The first hour (09:15..10:14)
+# is then observed. At the close of the 12th bar (10:15) the retrace is
+# (day open - close) / (day open - previous close): 0 means the price is still at the open, 1 means it
+# has closed the whole gap, above 1 it has gone through. If the retrace is at least `retrace_min`,
+# the reversal has started, and the trade is taken at that close IN THE DIRECTION OF THE RETRACE (short
+# a gap up, long a gap down), held to the 15:15 square-off with no stop and no target. If the retrace
+# is below `retrace_min` the day is not traded. One arm is one (gap_threshold_pct, retrace_min) pair:
+# 3 x 2 = 6 arms, every one a counted look. The exit is fixed at the close because the ORB screen
+# (EM-202) showed gross return accruing late in the day, not early; that lesson is Discovery output.
+#
+# Data: the Discovery split only (start of data to 2024-12-31, EDGE_SEARCH_PLAN.md §4.3), the 29
+# names with ten years of 5m bars; the 7 audit-quarantined corporate-action days are excluded.
+# Confirmation and the vault are not touched.
+#
+# Stages, each only while the previous passes (§6): S1 median absolute move over the hold at least 2x
+# the adverse round-trip cost at the declared size (§3.5); S2 the fixed screen bar (net t >= 3.0,
+# >= 300 trades, net positive in >= 60% of years, no instrument > 50% of net, net expectancy > 0 at
+# benchmark costs, gross >= the adverse break-even).
+family: strategy
+slug: l3-first-hour-shock-reversal
+hypothesis: >-
+  When a large-cap NSE name gaps at least 1% and by 10:15 has already given back a real part of the
+  gap, the rest of the reversal to the 15:15 close is large enough to pay the round-trip cost at Rs
+  25,000 (0.324% benchmark, 0.636% adverse). Waiting for the first hour to show the reversal picks
+  the gaps that are being faded, which the raw-gap fade (EM-201, entered at 09:15, gross under 0.1%)
+  could not tell apart from the gaps that run.
+economic_rationale: >-
+  An overnight headline is priced by a thin opening auction, and the first hour is where retail
+  momentum chasing meets liquidity providers and value buyers. If the price has already retraced a
+  good part of the gap by 10:15, the over-reaction is being corrected by real flow and the remaining
+  distance to the previous close is the unfinished part of that correction. If it has not retraced,
+  the gap was information and there is nothing to fade.
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from 10:15 to the close on
+  the conditioning days is below 2x the mean adverse round-trip cost at Rs 25,000 (about 1.27%): that
+  arm is INFEASIBLE. S2: an arm needs net t >= 3.0, at least 300 trades, net positive in at least
+  60% of calendar years, no instrument above 50% of net profit, net expectancy > 0 at benchmark
+  costs and mean gross return at least the adverse break-even. If no arm passes S2 the cell is
+  SCREEN_REJECT. An arm that passes at one grid point and not its neighbours is overfit (§3.8). All 6
+  arms are counted in the program-wide trial count whether or not they pass. The scan is advisory
+  (no engine strategy to prove parity against), so a pass is a lead for `curate`, not a verdict.
+parameter_grid:
+  gap_threshold_pct: ["1.0", "1.5", "2.0"]
+  retrace_min: ["0.25", "0.5"]
+feature_versions:
+  first_hour_retrace: 1
+position_value: "25000"
+declared_at: 2026-09-24T19:45:00+05:30
