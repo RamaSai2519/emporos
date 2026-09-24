@@ -7,19 +7,29 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 > Its §4 priority order supersedes the "Next" row below: D1 (wide and mid-cap universe, run in the background) and D5
 > (event calendar) come ahead of further mega-cap cells. D7 quote recording starts now. Mega-cap cells only where the
 > conditioning set selects large days by construction, hold to 15:15 by default, 2-6 arms per cell. Operator decisions
-> are pending on EM-206 (the DSR hurdle needs an annualised Sharpe above 5 at raw N) and EM-207 (a Rs 50,000 single position).
+> were pending on EM-206 and EM-207; both are now approved and committed (see the Blocked row).
 
 | Field | Value |
 |---|---|
-| Iteration | 14 (2026-09-24) |
+| Iteration | 15 (2026-09-24) |
 | Last completed | **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | While the D1 fetch runs (about 5-6 hours, log `/tmp/claude-1000/d1/fetch.log`, resumable): **D5** event calendar (foreground, review-1 §4.2) and **D7** quote recording. When D1 lands: liquidity filter from Discovery-period bars, the unsigned-move table on the new names, vault instrument seal (§4.3), vectorised screen path (review-1 §4.7). Mega-cap cells meanwhile only if they select large days by construction: L4-expected-range-filter, L4-india-vix-regime (top quintile), L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. EM-206 and EM-207 are with the operator and are not implemented |
+| Next | **D7** quote recording (starts now, review-1 §4.3); while the D1 fetch runs (log `/tmp/claude-1000/d1/fetch.log`, resumable), the large-day mega-cap cells, now sized at Rs 50,000 where it helps (the S1 bar at 50k is about 0.99%, so the top VIX quintile clears it): L4-india-vix-regime (top quintile), L4-expected-range-filter, L4-atr-percentile-regime (top decile), L4-gap-fade-expected-range. When D1 lands: liquidity filter from Discovery-period bars, unsigned-move table on the new names, vault instrument seal (§4.3), vectorised screen path (review-1 §4.7). D5 is blocked on EM-209 |
 | Global N | **14,072** on 2026-09-24 (14,066 plus the 6 arms of L4-nr7-inside-day-breakout) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
 | Cells | 40 TODO, 5 terminal (all SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
-| Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
+| Blocked on operator | **EM-209**: D5 event-calendar source (NSE/BSE announcement endpoints within terms, a licensed dataset, a CSV export, or drop the event lanes). Blocks D5 and its 8 cells; every other lane continues. EM-206 (DSR luck benchmark repriced) and EM-207 (production capital Rs 1,00,000, Rs 50,000 positions) were approved by the operator on 2026-09-24 (commits 529c8e2, 325f8b8) |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 15 (2026-09-24): D5 blocked on the operator (EM-209)
+Probed the screener MCP for the earnings calendar: `get_company_announcements` returned nothing for
+RELIANCE, `get_quarterly_results` gives only the last 8 quarter-end figures (no announcement date, no
+time), `get_document_list` gives annual reports. A quarter-end is not when a result became public, and
+choosing the reaction day from price or volume would select it by its outcome, so neither is used.
+The plan allows scraping only within a site's terms, and whether NSE's or BSE's announcement endpoints
+qualify is the operator's call. Filed EM-209 with the four options; D5 and its 8 cells (7 L2 cells,
+L14-results-season) are `BLOCKED(EM-209)`. Other lanes continue (§7.6). Noted that the operator session
+approved EM-206 and EM-207 while this loop ran.
 
 ## Iteration 14 (2026-09-24): D1 wider universe started (EM-208)
 Lists: `config/universe/d1/nifty100.csv` and `niftymidcap150.csv`, one plain GET each from NSE Indices'
