@@ -5,15 +5,29 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 4 (2026-09-24) |
-| Last completed | F3 core: screener, S2 bar, screen ledger, evaluator parity (EM-195, advisory); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **F3B** signal-level parity: vectorised orb_v1 / vwap_reversion_v1 / rsi_pullback_v1 scans vs `backtest curate` (EM-196). Then F4, vault seal; D7 quote recording and D1 in the background |
+| Iteration | 5 (2026-09-24) |
+| Last completed | F3B signal-level parity: three scans match the real engine (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **F4** size-aware evaluation, declared position value through every study and curation (EM-198). Then the vault seal; D7 quote recording and D1 in the background |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3 (vault not yet sealed) |
-| Cells | 42 TODO, 0 terminal; no lane may run before F3B, F4 and VAULT are DONE |
+| Cells | 42 TODO, 0 terminal; no lane may run before F4 and VAULT are DONE |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 5 (2026-09-24): F3B signal parity (EM-196)
+`emporos.research.scans`: `ScanRules` (a strategy's entry/exit rules as a state machine over bars) and
+`IntradayScan` (the order path they share, mirroring the backtest: a signal at a bar's close is a
+marketable limit that first trades on the next bar, only strictly through the limit and only if
+10% of the bar's volume covers it; 15:15 square-off; the broker's forced close). Scans for
+orb_v1, vwap_reversion_v1 and rsi_pullback_v1 reuse the strategies' own indicators, so only the
+decisions are re-implemented. `test_scan_parity.py` runs the real `BacktestJob` and each scan over
+the committed year of RELIANCE/TCS 5m bars: **the trade sets are identical** (323 / 833 / 1,109
+round trips) and screener net expectancy is within 1.4-1.7% of the engine's (bar: 10%), benchmark
+and adverse scenarios alike. A negative control (orb with shorting off) fails the same comparison.
+`PARITY_PROVEN` lists the proven scans and the parity test iterates it; `ScanScreener` makes a
+screen non-advisory only for a scan in it, so a new hypothesis's scan is advisory until it has its
+own parity case. Speed: about 0.3-0.7 s per strategy-year for two names, Decimal not numpy.
 
 ## Iteration 4 (2026-09-24): F3 core (EM-195)
 `emporos.research` gained the screener: `ScreenTrade`/`DeclaredValueSizer` (whole shares at the
@@ -38,6 +52,10 @@ A future re-run of a study is new looks and lands in its own ledger, counted sep
 Effect: N 740 -> 14,028, so the DSR hurdle at S4/S5 is now priced at the program's real breadth.
 
 ## Known weaknesses carried forward
+- Scan parity is proven on two liquid names, one year, no risk gate, one instrument at a time. Not
+  modelled: cross-instrument risk limits (3 open positions, capital deployed, daily loss), partial
+  fills on thin volume (the scan skips an order a bar cannot take whole), re-signals while an order
+  rests. A screen is triage; a verdict comes from `curate`. Widen the parity case once D1 lands.
 - Program-wide N is still a lower bound: it counts only grids a report states. Screener evaluations
   (F3) will add to it. N is summed across sources that may overlap (report rows and ledger trials of
   one strategy run), which can only raise it.
