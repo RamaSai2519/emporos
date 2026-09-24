@@ -1,0 +1,53 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1, §7.4). EM-204, search-map cell
+# L3-first-hour-reversal-large-gap, child of L3-first-hour-shock-reversal (EM-203). Not yet run: no
+# result of this cell has been seen.
+#
+# Why this child: the parent's Discovery output showed the fade's gross return rising with gap size
+# (0.188, 0.257, 0.351% at 1, 1.5, 2% gaps, retrace 0.25) and its median move reaching 1.22% at 2%,
+# just under the S1 bar. Gross positive, net negative: restrict to the days that can pay (§7.4). The
+# larger gaps are declared here, once, with two neighbours per axis so a lone lucky point is visible.
+#
+# What is run: exactly the parent's rules (scans/shock_reversal.py). The session's first bar opens at
+# least `gap_threshold_pct` from the previous close; at the close of the 10:10 bar the retrace
+# (day open - close) / (day open - previous close) must be at least `retrace_min`; if so, trade the
+# retrace direction (short a gap up, long a gap down) from that close, held to the 15:15 square-off,
+# no stop, no target. One arm is one (gap_threshold_pct, retrace_min) pair: 2 x 2 = 4 arms, every one
+# a counted look. The parent's 2% arms are not re-run.
+#
+# Known risk, stated ahead: the parent had 809 trades at 2% / 0.25, so a 3% gap may fall below the
+# 300-trade floor. That is a reason to reject an arm at S2, not to lower the floor or widen the grid
+# after seeing it; the fix for too few trades is D1's wider universe (§7.4), not a looser filter.
+#
+# Data: Discovery only (start of data to 2024-12-31), the 29 names with ten years of 5m bars, the 7
+# audit-quarantined corporate-action days excluded. Confirmation and the vault are not touched.
+#
+# Stages (§6): S1 median absolute move at least 2x the adverse round-trip cost at Rs 25,000 (§3.5);
+# S2 net t >= 3.0, >= 300 trades, net positive in >= 60% of years, no instrument > 50% of net, net
+# expectancy > 0 at benchmark costs, gross >= the adverse break-even.
+family: strategy
+slug: l3-first-hour-reversal-large-gap
+hypothesis: >-
+  When a large-cap NSE name gaps 2.5% or more and by 10:15 has already given back at least a
+  quarter of the gap, the rest of the reversal to the 15:15 close has a median move above the ~1.27%
+  feasibility bar and a mean gross return above the 0.636% adverse cost at Rs 25,000, which the
+  parent's smaller gaps (median 0.85-1.23%) could not reach.
+economic_rationale: >-
+  The larger the overnight shock, the larger the auction's over-reaction and the further the price
+  has to travel back when real flow corrects it; the cost of a round trip is fixed in percent, so
+  the only way a fade can pay is a bigger expected reversal. The parent's gross return grew with gap
+  size, which is what this mechanism predicts.
+falsification: >-
+  Rejected at the first stage it fails. S1: median absolute gross move from 10:15 to the close below
+  2x the mean adverse round-trip cost (about 1.27%): that arm is INFEASIBLE. S2: net t >= 3.0, at
+  least 300 trades, net positive in at least 60% of calendar years, no instrument above 50% of net
+  profit, net expectancy > 0 at benchmark costs and mean gross at least the adverse break-even. If no
+  arm passes S2 the cell is SCREEN_REJECT and the fade-after-a-gap family is closed on Discovery
+  data: no further threshold is tried. All 4 arms are counted in the program-wide trial count. The
+  scan is advisory (no engine strategy), so a pass is a lead for `curate`, not a verdict.
+parameter_grid:
+  gap_threshold_pct: ["2.5", "3.0"]
+  retrace_min: ["0.25", "0.5"]
+feature_versions:
+  first_hour_retrace: 1
+position_value: "25000"
+declared_at: 2026-09-24T20:00:00+05:30
