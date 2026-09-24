@@ -14,6 +14,7 @@ from typing import Any
 
 import yaml
 
+from emporos.cli.experiment_provenance import GitRepository
 from emporos.core.config import CONFIG_DIR
 from emporos.core.errors import ConfigurationError
 from emporos.domain.research_experiments import ExperimentDeclaration, ExperimentFamily
@@ -125,3 +126,21 @@ class ExperimentDeclarationLoader:
         if moment.tzinfo is None:
             raise ConfigurationError(f"{path}: declared_at needs a UTC offset, e.g. +05:30")
         return moment
+
+
+class DeclarationGate:
+    """Loads a declaration and, unless told otherwise, refuses one that was not committed first: a
+    claim that can still be edited after the result is known is not a pre-declaration."""
+
+    def __init__(self, loader: ExperimentDeclarationLoader, git: GitRepository) -> None:
+        self._loader = loader
+        self._git = git
+
+    def load(self, path: Path, *, allow_uncommitted: bool = False) -> ExperimentDeclaration:
+        declared = self._loader.load(path)
+        if not allow_uncommitted and not self._git.is_committed(path):
+            raise ConfigurationError(
+                f"{path} is not committed: commit the declaration before the run "
+                "(or pass --allow-uncommitted-declaration, which forfeits the proof)"
+            )
+        return declared

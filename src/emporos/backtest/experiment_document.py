@@ -71,6 +71,7 @@ class ExperimentDocument:
             "slug": d.slug,
             "outcome": report.outcome.value,
             "declaration": {
+                "predeclared": d.is_predeclared,
                 "hypothesis": d.hypothesis,
                 "economic_rationale": d.economic_rationale,
                 "falsification": d.falsification,
@@ -181,6 +182,7 @@ class ExperimentDocument:
             "",
             "## Declaration (made before the run)",
             "",
+            f"- Pre-declared: {'yes' if d.is_predeclared else 'no (backfilled after the fact)'}",
             f"- Hypothesis: {d.hypothesis}",
             f"- Economic rationale: {d.economic_rationale}",
             f"- Falsified by: {d.falsification}",

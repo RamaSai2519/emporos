@@ -28,6 +28,7 @@ from emporos.backtest.robustness.report import RobustnessDocument
 from emporos.core.clock import IST
 from emporos.domain.experiments import Verdict
 from emporos.domain.research_experiments import (
+    BACKFILLED_NOT_PREDECLARED,
     DatasetVersion,
     DatePair,
     ExperimentDeclaration,
@@ -55,6 +56,31 @@ class ExperimentReportBuilder(Protocol[SourceT_contra]):
     def build(
         self, source: SourceT_contra, declaration: ExperimentDeclaration, versions: VersionStamp
     ) -> ExperimentReport: ...
+
+
+class PredeclarationCap:
+    """A report whose claim was reconstructed after the fact (a backfill) can only ever be
+    REJECTED or INCONCLUSIVE: it is marked, and an ACCEPTED result is capped, never upgraded."""
+
+    def apply(
+        self,
+        declaration: ExperimentDeclaration,
+        outcome: ExperimentOutcomeLabel,
+        reasons: tuple[ReasonFinding, ...],
+        notes: tuple[str, ...],
+    ) -> tuple[ExperimentOutcomeLabel, tuple[ReasonFinding, ...], tuple[str, ...]]:
+        if declaration.is_predeclared:
+            return outcome, reasons, notes
+        notes = (BACKFILLED_NOT_PREDECLARED, *notes)
+        if outcome is not ExperimentOutcomeLabel.ACCEPTED:
+            return outcome, reasons, notes
+        finding = ReasonFinding(
+            ReasonCode.NOT_PREDECLARED,
+            "the hypothesis was declared before the run",
+            FindingOutcome.UNKNOWN,
+            "the economic rationale was not recorded before the evidence was gathered",
+        )
+        return ExperimentOutcomeLabel.INCONCLUSIVE, (*reasons, finding), notes
 
 
 class CalendarDays:
@@ -97,6 +123,9 @@ class CurationExperimentReportBuilder:
                 "own quantity and entry price; simulated slippage is already inside the fill "
                 "prices, so gross P&L is after slippage and before charges"
             )
+        outcome, reasons, notes_ = PredeclarationCap().apply(
+            declaration, outcome, reasons, tuple(notes)
+        )
         return ExperimentReport(
             experiment_id=self._minter.mint(declaration),
             declaration=declaration,
@@ -105,7 +134,7 @@ class CurationExperimentReportBuilder:
             metrics=self._metrics(source),
             outcome=outcome,
             reasons=reasons,
-            notes=tuple(notes),
+            notes=notes_,
             supporting=self._supporting(robustness),
         )
 

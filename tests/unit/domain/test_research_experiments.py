@@ -8,6 +8,8 @@ import pytest
 
 from emporos.domain.experiments import Verdict
 from emporos.domain.research_experiments import (
+    BACKFILLED_NOT_PREDECLARED,
+    BACKFILLED_RATIONALE,
     CostBreakdown,
     DatePair,
     ExperimentDeclaration,
@@ -179,3 +181,31 @@ class TestReport:
         assert report(
             ExperimentOutcomeLabel.INCONCLUSIVE, reasons=(ok, unknown)
         ).primary_reasons == (unknown,)
+
+
+class TestBackfilled:
+    def backfilled(self) -> ExperimentDeclaration:
+        return declaration(economic_rationale=BACKFILLED_RATIONALE)
+
+    def test_a_backfilled_declaration_is_not_predeclared(self) -> None:
+        assert not self.backfilled().is_predeclared
+        assert declaration().is_predeclared
+
+    def test_a_backfilled_report_must_carry_the_note(self) -> None:
+        with pytest.raises(ValueError, match=BACKFILLED_NOT_PREDECLARED):
+            report(ExperimentOutcomeLabel.INCONCLUSIVE, declaration=self.backfilled())
+
+        noted = report(
+            ExperimentOutcomeLabel.INCONCLUSIVE,
+            declaration=self.backfilled(),
+            notes=(BACKFILLED_NOT_PREDECLARED,),
+        )
+        assert noted.outcome is ExperimentOutcomeLabel.INCONCLUSIVE
+
+    def test_a_backfilled_report_can_never_be_accepted(self) -> None:
+        with pytest.raises(ValueError, match="not pre-declared"):
+            report(
+                ExperimentOutcomeLabel.ACCEPTED,
+                declaration=self.backfilled(),
+                notes=(BACKFILLED_NOT_PREDECLARED,),
+            )

@@ -4,6 +4,7 @@
 
 ## Declaration (made before the run)
 
+- Pre-declared: yes
 - Hypothesis: Opening-range breakouts continue on high-volume days.
 - Economic rationale: Order-flow imbalance at the open persists for the first hour.
 - Falsified by: Net expectancy after costs is not positive out of sample.

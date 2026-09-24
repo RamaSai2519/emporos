@@ -24,10 +24,7 @@ from emporos.backtest.curation import (
     StrategyCurator,
 )
 from emporos.backtest.curation_run import CurationRun, PlannedStrategy, WindowPlan
-from emporos.backtest.experiment_report import (
-    CurationExperimentReportBuilder,
-    ExperimentReportBuilder,
-)
+from emporos.backtest.experiment_report import CurationExperimentReportBuilder
 from emporos.backtest.parallel import default_workers
 from emporos.backtest.risk_gate import RiskGateFactory
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
@@ -51,18 +48,17 @@ from emporos.backtest.robustness.trials import InMemoryTrialLedger, TrialLedger,
 from emporos.backtest.tuning import SHARPE, ParameterCandidate
 from emporos.cli.backtest_parallel import CurationRecipe, curation_batch
 from emporos.cli.backtest_runtime import candle_cache_root, open_backtest_runtime
-from emporos.cli.experiment_declarations import ExperimentDeclarationLoader
+from emporos.cli.experiment_declarations import DeclarationGate, ExperimentDeclarationLoader
 from emporos.cli.experiment_provenance import CurationVersionStamp, GitRepository
 from emporos.cli.experiment_registry import (
     DEFAULT_EXPERIMENTS_DIR,
-    ExperimentRegistry,
+    ExperimentPublication,
     FileExperimentRegistry,
-    PublishOutcome,
 )
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
-from emporos.core.errors import ConfigurationError, EmporosError
+from emporos.core.errors import EmporosError
 from emporos.core.ids import IdGenerator
 from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import InstrumentResolver
@@ -70,7 +66,6 @@ from emporos.domain.money import Money
 from emporos.domain.research_experiments import (
     CostBreakdown,
     ExperimentDeclaration,
-    ExperimentReport,
     VersionStamp,
 )
 from emporos.persistence.trial_ledger import MongoTrialLedger
@@ -230,24 +225,6 @@ class PlanCostModel:
     ) -> PortfolioCostModel:
         schedule = PlanCostModel.schedule(library, last_day)
         return PortfolioCostModel(schedule, benchmark.spread_bps, benchmark.slippage_bps)
-
-
-class CurationPublication:
-    """Turns a finished curation into a published experiment report and refreshes the index."""
-
-    def __init__(
-        self, builder: ExperimentReportBuilder[CurationRecord], registry: ExperimentRegistry
-    ) -> None:
-        self._builder = builder
-        self._registry = registry
-
-    def publish(
-        self, record: CurationRecord, declaration: ExperimentDeclaration, versions: VersionStamp
-    ) -> tuple[ExperimentReport, PublishOutcome]:
-        report = self._builder.build(record, declaration, versions)
-        outcome = self._registry.publish(report)
-        self._registry.rebuild_index()
-        return report, outcome
 
 
 @dataclass(frozen=True)
@@ -463,17 +440,10 @@ def backtest_curate(
 
 
 def _declared(declaration: Path | None, allow_uncommitted: bool) -> ExperimentDeclaration | None:
-    """The declaration, refused before anything runs unless it was committed first: a claim that
-    can be edited after the result is known is not a pre-declaration."""
     if declaration is None:
         return None
-    declared = ExperimentDeclarationLoader().load(declaration)
-    if not allow_uncommitted and not GitRepository().is_committed(declaration):
-        raise ConfigurationError(
-            f"{declaration} is not committed: commit the declaration before the run "
-            "(or pass --allow-uncommitted-declaration, which forfeits the proof)"
-        )
-    return declared
+    gate = DeclarationGate(ExperimentDeclarationLoader(), GitRepository())
+    return gate.load(declaration, allow_uncommitted=allow_uncommitted)
 
 
 def _publish(
@@ -482,7 +452,7 @@ def _publish(
     versions: VersionStamp,
     experiments_dir: Path,
 ) -> None:
-    publication = CurationPublication(
+    publication = ExperimentPublication(
         CurationExperimentReportBuilder(), FileExperimentRegistry(experiments_dir)
     )
     try:

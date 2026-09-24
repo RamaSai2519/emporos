@@ -8,9 +8,9 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from emporos.backtest.experiment_report import CurationExperimentReportBuilder
-from emporos.cli.curation_commands import CurationPublication
 from emporos.cli.experiment_registry import (
     INDEX_JSON,
+    ExperimentPublication,
     FileExperimentRegistry,
     PublishOutcome,
 )
@@ -51,10 +51,10 @@ class TestIndex:
         assert len(json.loads((tmp_path / INDEX_JSON).read_text())["experiments"]) == 1
 
 
-class TestCurationPublication:
+class TestExperimentPublication:
     async def test_a_finished_curation_is_published_and_indexed(self, tmp_path: Path) -> None:
         record, _ = await curate(reservation())
-        publication = CurationPublication(
+        publication = ExperimentPublication(
             CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
         )
 
@@ -69,7 +69,7 @@ class TestCurationPublication:
 
     async def test_publishing_the_same_curation_again_changes_nothing(self, tmp_path: Path) -> None:
         record, _ = await curate(reservation())
-        publication = CurationPublication(
+        publication = ExperimentPublication(
             CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
         )
         publication.publish(record, sample_declaration(), VersionStamp())
@@ -82,7 +82,7 @@ class TestCurationPublication:
         self, tmp_path: Path
     ) -> None:
         record, _ = await curate(reservation())
-        publication = CurationPublication(
+        publication = ExperimentPublication(
             CurationExperimentReportBuilder(), FileExperimentRegistry(tmp_path)
         )
 
@@ -95,3 +95,32 @@ class TestCurationPublication:
         assert document["versions"]["dataset"] is not None
         assert document["versions"]["behaviour_hash"].startswith("sha256:")
         assert document["versions"]["code_revision"] == "abc1234"
+
+
+class TestReport:
+    def test_a_family_without_a_trial_ledger_is_refused_before_any_database_is_touched(
+        self,
+    ) -> None:
+        result = runner.invoke(
+            app, ["research", "experiments", "report", "--hypothesis", "h1", "--family", "strategy"]
+        )
+
+        assert result.exit_code == 1
+        assert "report failed" in result.output and "not backed by a trial ledger" in result.output
+
+    def test_an_uncommitted_declaration_is_refused_before_any_database_is_touched(
+        self, tmp_path: Path
+    ) -> None:
+        declaration = tmp_path / "feat-test.yaml"
+        declaration.write_text(
+            "family: feature\nslug: feat-test\nhypothesis: h\neconomic_rationale: r\n"
+            "falsification: f\ndeclared_at: 2026-09-24T09:00:00+05:30\n"
+        )
+
+        result = runner.invoke(
+            app,
+            ["research", "experiments", "report", "--hypothesis", "h1",
+             "--declaration", str(declaration)],
+        )  # fmt: skip
+
+        assert result.exit_code == 1 and "not committed" in result.output

@@ -5,6 +5,7 @@
   "slug": "orb-breakout",
   "outcome": "inconclusive",
   "declaration": {
+    "predeclared": true,
     "hypothesis": "Opening-range breakouts continue on high-volume days.",
     "economic_rationale": "Order-flow imbalance at the open persists for the first hour.",
     "falsification": "Net expectancy after costs is not positive out of sample.",

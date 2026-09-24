@@ -6,15 +6,38 @@ before a long run, not after."""
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 import typer
 
 from emporos.backtest.experiment_identity import ExperimentIdMinter
-from emporos.cli.experiment_declarations import ExperimentDeclarationLoader
+from emporos.cli.experiment_declarations import DeclarationGate, ExperimentDeclarationLoader
 from emporos.cli.experiment_provenance import GitRepository
-from emporos.cli.experiment_registry import DEFAULT_EXPERIMENTS_DIR, FileExperimentRegistry
+from emporos.cli.experiment_registry import (
+    DEFAULT_EXPERIMENTS_DIR,
+    ExperimentPublication,
+    FileExperimentRegistry,
+)
+from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.domain.research_experiments import (
+    ExperimentDeclaration,
+    ExperimentFamily,
+    VersionStamp,
+)
+from emporos.persistence.cross_sectional_ledger import MongoCrossSectionalTrialLedger
+from emporos.persistence.feature_ledger import MongoFeatureTrialLedger
+from emporos.persistence.hypothesis_store import MongoHypothesisRegistry
+from emporos.persistence.lead_lag_ledger import MongoLeadLagTrialLedger
+from emporos.persistence.mongo import MongoClientFactory
+from emporos.research.experiment_report import (
+    LEDGER_FAMILIES,
+    BackfilledDeclaration,
+    LedgerExperiment,
+    LedgerExperimentReader,
+    LedgerExperimentReportBuilder,
+)
 
 research_app = typer.Typer(help="Offline research tools.", no_args_is_help=True)
 experiments_app = typer.Typer(
@@ -54,3 +77,73 @@ def experiments_index(root: Path = _ROOT) -> None:
     """Rebuild INDEX.md and index.json from the published reports."""
     count = FileExperimentRegistry(root).rebuild_index()
     typer.echo(f"{count} experiment(s) indexed in {root}")
+
+
+_HYPOTHESIS = typer.Option(..., "--hypothesis", help="The declared hypothesis id.")
+_FAMILY = typer.Option(
+    ExperimentFamily.FEATURE,
+    "--family",
+    help="Which ledger holds its trials: feature, cross_sectional or lead_lag.",
+)
+_OPTIONAL_DECLARATION = typer.Option(
+    None,
+    "--declaration",
+    exists=True,
+    dir_okay=False,
+    help="The experiment declaration (config/experiments/<slug>.yaml). Without one the report is "
+    "built from the recorded hypothesis alone and is marked BACKFILLED_NOT_PREDECLARED.",
+)
+_UNCOMMITTED = typer.Option(
+    False,
+    "--allow-uncommitted-declaration",
+    help="Publish even though the declaration is not committed.",
+)
+
+
+async def _read(family: ExperimentFamily, hypothesis_id: str) -> LedgerExperiment:
+    mongo = MongoClientFactory(Settings.default())
+    try:
+        database = mongo.database()
+        reader = LedgerExperimentReader(
+            MongoHypothesisRegistry(database),
+            MongoFeatureTrialLedger(database),
+            MongoCrossSectionalTrialLedger(database),
+            MongoLeadLagTrialLedger(database),
+        )
+        return await reader.read(family, hypothesis_id)
+    finally:
+        await mongo.close()
+
+
+@experiments_app.command("report")
+def experiments_report(
+    hypothesis: str = _HYPOTHESIS,
+    family: ExperimentFamily = _FAMILY,
+    declaration: Path | None = _OPTIONAL_DECLARATION,
+    root: Path = _ROOT,
+    allow_uncommitted_declaration: bool = _UNCOMMITTED,
+) -> None:
+    """Publish the report of a feature, cross-sectional or lead-lag hypothesis from its ledger."""
+    try:
+        declared: ExperimentDeclaration | None = None
+        if declaration is not None:
+            gate = DeclarationGate(ExperimentDeclarationLoader(), GitRepository())
+            declared = gate.load(declaration, allow_uncommitted=allow_uncommitted_declaration)
+        if family not in LEDGER_FAMILIES:
+            raise ValueError(f"{family.value} experiments are not backed by a trial ledger")
+        source = asyncio.run(_read(family, hypothesis))
+        publication = ExperimentPublication(
+            LedgerExperimentReportBuilder(), FileExperimentRegistry(root)
+        )
+        report, outcome = publication.publish(
+            source,
+            declared or BackfilledDeclaration.of(family, source.hypothesis),
+            VersionStamp(code_revision=GitRepository().revision()),
+        )
+    except (EmporosError, ValueError, LookupError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"report failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(
+        f"{report.experiment_id}: {report.outcome.value.upper()} ({outcome.value}) in {root}"
+    )

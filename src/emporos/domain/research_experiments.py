@@ -37,6 +37,7 @@ class ReasonCode(StrEnum):
     TOO_FEW_REGIMES = "too_few_regimes"
     HOLDOUT_NOT_RESERVED = "holdout_not_reserved"
     HOLDOUT_NOT_EVALUATED = "holdout_not_evaluated"
+    NOT_PREDECLARED = "not_predeclared"
 
 
 # ---------------------------------------------------------------------------------------------
@@ -44,6 +45,11 @@ class ReasonCode(StrEnum):
 # ---------------------------------------------------------------------------------------------
 
 SCHEMA_VERSION = 1
+
+# What a report of evidence gathered before declarations existed says instead of inventing a
+# rationale, and the note that marks such a report. Never upgraded: it cannot be ACCEPTED.
+BACKFILLED_RATIONALE = "backfilled: not pre-declared"
+BACKFILLED_NOT_PREDECLARED = "BACKFILLED_NOT_PREDECLARED"
 
 _SLUG = re.compile(r"^[a-z0-9]+(?:[_-][a-z0-9]+)*$")
 _ID = re.compile(r"^EXP-\d{8}-[a-z0-9]+(?:[_-][a-z0-9]+)*-[0-9a-f]{8}$")
@@ -196,6 +202,11 @@ class ExperimentDeclaration:
         if self.declared_at.tzinfo is None:
             raise ValueError("a declaration's time must be timezone-aware")
 
+    @property
+    def is_predeclared(self) -> bool:
+        """False for a backfilled declaration: the claim was reconstructed after the fact."""
+        return self.economic_rationale != BACKFILLED_RATIONALE
+
     def canonical(self) -> dict[str, JsonValue]:
         """The declaration as JSON-safe content, the input to its id."""
         grid: dict[str, JsonValue] = {k: list(v) for k, v in sorted(self.parameter_grid.items())}
@@ -313,6 +324,12 @@ class ExperimentReport:
                 raise ValueError("an experiment with no reserved holdout cannot be accepted")
             if any(r.outcome is not FindingOutcome.PASS for r in self.reasons):
                 raise ValueError("an accepted experiment cannot carry a failing or unknown reason")
+            if not self.declaration.is_predeclared:
+                raise ValueError("an experiment that was not pre-declared cannot be accepted")
+        if not self.declaration.is_predeclared and BACKFILLED_NOT_PREDECLARED not in self.notes:
+            raise ValueError(
+                f"a backfilled report must carry the {BACKFILLED_NOT_PREDECLARED} note"
+            )
 
     @property
     def primary_reasons(self) -> tuple[ReasonFinding, ...]:

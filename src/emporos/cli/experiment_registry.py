@@ -16,15 +16,23 @@ import json
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Generic, Protocol, TypeVar
 
 from emporos.backtest.experiment_document import NOT_APPLICABLE, ExperimentDocument
+from emporos.backtest.experiment_report import ExperimentReportBuilder
 from emporos.core.errors import DefinitiveError
-from emporos.domain.research_experiments import ExperimentReport
+from emporos.domain.research_experiments import (
+    ExperimentDeclaration,
+    ExperimentReport,
+    VersionStamp,
+)
 
 DEFAULT_EXPERIMENTS_DIR = Path("docs/strategies/experiments")
 INDEX_MARKDOWN = "INDEX.md"
 INDEX_JSON = "index.json"
+
+
+SourceT = TypeVar("SourceT")
 
 
 class ExperimentAlreadyPublishedError(DefinitiveError):
@@ -53,8 +61,8 @@ class ExperimentIndex:
     say what the records say. Rows sort by family, then declaration time, then id."""
 
     _HEADER = (
-        "id", "family", "slug", "declared", "validation", "holdout", "trades", "net P&L", "PF",
-        "Sharpe", "DSR", "PBO", "outcome", "primary reasons",
+        "id", "family", "slug", "declared", "pre-declared", "validation", "holdout", "trades",
+        "net P&L", "PF", "Sharpe", "DSR", "PBO", "outcome", "primary reasons",
     )  # fmt: skip
 
     def rows(self, documents: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -74,6 +82,7 @@ class ExperimentIndex:
         for r in rows:
             cells = (
                 f"[{r['id']}]({r['id']}.md)", r["family"], r["slug"], r["declared_at"][:10],
+                "yes" if r["predeclared"] else "no",
                 self._span(r["validation"]), self._span(r["holdout"]), self._cell(r["trades"]),
                 self._cell(r["net_pnl"]), self._cell(r["profit_factor"]), self._cell(r["sharpe"]),
                 self._cell(r["deflated_sharpe"]), self._cell(r["pbo"]), r["outcome"],
@@ -102,6 +111,7 @@ class ExperimentIndex:
             "family": d["family"],
             "slug": d["slug"],
             "declared_at": d["declaration"]["declared_at"],
+            "predeclared": d["declaration"]["predeclared"],
             "validation": d["periods"]["validation"],
             "holdout": d["periods"]["holdout"],
             "trades": metrics["trade_count"],
@@ -160,3 +170,21 @@ class FileExperimentRegistry:
         text = self._document.markdown(report)
         if not path.exists() or path.read_text(encoding="utf-8") != text:
             path.write_text(text, encoding="utf-8")
+
+
+class ExperimentPublication(Generic[SourceT]):
+    """Turns a finished study of any family into a published report and refreshes the index."""
+
+    def __init__(
+        self, builder: ExperimentReportBuilder[SourceT], registry: ExperimentRegistry
+    ) -> None:
+        self._builder = builder
+        self._registry = registry
+
+    def publish(
+        self, source: SourceT, declaration: ExperimentDeclaration, versions: VersionStamp
+    ) -> tuple[ExperimentReport, PublishOutcome]:
+        report = self._builder.build(source, declaration, versions)
+        outcome = self._registry.publish(report)
+        self._registry.rebuild_index()
+        return report, outcome
