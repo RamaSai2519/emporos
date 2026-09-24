@@ -10,6 +10,7 @@ import asyncio
 from collections.abc import Mapping
 from datetime import datetime, time, timedelta
 from pathlib import Path
+from typing import Protocol
 
 import typer
 
@@ -36,6 +37,8 @@ from emporos.research.cell_run import ArmResult, CellScreenRun, ScanFactory
 from emporos.research.history_audit import HistoryAudit
 from emporos.research.partition import DISCOVERY, DataSplit
 from emporos.research.scans.base import ScanExecution, SignalScan
+from emporos.research.scans.orb_rvol import OrbRvolParameters, orb_rvol_scan
+from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
 from emporos.research.scans.raw_gap import RawGapParameters, declared_arms, raw_gap_scan
 from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
 from emporos.research.screen_evaluator import ScreenEvaluator
@@ -59,6 +62,18 @@ class LocalBars:
         return asyncio.run(self._reader.get_range(instrument_id, Timeframe.M5, start, end))
 
 
+class ScreenCell(Protocol):
+    """One declared cell: its arms, how to scan an arm, and how to name one in the table."""
+
+    slug: str
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]: ...
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan: ...
+
+    def label(self, point: Mapping[str, str]) -> str: ...
+
+
 class RawGapCell:
     """The recipe for cell L3-raw-gap-hold-to-close."""
 
@@ -70,18 +85,38 @@ class RawGapCell:
     def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
         return raw_gap_scan(RawGapParameters.from_point(point), execution)
 
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"{point['gap_threshold_pct']}% {point['direction']} bar{point['entry_bar']}"
 
-CELLS: Mapping[str, RawGapCell] = {RawGapCell.slug: RawGapCell()}
+
+class OrbRvolCell:
+    """The recipe for cell L3-orb-high-rvol-wide-range."""
+
+    slug = "l3-orb-high-rvol-wide-range"
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in orb_rvol_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        return orb_rvol_scan(OrbRvolParameters.from_point(point), execution)
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return (
+            f"rvol>={point['rvol_min']} width>={point['or_width_min_bps']}bps exit {point['exit']}"
+        )
 
 
-def _table(results: list[ArmResult]) -> list[str]:
+CELLS: Mapping[str, ScreenCell] = {c.slug: c for c in (RawGapCell(), OrbRvolCell())}
+
+
+def _table(recipe: ScreenCell, results: list[ArmResult]) -> list[str]:
     lines = [
         f"{'arm':<40} {'verdict':<14} {'trades':>6} {'gross%':>8} {'net%':>8} {'t':>7} "
         f"{'med|mv|%':>9}"
     ]
     for r in results:
-        p, x = r.parameters, r.result
-        name = f"{p['gap_threshold_pct']}% {p['direction']} bar{p['entry_bar']}"
+        x = r.result
+        name = recipe.label(r.parameters)
 
         def pct(v: object) -> str:
             return "n/a" if v is None else f"{float(v) * 100:.3f}"  # type: ignore[arg-type]
@@ -129,7 +164,7 @@ def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"screen failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
-    for line in _table(results):
+    for line in _table(recipe, results):
         typer.echo(line)
     if any(r.result.advisory for r in results):
         typer.echo("advisory: this scan is not parity-proven against an engine strategy (F3b)")
