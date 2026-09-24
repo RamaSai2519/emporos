@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ import typer
 import yaml
 
 from emporos.backtest.batch import Backtester
+from emporos.backtest.cost_breakdown import CostBreakdownCalculator
 from emporos.backtest.costs import EarliestBeforeFirst, ScheduleSource, StrictSchedules
 from emporos.backtest.curation import (
     CurationRecord,
@@ -26,10 +28,13 @@ from emporos.backtest.risk_gate import RiskGateFactory
 from emporos.backtest.robustness.assessment import HoldBaseline, RobustnessAssessor
 from emporos.backtest.robustness.benchmark import (
     DEFAULT_BENCHMARK_FILE,
+    BenchmarkConfig,
     BenchmarkLoader,
     BenchmarkScaler,
 )
+from emporos.backtest.robustness.holdout import FinalHoldoutReservation
 from emporos.backtest.robustness.perturbation import PerturbationRunner
+from emporos.backtest.robustness.portfolio_economics import PortfolioCostModel
 from emporos.backtest.robustness.recording import (
     LedgerRecorder,
     ResultRecorder,
@@ -46,10 +51,12 @@ from emporos.cli.verdict_commands import record_curation
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.core.ids import IdGenerator
+from emporos.domain.fees import FeeSchedule
 from emporos.domain.instruments import InstrumentResolver
 from emporos.domain.money import Money
+from emporos.domain.research_experiments import CostBreakdown
 from emporos.persistence.trial_ledger import MongoTrialLedger
-from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.portfolio.fee_schedules import FeeScheduleError, FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
 from emporos.session.strategy_files import StrategyConfigLoader
 from emporos.strategies.config import ResolvedStrategyConfig
@@ -102,7 +109,13 @@ def _record_document(record: CurationRecord) -> dict[str, Any]:
             "window_max_drawdowns": [str(d) for d in record.pooled.window_drawdowns],
             "instrument_nets": {k: str(v) for k, v in sorted(record.pooled.symbol_nets.items())},
             "compounded_return": str(record.compounded_return),
+            "expectancy": None if stats.expectancy is None else str(stats.expectancy),
+            "sharpe": _sharpe(record),
+            "max_window_drawdown": str(max(record.pooled.window_drawdowns, default=Decimal(0))),
         },
+        "dataset": _dataset(record),
+        "behaviour_hashes": dict(sorted(record.behaviour_hashes.items())),
+        "costs": _costs(record.costs),
         "windows": [list(w) for w in record.windows],
         "checks": [
             {"name": c.name, "passed": c.passed, "actual": c.actual, "required": c.required}
@@ -112,6 +125,73 @@ def _record_document(record: CurationRecord) -> dict[str, Any]:
         if record.robustness is None
         else RobustnessDocument().of(record.robustness),
     }
+
+
+def _sharpe(record: CurationRecord) -> str | None:
+    """The pooled out-of-sample annualised Sharpe, already computed by the robustness assessment
+    from every window's daily returns; absent when no assessment was run."""
+    if record.robustness is None or record.robustness.deflated_sharpe.annualised_sharpe is None:
+        return None
+    return str(record.robustness.deflated_sharpe.annualised_sharpe)
+
+
+def _dataset(record: CurationRecord) -> dict[str, Any] | None:
+    p = record.provenance
+    if p is None:
+        return None
+    return {
+        "timeframe": p.dataset_timeframe.value,
+        "first": p.dataset_first.isoformat(),
+        "last": p.dataset_last.isoformat(),
+        "universe_hash": p.universe_hash,
+        "calendar_version": p.calendar_version,
+        "quarantine_hash": p.quarantine_hash,
+    }
+
+
+def _costs(costs: CostBreakdown | None) -> dict[str, str | None] | None:
+    if costs is None:
+        return None
+    return {
+        "brokerage": str(costs.brokerage),
+        "statutory": str(costs.statutory),
+        "spread": str(costs.spread),
+        "slippage": str(costs.slippage),
+        "total": str(costs.total),
+        "per_trade_bps": None if costs.per_trade_bps is None else str(costs.per_trade_bps),
+        "per_trade_inr": None if costs.per_trade_inr is None else str(costs.per_trade_inr),
+    }
+
+
+class PlanHoldout:
+    """Reads the plan's pre-declared `holdout_days`. Absent is legal, and means nothing is
+    reserved: the run still happens, but its report can never be ACCEPTED."""
+
+    @staticmethod
+    def reservation(plan: dict[str, Any]) -> FinalHoldoutReservation | None:
+        days = plan.get("holdout_days")
+        if days is None:
+            return None
+        if isinstance(days, bool) or not isinstance(days, int) or days <= 0:
+            raise ValueError("the plan's holdout_days must be a positive whole number of days")
+        return FinalHoldoutReservation(timedelta(days=days))
+
+
+class PlanCostModel:
+    """The one cost model a curation run's breakdown and cost-error gate both read: the fee
+    schedule in force on the last day (the oldest one when the run predates them all) with the
+    benchmark's spread and slippage."""
+
+    @staticmethod
+    def of(
+        library: FeeScheduleLibrary, benchmark: BenchmarkConfig, last_day: date
+    ) -> PortfolioCostModel:
+        schedule: FeeSchedule
+        try:
+            schedule = library.for_date(last_day)
+        except FeeScheduleError:
+            schedule = library.earliest
+        return PortfolioCostModel(schedule, benchmark.spread_bps, benchmark.slippage_bps)
 
 
 async def _curate(
@@ -137,6 +217,12 @@ async def _curate(
             f"(available: {', '.join(sorted(known))})"
         )
     windows = plan["windows"]
+    holdout = PlanHoldout.reservation(plan)
+    if holdout is None:
+        typer.secho(
+            f"{plan_path} reserves no holdout (holdout_days): the run cannot be ACCEPTED",
+            fg=typer.colors.YELLOW,
+        )
     benchmark = BenchmarkLoader(benchmark_path).load()
     scaler = BenchmarkScaler(benchmark)
     registry = build_registry()
@@ -159,6 +245,7 @@ async def _curate(
         return StrictSchedules(library)
 
     criteria = SelectionCriteria()
+    cost_model = PlanCostModel.of(library, benchmark, last.date())
     settings = Settings.default()
     async with open_backtest_runtime(settings) as runtime:
         ledger: TrialLedger = InMemoryTrialLedger()
@@ -196,7 +283,7 @@ async def _curate(
                 )
                 return RobustnessAssessor(
                     benchmark, trial_statistics, PerturbationRunner(backtester, batch=batch),
-                    baseline,
+                    baseline, portfolio_cost_model=cost_model,
                 )  # fmt: skip
 
             run = CurationRun(
@@ -209,6 +296,7 @@ async def _curate(
                 ),
                 assessors=assessor, batch=batch,
                 calendar=runtime.calendar, quarantine=runtime.quarantine,
+                holdout=holdout, costs=CostBreakdownCalculator(cost_model),
             )  # fmt: skip
             records = await run.run(
                 [strategy(e) for e in plan["strategies"] if not only or e["name"] in only],

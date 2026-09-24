@@ -201,6 +201,11 @@ class FixedSchedule:
     def assumed_days(self) -> frozenset[date]:
         return frozenset()
 
+    @classmethod
+    def as_source(cls) -> ScheduleSource:
+        """A factory a run can be handed: `CurationRun` takes a callable that makes the source."""
+        return cls()
+
 
 class FixedTicks:
     def tick_size(self, instrument_id: str) -> Money:

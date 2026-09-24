@@ -9,6 +9,10 @@ windows:
   train_days: 130
   test_days: 42
   embargo_days: 1
+# The last days of the run's range are reserved before any window is planned: no parameter is ever
+# chosen on them and no walk-forward window reads them (EM-184). One test window long. Kept out of
+# `windows` because the later plans (plan_em*.yaml) are pinned to this file's windows, verbatim.
+holdout_days: 42
 strategies:
   - name: orb_v1
     file: config/strategies/orb_v1.yaml
