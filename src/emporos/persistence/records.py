@@ -398,6 +398,18 @@ class GraduationEventRecord(Record):
     at: datetime
 
 
+class BrokerVerificationCheckRecord(Record):
+    """One recorded broker check result, append-only
+    (`emporos.domain.broker_verification.CheckResult`)."""
+
+    name: str
+    outcome: str
+    checked_at: datetime
+    evidence_ref: str
+    detail: str
+    recorded_by: str
+
+
 class LiveAcknowledgementRecord(Record):
     """A human's typed acceptance of one configuration going live, append-only
     (`emporos.domain.graduation.LiveAcknowledgement`)."""

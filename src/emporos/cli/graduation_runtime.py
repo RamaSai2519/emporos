@@ -19,6 +19,7 @@ from emporos.core.config import Settings
 from emporos.core.ids import IdGenerator
 from emporos.graduation.config import GraduationSettingsLoader
 from emporos.graduation.policy import standard_policy
+from emporos.graduation.recorded_evidence import RecordedBrokerEvidence
 from emporos.graduation.requirements import (
     BrokerVerificationPassed,
     DataIntegrityClean,
@@ -31,9 +32,9 @@ from emporos.graduation.requirements import (
     ValidatedVerdictForConfig,
 )
 from emporos.graduation.service import GraduationService
-from emporos.graduation.unverified import UnverifiedBrokerEvidence
 from emporos.history.quarantine import CorporateActionQuarantine
 from emporos.parity.config import ParityThresholdsLoader
+from emporos.persistence.broker_verification_store import MongoBrokerVerificationLog
 from emporos.persistence.graduation_store import MongoAcknowledgementBook, MongoGraduationLedger
 from emporos.persistence.mongo import MongoClientFactory
 from emporos.persistence.parity_store import MongoParityReportStore
@@ -74,8 +75,9 @@ class GraduationComposer:
 
     * verdicts, parity reports (EM-185), the acknowledgement book and the ledger: Mongo;
     * experiment reports: the published files in `docs/strategies/experiments`;
-    * broker verification (EM-186): `UnverifiedBrokerEvidence`, which reports every critical check
-      as NOT passed until EM-186 records real evidence. Nothing here ever assumes a pass.
+    * broker verification (EM-186): `RecordedBrokerEvidence` over the append-only results log, which
+      reports a critical check with no result, or any result that is not a recent PASS, as NOT
+      passed. Nothing here ever assumes a pass.
     """
 
     def __init__(self, settings: Settings, clock: Clock) -> None:
@@ -129,7 +131,9 @@ class _GraduationSession:
                 MongoParityReportStore(database), ParityThresholdsLoader().load().min_sessions
             ),
             BrokerVerificationPassed(
-                UnverifiedBrokerEvidence(), clock, tuning.broker_verification_max_age
+                RecordedBrokerEvidence(MongoBrokerVerificationLog(database, ids)),
+                clock,
+                tuning.broker_verification_max_age,
             ),
             LiveAcknowledged(acknowledgements),
             NoOpenAnomalies(MonitorSwitchView(kill_switch), MongoUnresolvedOrders(database)),

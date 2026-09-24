@@ -227,6 +227,12 @@ PLATFORM_SCHEMA = Schema(
             Collection.LIVE_ACKNOWLEDGEMENTS,
             IndexSpec.on("strategy", "behaviour_hash", unique=True),
         ),
+        # Broker verification results (EM-186): append-only, never edited or expired; the record of
+        # what was and was not verified against the real broker is itself the audit trail.
+        _spec(
+            Collection.BROKER_VERIFICATION_CHECKS,
+            IndexSpec.on("name", "checked_at"),
+        ),
         # Jev's recorded answers (EM-187): append-only and replayed forever, so no TTL. The unique
         # key is the question's identity: a changed prompt or model is a new question.
         _spec(

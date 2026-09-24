@@ -17,6 +17,7 @@ import typer
 
 from emporos.cli.api_commands import api_app
 from emporos.cli.backtest_commands import backtest_app
+from emporos.cli.broker_verification_commands import broker_verify_app
 from emporos.cli.experiment_commands import research_app
 from emporos.cli.graduation_commands import graduation_app
 from emporos.cli.history_composition import resolve_symbols
@@ -75,6 +76,7 @@ app.add_typer(worker_app, name="worker")
 app.add_typer(paper_app, name="paper")
 app.add_typer(research_app, name="research")
 app.add_typer(graduation_app, name="graduation")
+app.add_typer(broker_verify_app, name="broker-verify")
 app.command("run")(worker_run)  # `emporos run` is `emporos worker run`
 app.command("halt")(halt)
 app.command("resume")(resume)

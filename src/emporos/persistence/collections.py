@@ -41,6 +41,7 @@ class Collection(StrEnum):
     PARITY_REPORTS = "parity_reports"
     GRADUATION_EVENTS = "graduation_events"
     LIVE_ACKNOWLEDGEMENTS = "live_acknowledgements"
+    BROKER_VERIFICATION_CHECKS = "broker_verification_checks"
     JEV_DECISIONS = "jev_decisions"
     SYSTEM_EVENTS = "system_events"
     MARKET_CALENDAR = "market_calendar"

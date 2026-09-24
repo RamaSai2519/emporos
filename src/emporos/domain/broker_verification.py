@@ -17,7 +17,8 @@ from typing import Protocol
 class CheckOutcome(StrEnum):
     PASS = "pass"
     FAIL = "fail"
-    UNKNOWN = "unknown"  # never run, or could not be judged: not a pass
+    UNKNOWN = "unknown"  # never run, or could not be judged (UNVERIFIED): not a pass
+    BLOCKED = "blocked"  # cannot be run in this environment today (e.g. no static IP): not a pass
 
 
 # The checks every live deployment must have passed (plan 2g). EM-186 owns running them; graduation
@@ -52,3 +53,42 @@ class BrokerVerificationEvidence(Protocol):
         """The latest result of every critical check. A check with no result is reported as
         UNKNOWN, never left out: a missing check must be visible as a missing check."""
         ...
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    """One recorded attempt at a check: what was found, when, and where the proof lives.
+
+    Results are only ever appended. A later result supersedes an earlier one for graduation, but
+    the earlier one stays, so the history of what was and was not verified is auditable.
+    """
+
+    name: str
+    outcome: CheckOutcome
+    checked_at: datetime
+    evidence_ref: str  # a test id, a fixture path, a log path, or a Jira comment: never empty
+    detail: str
+    recorded_by: str
+
+    def __post_init__(self) -> None:
+        if not self.name.strip():
+            raise ValueError("a check result needs a check name")
+        if self.checked_at.tzinfo is None:
+            raise ValueError("a check result's time must be timezone-aware")
+        if not self.evidence_ref.strip():
+            raise ValueError("a check result must point at its evidence")
+        if not self.recorded_by.strip():
+            raise ValueError("a check result must say who recorded it")
+
+    def as_check(self) -> BrokerCheck:
+        return BrokerCheck(self.name, self.outcome, self.checked_at, self.detail)
+
+
+class BrokerVerificationLog(Protocol):
+    """Append-only record of check results."""
+
+    async def append(self, result: CheckResult) -> None: ...
+
+    async def latest(self, name: str) -> CheckResult | None: ...
+
+    async def history(self, name: str | None = None) -> Sequence[CheckResult]: ...
