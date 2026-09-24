@@ -1,0 +1,54 @@
+# Declared BEFORE any data run (EDGE_SEARCH_PLAN.md §3.1). EM-202, search-map cell
+# L3-orb-high-rvol-wide-range. Not yet run: no result of this cell has been seen.
+#
+# What is run: one trade per name per day. The opening range is the first 6 bars (09:15..09:45). The
+# first bar after it whose close is beyond the range by 5 bps (long above, short below) is the
+# breakout, taken only when (a) the opening range's total volume is at least `rvol_min` times the
+# name's mean opening-range volume over its previous 20 sessions (at least 10 needed; the ratio is
+# fully known at 09:45, so it looks ahead at nothing) and (b) the opening range is at least
+# `or_width_min_bps` of the price wide. There is NO stop and NO target (the fixed ORB's stop/target
+# is not the hypothesis): the position is held to the exit rule. The exit is the session's 15:15
+# square-off (`close`) or a time stop at 12:30 (`1230`; the first bar closing at or after 12:30
+# exits). No entries at or after 14:45. One arm is one (rvol_min, or_width_min_bps, exit) triple:
+# 3 x 2 x 2 = 12 arms, every one a counted look.
+#
+# Data: the Discovery split only (start of data to 2024-12-31, EDGE_SEARCH_PLAN.md §4.3), the 29
+# names with ten years of 5m bars; the 7 audit-quarantined corporate-action days are excluded.
+# Confirmation and the vault are not touched.
+#
+# Stages, each only while the previous passes (§6): S1 median absolute move over the hold at least 2x
+# the adverse round-trip cost at the declared size (§3.5); S2 the fixed screen bar (net t >= 3.0,
+# >= 300 trades, net positive in >= 60% of years, no instrument > 50% of net, net expectancy > 0 at
+# benchmark costs, gross >= the adverse break-even).
+family: strategy
+slug: l3-orb-high-rvol-wide-range
+hypothesis: >-
+  When a large-cap NSE name breaks out of a WIDE opening range on unusually high opening volume,
+  the move from the breakout to the close (or to midday) has a mean gross return large enough to pay
+  the round-trip cost at Rs 25,000 (0.324% benchmark, 0.636% adverse), which the unfiltered
+  opening-range breakout (orb_v1, rejected) does not, because its trades are dominated by narrow,
+  low-participation days that drift nowhere.
+economic_rationale: >-
+  Informed or forced flow arrives in bursts and shows up as unusual volume in the first 30 minutes.
+  A wide range on that volume means the auction has already moved on real participation, and a
+  breakout past it marks the side that the slow capital (funds working orders through the day) is
+  still to be filled on, so the move continues instead of mean-reverting. On low-volume narrow
+  ranges the breakout is noise and liquidity providers fade it; conditioning removes those days.
+falsification: >-
+  Rejected at the first stage it fails. S1: for an arm, the median absolute gross move from entry to
+  its exit on the conditioning days is below 2x the mean adverse round-trip cost at Rs 25,000 (about
+  1.27%), so no such trade could pay for itself: that arm is INFEASIBLE. S2: an arm needs net t >=
+  3.0, at least 300 trades, net positive in at least 60% of calendar years, no instrument above 50%
+  of net profit, net expectancy > 0 at benchmark costs and mean gross return at least the adverse
+  break-even. If no arm passes S2 the cell is SCREEN_REJECT. An arm that passes at one grid point and
+  not its neighbours is overfit, not tuned around (§3.8). All 12 arms are counted in the
+  program-wide trial count whether or not they pass. The scan is advisory (no engine strategy to
+  prove parity against), so a pass here is a lead for `curate`, never a verdict.
+parameter_grid:
+  rvol_min: ["1.5", "2.0", "3.0"]
+  or_width_min_bps: ["50", "100"]
+  exit: [close, "1230"]
+feature_versions:
+  opening_range_rvol: 1
+position_value: "25000"
+declared_at: 2026-09-24T19:35:00+05:30
