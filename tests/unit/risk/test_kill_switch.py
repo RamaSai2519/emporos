@@ -388,3 +388,53 @@ class TestSettings:
         assert explicit.kill_switch_path == tmp_path / "H"
         default = Settings(_env_file=None, KILL_SWITCH_FILE=None)  # type: ignore[call-arg]
         assert default.kill_switch_path == Path.home() / ".emporos" / "HALT"
+
+
+class TestExitsPermittedByATripwireHalt:
+    """EM-189: only a halt the anomaly tripwire set lets exits through."""
+
+    async def test_a_tripwire_sentinel_permits_exits_and_an_operator_sentinel_does_not(
+        self, tmp_path: Path
+    ) -> None:
+        sentinel = FileSentinelKillSwitch(tmp_path / "HALT")
+        await sentinel.engage("feed dropped", "tripwire", NOW)
+        assert (await sentinel.read()).exits_permitted is True
+
+        await sentinel.engage("feed dropped", "rama", NOW)
+        assert (await sentinel.read()).exits_permitted is False
+
+    async def test_a_reason_that_merely_mentions_the_tripwire_does_not_permit_exits(
+        self, tmp_path: Path
+    ) -> None:
+        sentinel = FileSentinelKillSwitch(tmp_path / "HALT")
+        await sentinel.engage("set by tripwire at noon", "rama", NOW)
+        assert (await sentinel.read()).exits_permitted is False
+
+    async def test_the_mongo_flag_permits_exits_only_for_the_tripwire(self) -> None:
+        from emporos.persistence.records import KillSwitchRecord
+        from emporos.risk.kill_switch import MongoKillSwitch
+
+        class Repo:
+            def __init__(self, set_by: str) -> None:
+                self.record = KillSwitchRecord(
+                    _id="current", halted=True, reason="r", set_by=set_by, changed_at=NOW
+                )
+
+            async def current(self) -> KillSwitchRecord:
+                return self.record
+
+        assert (await MongoKillSwitch(Repo("tripwire")).read()).exits_permitted is True  # type: ignore[arg-type]
+        assert (await MongoKillSwitch(Repo("rama")).read()).exits_permitted is False  # type: ignore[arg-type]
+
+    async def test_exits_are_permitted_only_when_every_halted_source_permits_them(self) -> None:
+        class Source:
+            def __init__(self, name: str, permits: bool) -> None:
+                self.name, self._permits = name, permits
+
+            async def read(self) -> SourceReading:
+                return SourceReading(True, "x", self._permits)
+
+        both, _, _ = monitor(Source("mongo", True), Source("file", True))  # type: ignore[arg-type]
+        mixed, _, _ = monitor(Source("mongo", True), Source("file", False))  # type: ignore[arg-type]
+        assert (await both.refresh()).exits_permitted is True
+        assert (await mixed.refresh()).exits_permitted is False

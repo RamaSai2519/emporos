@@ -47,6 +47,7 @@ from emporos.persistence.candle_hot import MongoCandleStore
 from emporos.persistence.candles import CandleRepository
 from emporos.persistence.placement import RetentionPlacement
 from emporos.session.risk_facts import VenueHealth
+from emporos.session.tripwire import FeedWatch
 from emporos.session.worker import SessionVenue
 
 
@@ -134,6 +135,7 @@ class LiveConnection:
     venue: SessionVenue
     health: VenueHealth
     warmup: WarmupSource
+    watch: FeedWatch
 
 
 class LiveVenueOpener(Protocol):
@@ -213,7 +215,11 @@ class AngelOneLiveVenueOpener:
             venue = LiveVenue(broker, market.client, order_client, instruments, health)
             try:
                 yield LiveConnection(
-                    broker, venue, health, RepositoryWarmup(repository, self._clock)
+                    broker,
+                    venue,
+                    health,
+                    RepositoryWarmup(repository, self._clock),
+                    market.watchdog,
                 )
             finally:
                 await market.service.stop()

@@ -3,3 +3,14 @@
 # from environment variables / SSM Parameter Store (Decision 10) via core.config.Settings.
 log_level: INFO
 timezone: Asia/Kolkata
+
+# The anomaly tripwire (EM-189): on the first anomaly it halts new orders (exits still work) and
+# alerts; only `emporos resume` clears it. Integers, or quoted strings for a fraction.
+tripwire:
+  poll_seconds: 2
+  feed_drop_halt_seconds: 60          # market-data feed down this long inside the session
+  stale_instrument_fraction: "0.5"    # more than this share of watched instruments STALE
+  unknown_order_seconds: 90           # an order UNKNOWN this long
+  rejection_burst_count: 5            # this many broker rejections ...
+  rejection_burst_seconds: 60         # ... inside this window
+  order_feed_down_seconds: 30         # order-update feed down this long with orders open

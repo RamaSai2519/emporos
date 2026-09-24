@@ -31,7 +31,11 @@ class TradingModeGuard:
 
 
 class KillSwitchGuard:
-    """Blocks everything while the kill switch is set — and while its state cannot be read."""
+    """Blocks everything while the kill switch is set — and while its state cannot be read.
+
+    One exception, explicit and narrow: a halt raised by the anomaly tripwire (EM-189) blocks new
+    orders only. An EXIT still passes, because a position that cannot be closed is worse than the
+    anomaly that halted trading. An operator's halt, and an unreadable switch, block exits too."""
 
     name = "KillSwitchGuard"
 
@@ -41,6 +45,8 @@ class KillSwitchGuard:
             return RuleVerdict.block(
                 "the kill switch state is unknown, so it is treated as set", source=switch.source
             )
+        if switch.halted and switch.exits_permitted and not is_entry(signal):
+            return RuleVerdict.allow()
         if switch.halted:
             return RuleVerdict.block(
                 "the kill switch is set", source=switch.source, reason=switch.reason

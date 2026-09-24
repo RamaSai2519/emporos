@@ -33,6 +33,7 @@ from emporos.risk.config import RiskLimitsLoader
 from emporos.risk.kill_switch import FileSentinelKillSwitch, KillSwitchMonitor, MongoKillSwitch
 from emporos.session.launch_gate import ConfigLaunchFacts, live_policy
 from emporos.session.strategy_files import StrategyConfigLoader
+from emporos.session.tripwire_config import TripwireSettingsLoader
 from emporos.session.worker import SessionReport
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.resolution import StrategyConfigResolver
@@ -121,6 +122,8 @@ class LiveWorker:
                     window=window,
                     warmup=connection.warmup,
                     tuning=options.tuning,
+                    tripwire=TripwireSettingsLoader(settings.yaml_config).load(),
+                    feed_watch=connection.watch,
                 ).build()
                 return await assembly.worker.run_session()
         finally:

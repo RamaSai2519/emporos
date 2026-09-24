@@ -66,6 +66,18 @@ class TestKillSwitchGuard:
         snapshot = healthy(system=healthy_system(kill_switch=reading))
         assert not KillSwitchGuard().evaluate(make_signal(kind=SignalKind.EXIT), snapshot).allowed
 
+    def test_a_tripwire_halt_blocks_entries_but_lets_an_exit_through(self) -> None:
+        reading = KillSwitchReading(halted=True, known=True, exits_permitted=True)
+        snapshot = healthy(system=healthy_system(kill_switch=reading))
+        guard = KillSwitchGuard()
+        assert not guard.evaluate(make_signal(kind=SignalKind.ENTRY), snapshot).allowed
+        assert guard.evaluate(make_signal(kind=SignalKind.EXIT), snapshot).allowed
+
+    def test_an_unreadable_switch_blocks_exits_even_if_a_tripwire_flag_is_set(self) -> None:
+        reading = KillSwitchReading(halted=True, known=False, exits_permitted=True)
+        snapshot = healthy(system=healthy_system(kill_switch=reading))
+        assert not KillSwitchGuard().evaluate(make_signal(kind=SignalKind.EXIT), snapshot).allowed
+
     def test_it_blocks_when_the_state_has_never_been_read(self) -> None:
         unread = KillSwitchReading()  # the default: halted, unknown
         verdict = KillSwitchGuard().evaluate(

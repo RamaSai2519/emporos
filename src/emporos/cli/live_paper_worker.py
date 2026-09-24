@@ -43,6 +43,7 @@ from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.risk.config import RiskLimitsLoader
 from emporos.risk.kill_switch import FileSentinelKillSwitch
 from emporos.session.strategy_files import StrategyConfigLoader
+from emporos.session.tripwire_config import TripwireSettingsLoader
 from emporos.session.worker import SessionReport
 from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.resolution import StrategyConfigResolver
@@ -121,6 +122,8 @@ class LivePaperWorker:
                     kill_switch_sentinel=FileSentinelKillSwitch(settings.kill_switch_path),
                     kill_switch_collection=options.kill_switch_collection,
                     tuning=options.tuning,
+                    tripwire=TripwireSettingsLoader(settings.yaml_config).load(),
+                    feed_watch=feed.watch,
                     window=window,
                     starting_cash=options.starting_cash,
                     warmup=feed.warmup,

@@ -121,6 +121,7 @@ from emporos.portfolio.sources import BrokerReconciliationSource
 from emporos.risk.assembly import MonitoredSystemFacts, SnapshotAssembler
 from emporos.risk.engine import RiskEngine
 from emporos.risk.kill_switch import (
+    TRIPWIRE_SETTER,
     FileSentinelKillSwitch,
     KillSwitchControl,
     KillSwitchMonitor,
@@ -147,6 +148,7 @@ from emporos.session.launch_gate import (
 from emporos.session.lifecycle import SessionLifecycle
 from emporos.session.quoter import MarkRepriceQuoter
 from emporos.session.recovery import StartupRecovery
+from emporos.session.rejection_tracker import RejectionTracker
 from emporos.session.replacement import RiskReplacementReviewer
 from emporos.session.risk_facts import (
     JournalOrderFlow,
@@ -156,7 +158,7 @@ from emporos.session.risk_facts import (
 )
 from emporos.session.run_status import RunStatusBoard
 from emporos.session.signal_path import GatedExecutionSink
-from emporos.session.square_off import SquareOffService
+from emporos.session.square_off import SquareOffService, WorkingOrders
 from emporos.session.strategy_positions import StrategyPositionBook
 from emporos.session.strategy_runs import (
     RunEnvironment,
@@ -164,6 +166,17 @@ from emporos.session.strategy_runs import (
     StrategyRunnerBuilder,
 )
 from emporos.session.telemetry import RejectionCounter, TickRate, WorkerTelemetry
+from emporos.session.tripwire import (
+    AnomalyDetector,
+    AnomalyTripwire,
+    FeedDroppedDetector,
+    FeedWatch,
+    OrderUpdateGapDetector,
+    RejectionBurstDetector,
+    UnresolvedUnknownOrderDetector,
+    WidespreadStalenessDetector,
+)
+from emporos.session.tripwire_config import TripwireSettings
 from emporos.session.updates import OrderUpdateRouter
 from emporos.session.worker import SessionSchedule, SessionVenue, TradingWorker
 from emporos.signals.recorder import SignalRecorder
@@ -317,6 +330,8 @@ class _CommonFields(Protocol):
     job_runners: Mapping[str, JobFunction]
     warmup: WarmupSource | None
     close_out_hooks: Sequence[CloseOutHook]
+    tripwire: TripwireSettings | None
+    feed_watch: FeedWatch | None
 
 
 @dataclass(frozen=True)
@@ -376,6 +391,9 @@ class PaperWorkerComposer:
     job_runners: Mapping[str, JobFunction] = field(default_factory=dict)
     warmup: WarmupSource | None = None  # history for a launched strategy; None starts it empty
     close_out_hooks: Sequence[CloseOutHook] = ()
+    # EM-189: the anomaly tripwire. None leaves it off (a test rig); the CLI always passes both.
+    tripwire: TripwireSettings | None = None
+    feed_watch: FeedWatch | None = None
     # May a strategy start? None means the paper rule: a strategy that is not validated needs its
     # standing acknowledged. A test that wants no rule passes `OpenStartGate` explicitly.
     start_gate: StartGate | None = None
@@ -482,6 +500,8 @@ class LiveWorkerComposer:
     warmup: WarmupSource | None = None
     start_gate: StartGate | None = None
     close_out_hooks: Sequence[CloseOutHook] = ()
+    tripwire: TripwireSettings | None = None
+    feed_watch: FeedWatch | None = None
 
     async def build(self) -> WorkerAssembly:
         await self.client.admin.command("ping")
@@ -644,6 +664,7 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
             *seam.extra_jobs,
             Job("events", t.events, _Drain(outbox, SystemEventRepository(db))),
             Job("worker_health", t.metrics, health_reports.report),
+            *_tripwire_jobs(common, seam, prelude, broker, _Books(ledger, journal)),
         ],
         common.clock, alerts,
     )  # fmt: skip
@@ -689,6 +710,43 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
         lifecycle, ledger, journal, prelude.monitor, prelude.control, tuple(runs), host, processor,
         telemetry,
     )  # fmt: skip
+
+
+def _tripwire_jobs(
+    common: _CommonFields,
+    seam: BrokerSeam,
+    prelude: _Prelude,
+    broker: Broker,
+    orders: WorkingOrders,
+) -> list[Job]:
+    """The anomaly tripwire as a polled job, for paper and live workers alike so it is exercised
+    in paper first. It halts through the kill switch as `tripwire`, which blocks new orders and
+    lets exits through."""
+    settings = common.tripwire
+    if settings is None:
+        return []
+    rejections = RejectionTracker()
+    broker.on_order_update(rejections.on_update)
+    detectors: list[AnomalyDetector] = [
+        UnresolvedUnknownOrderDetector(orders, settings.unknown_order),
+        RejectionBurstDetector(
+            rejections, settings.rejection_burst_count, settings.rejection_window
+        ),
+        OrderUpdateGapDetector(seam.health, orders, settings.order_feed_down),
+    ]
+    if common.feed_watch is not None:
+        detectors[:0] = [
+            FeedDroppedDetector(common.feed_watch, settings.feed_drop_halt),
+            WidespreadStalenessDetector(common.feed_watch, settings.stale_fraction),
+        ]
+    tripwire = AnomalyTripwire(
+        detectors,
+        KillSwitchHalt(prelude.control, TRIPWIRE_SETTER),
+        _SwitchView(prelude.monitor),
+        common.clock,
+        prelude.alerts,
+    )
+    return [Job("tripwire", settings.poll, tripwire.run_once)]
 
 
 def _handlers(

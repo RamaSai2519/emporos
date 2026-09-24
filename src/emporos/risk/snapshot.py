@@ -41,6 +41,9 @@ class KillSwitchReading:
     known: bool = False
     source: str = "unread"
     reason: str = ""
+    # True only when every source that is halted was set by a protective tripwire: new orders stay
+    # blocked, exits go through (EM-189).
+    exits_permitted: bool = False
 
 
 @dataclass(frozen=True)
@@ -137,6 +140,7 @@ class RiskSnapshot:
                     "known": self.system.kill_switch.known,
                     "source": self.system.kill_switch.source,
                     "reason": self.system.kill_switch.reason,
+                    "exits_permitted": self.system.kill_switch.exits_permitted,
                 },
                 "broker_session_ok": self.system.broker_session_ok,
                 "order_feed_ok": self.system.order_feed_ok,

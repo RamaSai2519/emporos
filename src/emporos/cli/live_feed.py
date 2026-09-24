@@ -43,6 +43,7 @@ from emporos.persistence.candle_hot import MongoCandleStore
 from emporos.persistence.candles import CandleRepository
 from emporos.persistence.placement import RetentionPlacement
 from emporos.session.bar_feed import ClosedBarQueue
+from emporos.session.tripwire import FeedWatch
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,11 @@ class LiveFeed(Protocol):
 
     @property
     def warmup(self) -> WarmupSource: ...
+
+    @property
+    def watch(self) -> FeedWatch:
+        """The feed's own health, for the anomaly tripwire."""
+        ...
 
     def running(self) -> AbstractAsyncContextManager[None]:
         """Ticks flow (and candles close) for as long as this context is open."""
@@ -90,10 +96,16 @@ class AngelOneFeed:
         source: MarketDataSource,
         warmup: WarmupSource,
         running: Callable[[], AbstractAsyncContextManager[None]],
+        watch: FeedWatch,
     ) -> None:
         self._source = source
         self._warmup = warmup
         self._running = running
+        self._watch = watch
+
+    @property
+    def watch(self) -> FeedWatch:
+        return self._watch
 
     @property
     def source(self) -> MarketDataSource:
@@ -170,7 +182,10 @@ class AngelOneFeedOpener:
                         await feed_task
 
             yield AngelOneFeed(
-                MarketDataOnly(broker), RepositoryWarmup(repository, self._clock), running
+                MarketDataOnly(broker),
+                RepositoryWarmup(repository, self._clock),
+                running,
+                market.watchdog,
             )
         finally:
             try:

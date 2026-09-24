@@ -25,6 +25,19 @@ class ScriptedWarmup:
         return self._bars
 
 
+class ConnectedFeedWatch:
+    """A feed that never drops: what a scripted session's tripwire is given."""
+
+    def feed_down_since(self) -> None:
+        return None
+
+    def watched_count(self) -> int:
+        return 0
+
+    def stale_count(self) -> int:
+        return 0
+
+
 class ScriptedFeed:
     def __init__(self, source: MarketDataSource, warmup: ScriptedWarmup, events: list[str]) -> None:
         self._source = source
@@ -38,6 +51,10 @@ class ScriptedFeed:
     @property
     def warmup(self) -> ScriptedWarmup:
         return self._warmup
+
+    @property
+    def watch(self) -> ConnectedFeedWatch:
+        return ConnectedFeedWatch()
 
     def running(self) -> AbstractAsyncContextManager[None]:
         return self._running()

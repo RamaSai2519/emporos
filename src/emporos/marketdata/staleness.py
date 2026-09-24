@@ -114,6 +114,7 @@ class StalenessWatchdog:
         self._reported_stale: set[str] = set()
         self._listeners: list[StalenessListener] = []
         self._feed_down = False
+        self._feed_down_since: datetime | None = None
         self._ticks_seen_on: set[date] = set()
         self._no_tick_alarm_on: set[date] = set()
 
@@ -141,8 +142,11 @@ class StalenessWatchdog:
 
     async def on_connected(self) -> None:
         self._feed_down = False
+        self._feed_down_since = None
 
     async def on_disconnected(self, reason: str) -> None:
+        if not self._feed_down:
+            self._feed_down_since = self._clock.now()
         self._feed_down = True
 
     # -- the view the risk engine reads ------------------------------------------------------
@@ -164,6 +168,20 @@ class StalenessWatchdog:
             return True
         quiet = self.silent_for(instrument_id)
         return quiet is not None and quiet > self._policy.threshold(instrument_id)
+
+    def feed_down_since(self) -> datetime | None:
+        """When the feed dropped, measured from the session open at the earliest; `None` while it
+        is connected or outside the session (overnight silence is not an outage)."""
+        now = self._clock.now()
+        if not self._feed_down or self._feed_down_since is None or not self._window.contains(now):
+            return None
+        return max(self._feed_down_since, self._window.open_at(now.astimezone(IST).date()))
+
+    def watched_count(self) -> int:
+        return len(self._watched)
+
+    def stale_count(self) -> int:
+        return len(self.stale_instruments())
 
     def stale_instruments(self) -> frozenset[str]:
         return frozenset(i for i in self._watched if self.is_stale(i))

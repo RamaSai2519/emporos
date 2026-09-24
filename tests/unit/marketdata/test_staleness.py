@@ -240,3 +240,30 @@ def test_threshold_configuration_is_validated() -> None:
         TieredThresholds(seconds_by_tier={LiquidityTier.MEDIUM: 0.0})
     with pytest.raises(ConfigurationError):
         TieredThresholds({"X": LiquidityTier.LOW}, {LiquidityTier.MEDIUM: 30.0})
+
+
+def test_the_watchdog_reports_when_the_feed_dropped_and_how_much_is_stale() -> None:
+    rig = Rig(at=ist(10, 0), watch=(SBIN, THIN))
+    assert rig.dog.feed_down_since() is None and rig.dog.watched_count() == 2
+
+    asyncio.run(rig.dog.on_disconnected("socket closed"))
+    dropped_at = rig.clock.now()
+    rig.wait(30)
+    asyncio.run(rig.dog.on_disconnected("still closed"))  # a second signal keeps the first time
+    assert rig.dog.feed_down_since() == dropped_at
+    assert rig.dog.stale_count() == 2
+
+    asyncio.run(rig.dog.on_connected())
+    assert rig.dog.feed_down_since() is None
+
+
+def test_a_drop_before_the_open_is_measured_from_the_open_and_none_outside_the_session() -> None:
+    rig = Rig(at=ist(8, 0))
+    asyncio.run(rig.dog.on_disconnected("overnight"))
+    assert rig.dog.feed_down_since() is None  # before the session: silence means nothing
+
+    rig.clock.set(ist(9, 20))
+    assert rig.dog.feed_down_since() == ist(9, 15)  # judged from the open, not from 08:00
+
+    rig.clock.set(ist(16, 0))
+    assert rig.dog.feed_down_since() is None

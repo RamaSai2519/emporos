@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import re
 import tempfile
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
@@ -38,11 +39,19 @@ DEFAULT_POLL_SECONDS = 5.0
 DEFAULT_READ_TIMEOUT_SECONDS = 2.0
 _STALE_AFTER_POLLS = 3
 
+# A halt set by one of these is a protective stop after an anomaly (EM-189): it blocks NEW orders
+# but lets exits through, because being unable to leave a position is worse than the anomaly. An
+# operator's halt, or the reconciler's, still blocks everything.
+TRIPWIRE_SETTER = "tripwire"
+EXIT_PERMITTING_SETTERS = frozenset({TRIPWIRE_SETTER})
+_SET_BY = re.compile(r"^set by (\S+) at ", re.MULTILINE)
+
 
 @dataclass(frozen=True)
 class SourceReading:
     halted: bool
     reason: str = ""
+    exits_permitted: bool = False  # only meaningful when halted
 
 
 class KillSwitchReader(Protocol):
@@ -78,7 +87,9 @@ class FileSentinelKillSwitch:
             reason = self._path.read_text(encoding="utf-8").strip()
         except FileNotFoundError:
             return SourceReading(False)
-        return SourceReading(True, reason)
+        # The writer's own footer is the LAST such line: a reason cannot forge it.
+        setters = _SET_BY.findall(reason)
+        return SourceReading(True, reason, bool(setters) and setters[-1] in EXIT_PERMITTING_SETTERS)
 
     async def engage(self, reason: str, set_by: str, at: datetime) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -111,7 +122,7 @@ class MongoKillSwitch:
         record = await self._repository.current()
         if record is None or not record.halted:
             return SourceReading(False)
-        return SourceReading(True, record.reason)
+        return SourceReading(True, record.reason, record.set_by in EXIT_PERMITTING_SETTERS)
 
     async def engage(self, reason: str, set_by: str, at: datetime) -> None:
         await self._repository.save(self._record(True, reason, set_by, at))
@@ -198,7 +209,10 @@ class KillSwitchMonitor:
         if halted:
             names = ",".join(name for name, _ in halted)
             reasons = "; ".join(r.reason for _, r in halted if r.reason)
-            return KillSwitchReading(halted=True, known=True, source=names, reason=reasons)
+            return KillSwitchReading(
+                halted=True, known=True, source=names, reason=reasons,
+                exits_permitted=all(r.exits_permitted for _, r in halted),
+            )  # fmt: skip
         failed = [
             src.name for src, r in zip(self._sources, results, strict=True)
             if isinstance(r, BaseException)
