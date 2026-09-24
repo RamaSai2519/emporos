@@ -28,7 +28,6 @@
     "orders are priced by a minimal marketable-limit stand-in (limit_buffer_bps from the config, tick-rounded); Phase 12 owns the real execution pricing",
     "intraday: resting orders are cancelled and positions exited from session.square_off_at; anything still open at the session's close is closed by the broker's forced square-off",
     "fills: through crossing, at the order's own limit, 0.1 of bar volume, 0 bps rejected (seed 0), forced square-off 10 bps against",
-    "fee schedule NOT reconciled against a contract note (verified: false)",
     "146 trading day(s) predate the oldest fee schedule and were priced with it",
     "universe: 2 of 2 instrument(s) were resolved from their EARLIEST recorded definition, because the instrument master holds no history covering 2025-09-22; a delisting or symbol change before the master began recording is not represented (survivorship, EM-99 H8)"
   ],
@@ -63,10 +62,10 @@
       {
         "name": "angelone-equity-intraday",
         "effective_from": "2026-09-20",
-        "verified": false
+        "verified": true
       }
     ],
-    "all_verified": false,
+    "all_verified": true,
     "days_priced_with_a_schedule_that_did_not_yet_exist": 146
   },
   "metrics": {

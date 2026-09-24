@@ -66,10 +66,12 @@ the frozen file, and an integration test checks the Atlas read path gives the sa
 * Signal → order pricing is a minimal stand-in (`limit_buffer_bps` from the YAML, tick-rounded);
   Phase 12 owns the real one. Intraday square-off at `session.square_off_at` and the broker's
   forced close (10 bps against) are backtest stand-ins for risk/execution.
-* **Fee schedule is unverified and did not exist yet**: `config/fees/angelone-2026-09-20.yaml` is
-  dated the day it was read, not the day rates began, and is `verified: false`. All 146 traded days
-  predate it and were priced with it (`--assume-earliest-fees`; without it the run refuses).
-  Charges are about half of the loss, so this assumption matters.
+* **Fee schedule did not exist yet**: `config/fees/angelone-2026-09-20.yaml` is dated the day it
+  was read, not the day rates began. All 146 traded days predate it and were priced with it
+  (`--assume-earliest-fees`; without it the run refuses). Charges are about half of the loss, so
+  this assumption matters. The schedule was `verified: false` when this run was made; the operator
+  reconciled its rates against a real contract note on 2026-09-24 (EM-197), and the four provenance
+  lines in the JSON were updated to say so. No number in the run changed: the rates are the same.
 * **Universe**: the instrument master only began recording history on 2026-09-19, so both
   instruments were resolved from their earliest recorded definition (`--assume-current-universe`).
   A delisting or rename before then is not represented (survivorship, EM-99 H8).

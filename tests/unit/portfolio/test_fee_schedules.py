@@ -39,14 +39,14 @@ def write(directory: Path, filename: str, day: str, stt: str = "0.025") -> Path:
     return path
 
 
-def test_the_shipped_schedule_loads_exactly_and_is_flagged_unverified() -> None:
+def test_the_shipped_schedule_loads_exactly_and_is_flagged_verified() -> None:
     schedule = FeeScheduleLibrary.from_directory().for_date(date(2026, 9, 21))
 
     assert schedule.name == "angelone-equity-intraday"
     assert schedule.stt_sell_percent == Decimal("0.025")
     assert schedule.exchange_transaction_percent[Exchange.NSE] == Decimal("0.0030699")
     assert schedule.brokerage_flat == Money.of("20")
-    assert schedule.verified is False  # read from a tariff page, never reconciled to a bill
+    assert schedule.verified is True  # operator reconciled it against a real contract note (EM-197)
 
 
 def test_the_schedule_in_force_on_a_day_is_the_latest_that_had_started(tmp_path: Path) -> None:

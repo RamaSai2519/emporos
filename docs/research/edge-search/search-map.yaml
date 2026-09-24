@@ -41,7 +41,7 @@ foundations:
   - {id: D5,    name: "Event calendar timestamped at publication", status: TODO}
   - {id: D6,    name: "Daily bhavcopy delivery % and FII/DII flows", status: TODO}
   - {id: D7,    name: "Forward L1 quote recording", status: TODO}
-  - {id: D8,    name: "Fee schedule reconciled against a contract note", status: BLOCKED(EM-197), ticket: EM-197}
+  - {id: D8,    name: "Fee schedule reconciled against a contract note", status: DONE, ticket: EM-197}
 
 cells:
   # --- P1 ---------------------------------------------------------------------------------------

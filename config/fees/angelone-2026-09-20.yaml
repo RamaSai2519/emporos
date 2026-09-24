@@ -3,12 +3,13 @@
 #
 # [VOLATILE] Read from https://www.angelone.in/exchange-transaction-charges on 2026-09-20. That page
 # states no effective date, so `effective_from` is the date it was read, not a published date.
-# `verified: false` = NOT reconciled against a real contract note. Fine for paper P&L; do not use
-# it to predict a bill. Not modelled: IPFT levy (part of the GST base), BSE scrip groups (BSE uses
+# `verified: true` = the operator reconciled these rates against a real contract note on 2026-09-24
+# (EM-197). `verified: false` would mean read from the tariff page only: fine for paper P&L, not for
+# predicting a bill. Not modelled: IPFT levy (part of the GST base), BSE scrip groups (BSE uses
 # the group A/B rate), DP charges (delivery only) — costs are slightly understated.
 name: angelone-equity-intraday
 effective_from: "2026-09-20"
-verified: false
+verified: true
 brokerage:
   flat: "20"            # lower of this per executed order...
   percent: "0.1"        # ...or this share of turnover,
