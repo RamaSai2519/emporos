@@ -12,6 +12,7 @@ from emporos.core.clock import FixedClock
 from emporos.jev.client import VercelGatewayJevClient
 from emporos.jev.config import JevConfig
 from emporos.jev.models import ABSTAIN, CONFIRM, JevRequest
+from emporos.jev.prompts import DEFAULT_PROMPT, JevPrompt
 from tests.support.fakes import AdvancingSleeper, FixedJitter, ScriptedHttpServer
 
 T0 = datetime(2026, 1, 5, 3, 45, tzinfo=UTC)
@@ -57,6 +58,7 @@ def _request() -> JevRequest:
         target=Decimal(104),
         expected_edge=Decimal(2),
         confidence=Decimal(1),
+        as_of=T0,
     )
 
 
@@ -211,3 +213,56 @@ async def test_concurrency_is_bounded_by_max_concurrency() -> None:
     results = await asyncio.gather(client.decide(_request()), client.decide(_request()))
 
     assert all(decision.ok for decision in results)
+
+
+async def test_the_decision_records_prompt_and_request_provenance() -> None:
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(_chat_reply())
+
+    decision = await _client(server).decide(_request())
+
+    assert decision.prompt_version == DEFAULT_PROMPT.version
+    assert decision.prompt_hash == DEFAULT_PROMPT.content_hash
+    assert decision.request_hash == _request().request_hash()
+
+
+async def test_a_failed_decision_records_provenance_too() -> None:
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(httpx.Response(500))
+
+    decision = await _client(server).decide(_request())
+
+    assert decision.ok is False
+    assert decision.prompt_hash == DEFAULT_PROMPT.content_hash
+    assert decision.request_hash == _request().request_hash()
+
+
+async def test_the_injected_prompt_is_what_is_sent_and_recorded() -> None:
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(_chat_reply())
+    prompt = JevPrompt(version="exp-2", system_text="Answer with JSON only.")
+    clock = FixedClock(T0)
+    client = VercelGatewayJevClient(
+        JevConfig(enabled=True, max_retries=0),
+        API_KEY,
+        clock=clock,
+        client_factory=_FixedClientFactory(server),
+        prompt=prompt,
+        sleeper=AdvancingSleeper(clock),
+    )
+
+    decision = await client.decide(_request())
+
+    body = json.loads(server.requests[0].content)
+    assert body["messages"][0]["content"] == "Answer with JSON only."
+    assert decision.prompt_version == "exp-2"
+    assert decision.prompt_hash == prompt.content_hash
+
+
+async def test_the_payload_sent_contains_only_fields_known_at_as_of() -> None:
+    """Every key sent is one `JevRequest.payload()` derives from the candidate at `as_of`; the
+    request's own timestamp is not among them."""
+    server = ScriptedHttpServer(base_url="https://gateway.ai.vercel.sh").queue(_chat_reply())
+
+    await _client(server).decide(_request())
+
+    sent = json.loads(json.loads(server.requests[0].content)["messages"][1]["content"])
+    assert sent == _request().payload()
+    assert "as_of" not in sent

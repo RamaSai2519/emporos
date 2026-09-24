@@ -258,3 +258,12 @@ async def test_a_candidate_with_no_regime_sends_none() -> None:
     await filter_.apply((candidate,))
 
     assert provider.requests[0].regime is None
+
+
+async def test_the_request_is_stamped_with_the_candidates_generation_time() -> None:
+    provider = _ScriptedProvider(_decision(CONFIRM))
+    filter_ = JevMetaDecisionFilter(provider, JevConfig(enabled=True, mode=CONFIRMATION))
+
+    await filter_.apply((_candidate(),))
+
+    assert provider.requests[0].as_of == T0

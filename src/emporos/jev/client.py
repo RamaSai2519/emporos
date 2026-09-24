@@ -29,16 +29,10 @@ from emporos.broker.backoff import BackoffPolicy, JitterSource, RandomJitter
 from emporos.core.clock import AsyncioSleeper, Clock, Sleeper, SystemClock
 from emporos.jev.config import JevConfig
 from emporos.jev.models import ABSTAIN, CONFIRM, REJECT, JevDecision, JevRequest, failed_decision
+from emporos.jev.prompts import DEFAULT_PROMPT, JevPrompt
 
 _LOG = logging.getLogger(__name__)
 _VALID_DECISIONS = frozenset({CONFIRM, REJECT, ABSTAIN})
-
-_SYSTEM_PROMPT = (
-    "You are a trading decision-support filter. Given structured context about a candidate "
-    "trade opportunity, respond with ONLY a JSON object of the form "
-    '{"decision": "confirm"|"reject"|"abstain", "confidence": <0..1>, "reason": "<short text>"}. '
-    "No other text."
-)
 
 
 class HttpClientFactory(Protocol):
@@ -66,11 +60,13 @@ class VercelGatewayJevClient:
         *,
         clock: Clock | None = None,
         client_factory: HttpClientFactory | None = None,
+        prompt: JevPrompt = DEFAULT_PROMPT,
         backoff: BackoffPolicy | None = None,
         jitter: JitterSource | None = None,
         sleeper: Sleeper | None = None,
     ) -> None:
         self._config = config
+        self._prompt = prompt
         self._api_key = api_key
         self._clock = clock or SystemClock()
         self._clients = client_factory or _DefaultHttpClientFactory(
@@ -101,15 +97,21 @@ class VercelGatewayJevClient:
         latency_ms = int((self._clock.now() - started).total_seconds() * 1000)
         _LOG.warning("Jev request failed after %d attempt(s): %s", attempts, last_error)
         return failed_decision(
-            "vercel_gateway", error=last_error, requested_at=started, latency_ms=latency_ms
+            "vercel_gateway",
+            error=last_error,
+            requested_at=started,
+            latency_ms=latency_ms,
+            prompt_version=self._prompt.version,
+            prompt_hash=self._prompt.content_hash,
+            request_hash=request.request_hash(),
         )
 
     async def _send(self, request: JevRequest, started: datetime) -> JevDecision:
         payload = {
             "model": self._config.model,
             "messages": [
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {"role": "user", "content": json.dumps(_context(request))},
+                {"role": "system", "content": self._prompt.system_text},
+                {"role": "user", "content": json.dumps(request.payload())},
             ],
             "temperature": 0,
         }
@@ -120,9 +122,9 @@ class VercelGatewayJevClient:
                 headers={"Authorization": f"Bearer {self._api_key}"},
             )
         response.raise_for_status()
-        return self._parse(response.json(), started)
+        return self._parse(response.json(), started, request)
 
-    def _parse(self, body: dict[str, Any], started: datetime) -> JevDecision:
+    def _parse(self, body: dict[str, Any], started: datetime, request: JevRequest) -> JevDecision:
         latency_ms = int((self._clock.now() - started).total_seconds() * 1000)
         try:
             content = body["choices"][0]["message"]["content"]
@@ -149,6 +151,9 @@ class VercelGatewayJevClient:
             requested_at=started,
             latency_ms=latency_ms,
             tokens_used=tokens_used,
+            prompt_version=self._prompt.version,
+            prompt_hash=self._prompt.content_hash,
+            request_hash=request.request_hash(),
         )
 
     @staticmethod
@@ -164,23 +169,3 @@ class VercelGatewayJevClient:
 
 class _MalformedResponse(ValueError):
     """Jev answered, but not with parseable JSON in the expected shape."""
-
-
-def _context(request: JevRequest) -> dict[str, Any]:
-    return {
-        "symbol": request.symbol,
-        "timeframe": request.timeframe,
-        "regime": request.regime,
-        "strategy": request.strategy_name,
-        "direction": request.direction,
-        "entry": str(request.entry),
-        "stop": str(request.stop),
-        "target": str(request.target),
-        "expected_edge": str(request.expected_edge),
-        "confidence": str(request.confidence),
-        "features": {k: str(v) for k, v in request.features.items()},
-        "historical_conditional_performance": {
-            k: str(v) for k, v in request.historical_conditional_performance.items()
-        },
-        "portfolio_context": {k: str(v) for k, v in request.portfolio_context.items()},
-    }

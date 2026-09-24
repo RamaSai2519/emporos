@@ -130,4 +130,5 @@ def _to_request(candidate: OpportunityCandidate) -> JevRequest:
         target=candidate.target.amount,
         expected_edge=candidate.expected_edge,
         confidence=candidate.confidence,
+        as_of=candidate.generated_at,
     )

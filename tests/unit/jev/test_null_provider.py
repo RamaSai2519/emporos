@@ -22,6 +22,7 @@ def _request() -> JevRequest:
         target=Decimal(104),
         expected_edge=Decimal(2),
         confidence=Decimal(1),
+        as_of=T0,
     )
 
 

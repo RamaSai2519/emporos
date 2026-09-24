@@ -7,6 +7,8 @@ even mentions Jev.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
+from decimal import Decimal
 
 from emporos.core.errors import ConfigurationError
 from emporos.jev.models import CONFIRMATION, RANKING, STRATEGY_SELECTION
@@ -29,6 +31,11 @@ class JevConfig:
     max_retries: int = 2
     base_url: str = "https://gateway.ai.vercel.sh"
     model: str = "openai/gpt-4o-mini"
+    # Experiment provenance (EM-187). Live config is not forced to carry these; a Jev EXPERIMENT
+    # refuses to run without a declared cutoff (`emporos.jev.leakage`), and cost analysis refuses
+    # to run without a declared rate rather than silently pricing Jev at zero.
+    model_knowledge_cutoff: date | None = None
+    inr_per_1k_tokens: Decimal | None = None
 
     def __post_init__(self) -> None:
         if self.mode not in _MODES:
@@ -47,6 +54,8 @@ class JevConfig:
             raise ConfigurationError("Jev base_url cannot be empty")
         if not self.model:
             raise ConfigurationError("Jev model cannot be empty")
+        if self.inr_per_1k_tokens is not None and self.inr_per_1k_tokens < 0:
+            raise ConfigurationError("Jev inr_per_1k_tokens cannot be negative")
 
 
 class JevCredentialsMissing(ConfigurationError):

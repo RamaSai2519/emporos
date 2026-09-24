@@ -6,11 +6,14 @@ input comes from.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from types import MappingProxyType
+from typing import Any
 
 # Jev's operating modes (EM-161), as plain strings rather than a StrEnum: `JevConfig` is what
 # validates which of these this build supports, so a config typo fails loudly there instead of
@@ -35,6 +38,10 @@ class JevRequest:
     target: Decimal
     expected_edge: Decimal
     confidence: Decimal
+    # When the candidate was generated. NEVER sent to the model: it is for the leakage guard and
+    # for the audit record only. Every other field is derived from information known at this
+    # instant, which is what makes a backtest of Jev free of look-ahead by construction.
+    as_of: datetime
     features: Mapping[str, Decimal] = field(default_factory=dict)
     historical_conditional_performance: Mapping[str, Decimal] = field(default_factory=dict)
     portfolio_context: Mapping[str, Decimal] = field(default_factory=dict)
@@ -42,6 +49,8 @@ class JevRequest:
     def __post_init__(self) -> None:
         if not self.symbol or not self.strategy_name:
             raise ValueError("a Jev request needs a symbol and a strategy name")
+        if self.as_of.tzinfo is None:
+            raise ValueError("as_of must be timezone-aware")
         object.__setattr__(self, "features", MappingProxyType(dict(self.features)))
         object.__setattr__(
             self,
@@ -51,6 +60,33 @@ class JevRequest:
         object.__setattr__(
             self, "portfolio_context", MappingProxyType(dict(self.portfolio_context))
         )
+
+    def payload(self) -> dict[str, Any]:
+        """Exactly what is sent to the model as the user message: nothing else about this request
+        (notably `as_of`) ever leaves the process."""
+        return {
+            "symbol": self.symbol,
+            "timeframe": self.timeframe,
+            "regime": self.regime,
+            "strategy": self.strategy_name,
+            "direction": self.direction,
+            "entry": str(self.entry),
+            "stop": str(self.stop),
+            "target": str(self.target),
+            "expected_edge": str(self.expected_edge),
+            "confidence": str(self.confidence),
+            "features": {k: str(v) for k, v in self.features.items()},
+            "historical_conditional_performance": {
+                k: str(v) for k, v in self.historical_conditional_performance.items()
+            },
+            "portfolio_context": {k: str(v) for k, v in self.portfolio_context.items()},
+        }
+
+    def request_hash(self) -> str:
+        """SHA-256 of the canonical (sorted-key, compact) JSON of `payload()`: the identity of the
+        question actually asked, stable across processes and key order."""
+        canonical = json.dumps(self.payload(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 CONFIRM = "confirm"
@@ -73,6 +109,10 @@ class JevDecision:
     latency_ms: int
     error: str | None = None
     tokens_used: int | None = None  # cost proxy: the gateway bills per token, not per request
+    # Provenance (EM-187): which prompt text and which exact question produced this answer.
+    prompt_version: str | None = None
+    prompt_hash: str | None = None
+    request_hash: str | None = None
 
     def __post_init__(self) -> None:
         if self.requested_at.tzinfo is None:
@@ -94,7 +134,14 @@ class JevDecision:
 
 
 def failed_decision(
-    provider: str, *, error: str, requested_at: datetime, latency_ms: int = 0
+    provider: str,
+    *,
+    error: str,
+    requested_at: datetime,
+    latency_ms: int = 0,
+    prompt_version: str | None = None,
+    prompt_hash: str | None = None,
+    request_hash: str | None = None,
 ) -> JevDecision:
     """The shape every failure/timeout is represented as: ABSTAIN with the error recorded, never
     an exception a caller must remember to catch."""
@@ -107,4 +154,7 @@ def failed_decision(
         requested_at=requested_at,
         latency_ms=latency_ms,
         error=error,
+        prompt_version=prompt_version,
+        prompt_hash=prompt_hash,
+        request_hash=request_hash,
     )

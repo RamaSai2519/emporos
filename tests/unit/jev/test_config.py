@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 
 from emporos.core.errors import ConfigurationError
@@ -61,3 +63,15 @@ def test_require_credentials_raises_an_actionable_error_when_missing() -> None:
 def test_require_credentials_raises_for_an_empty_string_key() -> None:
     with pytest.raises(JevCredentialsMissing):
         require_credentials(JevConfig(enabled=True), "")
+
+
+def test_provenance_fields_default_to_undeclared() -> None:
+    config = JevConfig()
+
+    assert config.model_knowledge_cutoff is None
+    assert config.inr_per_1k_tokens is None
+
+
+def test_a_negative_inr_rate_is_refused() -> None:
+    with pytest.raises(ConfigurationError, match="inr_per_1k_tokens"):
+        JevConfig(inr_per_1k_tokens=Decimal("-0.1"))

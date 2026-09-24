@@ -22,6 +22,7 @@ def _request(**overrides: object) -> JevRequest:
         "target": Decimal(104),
         "expected_edge": Decimal(2),
         "confidence": Decimal(1),
+        "as_of": T0,
     }
     defaults.update(overrides)
     return JevRequest(**defaults)  # type: ignore[arg-type]
@@ -102,3 +103,37 @@ def test_failed_decision_is_always_abstain_with_the_error_recorded() -> None:
     assert decision.confidence is None
     assert decision.error == "timeout"
     assert decision.ok is False
+
+
+def test_as_of_must_be_timezone_aware() -> None:
+    with pytest.raises(ValueError, match="as_of"):
+        _request(as_of=T0.replace(tzinfo=None))
+
+
+def test_the_payload_never_carries_as_of() -> None:
+    assert "as_of" not in _request().payload()
+
+
+def test_the_request_hash_is_stable_and_ignores_as_of() -> None:
+    first = _request()
+    later = _request(as_of=T0.replace(hour=5))
+
+    assert first.request_hash() == later.request_hash()
+    assert len(first.request_hash()) == 64
+
+
+def test_the_request_hash_changes_with_any_payload_field() -> None:
+    assert _request().request_hash() != _request(entry=Decimal(101)).request_hash()
+    assert _request().request_hash() != _request(features={"rsi": Decimal(70)}).request_hash()
+
+
+def test_a_failed_decision_carries_provenance() -> None:
+    decision = failed_decision(
+        "p", error="x", requested_at=T0, prompt_version="v1", prompt_hash="h", request_hash="r"
+    )
+
+    assert (decision.prompt_version, decision.prompt_hash, decision.request_hash) == (
+        "v1",
+        "h",
+        "r",
+    )
