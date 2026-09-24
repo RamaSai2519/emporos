@@ -103,7 +103,10 @@ class GraduationService:
             strategy, behaviour_hash, stage, target, actor, experiment_id, jev_enabled
         )
         reports = await self._assess(request)
-        reasons = [r.assessment.refusal for r in reports if r.assessment.refusal is not None]
+        # Two requirements can refuse for one cause (an uncited report): say it once.
+        reasons = list(
+            dict.fromkeys(r.assessment.refusal for r in reports if r.assessment.refusal is not None)
+        )
         if reasons:
             raise PromotionRefused(reasons)
         evidence = tuple(

@@ -16,6 +16,7 @@ from emporos.domain.graduation import (
     TransitionKind,
     acknowledgement_phrase,
     effective_stage,
+    short_hash,
 )
 
 AT = datetime(2026, 9, 24, 4, 0, tzinfo=UTC)
@@ -155,3 +156,10 @@ class TestAcknowledgement:
             self.ack(**{field: ""})
         with pytest.raises(ValueError, match="UTC"):
             self.ack(at=datetime(2026, 9, 24))
+
+
+def test_the_short_hash_skips_the_label_every_hash_shares() -> None:
+    """`sha256:6f3a...` -> `6f3a...`, or the phrase would name a config by one character."""
+    assert short_hash("sha256:0123456789abcdef") == "01234567"
+    assert short_hash("abcdef0123456789") == "abcdef01"
+    assert acknowledgement_phrase("orb_v1", "sha256:0123456789abcdef") == "orb_v1@01234567 LIVE"

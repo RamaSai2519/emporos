@@ -120,6 +120,13 @@ class TestPromotion:
         assert refused.value.reasons == ("first", "third")
         assert ledger.events == []
 
+    async def test_two_requirements_refusing_for_one_cause_say_it_once(self) -> None:
+        policy = StagePolicy({S.PAPER: [Scripted("a", "same"), Scripted("b", "same")]})
+        svc, _ = service(policy=policy)
+        with pytest.raises(PromotionRefused) as refused:
+            await svc.promote(STRATEGY, HASH, S.PAPER, "rama")
+        assert refused.value.reasons == ("same",)
+
     async def test_a_requirement_that_cannot_answer_counts_as_refusing(self) -> None:
         svc, ledger = service(policy=StagePolicy({S.PAPER: [Scripted("flaky", boom=True)]}))
         with pytest.raises(PromotionRefused, match="flaky could not be checked"):

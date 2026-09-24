@@ -124,9 +124,15 @@ def effective_stage(last: GraduationEvent | None, behaviour_hash: str) -> Gradua
     return last.to_stage
 
 
+def short_hash(behaviour_hash: str) -> str:
+    """The first eight characters of the hash itself, without its `sha256:` label (a label every
+    hash shares would leave one hex character of the phrase actually identifying a config)."""
+    return behaviour_hash.removeprefix("sha256:")[:8]
+
+
 def acknowledgement_phrase(strategy: str, behaviour_hash: str) -> str:
     """The exact text an operator must type to accept the first live deployment of a config."""
-    return f"{strategy}@{behaviour_hash[:8]} LIVE"
+    return f"{strategy}@{short_hash(behaviour_hash)} LIVE"
 
 
 @dataclass(frozen=True)

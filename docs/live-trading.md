@@ -25,6 +25,8 @@ orb_v1: may NOT go live
   - LIVE_TRADING_ENABLED is not set to 'true'
   - orb_v1 has `enabled: false` in its config
   - orb_v1 is rejected, not validated
+  - orb_v1 is at research for this configuration; it must be graduated to live_conservative (`emporos graduation promote`)
+  - no human acknowledgement is recorded for orb_v1 in this configuration (`emporos graduation acknowledge orb_v1`)
 ```
 
 The conditions, each its own small class in `session/launch_gate.py`, all of which must hold:

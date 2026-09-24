@@ -20,6 +20,7 @@ from emporos.domain.graduation import (
     EvidenceRef,
     GraduationStage,
     acknowledgement_phrase,
+    short_hash,
 )
 from emporos.domain.parity import PaperReconciliationEvidence
 from emporos.domain.research_experiments import ExperimentFamily, ExperimentOutcomeLabel, ReasonCode
@@ -212,7 +213,7 @@ class PaperReconciliationPassed:
                 f"paper reconciliation is {report.verdict.value} ({report.period})"
                 + (f": {detail}" if detail else "")
             )
-        ref = f"{request.strategy}:{request.behaviour_hash[:8]}:{report.period}"
+        ref = f"{request.strategy}:{short_hash(request.behaviour_hash)}:{report.period}"
         return Assessment.met(EvidenceRef(EvidenceKind.RECONCILIATION_REPORT, ref))
 
 
@@ -267,7 +268,7 @@ class LiveAcknowledged:
         return Assessment.met(
             EvidenceRef(
                 EvidenceKind.ACKNOWLEDGEMENT,
-                f"{request.strategy}:{request.behaviour_hash[:8]}",
+                f"{request.strategy}:{short_hash(request.behaviour_hash)}",
                 f"by {found.operator}",
             )
         )

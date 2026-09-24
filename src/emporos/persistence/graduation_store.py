@@ -24,6 +24,7 @@ from emporos.domain.graduation import (
     GraduationStage,
     LiveAcknowledgement,
     TransitionKind,
+    short_hash,
 )
 from emporos.persistence.collections import Collection
 from emporos.persistence.errors import DuplicateRecordError
@@ -127,7 +128,7 @@ class MongoAcknowledgementBook:
             await self._records.insert(record)
         except DuplicateRecordError as error:
             raise AcknowledgementExistsError(
-                f"{acknowledgement.strategy} ({acknowledgement.behaviour_hash[:8]}) "
+                f"{acknowledgement.strategy} ({short_hash(acknowledgement.behaviour_hash)}) "
                 "is already acknowledged"
             ) from error
 

@@ -19,6 +19,7 @@ from emporos.domain.graduation import (
     GraduationStage,
     LiveAcknowledgement,
     acknowledgement_phrase,
+    short_hash,
 )
 from emporos.graduation.ports import AcknowledgementBook, ExperimentEvidence
 from emporos.graduation.service import (
@@ -159,7 +160,7 @@ class GraduationConsole:
     async def _summary(self, name: str, behaviour_hash: str, cited: str | None) -> list[str]:
         limits = self._live_limits
         lines = [
-            f"LIVE acknowledgement for {name} @ {behaviour_hash[:8]}",
+            f"LIVE acknowledgement for {name} @ {short_hash(behaviour_hash)}",
             f"  risk tier:            {self._live_tier.value}",
             f"  account capital:      {_plain(limits.account_capital)}",
             f"  max capital deployed: {_plain(limits.max_capital_deployed)}",
@@ -188,7 +189,7 @@ class GraduationConsole:
 
     @staticmethod
     def _standing_lines(report: StandingReport) -> list[str]:
-        head = f"{report.strategy} @ {report.behaviour_hash[:8]}: {report.stage.value}"
+        head = f"{report.strategy} @ {short_hash(report.behaviour_hash)}: {report.stage.value}"
         if report.next_stage is None:
             return [head + " (nothing further is promotable)"]
         lines = [head + f" -> next: {report.next_stage.value}"]
