@@ -3,6 +3,12 @@
 Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 [`search-map.yaml`](search-map.yaml) (validated in CI by `emporos.research.search_map`).
 
+> **Steering (2026-09-24, operator session): read [`review-1.md`](review-1.md) before choosing the next cell.**
+> Its §4 priority order supersedes the "Next" row below: D1 (wide and mid-cap universe, run in the background) and D5
+> (event calendar) come ahead of further mega-cap cells. D7 quote recording starts now. Mega-cap cells only where the
+> conditioning set selects large days by construction, hold to 15:15 by default, 2-6 arms per cell. Operator decisions
+> are pending on EM-206 (the DSR hurdle needs an annualised Sharpe above 5 at raw N) and EM-207 (a Rs 50,000 single position).
+
 | Field | Value |
 |---|---|
 | Iteration | 12 (2026-09-24) |
