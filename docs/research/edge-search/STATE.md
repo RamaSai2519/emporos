@@ -13,15 +13,41 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 |---|---|
 | Capital and size | **Rs 1,00,000 capital, Rs 50,000 max position** (EM-207, 325f8b8): risk.yaml deployed 1,00,000, daily loss 2,000; benchmark.yaml capital 1,00,000. New declarations default to Rs 50,000, so the §3.5 bar is about 0.99%. Cells declared earlier keep their declared size; rejected cells are not re-run at the new size |
 | DSR at S4/S5 | EM-206 (529c8e2): `deflated_sharpe_spread`, null hypothesis spread 1/sqrt(T-1), with the full program-wide N. At N about 14k a DSR of 0.95 needs z of about 5.6, an annualised Sharpe of about 2.0 over 2,000 walk-forward days: S4 is passable, so a candidate that clears S3 goes on to S4 and is not parked |
-| Iteration | 17 (2026-09-24) |
-| Last completed | **D5 results events done (EM-209): 8,573 filings, 8,070 first-public events for 250 names, gaps documented**; L4-india-vix-regime: SCREEN_REJECT** (EM-210, 6 arms, feasible at Rs 50,000 but t under 0.5); D5 collector built and running (EM-209, operator-authorised); **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **L2-earnings-gap-fade / continuation / pead-first-hour** on the 29 names now (events exist for them; more names when D1 lands; needs a per-instrument event-day gate, the current `DayGate` is date-only). D1 fetch still running (log `/tmp/claude-1000/d1/fetch.log`, resumable, about 20% at batch 10 of 50). When D1 lands: liquidity filter, unsigned-move table, vault instrument seal, vectorised screen. D5b (EM-212): ex-dates, bulk deals, rebalances, F&O ban. Mega-cap large-day cells left: L4-expected-range-filter, L4-atr-percentile-regime, L4-gap-fade-expected-range (expect weak after the VIX result) |
-| Global N | **14,078** on 2026-09-24 (14,072 plus the 6 arms of L4-india-vix-regime) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 18 (2026-09-25) |
+| Last completed | **L2-earnings-gap-fade and L2-earnings-gap-continuation: both SCREEN_REJECT** (EM-213, 8 arms, all feasible; fade after 30 minutes gross +0.14..0.19% under the 0.23% break-even, continuation gross negative); D5 results events done (EM-209): 8,573 filings, 8,070 first-public events for 250 names, gaps documented**; L4-india-vix-regime: SCREEN_REJECT** (EM-210, 6 arms, feasible at Rs 50,000 but t under 0.5); D5 collector built and running (EM-209, operator-authorised); **D1 started (EM-208): lists committed, `history fetch-universe` built, background fetch running**; L4-nr7-inside-day-breakout: SCREEN_REJECT** (EM-205, 6 arms, all INFEASIBLE, gross under 0.06%); L3-first-hour-reversal-large-gap: SCREEN_REJECT** (EM-204, 4 arms, feasible but t under 1); L3-first-hour-shock-reversal: SCREEN_REJECT** (EM-203, 6 arms, all INFEASIBLE); L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **D1 liquidity filter and universe seam** (the fetch is at batch 49 of 50; `CellScreenRun` reads its universe from the 29-name audit, so a D1 cell needs the universe passed in), then the child **L2-earnings-gap-fade-after-first-hour** on the wide universe (events exist for all 250 names, `config/universe/d1/tokens.csv` joins them to candles). Also: L2-earnings-pead-first-hour (needs the same reaction-day gate, now built), D5b (EM-212), mega-cap large-day cells L4-expected-range-filter, L4-atr-percentile-regime, L4-gap-fade-expected-range (expect weak) |
+| Global N | **14,086** on 2026-09-25 (14,078 plus the 8 arms of the two L2 earnings-gap cells) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 40 TODO, 0 BLOCKED, 6 terminal (all SCREEN_REJECT); D5b (EM-212) gates 4 L2 cells; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 38 TODO, 0 BLOCKED, 8 terminal (all SCREEN_REJECT); D5b (EM-212) gates 4 L2 cells; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. EM-209 was ruled on by the operator (NSE announcements endpoint authorised, 2026-09-24); EM-206 and EM-207 approved |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 18 (2026-09-25): L2 earnings-gap fade and continuation (EM-213)
+Atlassian tools loaded again (the session had lost them), so this iteration is tracked: EM-213.
+**Machinery** (b746833): `scans/event_days.py` decides the session that REACTS to a results filing
+from its exchange timestamp and the name's own sessions only (before 09:15: same session; after
+15:30 or a non-session day: the next session; in-session: skipped and counted), and
+`EventReactionScan` runs an inner scan per instrument gated to that instrument's reaction days
+(the older `DayGate` was date-only). `config/universe/d1/tokens.csv` maps the 250 symbols to Angel
+One tokens (public scrip master, 2026-09-25) so events keyed by symbol join candles keyed by
+`NSE:<token>`. Recipe `EarningsGapCell`; the screen prints reaction sessions used per year and
+the events skipped. 18 tests. The scan is the raw-gap rules unchanged.
+
+**Declared first** (faa7796): fade and continuation, gap 1.0/2.0% x entry bar 1 (09:15 close) or 6
+(first 30 minutes), hold to 15:15, Rs 50,000, Discovery, the 29 names. 4 arms each, 8 counted looks.
+
+**Result: both rejected, all arms feasible** (median |move| 1.15-1.49%, so results days are large
+by construction). Fade: entering at the first bar is worth nothing (gross -0.03..+0.02%), entering
+after 30 minutes gross +0.14% (1%) and +0.19% (2%), net -0.04..-0.09%, t under 1; the 2% arm is the
+nearest miss (break-even at Rs 50,000 is 0.23%) with only 206 trades. Continuation: gross negative
+in every arm (-0.05..-0.20%), worse after waiting, t down to -3.8: it is the mirror of the fade.
+Coverage: 14-79 reaction sessions a year (2022 has 49, the ledger's known hole), 297 results were
+published in session and skipped, 0 reaction sessions missing from the bars.
+**Child** (§7.4, gross positive net negative and too few trades: widen the universe before loosening
+anything): L2-earnings-gap-fade-after-first-hour on D1, waiting for the first hour as EM-203 found
+waiting pays. It follows two independent observations (waiting lifts the fade; results days are
+large), not a grid point. Continuation: no child.
 
 ## Iteration 17 (2026-09-24): D5 results events done (EM-209)
 The first collection used one subject and left holes: the exchange tags results as "Financial Result

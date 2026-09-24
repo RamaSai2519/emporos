@@ -47,8 +47,26 @@ foundations:
 cells:
   # --- P1 ---------------------------------------------------------------------------------------
   - {id: L2-pead-first-hour,            lane: L2, hypothesis: pead-first-hour,            status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-continuation,  lane: L2, hypothesis: earnings-gap-continuation,  status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
-  - {id: L2-earnings-gap-fade,          lane: L2, hypothesis: earnings-gap-fade,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5]}
+  - id: L2-earnings-gap-continuation
+    lane: L2
+    hypothesis: l2-earnings-gap-continuation
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D5]
+    experiments: [EXP-20260925-l2-earnings-gap-continuation-f954ae99]
+    lesson: "4 arms on Discovery at Rs 50,000, all feasible (median |move| 1.15-1.49%) but gross is negative in every arm (-0.05..-0.20%, worst after waiting 30 minutes), net -0.28..-0.43%, t down to -3.8: trading with the gap on a results day does not pay, and the fade is its mirror. No child (advisory scan)"
+  - id: L2-earnings-gap-fade
+    lane: L2
+    hypothesis: l2-earnings-gap-fade
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D5]
+    experiments: [EXP-20260925-l2-earnings-gap-fade-fd875e7b]
+    lesson: "4 arms on Discovery at Rs 50,000, all feasible (median |move| 1.15-1.48%) but none passes: entering at the first bar the fade is worth nothing (gross -0.03..+0.02%), entering after the first 30 minutes it is +0.14% (1% gap) and +0.19% (2% gap), under the 0.23% benchmark break-even at this size; net -0.04..-0.09%, t under 1. Only 29 names give 206-371 trades, and 297 in-session results were skipped. Waiting helps, as in EM-203 (advisory scan)"
+  - id: L2-earnings-gap-fade-after-first-hour
+    lane: L2
+    hypothesis: earnings-gap-fade-after-first-hour
+    parent: L2-earnings-gap-fade
+    status: TODO
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D5, D1]
   - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
