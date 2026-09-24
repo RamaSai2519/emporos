@@ -49,11 +49,11 @@ class TestWhatAVerdictIsBoundTo:
         assert after != before
 
     def test_a_config_sized_differently_from_the_benchmark_says_so(self) -> None:
-        """orb_v1.yaml sizes positions at 25,000; the benchmark judges at 10% of 50,000."""
+        """orb_v1.yaml sizes positions at 25,000; the benchmark judges at 10% of 1,00,000."""
         _, notes = subjects().hash_and_notes(ORB)
 
         assert len(notes) == 1
-        assert "₹5000" in notes[0] and "₹25000" in notes[0]
+        assert "₹10000" in notes[0] and "₹25000" in notes[0]
 
 
 class Book:

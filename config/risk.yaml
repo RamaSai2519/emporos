@@ -6,14 +6,20 @@
 # EM-189 (operator-approved 2026-09-24): capital deployed and the daily loss cap are
 # aligned to the Rs 50,000 production capital (config/robustness/benchmark.yaml): capital
 # deployed 60000 -> 50000, daily loss 2000 (4%) -> 1000 (2%, the benchmark's fraction).
+#
+# EM-207 (operator-approved 2026-09-24): production capital raised to Rs 1,00,000 so a position can
+# be Rs 50,000, where round-trip charges fall from 0.224% (Rs 25,000) to 0.130% (EDGE_SEARCH_PLAN
+# §1.1). Two full-size positions at most; the daily loss cap stays at the benchmark's 2%. The order
+# quantity cap rises because Rs 50,000 in a name under Rs 100 is more than 500 shares; the
+# rupee cap above still bounds every order.
 
-account_capital: "50000"          # rupees; every cap below is checked against it at load time
-max_daily_loss: "1000"            # rupees; new entries stop once the day's loss exceeds this
-max_strategy_loss: "1000"         # rupees, per strategy run
-max_position_value: "25000"       # rupees, per instrument
+account_capital: "100000"         # rupees; every cap below is checked against it at load time
+max_daily_loss: "2000"            # rupees; new entries stop once the day's loss exceeds this
+max_strategy_loss: "2000"         # rupees, per strategy run
+max_position_value: "50000"       # rupees, per instrument
 max_open_positions: 3
-max_capital_deployed: "50000"     # rupees, across all positions
-max_order_quantity: 500           # shares in one order (fat-finger)
+max_capital_deployed: "100000"    # rupees, across all positions
+max_order_quantity: 2000          # shares in one order (fat-finger)
 max_price_deviation_pct: "2"      # limit price vs last traded price, percent
 max_spread_bps: "20"              # widest bid/ask spread an entry tolerates, basis points
 duplicate_window_seconds: 5       # a second live order, same instrument and side, inside this

@@ -34,7 +34,7 @@ def load(tmp_path: Path, text: str):  # type: ignore[no-untyped-def]
 
 def test_the_shipped_file_loads_and_is_a_complete_set_of_limits() -> None:
     limits = RiskLimitsLoader(DEFAULT_RISK_FILE).load()
-    assert limits.max_daily_loss == Decimal("1000") and limits.max_open_positions == 3
+    assert limits.max_daily_loss == Decimal("2000") and limits.max_open_positions == 3
 
 
 def test_a_valid_file_loads_exact_decimals(tmp_path: Path) -> None:

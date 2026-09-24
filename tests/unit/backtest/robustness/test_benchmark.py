@@ -31,10 +31,10 @@ class TestShippedFile:
         b = BenchmarkLoader().load()
 
         assert (b.capital, b.max_position_fraction, b.max_daily_loss_fraction) == (
-            D(50000), D("0.10"), D("0.02"),
+            D(100000), D("0.10"), D("0.02"),
         )  # fmt: skip
         assert b.slippage_bps == D(5)
-        assert (b.max_position_value, b.max_daily_loss) == (D(5000), D(1000))
+        assert (b.max_position_value, b.max_daily_loss) == (D(10000), D(2000))
 
     def test_prices_the_deflated_sharpe_at_a_skill_less_sharpes_spread(self) -> None:
         assert BenchmarkLoader().load().verdict.deflated_sharpe_spread == "null_hypothesis"
@@ -119,10 +119,10 @@ class TestScaler:
         base = RiskLimitsLoader().load()
         scaled = BenchmarkScaler(BenchmarkLoader().load()).limits(base)
 
-        assert scaled.max_position_value == D(5000)
-        assert scaled.max_daily_loss == D(1000)
-        assert scaled.max_capital_deployed == D(50000)
-        assert scaled.max_strategy_loss == D(1000)
+        assert scaled.max_position_value == D(10000)
+        assert scaled.max_daily_loss == D(2000)
+        assert scaled.max_capital_deployed == D(100000)
+        assert scaled.max_strategy_loss == D(2000)
         assert scaled.max_open_positions == base.max_open_positions
         assert scaled.max_order_quantity == base.max_order_quantity
 
@@ -148,7 +148,7 @@ class TestScaler:
         assert scaler.strategy(config).risk.max_position_value == D(25000)
         assert scaler.limits(base).max_position_value == D(25000)
         # only the position size moved: the loss caps still follow the benchmark's capital
-        assert scaler.limits(base).max_daily_loss == D(1000)
+        assert scaler.limits(base).max_daily_loss == D(2000)
 
     def test_a_position_value_that_is_not_positive_is_refused(self) -> None:
         with pytest.raises(ValueError, match="positive"):
@@ -162,5 +162,5 @@ class TestScaler:
         sized = BenchmarkScaler(BenchmarkLoader().load()).strategy(config)
 
         assert config.risk.max_position_value == D(25000)
-        assert sized.risk.max_position_value == D(5000)
+        assert sized.risk.max_position_value == D(10000)
         assert sized.parameters == config.parameters

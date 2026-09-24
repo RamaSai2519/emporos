@@ -5,7 +5,10 @@
 # this file exists to prevent. Change them only by adding a new benchmark and re-running everything.
 # Rates and money are integers or QUOTED strings; a YAML float is refused.
 
-capital: 50000                    # rupees: what production trades
+# EM-207 (operator-approved 2026-09-24): production capital Rs 50,000 -> Rs 1,00,000. Only what
+# scales with capital moves (daily loss and window drawdown in rupees); no threshold changes, and
+# verdicts published before this commit were judged at Rs 50,000 and stand as published.
+capital: 100000                   # rupees: what production trades
 max_position_fraction: "0.10"     # of capital, per instrument
 max_daily_loss_fraction: "0.02"   # of capital
 slippage_bps: 5                   # already in every run: the marketable-limit buffer

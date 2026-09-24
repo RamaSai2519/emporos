@@ -3,6 +3,14 @@
 **Jira:** EM-191 (epic). **Follows:** EM-176, which is Done. EM-176 built the machinery and validated nothing.
 **Audience:** an autonomous coding agent that runs this plan in a loop, one iteration per wake-up,
 plus the operator who reviews what it hands back.
+**Capital (operator change, 2026-09-24, EM-207):** production capital is now **₹1,00,000**, with
+`max_position_value` ₹50,000 (at most two full-size positions) in `config/risk.yaml`. New
+declarations default to ₹50,000 per position, so the §3.5 feasibility bar is 2 × 0.495% ≈ **0.99%**.
+Cells already declared at ₹25,000 keep their declared size; rejected cells are not re-run at the
+new size. The mission's "₹50,000" below now reads as ₹1,00,000 of capital.
+**DSR (operator change, 2026-09-24, EM-206):** S4 and S5 price the Deflated Sharpe with
+`deflated_sharpe_spread: null_hypothesis` in `benchmark.yaml`. N is still the full program-wide
+count, and the 0.95 threshold is unchanged.
 **Status of this file:** plan of record. The agent must not edit the numbers in §3 or §6.
 The operator may change them, in a commit that says why.
 
@@ -54,8 +62,8 @@ The table shows round-trip cost as a percentage of position value. The "benchmar
 | Position value | Charges only | Benchmark break-even | Adverse break-even |
 |---|---|---|---|
 | ₹5,000 – ₹20,000 | 0.271% | **0.371%** | 0.707% |
-| ₹25,000 (current `max_position_value`) | 0.224% | **0.324%** | 0.636% |
-| ₹50,000 | 0.130% | 0.230% | 0.495% |
+| ₹25,000 (`max_position_value` until EM-207) | 0.224% | **0.324%** | 0.636% |
+| ₹50,000 (current `max_position_value`, EM-207) | 0.130% | 0.230% | 0.495% |
 | ₹1,00,000 (needs leverage) | 0.083% | 0.183% | 0.424% |
 | ₹2,50,000 (needs leverage) | 0.054% | 0.154% | 0.382% |
 
