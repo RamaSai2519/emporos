@@ -77,6 +77,16 @@ def test_messages_that_are_not_order_updates_are_ignored_not_errors(text: str) -
     assert PARSER.parse(text) is None
 
 
+def test_the_greeting_recorded_live_on_connect_is_a_notice_not_a_malformed_update() -> None:
+    greeting = json.loads((FIXTURE / "order_stream_greeting.json").read_text())["message"]
+    reader = OrderUpdateReader(PARSER, OrderUpdateHub())
+
+    assert PARSER.parse(json.dumps(greeting)) is None
+    reader.on_text(json.dumps(greeting))
+
+    assert (reader.received, reader.ignored, reader.malformed) == (0, 1, 0)
+
+
 def test_a_message_that_claims_to_be_an_update_but_is_unusable_is_a_value_error() -> None:
     broken = json.dumps({"orderData": {"exchange": "NSE"}})  # no orderid, side, quantity...
     with pytest.raises(ValueError, match="unusable"):

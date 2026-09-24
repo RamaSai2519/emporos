@@ -73,6 +73,13 @@ class OrderUpdateHub:
                 _LOG.exception("order-update handler failed")
 
 
+def _is_greeting(data: dict[str, Any]) -> bool:
+    """The message the stream sends on connect (observed live, EM-186): "order-status": "AB00" with
+    every `orderData` field present and empty. It is a notice, not a malformed update; an update
+    that merely lacks fields (no `orderid` key at all) is still refused as unusable."""
+    return data.get("orderid") == "" and not data.get("orderstatus")
+
+
 class OrderUpdateParser:
     def __init__(self, mapper: AccountMapper, clock: Clock) -> None:
         self._mapper = mapper
@@ -86,7 +93,7 @@ class OrderUpdateParser:
         except ValueError:
             return None
         data = message.get("orderData") if isinstance(message, dict) else None
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) or _is_greeting(data):
             return None
         try:
             order = order_from_update_data(data, self._mapper)
