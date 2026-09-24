@@ -16,6 +16,13 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 | Paper (S6) running | no |
 | Last commit | see `git log --grep EM-192` |
 
+## Blocked on the operator (2026-09-24, end of iteration 2)
+The Atlassian MCP needs re-authentication (`/mcp`). The loop is stopped until it is back. Pending
+Jira actions to apply first on resume:
+- EM-193 → Done (F2 committed in edb0dd8).
+- Comment on EM-191: F2 done; N = 740 is a lower bound; EM-194 (F2B) filed; jev_sweep pinned for L16.
+- Then start EM-194 (F2B): move to In Progress.
+
 ## Known weaknesses carried forward
 - Program-wide N undercounts until F2B: the EM-178..EM-181 study grids never reached their Mongo
   ledgers, so each counts as one registry row. N is summed across overlapping sources (report rows
