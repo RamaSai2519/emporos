@@ -13,6 +13,7 @@ capped at INCONCLUSIVE and the reason says why.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import replace
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -81,6 +82,31 @@ class PredeclarationCap:
             "the economic rationale was not recorded before the evidence was gathered",
         )
         return ExperimentOutcomeLabel.INCONCLUSIVE, (*reasons, finding), notes
+
+
+class RegimePooling:
+    """Adds each regime's slices across walk-forward windows. Counts and net P&L add; a win rate
+    is rebuilt from the whole wins each slice's rate stands for, so it is a real pooled rate, not
+    a mean of rates."""
+
+    def pool(
+        self, slices: Iterable[tuple[str, int, Decimal, Decimal | None]]
+    ) -> dict[str, RegimeMetrics]:
+        counts: dict[str, int] = defaultdict(int)
+        nets: dict[str, Decimal] = defaultdict(lambda: ZERO)
+        wins: dict[str, int] = defaultdict(int)
+        for regime, count, net_pnl, win_rate in slices:
+            counts[regime] += count
+            nets[regime] += net_pnl
+            if win_rate is not None:
+                wins[regime] += round(win_rate * count)
+        return {
+            regime: RegimeMetrics(
+                counts[regime], nets[regime], Decimal(wins[regime]) / Decimal(counts[regime])
+            )
+            for regime in sorted(counts)
+            if counts[regime] > 0
+        }
 
 
 class CalendarDays:
@@ -242,24 +268,11 @@ class CurationExperimentReportBuilder:
 
     @staticmethod
     def _regimes(robustness: RobustnessReport) -> dict[str, RegimeMetrics]:
-        """Counts and net P&L add across windows; a regime's win rate is rebuilt from the whole
-        wins each window's rate stands for, so it is a real pooled rate, not a mean of rates."""
-        counts: dict[str, int] = defaultdict(int)
-        nets: dict[str, Decimal] = defaultdict(lambda: ZERO)
-        wins: dict[str, int] = defaultdict(int)
-        for window in robustness.window_performance:
-            for regime, slice_ in window.by_regime.items():
-                counts[regime] += slice_.count
-                nets[regime] += slice_.net_pnl
-                if slice_.win_rate is not None:
-                    wins[regime] += round(slice_.win_rate * slice_.count)
-        return {
-            regime: RegimeMetrics(
-                counts[regime], nets[regime], Decimal(wins[regime]) / Decimal(counts[regime])
-            )
-            for regime in sorted(counts)
-            if counts[regime] > 0
-        }
+        return RegimePooling().pool(
+            (regime, slice_.count, slice_.net_pnl, slice_.win_rate)
+            for window in robustness.window_performance
+            for regime, slice_ in window.by_regime.items()
+        )
 
     @staticmethod
     def _windows(robustness: RobustnessReport) -> tuple[WindowMetrics, ...]:

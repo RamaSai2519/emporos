@@ -11,7 +11,16 @@ from pathlib import Path
 
 import typer
 
+from emporos.backtest.experiment_backfill import ReportBackfill
 from emporos.backtest.experiment_identity import ExperimentIdMinter
+from emporos.backtest.robustness.benchmark import BenchmarkLoader
+from emporos.backtest.robustness.verdict import VerdictPolicy
+from emporos.cli.experiment_backfill import (
+    DEFAULT_STRATEGIES_DIR,
+    BackfillSources,
+    BackfillSummary,
+    ExperimentBackfill,
+)
 from emporos.cli.experiment_declarations import DeclarationGate, ExperimentDeclarationLoader
 from emporos.cli.experiment_provenance import GitRepository
 from emporos.cli.experiment_registry import (
@@ -147,3 +156,59 @@ def experiments_report(
     typer.echo(
         f"{report.experiment_id}: {report.outcome.value.upper()} ({outcome.value}) in {root}"
     )
+
+
+_STRATEGIES_DIR = typer.Option(
+    DEFAULT_STRATEGIES_DIR, help="The published curation reports to backfill."
+)
+_LEDGERS = typer.Option(
+    False,
+    "--ledgers/--no-ledgers",
+    help="Also backfill every hypothesis in the feature, cross-sectional and lead-lag ledgers "
+    "(reads each ledger once from the shared database).",
+)
+
+
+async def _read_all() -> list[LedgerExperiment]:
+    mongo = MongoClientFactory(Settings.default())
+    try:
+        database = mongo.database()
+        return await LedgerExperimentReader(
+            MongoHypothesisRegistry(database),
+            MongoFeatureTrialLedger(database),
+            MongoCrossSectionalTrialLedger(database),
+            MongoLeadLagTrialLedger(database),
+        ).read_all()
+    finally:
+        await mongo.close()
+
+
+def _echo(what: str, summary: BackfillSummary) -> None:
+    typer.echo(
+        f"{what}: {summary.written} written, {summary.unchanged} already published "
+        f"({summary.indexed} experiment(s) in the index)"
+    )
+
+
+@experiments_app.command("backfill")
+def experiments_backfill(
+    strategies_dir: Path = _STRATEGIES_DIR, root: Path = _ROOT, ledgers: bool = _LEDGERS
+) -> None:
+    """Publish the reports that predate the registry, marked BACKFILLED_NOT_PREDECLARED.
+
+    Nothing is invented: what a source never recorded is n/a and no outcome is upgraded. Safe to
+    re-run: a report already published is left as it is."""
+    try:
+        codes = {
+            gate.name: gate.code
+            for gate in VerdictPolicy.standard(BenchmarkLoader().load().verdict).gates
+        }
+        backfill = ExperimentBackfill(FileExperimentRegistry(root), ReportBackfill(codes))
+        sources = BackfillSources(GitRepository()).discover(strategies_dir)
+        _echo("curation reports", backfill.curation_reports(sources))
+        if ledgers:
+            _echo("ledger hypotheses", backfill.ledger_reports(asyncio.run(_read_all())))
+    except (EmporosError, ValueError, LookupError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"backfill failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error

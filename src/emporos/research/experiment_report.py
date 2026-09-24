@@ -441,6 +441,9 @@ class BackfilledDeclaration:
         )
 
 
+_Trial = FeatureTrial | CrossSectionalTrial | LeadLagTrial
+
+
 class LedgerExperimentReader:
     """Reads one hypothesis and everything recorded against it from the three ledgers, through the
     same Protocols the studies write with, so a test can hand it in-memory ledgers."""
@@ -468,3 +471,35 @@ class LedgerExperimentReader:
         if family is ExperimentFamily.LEAD_LAG:
             return LeadLagLedgerEvidence.of(hypothesis, await self._lead_lag.all())
         raise ValueError(f"{family.value} experiments are not backed by a trial ledger")
+
+    async def read_all(self) -> list[LedgerExperiment]:
+        """Every hypothesis any ledger holds trials for, once per family that has any. Each ledger
+        is read a single time; a hypothesis id no registry knows is skipped, never guessed at."""
+        found: list[LedgerExperiment] = []
+        ledgers: list[tuple[ExperimentFamily, Sequence[_Trial]]] = [
+            (ExperimentFamily.FEATURE, await self._features.all()),
+            (ExperimentFamily.CROSS_SECTIONAL, await self._cross_sectional.all()),
+            (ExperimentFamily.LEAD_LAG, await self._lead_lag.all()),
+        ]
+        for family, trials in ledgers:
+            for hypothesis_id in sorted({t.hypothesis_id for t in trials}):
+                hypothesis = await self._hypotheses.get(hypothesis_id)
+                if hypothesis is not None:
+                    found.append(self._adapt(family, hypothesis, trials))
+        return found
+
+    @staticmethod
+    def _adapt(
+        family: ExperimentFamily, hypothesis: HypothesisDeclaration, trials: Sequence[_Trial]
+    ) -> LedgerExperiment:
+        if family is ExperimentFamily.FEATURE:
+            return FeatureLedgerEvidence.of(
+                hypothesis, [t for t in trials if isinstance(t, FeatureTrial)]
+            )
+        if family is ExperimentFamily.CROSS_SECTIONAL:
+            return CrossSectionalLedgerEvidence.of(
+                hypothesis, [t for t in trials if isinstance(t, CrossSectionalTrial)]
+            )
+        return LeadLagLedgerEvidence.of(
+            hypothesis, [t for t in trials if isinstance(t, LeadLagTrial)]
+        )

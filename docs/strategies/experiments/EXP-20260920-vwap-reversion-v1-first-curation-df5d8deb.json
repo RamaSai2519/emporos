@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260920-vwap-reversion-v1-first-curation-df5d8deb",
+  "family": "strategy",
+  "slug": "vwap-reversion-v1-first-curation",
+  "outcome": "rejected",
+  "declaration": {
+    "predeclared": false,
+    "hypothesis": "backfilled from docs/strategies/vwap_reversion_v1.json: vwap_reversion_v1 curated walk-forward",
+    "economic_rationale": "backfilled: not pre-declared",
+    "falsification": "backfilled: not recorded",
+    "parameter_grid": {
+      "candidate": [
+        "z20_x30_s15",
+        "z20_x25_s25",
+        "z25_x30_s15",
+        "z25_x25_s25",
+        "z30_x30_s25",
+        "z30_x25_s15"
+      ]
+    },
+    "feature_versions": {},
+    "declared_at": "2026-09-20T21:06:13+05:30"
+  },
+  "versions": {
+    "behaviour_hash": null,
+    "candidate_behaviour_hashes": {},
+    "dataset": null,
+    "cost_model": null,
+    "code_revision": null
+  },
+  "periods": {
+    "train": null,
+    "validation": {
+      "first": "2026-01-30",
+      "last": "2026-08-28"
+    },
+    "holdout": null
+  },
+  "metrics": {
+    "gross_pnl": "-1152.29",
+    "net_pnl": "-4241.34",
+    "expectancy": null,
+    "profit_factor": "0.2687596979414502948174200889624496",
+    "max_drawdown": "0.01466289674479865101389607583813158",
+    "sharpe": null,
+    "deflated_sharpe": null,
+    "pbo": null,
+    "trade_count": 56,
+    "win_rate": "0.3392857142857142857142857142857143",
+    "costs": null,
+    "by_regime": {},
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2026-01-30",
+        "last": "2026-03-13",
+        "net_pnl": "-1066.01"
+      },
+      {
+        "index": 1,
+        "first": "2026-03-13",
+        "last": "2026-04-24",
+        "net_pnl": "-559.47"
+      },
+      {
+        "index": 2,
+        "first": "2026-04-24",
+        "last": "2026-06-05",
+        "net_pnl": "-1139.32"
+      },
+      {
+        "index": 3,
+        "first": "2026-06-05",
+        "last": "2026-07-17",
+        "net_pnl": "-816.11"
+      },
+      {
+        "index": 4,
+        "first": "2026-07-17",
+        "last": "2026-08-28",
+        "net_pnl": "-660.43"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": null,
+      "name": "net profit is positive",
+      "outcome": "fail",
+      "detail": "-4241.34 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "enough trades to mean something",
+      "outcome": "fail",
+      "detail": "56 (needs >= 150)"
+    },
+    {
+      "code": null,
+      "name": "profit factor",
+      "outcome": "fail",
+      "detail": "0.269 (needs >= 1.2)"
+    },
+    {
+      "code": null,
+      "name": "profitable in most out-of-sample windows",
+      "outcome": "fail",
+      "detail": "0 of 5 (needs >= 60% of windows)"
+    },
+    {
+      "code": null,
+      "name": "no window's drawdown is too deep",
+      "outcome": "pass",
+      "detail": "1.5% (needs <= 10%)"
+    },
+    {
+      "code": null,
+      "name": "profitable across instruments, not a few",
+      "outcome": "fail",
+      "detail": "9 of 27 (needs >= 50% of instruments)"
+    },
+    {
+      "code": null,
+      "name": "still profitable without its best window",
+      "outcome": "fail",
+      "detail": "-3681.87 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "still profitable if charges were twice as high",
+      "outcome": "fail",
+      "detail": "-7330.39 (needs > 0)"
+    }
+  ],
+  "primary_reason_codes": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "notes": [
+    "BACKFILLED_NOT_PREDECLARED",
+    "backfilled from docs/strategies/vwap_reversion_v1.json, first committed 2026-09-20: the run predates experiment reports, so what it did not record is n/a"
+  ],
+  "supporting": {
+    "source": "docs/strategies/vwap_reversion_v1.json"
+  }
+}

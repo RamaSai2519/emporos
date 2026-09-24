@@ -150,3 +150,18 @@ class TestIndex:
 
     def test_an_empty_registry_has_an_empty_index(self, tmp_path: Path) -> None:
         assert FileExperimentRegistry(tmp_path / "none").rebuild_index() == 0
+
+
+class TestIndexFormatting:
+    def test_numbers_are_rounded_for_reading_and_the_json_keeps_every_digit(
+        self, tmp_path: Path
+    ) -> None:
+        registry = FileExperimentRegistry(tmp_path)
+        registry.publish(sample_report())
+        registry.rebuild_index()
+
+        text = (tmp_path / INDEX_MARKDOWN).read_text()
+        [row] = json.loads((tmp_path / INDEX_JSON).read_text())["experiments"]
+
+        assert "| 3120.75 | 1.421 | 1.372 | 0.931 | 0.220 |" in text
+        assert row["profit_factor"] == "1.4210"

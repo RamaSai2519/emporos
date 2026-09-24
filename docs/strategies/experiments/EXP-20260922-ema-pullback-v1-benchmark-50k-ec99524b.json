@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260922-ema-pullback-v1-benchmark-50k-ec99524b",
+  "family": "strategy",
+  "slug": "ema-pullback-v1-benchmark-50k",
+  "outcome": "rejected",
+  "declaration": {
+    "predeclared": false,
+    "hypothesis": "backfilled from docs/strategies/benchmark_50k/ema_pullback_v1.json: ema_pullback_v1 curated walk-forward",
+    "economic_rationale": "backfilled: not pre-declared",
+    "falsification": "backfilled: not recorded",
+    "parameter_grid": {
+      "candidate": [
+        "nov_s10_t15",
+        "nov_s15_t20",
+        "nov_s15_t30",
+        "vwap_s10_t15",
+        "vwap_s15_t20",
+        "vwap_s15_t30"
+      ]
+    },
+    "feature_versions": {},
+    "declared_at": "2026-09-22T13:02:14+05:30"
+  },
+  "versions": {
+    "behaviour_hash": null,
+    "candidate_behaviour_hashes": {},
+    "dataset": null,
+    "cost_model": null,
+    "code_revision": null
+  },
+  "periods": {
+    "train": null,
+    "validation": {
+      "first": "2026-01-30",
+      "last": "2026-08-28"
+    },
+    "holdout": null
+  },
+  "metrics": {
+    "gross_pnl": "-1247.61",
+    "net_pnl": "-3312.55",
+    "expectancy": null,
+    "profit_factor": "0.1146134026129535783779160519169500",
+    "max_drawdown": "0.01574675444351883934034663501588682",
+    "sharpe": "-4.608386929111046786460378675410415",
+    "deflated_sharpe": "0E-12",
+    "pbo": null,
+    "trade_count": 155,
+    "win_rate": "0.1225806451612903225806451612903226",
+    "costs": null,
+    "by_regime": {},
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2026-01-30",
+        "last": "2026-03-13",
+        "net_pnl": "-674.89"
+      },
+      {
+        "index": 1,
+        "first": "2026-03-13",
+        "last": "2026-04-24",
+        "net_pnl": "-600.93"
+      },
+      {
+        "index": 2,
+        "first": "2026-04-24",
+        "last": "2026-06-05",
+        "net_pnl": "-662.15"
+      },
+      {
+        "index": 3,
+        "first": "2026-06-05",
+        "last": "2026-07-17",
+        "net_pnl": "-665.18"
+      },
+      {
+        "index": 4,
+        "first": "2026-07-17",
+        "last": "2026-08-28",
+        "net_pnl": "-709.40"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": "net_pnl_not_real",
+      "name": "profit after costs is real",
+      "outcome": "fail",
+      "detail": "net -3312.55, 95% interval -3794.03 to -2787.38, P(net > 0) 0.000"
+    },
+    {
+      "code": "adverse_costs",
+      "name": "profit survives adverse costs",
+      "outcome": "unknown",
+      "detail": "net -3312.55 as run, -5682.47 under adverse costs"
+    },
+    {
+      "code": "too_few_windows_profitable",
+      "name": "profitable in most walk-forward windows",
+      "outcome": "fail",
+      "detail": "0 of 5 windows"
+    },
+    {
+      "code": "too_few_trades",
+      "name": "enough trades",
+      "outcome": "pass",
+      "detail": "155 trades, 150 needed to validate"
+    },
+    {
+      "code": "too_little_history",
+      "name": "enough history",
+      "outcome": "unknown",
+      "detail": "260 trading days, 500 needed"
+    },
+    {
+      "code": "drawdown_over_budget",
+      "name": "drawdown within the risk budget",
+      "outcome": "pass",
+      "detail": "worst window 1.6%, budget 10.0%"
+    },
+    {
+      "code": "profit_concentrated",
+      "name": "profit is not concentrated",
+      "outcome": "unknown",
+      "detail": "no profit to attribute"
+    },
+    {
+      "code": "parameter_unstable",
+      "name": "survives parameter changes",
+      "outcome": "fail",
+      "detail": "0% of neighbouring parameter sets profit, 50% needed"
+    },
+    {
+      "code": "dsr_below_threshold",
+      "name": "beats the luck of the search (Deflated Sharpe)",
+      "outcome": "unknown",
+      "detail": "DSR 0.000 over 318 trials, 0.95 needed"
+    },
+    {
+      "code": "below_baseline",
+      "name": "beats the always-long baseline",
+      "outcome": "fail",
+      "detail": "strategy net -3312.55, baseline -3062.66"
+    }
+  ],
+  "primary_reason_codes": [
+    "net_pnl_not_real",
+    "too_few_windows_profitable",
+    "parameter_unstable",
+    "below_baseline"
+  ],
+  "notes": [
+    "BACKFILLED_NOT_PREDECLARED",
+    "backfilled from docs/strategies/benchmark_50k/ema_pullback_v1.json, first committed 2026-09-22: the run predates experiment reports, so what it did not record is n/a"
+  ],
+  "supporting": {
+    "source": "docs/strategies/benchmark_50k/ema_pullback_v1.json",
+    "robustness": {
+      "verdict": "rejected",
+      "gates": [
+        {
+          "name": "profit after costs is real",
+          "outcome": "fail",
+          "detail": "net -3312.55, 95% interval -3794.03 to -2787.38, P(net > 0) 0.000"
+        },
+        {
+          "name": "profit survives adverse costs",
+          "outcome": "unknown",
+          "detail": "net -3312.55 as run, -5682.47 under adverse costs"
+        },
+        {
+          "name": "profitable in most walk-forward windows",
+          "outcome": "fail",
+          "detail": "0 of 5 windows"
+        },
+        {
+          "name": "enough trades",
+          "outcome": "pass",
+          "detail": "155 trades, 150 needed to validate"
+        },
+        {
+          "name": "enough history",
+          "outcome": "unknown",
+          "detail": "260 trading days, 500 needed"
+        },
+        {
+          "name": "drawdown within the risk budget",
+          "outcome": "pass",
+          "detail": "worst window 1.6%, budget 10.0%"
+        },
+        {
+          "name": "profit is not concentrated",
+          "outcome": "unknown",
+          "detail": "no profit to attribute"
+        },
+        {
+          "name": "survives parameter changes",
+          "outcome": "fail",
+          "detail": "0% of neighbouring parameter sets profit, 50% needed"
+        },
+        {
+          "name": "beats the luck of the search (Deflated Sharpe)",
+          "outcome": "unknown",
+          "detail": "DSR 0.000 over 318 trials, 0.95 needed"
+        },
+        {
+          "name": "beats the always-long baseline",
+          "outcome": "fail",
+          "detail": "strategy net -3312.55, baseline -3062.66"
+        }
+      ],
+      "monte_carlo": {
+        "trades": 155,
+        "resamples": 5000,
+        "seed": 20260920,
+        "confidence": "0.95",
+        "inconclusive_reason": null,
+        "net_pnl": {
+          "observed": "-3312.55",
+          "low": "-3794.03",
+          "high": "-2787.38"
+        },
+        "expectancy": {
+          "observed": "-0.005005152383790850360468525086518764",
+          "low": "-0.005709689834313213744923011767750746",
+          "high": "-0.004250499581546111410922616749847302"
+        },
+        "profit_factor": {
+          "observed": "0.1146134026129535783779160519169500",
+          "low": "0.04994222653686146597355148326815622",
+          "high": "0.2028215754023792862141357592722183"
+        },
+        "max_drawdown": {
+          "observed": "0.0664764",
+          "low": "0.066251",
+          "high": "0.0676668"
+        },
+        "probability_net_positive": "0",
+        "probability_of_ruin": "0"
+      },
+      "deflated_sharpe": {
+        "observations": 142,
+        "trial_count": 318,
+        "daily_sharpe": "-0.2903010895140112984016927166663330",
+        "annualised_sharpe": "-4.608386929111046786460378675410415",
+        "expected_max_sharpe": "0.1823565348180406360451290831719603",
+        "probabilistic_sharpe": "2.0E-11",
+        "deflated_sharpe": "0E-12",
+        "reason": null
+      },
+      "concentration": {
+        "top_instrument": null,
+        "top_instrument_share": null,
+        "top_month": null,
+        "top_month_share": null,
+        "top_trades": 5,
+        "top_trades_share": null
+      },
+      "cost_scenarios": [
+        {
+          "name": "no_slippage",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "-5",
+          "net_pnl": "-2643.824405"
+        },
+        {
+          "name": "benchmark",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-3312.55"
+        },
+        {
+          "name": "slippage_plus5",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "5",
+          "net_pnl": "-3981.275595"
+        },
+        {
+          "name": "fees_x1_5",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-4345.020"
+        },
+        {
+          "name": "fees_x2",
+          "fee_multiplier": "2",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-5377.49"
+        },
+        {
+          "name": "adverse",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "10",
+          "net_pnl": "-5682.47119"
+        }
+      ],
+      "perturbation": {
+        "profitable_share": "0",
+        "runs": [
+          {
+            "window": 0,
+            "candidate": "nov_s10_t15",
+            "net_pnl": "-647.20"
+          },
+          {
+            "window": 1,
+            "candidate": "nov_s15_t30",
+            "net_pnl": "-577.75"
+          },
+          {
+            "window": 1,
+            "candidate": "vwap_s15_t20",
+            "net_pnl": "-670.65"
+          },
+          {
+            "window": 2,
+            "candidate": "vwap_s10_t15",
+            "net_pnl": "-647.43"
+          },
+          {
+            "window": 3,
+            "candidate": "nov_s10_t15",
+            "net_pnl": "-633.51"
+          },
+          {
+            "window": 4,
+            "candidate": "nov_s15_t20",
+            "net_pnl": "-647.85"
+          },
+          {
+            "window": 4,
+            "candidate": "vwap_s15_t30",
+            "net_pnl": "-716.20"
+          }
+        ]
+      },
+      "baseline_net_pnl": "-3062.66"
+    }
+  }
+}

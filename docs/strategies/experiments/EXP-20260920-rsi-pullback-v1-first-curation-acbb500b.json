@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260920-rsi-pullback-v1-first-curation-acbb500b",
+  "family": "strategy",
+  "slug": "rsi-pullback-v1-first-curation",
+  "outcome": "rejected",
+  "declaration": {
+    "predeclared": false,
+    "hypothesis": "backfilled from docs/strategies/rsi_pullback_v1.json: rsi_pullback_v1 curated walk-forward",
+    "economic_rationale": "backfilled: not pre-declared",
+    "falsification": "backfilled: not recorded",
+    "parameter_grid": {
+      "candidate": [
+        "e05_x55",
+        "e05_x70",
+        "e10_x55",
+        "e10_x70",
+        "e15_x55",
+        "e15_x70"
+      ]
+    },
+    "feature_versions": {},
+    "declared_at": "2026-09-20T21:06:13+05:30"
+  },
+  "versions": {
+    "behaviour_hash": null,
+    "candidate_behaviour_hashes": {},
+    "dataset": null,
+    "cost_model": null,
+    "code_revision": null
+  },
+  "periods": {
+    "train": null,
+    "validation": {
+      "first": "2026-01-30",
+      "last": "2026-08-28"
+    },
+    "holdout": null
+  },
+  "metrics": {
+    "gross_pnl": "-700.30",
+    "net_pnl": "-3484.56",
+    "expectancy": null,
+    "profit_factor": "0.09809372209496447567651512210272936",
+    "max_drawdown": "0.01091565052940935027701576568591724",
+    "sharpe": null,
+    "deflated_sharpe": null,
+    "pbo": null,
+    "trade_count": 51,
+    "win_rate": "0.07843137254901960784313725490196078",
+    "costs": null,
+    "by_regime": {},
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2026-01-30",
+        "last": "2026-03-13",
+        "net_pnl": "-525.97"
+      },
+      {
+        "index": 1,
+        "first": "2026-03-13",
+        "last": "2026-04-24",
+        "net_pnl": "-887.64"
+      },
+      {
+        "index": 2,
+        "first": "2026-04-24",
+        "last": "2026-06-05",
+        "net_pnl": "-720.17"
+      },
+      {
+        "index": 3,
+        "first": "2026-06-05",
+        "last": "2026-07-17",
+        "net_pnl": "-687.12"
+      },
+      {
+        "index": 4,
+        "first": "2026-07-17",
+        "last": "2026-08-28",
+        "net_pnl": "-663.66"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": null,
+      "name": "net profit is positive",
+      "outcome": "fail",
+      "detail": "-3484.56 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "enough trades to mean something",
+      "outcome": "fail",
+      "detail": "51 (needs >= 150)"
+    },
+    {
+      "code": null,
+      "name": "profit factor",
+      "outcome": "fail",
+      "detail": "0.098 (needs >= 1.2)"
+    },
+    {
+      "code": null,
+      "name": "profitable in most out-of-sample windows",
+      "outcome": "fail",
+      "detail": "0 of 5 (needs >= 60% of windows)"
+    },
+    {
+      "code": null,
+      "name": "no window's drawdown is too deep",
+      "outcome": "pass",
+      "detail": "1.1% (needs <= 10%)"
+    },
+    {
+      "code": null,
+      "name": "profitable across instruments, not a few",
+      "outcome": "fail",
+      "detail": "2 of 22 (needs >= 50% of instruments)"
+    },
+    {
+      "code": null,
+      "name": "still profitable without its best window",
+      "outcome": "fail",
+      "detail": "-2958.59 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "still profitable if charges were twice as high",
+      "outcome": "fail",
+      "detail": "-6268.82 (needs > 0)"
+    }
+  ],
+  "primary_reason_codes": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "notes": [
+    "BACKFILLED_NOT_PREDECLARED",
+    "backfilled from docs/strategies/rsi_pullback_v1.json, first committed 2026-09-20: the run predates experiment reports, so what it did not record is n/a"
+  ],
+  "supporting": {
+    "source": "docs/strategies/rsi_pullback_v1.json"
+  }
+}

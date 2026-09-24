@@ -332,3 +332,28 @@ class TestReader:
     async def test_a_family_without_a_ledger_is_refused(self) -> None:
         with pytest.raises(ValueError, match="not backed by a trial ledger"):
             await (await self.reader()).read(ExperimentFamily.STRATEGY, "h-momentum")
+
+
+class TestReadAll:
+    async def test_it_reads_each_ledger_once_and_makes_one_experiment_per_family_and_hypothesis(
+        self,
+    ) -> None:
+        reader = await TestReader().reader()
+
+        found = await reader.read_all()
+
+        assert sorted((e.family.value, e.hypothesis.hypothesis_id, len(e.rows)) for e in found) == [
+            ("cross_sectional", "h-momentum", 1),
+            ("feature", "h-momentum", 4),
+            ("lead_lag", "h-momentum", 1),
+        ]
+
+    async def test_a_hypothesis_no_registry_knows_is_skipped_not_guessed(self) -> None:
+        hypotheses = InMemoryHypothesisRegistry()  # declares nothing
+        features = InMemoryFeatureTrialLedger()
+        await features.append(feature_trial("orphan", hypothesis="h-unknown"))
+        reader = LedgerExperimentReader(
+            hypotheses, features, InMemoryCrossSectionalTrialLedger(), InMemoryLeadLagTrialLedger()
+        )
+
+        assert await reader.read_all() == []

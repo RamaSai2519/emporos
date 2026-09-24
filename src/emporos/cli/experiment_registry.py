@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Generic, Protocol, TypeVar
@@ -84,8 +85,9 @@ class ExperimentIndex:
                 f"[{r['id']}]({r['id']}.md)", r["family"], r["slug"], r["declared_at"][:10],
                 "yes" if r["predeclared"] else "no",
                 self._span(r["validation"]), self._span(r["holdout"]), self._cell(r["trades"]),
-                self._cell(r["net_pnl"]), self._cell(r["profit_factor"]), self._cell(r["sharpe"]),
-                self._cell(r["deflated_sharpe"]), self._cell(r["pbo"]), r["outcome"],
+                self._number(r["net_pnl"], 2), self._number(r["profit_factor"], 3),
+                self._number(r["sharpe"], 3), self._number(r["deflated_sharpe"], 3),
+                self._number(r["pbo"], 3), r["outcome"],
                 ", ".join(r["primary_reasons"]) or NOT_APPLICABLE,
             )  # fmt: skip
             lines.append("| " + " | ".join(str(c).replace("|", "\\|") for c in cells) + " |")
@@ -94,6 +96,11 @@ class ExperimentIndex:
     @staticmethod
     def _cell(value: object) -> str:
         return NOT_APPLICABLE if value is None else str(value)
+
+    @staticmethod
+    def _number(value: str | None, places: int) -> str:
+        """The exact string in the JSON, rounded for reading; the JSON keeps every digit."""
+        return NOT_APPLICABLE if value is None else f"{Decimal(value):.{places}f}"
 
     @staticmethod
     def _span(period: Mapping[str, str] | None) -> str:

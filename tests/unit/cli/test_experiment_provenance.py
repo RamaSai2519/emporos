@@ -106,3 +106,22 @@ class TestCurationVersionStamp:
 
         assert hash_a is not None and hash_b is not None
         assert hash_a.benchmark_hash != hash_b.benchmark_hash
+
+
+class TestFirstCommitTime:
+    def test_it_is_when_the_file_entered_the_repository(self, repo: Path) -> None:
+        moment = GitRepository(repo).first_commit_time(Path("declared.yaml"))
+
+        assert moment is not None and moment.tzinfo is not None
+
+    def test_a_later_edit_does_not_move_it(self, repo: Path) -> None:
+        before = GitRepository(repo).first_commit_time(Path("declared.yaml"))
+        (repo / "declared.yaml").write_text("a: 2\n")
+        git(repo, "commit", "-q", "-am", "edit")
+
+        assert GitRepository(repo).first_commit_time(Path("declared.yaml")) == before
+
+    def test_an_untracked_file_has_none(self, repo: Path) -> None:
+        (repo / "new.yaml").write_text("b: 1\n")
+
+        assert GitRepository(repo).first_commit_time(Path("new.yaml")) is None

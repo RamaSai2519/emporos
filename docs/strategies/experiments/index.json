@@ -1,0 +1,574 @@
+{
+  "experiments": [
+    {
+      "id": "EXP-20260920-orb-v1-first-curation-2389caa8",
+      "family": "strategy",
+      "slug": "orb-v1-first-curation",
+      "declared_at": "2026-09-20T21:06:13+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 40,
+      "net_pnl": "-3769.43",
+      "profit_factor": "0.2166539206477194324142345322903765",
+      "sharpe": null,
+      "deflated_sharpe": null,
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net profit is positive",
+        "enough trades to mean something",
+        "profit factor",
+        "profitable in most out-of-sample windows",
+        "profitable across instruments, not a few",
+        "still profitable without its best window",
+        "still profitable if charges were twice as high"
+      ]
+    },
+    {
+      "id": "EXP-20260920-rsi-pullback-v1-first-curation-acbb500b",
+      "family": "strategy",
+      "slug": "rsi-pullback-v1-first-curation",
+      "declared_at": "2026-09-20T21:06:13+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 51,
+      "net_pnl": "-3484.56",
+      "profit_factor": "0.09809372209496447567651512210272936",
+      "sharpe": null,
+      "deflated_sharpe": null,
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net profit is positive",
+        "enough trades to mean something",
+        "profit factor",
+        "profitable in most out-of-sample windows",
+        "profitable across instruments, not a few",
+        "still profitable without its best window",
+        "still profitable if charges were twice as high"
+      ]
+    },
+    {
+      "id": "EXP-20260920-vwap-reversion-v1-first-curation-df5d8deb",
+      "family": "strategy",
+      "slug": "vwap-reversion-v1-first-curation",
+      "declared_at": "2026-09-20T21:06:13+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 56,
+      "net_pnl": "-4241.34",
+      "profit_factor": "0.2687596979414502948174200889624496",
+      "sharpe": null,
+      "deflated_sharpe": null,
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net profit is positive",
+        "enough trades to mean something",
+        "profit factor",
+        "profitable in most out-of-sample windows",
+        "profitable across instruments, not a few",
+        "still profitable without its best window",
+        "still profitable if charges were twice as high"
+      ]
+    },
+    {
+      "id": "EXP-20260921-orb-v1-benchmark-50k-1912f871",
+      "family": "strategy",
+      "slug": "orb-v1-benchmark-50k",
+      "declared_at": "2026-09-21T03:42:27+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 167,
+      "net_pnl": "-3136.27",
+      "profit_factor": "0.1658124250266645742844451773692904",
+      "sharpe": "-6.199222824453666333865235832608006",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260921-rsi-pullback-v1-benchmark-50k-e8c45346",
+      "family": "strategy",
+      "slug": "rsi-pullback-v1-benchmark-50k",
+      "declared_at": "2026-09-21T03:42:27+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 171,
+      "net_pnl": "-3138.68",
+      "profit_factor": "0.04461747319846830996633447581013375",
+      "sharpe": "-3.782704233666925228700522191449704",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260921-vwap-reversion-v1-benchmark-50k-01850651",
+      "family": "strategy",
+      "slug": "vwap-reversion-v1-benchmark-50k",
+      "declared_at": "2026-09-21T03:42:27+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 174,
+      "net_pnl": "-3107.08",
+      "profit_factor": "0.1272075574519723702432351197916813",
+      "sharpe": "-4.735301413760987957947125637785039",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260922-donchian-v1-benchmark-50k-806ac21c",
+      "family": "strategy",
+      "slug": "donchian-v1-benchmark-50k",
+      "declared_at": "2026-09-22T13:02:14+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 173,
+      "net_pnl": "-3033.26",
+      "profit_factor": "0.1883689567702368592865323072641843",
+      "sharpe": "-5.797181639449279548359599999621065",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260922-ema-pullback-v1-benchmark-50k-ec99524b",
+      "family": "strategy",
+      "slug": "ema-pullback-v1-benchmark-50k",
+      "declared_at": "2026-09-22T13:02:14+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 155,
+      "net_pnl": "-3312.55",
+      "profit_factor": "0.1146134026129535783779160519169500",
+      "sharpe": "-4.608386929111046786460378675410415",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260922-gap-fade-v1-benchmark-50k-2a07f381",
+      "family": "strategy",
+      "slug": "gap-fade-v1-benchmark-50k",
+      "declared_at": "2026-09-22T13:02:14+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 147,
+      "net_pnl": "-2077.25",
+      "profit_factor": "0.3438239372774971649150738069741510",
+      "sharpe": "-4.567371990055308336836351557046336",
+      "deflated_sharpe": "1E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260922-gap-go-v1-benchmark-50k-4d0063f7",
+      "family": "strategy",
+      "slug": "gap-go-v1-benchmark-50k",
+      "declared_at": "2026-09-22T13:02:14+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 151,
+      "net_pnl": "-2791.94",
+      "profit_factor": "0.4018647139729290834536628004130479",
+      "sharpe": "-4.509846482066505222377047468938742",
+      "deflated_sharpe": "2E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260922-vwap-trend-v1-benchmark-50k-bbf04172",
+      "family": "strategy",
+      "slug": "vwap-trend-v1-benchmark-50k",
+      "declared_at": "2026-09-22T13:02:14+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 161,
+      "net_pnl": "-3155.88",
+      "profit_factor": "0.1771920219006648416112631990614001",
+      "sharpe": "-5.189236804782965768653537684699546",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260922-squeeze-breakout-v1-benchmark-50k-01f27963",
+      "family": "strategy",
+      "slug": "squeeze-breakout-v1-benchmark-50k",
+      "declared_at": "2026-09-22T14:02:59+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 167,
+      "net_pnl": "-3176.33",
+      "profit_factor": "0.1046513266752922406478764456997567",
+      "sharpe": "-6.012792639824990931573347252630109",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable",
+        "below_baseline"
+      ]
+    },
+    {
+      "id": "EXP-20260922-regime-selector-v1-benchmark-50k-2757eedb",
+      "family": "strategy",
+      "slug": "regime-selector-v1-benchmark-50k",
+      "declared_at": "2026-09-22T14:26:07+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 175,
+      "net_pnl": "-2879.72",
+      "profit_factor": "0.1234022605026924516987254612478730",
+      "sharpe": "-6.590517802991428737014254937848477",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260922-relative-strength-v1-benchmark-50k-e9249991",
+      "family": "strategy",
+      "slug": "relative-strength-v1-benchmark-50k",
+      "declared_at": "2026-09-22T19:02:32+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2026-01-30",
+        "last": "2026-08-28"
+      },
+      "holdout": null,
+      "trades": 176,
+      "net_pnl": "-2869.34",
+      "profit_factor": "0.1835685974351897430352625843294475",
+      "sharpe": "-4.175381882398784387045116187010958",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-liquidity-thrust-v1-em171-1c529c4a",
+      "family": "strategy",
+      "slug": "liquidity-thrust-v1-em171",
+      "declared_at": "2026-09-23T06:24:50+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2026-08-14"
+      },
+      "holdout": null,
+      "trades": 1134,
+      "net_pnl": "-18574.98",
+      "profit_factor": "0.3199241389662835782097235392540576",
+      "sharpe": "-6.205399272983182972355880610694808",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-donchian-v1-em171-refresh-aca8c5f9",
+      "family": "strategy",
+      "slug": "donchian-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 802,
+      "net_pnl": "-14971.10",
+      "profit_factor": "0.1643203861817662189196913403829666",
+      "sharpe": "-5.729829473747085031788562093706360",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-ema-pullback-v1-em171-refresh-574663c2",
+      "family": "strategy",
+      "slug": "ema-pullback-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 824,
+      "net_pnl": "-14740.07",
+      "profit_factor": "0.1103412977729063394218935879089076",
+      "sharpe": "-5.161842046975551107635052325017031",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-gap-fade-v1-em171-refresh-32b62856",
+      "family": "strategy",
+      "slug": "gap-fade-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 293,
+      "net_pnl": "-3938.42",
+      "profit_factor": "0.3895304318712353482777541827741317",
+      "sharpe": "-2.697364982983375802605067688529750",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-gap-go-v1-em171-refresh-a8615250",
+      "family": "strategy",
+      "slug": "gap-go-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 459,
+      "net_pnl": "-7699.45",
+      "profit_factor": "0.5006109844892960965744655182925643",
+      "sharpe": "-2.558086037543006833743306316146521",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-orb-v1-em171-refresh-113022a9",
+      "family": "strategy",
+      "slug": "orb-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 781,
+      "net_pnl": "-14823.89",
+      "profit_factor": "0.1116786007276091788299406802564550",
+      "sharpe": "-5.566218462627858656919947258724125",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-rsi-pullback-v1-em171-refresh-5758e466",
+      "family": "strategy",
+      "slug": "rsi-pullback-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 826,
+      "net_pnl": "-14398.29",
+      "profit_factor": "0.04457139292819234000310551175250398",
+      "sharpe": "-3.707313130890472447514160219459823",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-vwap-reversion-v1-em171-refresh-c1ad13a3",
+      "family": "strategy",
+      "slug": "vwap-reversion-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 811,
+      "net_pnl": "-15027.45",
+      "profit_factor": "0.07715166696655627044597166381003908",
+      "sharpe": "-4.361908782493911700804969209698201",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    },
+    {
+      "id": "EXP-20260923-vwap-trend-v1-em171-refresh-4fec887a",
+      "family": "strategy",
+      "slug": "vwap-trend-v1-em171-refresh",
+      "declared_at": "2026-09-23T17:31:31+05:30",
+      "predeclared": false,
+      "validation": {
+        "first": "2022-12-09",
+        "last": "2025-09-12"
+      },
+      "holdout": null,
+      "trades": 815,
+      "net_pnl": "-14707.16",
+      "profit_factor": "0.1161881182168912178647404540701657",
+      "sharpe": "-5.490645069395593733502732395001936",
+      "deflated_sharpe": "0E-12",
+      "pbo": null,
+      "outcome": "rejected",
+      "primary_reasons": [
+        "net_pnl_not_real",
+        "too_few_windows_profitable",
+        "parameter_unstable"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,661 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260923-orb-v1-em171-refresh-113022a9",
+  "family": "strategy",
+  "slug": "orb-v1-em171-refresh",
+  "outcome": "rejected",
+  "declaration": {
+    "predeclared": false,
+    "hypothesis": "backfilled from docs/strategies/em171/refresh_plan.json: orb_v1 curated walk-forward",
+    "economic_rationale": "backfilled: not pre-declared",
+    "falsification": "backfilled: not recorded",
+    "parameter_grid": {
+      "candidate": [
+        "r3_t15_s10",
+        "r3_t30_s10",
+        "r6_t15_s10",
+        "r6_t30_s10",
+        "r6_t20_s15",
+        "r3_t20_s15"
+      ]
+    },
+    "feature_versions": {},
+    "declared_at": "2026-09-23T17:31:31+05:30"
+  },
+  "versions": {
+    "behaviour_hash": null,
+    "candidate_behaviour_hashes": {},
+    "dataset": null,
+    "cost_model": null,
+    "code_revision": null
+  },
+  "periods": {
+    "train": null,
+    "validation": {
+      "first": "2022-12-09",
+      "last": "2025-09-12"
+    },
+    "holdout": null
+  },
+  "metrics": {
+    "gross_pnl": "-4414.26",
+    "net_pnl": "-14823.89",
+    "expectancy": null,
+    "profit_factor": "0.1116786007276091788299406802564550",
+    "max_drawdown": "0.0149132",
+    "sharpe": "-5.566218462627858656919947258724125",
+    "deflated_sharpe": "0E-12",
+    "pbo": null,
+    "trade_count": 781,
+    "win_rate": "0.2074263764404609475032010243277849",
+    "costs": null,
+    "by_regime": {},
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2022-12-09",
+        "last": "2023-01-20",
+        "net_pnl": "-627.19"
+      },
+      {
+        "index": 1,
+        "first": "2023-01-20",
+        "last": "2023-03-03",
+        "net_pnl": "-614.02"
+      },
+      {
+        "index": 2,
+        "first": "2023-03-03",
+        "last": "2023-04-14",
+        "net_pnl": "-644.83"
+      },
+      {
+        "index": 3,
+        "first": "2023-04-14",
+        "last": "2023-05-26",
+        "net_pnl": "-618.39"
+      },
+      {
+        "index": 4,
+        "first": "2023-05-26",
+        "last": "2023-07-07",
+        "net_pnl": "-620.21"
+      },
+      {
+        "index": 5,
+        "first": "2023-07-07",
+        "last": "2023-08-18",
+        "net_pnl": "-627.03"
+      },
+      {
+        "index": 6,
+        "first": "2023-08-18",
+        "last": "2023-09-29",
+        "net_pnl": "-649.82"
+      },
+      {
+        "index": 7,
+        "first": "2023-09-29",
+        "last": "2023-11-10",
+        "net_pnl": "-591.27"
+      },
+      {
+        "index": 8,
+        "first": "2023-11-10",
+        "last": "2023-12-22",
+        "net_pnl": "-636.86"
+      },
+      {
+        "index": 9,
+        "first": "2023-12-22",
+        "last": "2024-02-02",
+        "net_pnl": "-604.13"
+      },
+      {
+        "index": 10,
+        "first": "2024-02-02",
+        "last": "2024-03-15",
+        "net_pnl": "-583.68"
+      },
+      {
+        "index": 11,
+        "first": "2024-03-15",
+        "last": "2024-04-26",
+        "net_pnl": "-650.67"
+      },
+      {
+        "index": 12,
+        "first": "2024-04-26",
+        "last": "2024-06-07",
+        "net_pnl": "-617.24"
+      },
+      {
+        "index": 13,
+        "first": "2024-06-07",
+        "last": "2024-07-19",
+        "net_pnl": "-709.70"
+      },
+      {
+        "index": 14,
+        "first": "2024-07-19",
+        "last": "2024-08-30",
+        "net_pnl": "-536.85"
+      },
+      {
+        "index": 15,
+        "first": "2024-08-30",
+        "last": "2024-10-11",
+        "net_pnl": "-513.42"
+      },
+      {
+        "index": 16,
+        "first": "2024-10-11",
+        "last": "2024-11-22",
+        "net_pnl": "-606.66"
+      },
+      {
+        "index": 17,
+        "first": "2024-11-22",
+        "last": "2025-01-03",
+        "net_pnl": "-627.57"
+      },
+      {
+        "index": 18,
+        "first": "2025-01-03",
+        "last": "2025-02-14",
+        "net_pnl": "-565.03"
+      },
+      {
+        "index": 19,
+        "first": "2025-02-14",
+        "last": "2025-03-28",
+        "net_pnl": "-654.75"
+      },
+      {
+        "index": 20,
+        "first": "2025-03-28",
+        "last": "2025-05-09",
+        "net_pnl": "-710.45"
+      },
+      {
+        "index": 21,
+        "first": "2025-05-09",
+        "last": "2025-06-20",
+        "net_pnl": "-605.11"
+      },
+      {
+        "index": 22,
+        "first": "2025-06-20",
+        "last": "2025-08-01",
+        "net_pnl": "-721.37"
+      },
+      {
+        "index": 23,
+        "first": "2025-08-01",
+        "last": "2025-09-12",
+        "net_pnl": "-487.64"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": "net_pnl_not_real",
+      "name": "profit after costs is real",
+      "outcome": "fail",
+      "detail": "net -14823.89, 95% interval -15888.72 to -13738.20, P(net > 0) 0.000"
+    },
+    {
+      "code": "adverse_costs",
+      "name": "profit survives adverse costs",
+      "outcome": "unknown",
+      "detail": "net -14823.89 as run, -26789.37 under adverse costs"
+    },
+    {
+      "code": "too_few_windows_profitable",
+      "name": "profitable in most walk-forward windows",
+      "outcome": "fail",
+      "detail": "0 of 24 windows"
+    },
+    {
+      "code": "too_few_trades",
+      "name": "enough trades",
+      "outcome": "pass",
+      "detail": "781 trades, 150 needed to validate"
+    },
+    {
+      "code": "too_little_history",
+      "name": "enough history",
+      "outcome": "pass",
+      "detail": "820 trading days, 500 needed"
+    },
+    {
+      "code": "drawdown_over_budget",
+      "name": "drawdown within the risk budget",
+      "outcome": "pass",
+      "detail": "worst window 1.5%, budget 10.0%"
+    },
+    {
+      "code": "profit_concentrated",
+      "name": "profit is not concentrated",
+      "outcome": "unknown",
+      "detail": "no profit to attribute"
+    },
+    {
+      "code": "parameter_unstable",
+      "name": "survives parameter changes",
+      "outcome": "fail",
+      "detail": "0% of neighbouring parameter sets profit, 50% needed"
+    },
+    {
+      "code": "dsr_below_threshold",
+      "name": "beats the luck of the search (Deflated Sharpe)",
+      "outcome": "unknown",
+      "detail": "DSR 0.000 over 168 trials, 0.95 needed"
+    },
+    {
+      "code": "below_baseline",
+      "name": "beats the always-long baseline",
+      "outcome": "pass",
+      "detail": "strategy net -14823.89, baseline -16219.40"
+    },
+    {
+      "code": "too_few_regimes",
+      "name": "evidence spans enough distinct regimes",
+      "outcome": "pass",
+      "detail": "1 regime(s); diversity not required"
+    }
+  ],
+  "primary_reason_codes": [
+    "net_pnl_not_real",
+    "too_few_windows_profitable",
+    "parameter_unstable"
+  ],
+  "notes": [
+    "BACKFILLED_NOT_PREDECLARED",
+    "backfilled from docs/strategies/em171/refresh_plan.json, first committed 2026-09-23: the run predates experiment reports, so what it did not record is n/a"
+  ],
+  "supporting": {
+    "source": "docs/strategies/em171/refresh_plan.json",
+    "robustness": {
+      "verdict": "rejected",
+      "gates": [
+        {
+          "name": "profit after costs is real",
+          "outcome": "fail",
+          "detail": "net -14823.89, 95% interval -15888.72 to -13738.20, P(net > 0) 0.000"
+        },
+        {
+          "name": "profit survives adverse costs",
+          "outcome": "unknown",
+          "detail": "net -14823.89 as run, -26789.37 under adverse costs"
+        },
+        {
+          "name": "profitable in most walk-forward windows",
+          "outcome": "fail",
+          "detail": "0 of 24 windows"
+        },
+        {
+          "name": "enough trades",
+          "outcome": "pass",
+          "detail": "781 trades, 150 needed to validate"
+        },
+        {
+          "name": "enough history",
+          "outcome": "pass",
+          "detail": "820 trading days, 500 needed"
+        },
+        {
+          "name": "drawdown within the risk budget",
+          "outcome": "pass",
+          "detail": "worst window 1.5%, budget 10.0%"
+        },
+        {
+          "name": "profit is not concentrated",
+          "outcome": "unknown",
+          "detail": "no profit to attribute"
+        },
+        {
+          "name": "survives parameter changes",
+          "outcome": "fail",
+          "detail": "0% of neighbouring parameter sets profit, 50% needed"
+        },
+        {
+          "name": "beats the luck of the search (Deflated Sharpe)",
+          "outcome": "unknown",
+          "detail": "DSR 0.000 over 168 trials, 0.95 needed"
+        },
+        {
+          "name": "beats the always-long baseline",
+          "outcome": "pass",
+          "detail": "strategy net -14823.89, baseline -16219.40"
+        },
+        {
+          "name": "evidence spans enough distinct regimes",
+          "outcome": "pass",
+          "detail": "1 regime(s); diversity not required"
+        }
+      ],
+      "monte_carlo": {
+        "trades": 781,
+        "resamples": 5000,
+        "seed": 20260920,
+        "confidence": "0.95",
+        "inconclusive_reason": null,
+        "net_pnl": {
+          "observed": "-14823.89",
+          "low": "-15888.72",
+          "high": "-13738.20"
+        },
+        "expectancy": {
+          "observed": "-0.004459601838256910920262814535884626",
+          "low": "-0.004774590052524807931789355583543351",
+          "high": "-0.004137682753250784656716896296390344"
+        },
+        "profit_factor": {
+          "observed": "0.1116786007276091788299406802564550",
+          "low": "0.08868212954583082018157874876926254",
+          "high": "0.1367317678526247304184387763707996"
+        },
+        "max_drawdown": {
+          "observed": "0.2969793595467269847039551621527109",
+          "low": "0.2964778",
+          "high": "0.2972336954371877608444357249342607"
+        },
+        "probability_net_positive": "0",
+        "probability_of_ruin": "1"
+      },
+      "deflated_sharpe": {
+        "observations": 679,
+        "trial_count": 168,
+        "daily_sharpe": "-0.3506388046468949258102566402847409",
+        "annualised_sharpe": "-5.566218462627858656919947258724125",
+        "expected_max_sharpe": "0.1638166104565737259736635803847059",
+        "probabilistic_sharpe": "0E-12",
+        "deflated_sharpe": "0E-12",
+        "reason": null
+      },
+      "concentration": {
+        "top_instrument": null,
+        "top_instrument_share": null,
+        "top_month": null,
+        "top_month_share": null,
+        "top_trades": 5,
+        "top_trades_share": null
+      },
+      "cost_scenarios": [
+        {
+          "name": "no_slippage",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "-5",
+          "net_pnl": "-11443.558110"
+        },
+        {
+          "name": "benchmark",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-14823.89"
+        },
+        {
+          "name": "slippage_plus5",
+          "fee_multiplier": "1",
+          "extra_slippage_bps": "5",
+          "net_pnl": "-18204.221890"
+        },
+        {
+          "name": "fees_x1_5",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-20028.705"
+        },
+        {
+          "name": "fees_x2",
+          "fee_multiplier": "2",
+          "extra_slippage_bps": "0",
+          "net_pnl": "-25233.52"
+        },
+        {
+          "name": "adverse",
+          "fee_multiplier": "1.5",
+          "extra_slippage_bps": "10",
+          "net_pnl": "-26789.36878"
+        }
+      ],
+      "perturbation": {
+        "profitable_share": "0",
+        "runs": [
+          {
+            "window": 0,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-602.52"
+          },
+          {
+            "window": 0,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-674.59"
+          },
+          {
+            "window": 1,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-540.06"
+          },
+          {
+            "window": 1,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-566.72"
+          },
+          {
+            "window": 2,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-702.08"
+          },
+          {
+            "window": 2,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-654.49"
+          },
+          {
+            "window": 3,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-625.18"
+          },
+          {
+            "window": 3,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-652.92"
+          },
+          {
+            "window": 4,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-614.39"
+          },
+          {
+            "window": 4,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-636.64"
+          },
+          {
+            "window": 5,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-700.85"
+          },
+          {
+            "window": 5,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-657.44"
+          },
+          {
+            "window": 6,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-574.89"
+          },
+          {
+            "window": 6,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-665.08"
+          },
+          {
+            "window": 7,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-583.33"
+          },
+          {
+            "window": 7,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-568.77"
+          },
+          {
+            "window": 8,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-544.79"
+          },
+          {
+            "window": 8,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-731.87"
+          },
+          {
+            "window": 9,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-609.33"
+          },
+          {
+            "window": 9,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-678.10"
+          },
+          {
+            "window": 10,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-594.89"
+          },
+          {
+            "window": 10,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-592.90"
+          },
+          {
+            "window": 11,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-689.29"
+          },
+          {
+            "window": 11,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-632.50"
+          },
+          {
+            "window": 12,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-642.65"
+          },
+          {
+            "window": 12,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-620.10"
+          },
+          {
+            "window": 13,
+            "candidate": "r3_t20_s15",
+            "net_pnl": "-619.44"
+          },
+          {
+            "window": 14,
+            "candidate": "r3_t20_s15",
+            "net_pnl": "-521.75"
+          },
+          {
+            "window": 15,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-458.96"
+          },
+          {
+            "window": 15,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-616.93"
+          },
+          {
+            "window": 16,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-646.81"
+          },
+          {
+            "window": 16,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-640.78"
+          },
+          {
+            "window": 17,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-638.55"
+          },
+          {
+            "window": 17,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-723.62"
+          },
+          {
+            "window": 18,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-683.55"
+          },
+          {
+            "window": 18,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-619.04"
+          },
+          {
+            "window": 19,
+            "candidate": "r3_t15_s10",
+            "net_pnl": "-592.08"
+          },
+          {
+            "window": 19,
+            "candidate": "r6_t30_s10",
+            "net_pnl": "-627.75"
+          },
+          {
+            "window": 20,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-695.58"
+          },
+          {
+            "window": 20,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-630.90"
+          },
+          {
+            "window": 21,
+            "candidate": "r3_t30_s10",
+            "net_pnl": "-672.99"
+          },
+          {
+            "window": 21,
+            "candidate": "r6_t15_s10",
+            "net_pnl": "-669.00"
+          },
+          {
+            "window": 22,
+            "candidate": "r6_t20_s15",
+            "net_pnl": "-663.45"
+          },
+          {
+            "window": 23,
+            "candidate": "r3_t20_s15",
+            "net_pnl": "-554.22"
+          }
+        ]
+      },
+      "baseline_net_pnl": "-16219.40",
+      "direction": {
+        "long": {
+          "trades": 388,
+          "net_pnl": "-7656.88"
+        },
+        "short": {
+          "trades": 393,
+          "net_pnl": "-7167.01"
+        }
+      }
+    }
+  }
+}

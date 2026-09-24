@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "experiment_id": "EXP-20260920-orb-v1-first-curation-2389caa8",
+  "family": "strategy",
+  "slug": "orb-v1-first-curation",
+  "outcome": "rejected",
+  "declaration": {
+    "predeclared": false,
+    "hypothesis": "backfilled from docs/strategies/orb_v1.json: orb_v1 curated walk-forward",
+    "economic_rationale": "backfilled: not pre-declared",
+    "falsification": "backfilled: not recorded",
+    "parameter_grid": {
+      "candidate": [
+        "r3_t15_s10",
+        "r3_t30_s10",
+        "r6_t15_s10",
+        "r6_t30_s10",
+        "r6_t20_s15",
+        "r3_t20_s15"
+      ]
+    },
+    "feature_versions": {},
+    "declared_at": "2026-09-20T21:06:13+05:30"
+  },
+  "versions": {
+    "behaviour_hash": null,
+    "candidate_behaviour_hashes": {},
+    "dataset": null,
+    "cost_model": null,
+    "code_revision": null
+  },
+  "periods": {
+    "train": null,
+    "validation": {
+      "first": "2026-01-30",
+      "last": "2026-08-28"
+    },
+    "holdout": null
+  },
+  "metrics": {
+    "gross_pnl": "-1595.50",
+    "net_pnl": "-3769.43",
+    "expectancy": null,
+    "profit_factor": "0.2166539206477194324142345322903765",
+    "max_drawdown": "0.01217325185427994614677205835407810",
+    "sharpe": null,
+    "deflated_sharpe": null,
+    "pbo": null,
+    "trade_count": 40,
+    "win_rate": "0.325",
+    "costs": null,
+    "by_regime": {},
+    "by_window": [
+      {
+        "index": 0,
+        "first": "2026-01-30",
+        "last": "2026-03-13",
+        "net_pnl": "-1021.76"
+      },
+      {
+        "index": 1,
+        "first": "2026-03-13",
+        "last": "2026-04-24",
+        "net_pnl": "-653.98"
+      },
+      {
+        "index": 2,
+        "first": "2026-04-24",
+        "last": "2026-06-05",
+        "net_pnl": "-697.91"
+      },
+      {
+        "index": 3,
+        "first": "2026-06-05",
+        "last": "2026-07-17",
+        "net_pnl": "-823.37"
+      },
+      {
+        "index": 4,
+        "first": "2026-07-17",
+        "last": "2026-08-28",
+        "net_pnl": "-572.41"
+      }
+    ]
+  },
+  "reasons": [
+    {
+      "code": null,
+      "name": "net profit is positive",
+      "outcome": "fail",
+      "detail": "-3769.43 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "enough trades to mean something",
+      "outcome": "fail",
+      "detail": "40 (needs >= 150)"
+    },
+    {
+      "code": null,
+      "name": "profit factor",
+      "outcome": "fail",
+      "detail": "0.217 (needs >= 1.2)"
+    },
+    {
+      "code": null,
+      "name": "profitable in most out-of-sample windows",
+      "outcome": "fail",
+      "detail": "0 of 5 (needs >= 60% of windows)"
+    },
+    {
+      "code": null,
+      "name": "no window's drawdown is too deep",
+      "outcome": "pass",
+      "detail": "1.2% (needs <= 10%)"
+    },
+    {
+      "code": null,
+      "name": "profitable across instruments, not a few",
+      "outcome": "fail",
+      "detail": "4 of 19 (needs >= 50% of instruments)"
+    },
+    {
+      "code": null,
+      "name": "still profitable without its best window",
+      "outcome": "fail",
+      "detail": "-3197.02 (needs > 0)"
+    },
+    {
+      "code": null,
+      "name": "still profitable if charges were twice as high",
+      "outcome": "fail",
+      "detail": "-5943.36 (needs > 0)"
+    }
+  ],
+  "primary_reason_codes": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "notes": [
+    "BACKFILLED_NOT_PREDECLARED",
+    "backfilled from docs/strategies/orb_v1.json, first committed 2026-09-20: the run predates experiment reports, so what it did not record is n/a"
+  ],
+  "supporting": {
+    "source": "docs/strategies/orb_v1.json"
+  }
+}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 from emporos.backtest.robustness.benchmark import BenchmarkConfig
@@ -33,6 +34,13 @@ class GitRepository:
         tracked = self._git("ls-files", "--error-unmatch", "--", str(path))
         pending = self._git("status", "--porcelain", "--", str(path))
         return tracked is not None and pending == ""
+
+    def first_commit_time(self, path: Path) -> datetime | None:
+        """When the file was first committed (its oldest commit), or None if it never was."""
+        found = self._git("log", "--diff-filter=A", "--format=%cI", "--", str(path))
+        if not found:
+            return None
+        return datetime.fromisoformat(found.splitlines()[-1])
 
     def _git(self, *args: str) -> str | None:
         try:
