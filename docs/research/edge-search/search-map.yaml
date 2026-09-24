@@ -61,7 +61,19 @@ cells:
     lesson: "16 arms on Discovery: continuation is gross-negative, fade is gross +0.07..0.10% at 1-2% gaps (a third of the 0.324% benchmark cost) and does not grow with gap size; 6 arms INFEASIBLE and 10 SCREEN_REJECT, none passes (advisory scan)"
   - {id: L3-idio-gap-continuation,      lane: L3, hypothesis: idio-gap-continuation,      status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
   - {id: L3-idio-gap-fade,              lane: L3, hypothesis: idio-gap-fade,              status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
-  - {id: L3-orb-high-rvol-wide-range,   lane: L3, hypothesis: orb-high-rvol-wide-range,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
+  - id: L3-orb-high-rvol-wide-range
+    lane: L3
+    hypothesis: l3-orb-high-rvol-wide-range
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT]
+    experiments: [EXP-20260924-l3-orb-high-rvol-wide-range-16e11e3e]
+    lesson: "12 arms on Discovery, all INFEASIBLE (median |move| 0.4-0.8% vs 1.27% bar): gross return rises monotonically with the opening-volume multiple (0.07% at 1.5x to 0.20% at 3x, hold-to-close) but stays under the 0.324% benchmark cost, net -0.13..-0.30%; the time stop at 12:30 halves gross; the width floor adds nothing (advisory scan)"
+  - id: L3-orb-extreme-rvol
+    lane: L3
+    hypothesis: orb-extreme-rvol
+    parent: L3-orb-high-rvol-wide-range
+    status: TODO
+    requires: [F2, F2B, F3, F3B, F4, VAULT]
   - {id: L3-first-hour-shock-reversal,  lane: L3, hypothesis: first-hour-shock-reversal,  status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L4-nr7-inside-day-breakout,    lane: L4, hypothesis: nr7-inside-day-breakout,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - id: L4-gap-fade-expected-range

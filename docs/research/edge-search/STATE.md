@@ -5,15 +5,32 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 
 | Field | Value |
 |---|---|
-| Iteration | 9 (2026-09-24) |
-| Last completed | **L3-raw-gap-hold-to-close: SCREEN_REJECT** (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | Next P1 cells with no D-dependency: **L3-orb-high-rvol-wide-range**, L3-first-hour-shock-reversal, then L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter and the child L4-gap-fade-expected-range. D2 is done, so the D2 cells are open too: L3-idio-gap-continuation, L3-idio-gap-fade (the idiosyncratic gap is the stock gap minus the NIFTY 50 gap, which the raw-gap result makes the natural follow-up), L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
-| Global N | **14,044** on 2026-09-24 (14,028 plus the 16 arms of L3-raw-gap-hold-to-close) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
+| Iteration | 10 (2026-09-24) |
+| Last completed | **L3-orb-high-rvol-wide-range: SCREEN_REJECT** (EM-202, 12 arms, all INFEASIBLE); L3-raw-gap-hold-to-close: SCREEN_REJECT (EM-201, 16 arms); D2 index and VIX series fetched, verified and cached (EM-200); VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
+| Next | **L3-first-hour-shock-reversal**, then L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter and the children L4-gap-fade-expected-range and L3-orb-extreme-rvol (volume multiples 4x and up, the one monotone trend the ORB screen showed). D2 cells are open: L3-idio-gap-continuation, L3-idio-gap-fade, L4-india-vix-regime, L7-nifty-leads-constituents. Foundations still open: D5 (unlocks 8), D3 (5), D1 (3), D7. Each cell follows §7.3: Jira, declaration committed first, S1, S2 |
+| Global N | **14,056** on 2026-09-24 (14,044 plus the 12 arms of L3-orb-high-rvol-wide-range) (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
 | Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
-| Cells | 42 TODO, 0 terminal; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
+| Cells | 42 TODO, 2 terminal (both SCREEN_REJECT); foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 10 (2026-09-24): L3-orb-high-rvol-wide-range (EM-202)
+Declared and committed first (`config/experiments/l3-orb-high-rvol-wide-range.yaml`, 863e627): opening
+range = first 6 bars; breakout = first close 5 bps beyond it; taken only if the range's volume is at
+least `rvol_min` x the mean of the previous 20 sessions' (10 needed) and the range is at least
+`or_width_min_bps` wide; no stop or target; exit at the 15:15 square-off or a 12:30 time stop. 12 arms
+(rvol 1.5/2/3 x width 50/100 x exit close/1230), Rs 25,000, Discovery only. Scan `scans/orb_rvol.py`
+(rules pinned in 17 tests in `test_orb_rvol.py`), recipe added to `screen_commands.CELLS`.
+
+**Result: every arm INFEASIBLE** (median |move| 0.38-0.80%, bar about 1.27%), so also failing S2 on
+its face: net -0.13..-0.30%, net t -2.7..-22.6. The one structure worth a child: hold-to-close gross
+rises monotonically with the volume multiple (0.068, 0.103, 0.185% at width 50; 0.073, 0.113, 0.200% at
+100), still under the 0.324% cost, and the 12:30 time stop roughly halves it (the move accrues late,
+so holding longer, not shorter). The width floor adds little. Child per §7.4 (gross positive, net
+negative: restrict to a stricter filter): L3-orb-extreme-rvol, declared next time. The trade count at
+3x is about 1,400, so 4x-7x still has hundreds. The scan is advisory (no engine strategy to prove parity
+against). The screen takes about 9 minutes for 12 arms.
 
 ## Iteration 9 (2026-09-24): L3-raw-gap-hold-to-close (EM-201) and D2 closed
 **The cell (first lane run).** Declared and committed first (`config/experiments/l3-raw-gap-hold-to-close.yaml`,
