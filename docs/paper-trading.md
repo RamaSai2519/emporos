@@ -64,6 +64,10 @@ The verdict is recorded by the curation run itself (`emporos backtest curate`, o
 made before verdicts were recorded). Nobody types one in. `emporos backtest verdicts list` shows
 every strategy's standing from the command line.
 
+**A strategy graduated to `paper` (EM-189, `emporos graduation promote --to paper`) starts without
+naming its standing**; anything else still needs it, as below. Graduation is per configuration, so
+an edit puts it back to `research`.
+
 **Starting a strategy that is not validated is allowed in paper, but never by accident.** The
 dashboard asks you to type its standing (`rejected`, `inconclusive`, `stale`, `none`), and the worker
 checks that word itself: the same start sent by any other client without it is refused, with the
@@ -78,12 +82,17 @@ a separate action (Close position, or Square off all).
 
 - Fills are simulated against live quotes with the platform's dated charges. They are not what a
   real broker would have given you.
-- Risk uses `config/risk.yaml` (25,000 per instrument, 3 open positions and so on). A backtest
+- Risk uses `config/risk.yaml` (25,000 per instrument, 3 open positions, 50,000 deployed and a
+  1,000 daily loss cap: aligned to the ₹50,000 capital by EM-189, values PROPOSED pending operator
+  sign-off; the stricter live tier is in [live-trading.md](live-trading.md)). A backtest
   verdict is reached under limits and position sizes **scaled to the benchmark capital** (₹50,000,
   10% per position), so a strategy sized larger in its config will trade larger here than it was
   judged at. The verdict says so in its notes.
 - The worker refuses UPDATE_STRATEGY_CONFIG (there is no config validator wired), and refuses the
   backfill and backtest commands: backtests are run from the command line only.
+- The anomaly tripwire (EM-189) runs in paper exactly as in live: a feed down for a minute, a stuck
+  UNKNOWN order, a rejection burst and so on halt new orders (exits still work) until
+  `emporos resume`. It is exercised here first on purpose.
 - The kill switch works independently of the dashboard: `emporos halt`, the file sentinel
   (`~/.emporos/HALT`, or `KILL_SWITCH_FILE`), and the Mongo flag.
 

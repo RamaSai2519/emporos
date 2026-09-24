@@ -36,6 +36,9 @@ The conditions, each its own small class in `session/launch_gate.py`, all of whi
 | a verdict was recorded, and it is validated | `emporos backtest curate` concluded `validated` **for exactly this config** | the curation, not you |
 | the verdict is not stale | the config's behaviour has not changed since it was judged | you, by not editing it (editing `enabled` is fine) |
 | the kill switch is clear | not set, and readable | you |
+| graduated to `live_conservative` (EM-189) | the graduation ledger holds this **configuration** at `live_conservative` | `emporos graduation promote`, on evidence |
+| a human acknowledged it (EM-189) | a `LiveAcknowledgement` for this configuration exists | you, typing a phrase at a terminal |
+| the right risk tier (EM-189) | the worker loaded `config/risk.live_conservative.yaml` | the live worker does, always |
 
 There is no acknowledgement that gets past live: the typed-standing escape that paper allows does
 not exist here. A live start with any condition failing is refused, with all the failing reasons
@@ -44,6 +47,90 @@ together.
 Independently of this launch check, the risk engine's `TradingModeGuard` blocks every order in live
 mode while `LIVE_TRADING_ENABLED` is not true, so the switch is checked twice: before a worker
 starts, and on every order.
+
+## Graduation: RESEARCH -> PAPER -> LIVE_CONSERVATIVE (EM-189)
+
+A strategy configuration does not go live because a flag says so. It is **promoted**, one stage at a
+time, on evidence, and every step is appended to the `graduation_events` collection (monotonic `seq`
+per strategy, unique index, never edited): who, when, from where to where, and the evidence cited.
+The stage is bound to the config's behaviour hash, so editing the config puts it back to `research`
+(retirement is the strategy's and survives edits). `production` exists in the vocabulary and is
+**not promotable** in this release.
+
+```
+emporos graduation status [strategy]          # stage + which requirements of the next stage are met
+emporos graduation promote <strategy> --to paper|live_conservative [--experiment EXP-...]
+emporos graduation acknowledge <strategy>     # CLI only, needs a terminal
+emporos graduation demote <strategy> --to <stage> --reason "..."     # always allowed, always recorded
+emporos graduation history <strategy>
+```
+
+Requirements (one class each in `graduation/requirements.py`; every one **fails closed**, and a
+promotion prints every unmet one together):
+
+| stage | requirement | evidence |
+|---|---|---|
+| PAPER | `ValidatedVerdictForConfig` | latest verdict is VALIDATED for this behaviour hash (all robustness gates) |
+| PAPER | `HoldoutEvaluated` | the cited EM-188 report reserved a holdout and has no holdout reason outstanding |
+| PAPER | `DataIntegrityClean` | the report recorded its data provenance, assumed no un-allowlisted instrument, and ran under the quarantine in force now |
+| LIVE | all of PAPER's, plus | |
+| LIVE | `PaperReconciliationPassed` | newest cumulative EM-185 parity report is VALIDATED with at least `min_sessions` paper sessions |
+| LIVE | `BrokerVerificationPassed` | every critical broker check is a PASS, not older than `broker_verification_max_age_days` (`config/graduation.yaml`) |
+| LIVE | `LiveAcknowledged` | the typed acknowledgement exists for this configuration |
+| LIVE | `NoOpenAnomalies` | kill switch clear, no UNKNOWN / PENDING_NEW order |
+| LIVE | `JevDependencyAllowed` | only for a Jev-enabled deployment (`--jev-enabled`): the latest `jev_incremental` experiment for the config is ACCEPTED |
+
+**Today every one of these refuses**, which is the correct state: no strategy is validated, no report
+records its data provenance yet (`supporting.data_provenance` is not emitted by any report builder, so
+`DataIntegrityClean` cannot pass), and **broker verification (EM-186) has produced no evidence**: its
+seam (`BrokerVerificationEvidence`, `domain/broker_verification.py`) is bound to
+`UnverifiedBrokerEvidence`, which reports every critical check as `unknown`. Nothing assumes a pass;
+when EM-186 records real checks, only the binding in `cli/graduation_runtime.py` changes. Jev is not
+wired into the live worker, so `--jev-enabled` must be given by whoever enables it for a deployment.
+
+**The acknowledgement is deliberate.** `acknowledge` prints the risk tier, the capital, every limit
+and the experiment and verdict behind the strategy, then requires `<strategy>@<hash8> LIVE` typed
+exactly. It runs only on an interactive terminal, and it exists only on the CLI: the API has one
+read-only route (`GET /strategies/{name}/graduation`) and no write route, consistent with the kill
+switch not depending on the dashboard. Nothing in a script or a test may type it for you.
+
+### The live risk tier (PROPOSED numbers: not yet approved by the operator)
+
+Every order passes the risk engine, so conservative exposure is enforced there, not in a wrapper.
+`config/risk.yaml` is aligned to the ₹50,000 production capital and the live worker loads
+`config/risk.live_conservative.yaml`, which the loader refuses if any cap is looser than
+`risk.yaml`'s. **These values are the EM-189 plan's examples, committed as PROPOSED; the operator has
+to confirm or change them before the first live deployment.**
+
+| limit | `risk.yaml` (was) | `risk.yaml` | `risk.live_conservative.yaml` |
+|---|---|---|---|
+| `account_capital` | n/a | 50000 | 50000 |
+| `max_capital_deployed` | 60000 | **50000** | **10000** (20%) |
+| `max_daily_loss` | 2000 (4%) | **1000** (2%, the benchmark's) | **500** |
+| `max_strategy_loss` | 1000 | 1000 | **300** |
+| `max_position_value` | 25000 | 25000 | **5000** |
+| `max_open_positions` | 3 | 3 | **2** |
+| `max_risk_per_trade` | n/a | unset | **150** |
+
+`max_risk_per_trade` is new: `MaxRiskPerTradeGuard` blocks an entry whose
+`|limit - protective stop| x quantity` exceeds it, and blocks an entry with **no** protective stop
+(unknown risk is unauditable). `Signal.protective_stop` is additive; every built-in strategy states
+one (its own stop where it has one, else `risk.stop_loss_pct`). A manual dashboard entry carries no
+stop, so under the live tier a manual entry is refused: exits and square-off are unaffected.
+
+### Automatic shutdown on anomalies (the tripwire)
+
+`session/tripwire.py` halts trading through the same kill switch on the first of: the market-data
+feed down for `feed_drop_halt_seconds` inside the session; more than `stale_instrument_fraction` of
+watched instruments stale; an order UNKNOWN for `unknown_order_seconds`; `rejection_burst_count`
+broker rejections inside `rejection_burst_seconds`; the order-update feed down for
+`order_feed_down_seconds` with orders open (thresholds under `tripwire:` in
+`config/settings.base.yaml`). It runs in **paper and live** workers alike, alerts once, and never
+auto-resumes: `emporos resume` clears it. **A tripwire halt blocks new orders but not exits**: the
+kill switch records who set it, and `KillSwitchGuard` lets an EXIT through only when every set
+switch was set by the tripwire, so square-off still flattens the book. An operator's own
+`emporos halt` still blocks everything. (Reconciliation mismatch already halts through the
+reconciler and is not duplicated.)
 
 ## The live composition (built, EM-142) — proved on the emulator, never on a real endpoint
 
@@ -141,8 +228,33 @@ done.
    commit it, confirm `emporos backtest verdicts list` still says `validated`, then
    `LIVE_TRADING_ENABLED=true`, then `emporos worker run-live -s <strategy>` must report nothing
    missing before `emporos worker live -s <strategy>` is run for real.
-5. **Size the first day small.** Judge nothing from one session. Keep `emporos halt` and the SSM
+5. **Graduate it** (`emporos graduation status`, `promote --to paper`, then, once paper reconciliation
+   and broker verification exist, `acknowledge` and `promote --to live_conservative`). Confirm the
+   PROPOSED live risk numbers above first.
+6. **Size the first day small.** Judge nothing from one session. Keep `emporos halt` and the SSM
    instance stop in reach: the kill switch does not depend on the dashboard.
+
+## Compliance checklist (verify against the CURRENT rules before the first live order)
+
+Design-level: this repository does not assume the rules, it lists what must be confirmed with the
+current Angel One documentation and the current NSE/SEBI retail-algo circulars. Each item is a
+critical check in `domain/broker_verification.py` (`CRITICAL_BROKER_CHECKS`), so it is a
+machine-checked prerequisite rather than a promise in this document: it blocks
+`promote --to live_conservative` until EM-186 records a recent PASS for it.
+
+- [ ] **Order rate** stays below the exchange's threshold for unregistered algos (our budget is
+  `max_orders_per_second: 2` in `config/risk.yaml`) - `order_rate_within_exchange_threshold`.
+- [ ] **Static IP / API session constraints** confirmed, cross-referenced with EM-186 - `static_ip_registered`,
+  `login_and_session`.
+- [ ] **Algo-ID or order tagging** requirement confirmed with the broker; our `ordertag`
+  idempotency tag must stay compatible - `algo_tagging_requirement_confirmed`, `ordertag_round_trip`.
+- [ ] **Order lifecycle proven** on a real (tiny) limit order and the order-update socket -
+  `limit_order_round_trip`, `order_update_socket`.
+- [x] **Limit orders only**: `MARKET` and `IOC` are not in the type system.
+- [x] **Kill switch reachable off-dashboard**: CLI, Mongo flag, file sentinel, SSM instance stop.
+- [ ] **Audit retention**: `order_events` (monotonic seq), `risk_events`, `graduation_events` and
+  `live_acknowledgements` are append-only and have no TTL; confirm the retention period the rules
+  require is met by Atlas backups.
 
 Nothing here enables live trading, and nothing in this repository has placed, or can place, a real
 order — only ever the SmartAPI emulator.
