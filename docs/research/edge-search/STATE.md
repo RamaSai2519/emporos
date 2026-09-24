@@ -7,13 +7,32 @@ Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 |---|---|
 | Iteration | 7 (2026-09-24) |
 | Last completed | VAULT seal: `vault.yaml`, `VaultGate`, reads refused (EM-199); F4 size-aware evaluation: declared position value everywhere (EM-198); F3B signal-level parity (EM-196); F3 core (EM-195); F2B (EM-194); F2 (EM-193); F1 (EM-192) |
-| Next | **VAULT** seal (§4.3, EM-199): `vault.yaml` and a `VaultGate` in `emporos.backtest.integrity` style with a look-ahead-style test. Then lanes open, except those waiting on D-frontiers; D7 quote recording and D1 in the background |
+| Next | **D2** index and INDIA VIX series (needs a ticket): it unlocks 6 cells (L3 idio gap x2, L4 VIX, L5, L7 x2), the cheapest frontier via `emporos history fetch-bars`. Then D5 (event calendar, unlocks 8 incl. all of L2), D3 (sector taxonomy, 5), D1 (wider universe, 3). Cells with no D-dependency are open now (L3-raw-gap-hold-to-close, L3-orb-high-rvol-wide-range, L3-first-hour-shock-reversal, L4-nr7-inside-day-breakout, L4-atr-percentile-regime, L4-expected-range-filter) and interleave per §7.2. D7 quote recording starts at the first market session that allows it |
 | Global N | **14,028** on 2026-09-24 (`emporos backtest trials program`): 717 strategy trials, 23 registry rows, 13,288 documented study trials (feature 11,020, cross-sectional 252, lead-lag 2,016) from `historical-trials.yaml`. Still a **lower bound**: only runs a report states are counted |
-| Vault opens used | 0 of 3 (vault not yet sealed) |
-| Cells | 42 TODO, 0 terminal; no lane may run before VAULT is DONE |
+| Vault opens used | 0 of 3. Sealed 2026-09-24: 2026-03-19..2026-09-18, every instrument (time-only until D1), seal hash `b4b21b9e8c03` |
+| Cells | 42 TODO, 0 terminal; foundations F1-F4, VAULT and D8 are DONE, so cells without a D-dependency may run |
 | Blocked on operator | none. D8 done (EM-197): the operator reconciled the fee schedule on 2026-09-24 |
 | Paper (S6) running | no |
 | Last commit | see `git log -1` (EM-194) |
+
+## Iteration 7 (2026-09-24): the vault seal (EM-199)
+`emporos.backtest.vault`: `VaultSeal` (days, instruments, at most 3 opens), `UnsealRecord` (open
+number, the seal it was made against, the candidate hash, why, the range and instruments it admits),
+`VaultGate` and `VaultedCandleReader`. The reader refuses any read that touches the sealed days,
+before the source is asked, unless a committed unseal record for the named candidate admits the
+sealed part of the read (warm-up bars from before the vault need no admitting). The gate will not
+build with a fourth record, a gap or repeat in the numbering, a record against another seal hash, or
+one reaching outside the vault: the budget cannot be exceeded by adding a file. State is
+`docs/research/edge-search/vault.yaml` plus `vault-opens/open-<n>.yaml`; an open counts only if git
+tracks it with no pending change, and a missing seal fails closed. The shipped seal is pinned in a
+test, hash included. Wired into `open_backtest_runtime` (so backtest, curate, Jev and parity read
+through it) and into the curation worker processes (`CurationRecipe.vault`). `emporos research vault
+status` prints the seal and the opens left. Curate's `--to` past 2026-03-18 is now refused: the
+confirmation split ends there.
+
+The S5 command that names a candidate (`open_backtest_runtime` has no candidate argument yet) is part
+of the S5 stage, to build when the first candidate reaches it. Vault opens are never made by a
+command: an open is a committed record.
 
 ## Iteration 6 (2026-09-24): F4 size-aware evaluation (EM-198)
 `emporos.domain.sizing`: `DeclaredSize` (rupees per position, and whether it was declared or the risk
@@ -67,6 +86,10 @@ A future re-run of a study is new looks and lands in its own ledger, counted sep
 Effect: N 740 -> 14,028, so the DSR hurdle at S4/S5 is now priced at the program's real breadth.
 
 ## Known weaknesses carried forward
+- The seal covers the analysis seams (backtest, curate, Jev, parity and the curation workers). Data
+  plumbing that produces no result still reads bars: `cache warm` and prefetching, `quality_commands`,
+  and history tooling. They are not a route to a verdict, but the seal is a structural guard and not
+  a proof against a determined caller: the operator's git history is the audit.
 - Sizing gaps left for their lanes: `backtest/jev_sweep.py` still judges Jev arms at the benchmark
   share (L16 must thread `DeclaredSize`); `BenchmarkScaler` keeps `max_capital_deployed` at the
   benchmark capital, so L1 sizes above Rs 50,000 also need a leverage-aware capital before they run;
