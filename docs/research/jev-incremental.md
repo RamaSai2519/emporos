@@ -7,7 +7,8 @@ asked to *be* the edge.
 
 ## The expected outcome today: "Jev is not eligible to lift anything"
 
-No strategy currently has a VALIDATED baseline: every verdict in `docs/strategies/` is REJECTED.
+No strategy currently has a VALIDATED baseline: every verdict in `docs/strategies/` is REJECTED, and
+so are all twelve latest recorded verdicts in the `strategy_verdicts` collection (read 2026-09-24).
 The graduation rule is that a strategy is not validated merely because Jev improves a weak or
 negative baseline, so any run today ends **INCONCLUSIVE (`jev_baseline_not_validated`)**, or
 REJECTED if the Jev arm is itself rejected. What this ticket ships is therefore the harness and its
@@ -43,6 +44,21 @@ Sharpe, Deflated Sharpe, maximum drawdown, turnover and charges. Jev's cost in r
 treatment's days. The paired interval resamples **days** (the arms share their days) with the seeded
 resampler of the trade-level Monte Carlo. Per-regime deltas are reported so Jev cannot "help" only
 by trading one regime.
+
+## Jev as a meta-feature (research)
+
+`emporos.research.jev_feature.JevConfidenceFeature` exposes the recorded confidence as a `Feature`
+for the existing `FeatureStudy` / `AlphaDiscoveryEngine` (forward returns, rank IC, decile spread,
+cost-adjusted expectancy, by regime), so Jev can be tested as a *ranking variable* without any
+portfolio at all. It is built from the journal (`JevConfidenceIndex.from_records`) and never holds a
+provider, so a study cannot call the model or spend money. It is causal: a bar's value is the
+recorded decision whose `as_of` falls after the bar's open and at or before its close, and a bar with
+none is undefined, never filled from an older decision. The value is `+confidence` for a confirm and
+`-confidence` for a reject; it is direction-agnostic (the journal does not carry the side), so
+evaluate long and short candidates separately. It is registered under `jev_confidence@1` with the
+model and prompt hash as parameters, so another prompt is another feature. Running a study still
+needs a pre-declared `HypothesisDeclaration` with a holdout in the feature ledger, as for any feature;
+no such study has been run.
 
 ## Running it
 
