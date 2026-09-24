@@ -80,3 +80,25 @@ def test_a_stop_loss_signal_needs_a_trigger_and_a_plain_limit_refuses_one() -> N
 def test_invalid_signals_are_refused(overrides: dict[str, object], message: str) -> None:
     with pytest.raises(ValueError, match=message):
         _signal(**overrides)
+
+
+def test_an_entry_may_carry_a_protective_stop_on_the_losing_side() -> None:
+    assert _signal(protective_stop=Money.of("98")).protective_stop == Money.of("98")
+    short = _signal(side=OrderSide.SELL, protective_stop=Money.of("102"))
+    assert short.protective_stop == Money.of("102")
+
+
+@pytest.mark.parametrize("stop", ["100", "101", "0", "-1"])
+def test_a_long_stop_at_or_above_the_limit_or_non_positive_is_refused(stop: str) -> None:
+    with pytest.raises(ValueError, match="protective stop"):
+        _signal(protective_stop=Money.of(stop))
+
+
+def test_a_short_stop_at_or_below_the_limit_is_refused() -> None:
+    with pytest.raises(ValueError, match="protective stop"):
+        _signal(side=OrderSide.SELL, protective_stop=Money.of("100"))
+
+
+def test_an_exit_cannot_carry_a_protective_stop() -> None:
+    with pytest.raises(ValueError, match="only an entry"):
+        _signal(kind=SignalKind.EXIT, side=OrderSide.SELL, protective_stop=Money.of("102"))

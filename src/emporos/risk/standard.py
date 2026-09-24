@@ -20,6 +20,7 @@ from emporos.risk.rules.exposure import (
     MaxOpenPositionsGuard,
     MaxOrderQuantityGuard,
     MaxPositionValueGuard,
+    MaxRiskPerTradeGuard,
     MaxStrategyLossGuard,
     OrderRateGuard,
     PriceSanityGuard,
@@ -41,6 +42,11 @@ class StandardRuleSet:
 
     def rules(self) -> list[RiskRule]:
         limits = self._limits
+        per_trade = (
+            [MaxRiskPerTradeGuard(limits.max_risk_per_trade)]
+            if limits.max_risk_per_trade is not None
+            else []
+        )
         return [
             TradingModeGuard(),
             KillSwitchGuard(),
@@ -52,6 +58,7 @@ class StandardRuleSet:
             MaxDailyLossGuard(limits.max_daily_loss),
             MaxStrategyLossGuard(limits.max_strategy_loss),
             MaxPositionValueGuard(limits.max_position_value),
+            *per_trade,
             MaxOpenPositionsGuard(limits.max_open_positions),
             MaxCapitalDeployedGuard(limits.max_capital_deployed),
             MaxOrderQuantityGuard(limits.max_order_quantity),

@@ -125,7 +125,7 @@ class DonchianV1(IntradayStrategy):
         else:
             return
         if self._enter(
-            bar, side, f"closed beyond the {self._p.lookback}-bar channel {low}..{high}"
+            bar, side, f"closed beyond the {self._p.lookback}-bar channel {low}..{high}", stop=stop
         ):
             track.entries += 1
             track.stop, track.best = stop, close

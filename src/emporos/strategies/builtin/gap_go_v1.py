@@ -95,5 +95,7 @@ class GapGoV1(IntradayStrategy):
             return
         if stop == close:
             return
-        if self._enter(bar, side, f"gap {gap:.0f} bps held its opening range and broke out"):
+        if self._enter(
+            bar, side, f"gap {gap:.0f} bps held its opening range and broke out", stop=stop
+        ):
             track.traded, track.stop, track.target = True, stop, target

@@ -32,6 +32,7 @@ from emporos.strategies.config import ResolvedStrategyConfig
 from emporos.strategies.context import StrategyContext
 from emporos.strategies.indicators import arithmetic as ar
 
+_HUNDRED = Decimal(100)
 WARMUP_BARS = 400  # enough for the slowest indicator any built-in uses, across several days
 
 
@@ -125,20 +126,38 @@ class IntradayStrategy(Strategy):
         affordable = ar.div(self._config.risk.max_position_value, bar.close.amount)
         return int(affordable.to_integral_value(ROUND_FLOOR))
 
-    def _enter(self, bar: Candle, side: OrderSide, why: str) -> bool:
-        """Queue an entry sized to `risk.max_position_value`; False if it buys under one share."""
+    def _enter(self, bar: Candle, side: OrderSide, why: str, stop: Decimal | None = None) -> bool:
+        """Queue an entry sized to `risk.max_position_value`; False if it buys under one share.
+
+        `stop` is the strategy's own protective stop. One on the wrong side of the entry (or none)
+        is replaced by the configured `risk.stop_loss_pct`, so an entry always states its risk."""
         quantity = self._quantity(bar)
         if quantity < 1:
             return False
-        self._emit(bar, SignalKind.ENTRY, side, quantity, why)
+        protective = self._protective_stop(bar, side, stop)
+        self._emit(bar, SignalKind.ENTRY, side, quantity, why, protective)
         return True
+
+    def _protective_stop(self, bar: Candle, side: OrderSide, stop: Decimal | None) -> Decimal:
+        close = bar.close.amount
+        buying = side is OrderSide.BUY
+        if stop is not None and stop > 0 and (stop < close if buying else stop > close):
+            return stop
+        distance = ar.div(ar.mul(close, self._config.risk.stop_loss_pct), _HUNDRED)
+        return ar.sub(close, distance) if buying else ar.add(close, distance)
 
     def _exit(self, bar: Candle, held: Position, why: str) -> None:
         side = OrderSide.SELL if held.is_long else OrderSide.BUY
         self._emit(bar, SignalKind.EXIT, side, abs(held.net_quantity), why)
 
     def _emit(
-        self, bar: Candle, kind: SignalKind, side: OrderSide, quantity: int, why: str
+        self,
+        bar: Candle,
+        kind: SignalKind,
+        side: OrderSide,
+        quantity: int,
+        why: str,
+        protective_stop: Decimal | None = None,
     ) -> None:
         self._outbox.append(
             Signal(
@@ -151,6 +170,7 @@ class IntradayStrategy(Strategy):
                 limit_price=Money(bar.close.amount),
                 ts=bar.closes_at,
                 reason=why,
+                protective_stop=None if protective_stop is None else Money(protective_stop),
             )
         )
 

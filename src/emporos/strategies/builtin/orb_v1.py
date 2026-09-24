@@ -125,5 +125,5 @@ class OrbV1(IntradayStrategy):
         else:
             return
         why = f"closed {close} beyond the opening range {track.low}..{track.high}"
-        if self._enter(bar, side, why):
+        if self._enter(bar, side, why, stop=stop):
             track.traded, track.stop, track.target = True, stop, target

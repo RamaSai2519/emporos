@@ -128,5 +128,7 @@ class RsiPullbackV1(IntradayStrategy):
             side, stop = OrderSide.SELL, close + distance
         else:
             return
-        if self._enter(bar, side, f"RSI{self._p.rsi_period} {rsi:.0f} against the EMA trend"):
+        if self._enter(
+            bar, side, f"RSI{self._p.rsi_period} {rsi:.0f} against the EMA trend", stop=stop
+        ):
             track.entered_bar, track.stop = track.bar_of_day, stop

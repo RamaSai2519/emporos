@@ -113,6 +113,34 @@ class MaxPositionValueGuard:
         return RuleVerdict.allow()
 
 
+class MaxRiskPerTradeGuard:
+    """Blocks an ENTRY whose worst case, |limit - protective stop| x quantity, exceeds the cap.
+
+    An entry with no protective stop has an unknown worst case, which is unauditable, so it is
+    blocked too. Exits are never measured: they reduce risk."""
+
+    name = "MaxRiskPerTradeGuard"
+
+    def __init__(self, cap: Decimal) -> None:
+        if cap <= 0:
+            raise ValueError("the per-trade risk cap must be positive")
+        self._cap = Money(cap)
+
+    def evaluate(self, signal: Signal, snapshot: RiskSnapshot) -> RuleVerdict:
+        if not is_entry(signal):
+            return RuleVerdict.allow()
+        stop = signal.protective_stop
+        if stop is None:
+            return RuleVerdict.block("an entry with no protective stop has an unknown worst case")
+        risk = Money(abs(signal.limit_price.amount - stop.amount)).times(signal.quantity)
+        if risk > self._cap:
+            return RuleVerdict.block(
+                "the trade's risk to its stop exceeds the per-trade cap",
+                risk=risk.amount, cap=self._cap.amount,
+            )  # fmt: skip
+        return RuleVerdict.allow()
+
+
 class MaxOpenPositionsGuard:
     """Blocks an order that opens one position too many. Adding to a held position is fine."""
 

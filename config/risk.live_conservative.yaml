@@ -10,6 +10,7 @@
 account_capital: "50000"
 max_daily_loss: "500"
 max_strategy_loss: "300"
+max_risk_per_trade: "150"          # |limit - protective stop| x quantity of one entry
 max_position_value: "5000"
 max_open_positions: 2
 max_capital_deployed: "10000"

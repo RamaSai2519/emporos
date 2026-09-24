@@ -98,5 +98,5 @@ class GapFadeV1(IntradayStrategy):
             side is OrderSide.BUY and target <= close
         ):
             return  # already past the old price: nothing left to fade
-        if self._enter(bar, side, f"gap {gap:.0f} bps failed its opening range"):
+        if self._enter(bar, side, f"gap {gap:.0f} bps failed its opening range", stop=stop):
             track.traded, track.stop, track.target = True, stop, target

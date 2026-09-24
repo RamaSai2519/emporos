@@ -160,6 +160,7 @@ class SqueezeBreakoutV1(IntradayStrategy):
             side,
             f"squeeze ({self._p.min_squeeze_bars}+ bars) broke the "
             f"{self._p.breakout_lookback}-bar range {low}..{high}",
+            stop=stop,
         ):
             track.entries += 1
             track.stop, track.target = stop, target

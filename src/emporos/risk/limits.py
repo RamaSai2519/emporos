@@ -26,6 +26,10 @@ class RiskLimits(BaseModel):
     duplicate_window_seconds: PositiveInt
     max_orders_per_second: PositiveInt
     max_orders_per_minute: PositiveInt
+    # Worst-case loss of one entry, |limit - stop| x quantity (EM-189). Optional: unset means the
+    # guard is not registered, so only a tier that names it (live conservative) enforces it.
+    max_risk_per_trade: ExactDecimal | None = Field(default=None, gt=0)
+
     # The account the caps are sized against. Optional so a limits document that does not know its
     # account still loads, but when it is stated every cap is checked against it (EM-189): a cap
     # above the money that exists is not a cap.
@@ -46,6 +50,10 @@ class RiskLimits(BaseModel):
 
     def is_within(self, ceiling: RiskLimits) -> bool:
         """True when no cap here is looser than the same cap in `ceiling` (a stricter tier)."""
+        if ceiling.max_risk_per_trade is not None and (
+            self.max_risk_per_trade is None or self.max_risk_per_trade > ceiling.max_risk_per_trade
+        ):
+            return False
         return (
             self.max_daily_loss <= ceiling.max_daily_loss
             and self.max_strategy_loss <= ceiling.max_strategy_loss

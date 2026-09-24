@@ -186,7 +186,9 @@ class RegimeSelectorV1(IntradayStrategy):
             side, stop, target = OrderSide.SELL, close + stop_distance, close - target_distance
         else:
             return
-        if self._enter(bar, side, f"trending: broke the {self._p.breakout_lookback}-bar range"):
+        if self._enter(
+            bar, side, f"trending: broke the {self._p.breakout_lookback}-bar range", stop=stop
+        ):
             track.entries += 1
             track.stop, track.target = stop, target
 
@@ -205,6 +207,6 @@ class RegimeSelectorV1(IntradayStrategy):
             target = max(vwap, close - target_distance)
         else:
             return
-        if self._enter(bar, side, "ranging: extended from VWAP"):
+        if self._enter(bar, side, "ranging: extended from VWAP", stop=stop):
             track.entries += 1
             track.stop, track.target = stop, target

@@ -121,5 +121,5 @@ class VwapReversionV1(IntradayStrategy):
             side, stop = OrderSide.SELL, close + distance
         else:
             return
-        if self._enter(bar, side, f"{z:.2f} ATRs from VWAP {vwap:.2f}, RSI {rsi:.0f}"):
+        if self._enter(bar, side, f"{z:.2f} ATRs from VWAP {vwap:.2f}, RSI {rsi:.0f}", stop=stop):
             track.entered_bar, track.stop = track.bar_of_day, stop

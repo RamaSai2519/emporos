@@ -154,7 +154,9 @@ class MomentumV1(Strategy):
             f"EMA{self._params.slow_ema} {self._show(track.slow.value)}; "
             f"RSI{self._params.rsi_period} {self._show(rsi)}"
         )
-        self._emit(bar, SignalKind.ENTRY, OrderSide.BUY, quantity, reason)
+        distance = ar.div(ar.mul(bar.close.amount, self._config.risk.stop_loss_pct), Decimal(100))
+        stop = ar.sub(bar.close.amount, distance)
+        self._emit(bar, SignalKind.ENTRY, OrderSide.BUY, quantity, reason, stop)
 
     def _maybe_exit(self, bar: Candle, track: _Track) -> None:
         held = self._require_ctx().positions.position(bar.instrument_id)
@@ -168,7 +170,13 @@ class MomentumV1(Strategy):
         self._emit(bar, SignalKind.EXIT, OrderSide.SELL, held.net_quantity, reason)
 
     def _emit(
-        self, bar: Candle, kind: SignalKind, side: OrderSide, quantity: int, why: str
+        self,
+        bar: Candle,
+        kind: SignalKind,
+        side: OrderSide,
+        quantity: int,
+        why: str,
+        protective_stop: Decimal | None = None,
     ) -> None:
         ctx = self._require_ctx()
         self._outbox.append(
@@ -182,6 +190,7 @@ class MomentumV1(Strategy):
                 limit_price=Money(bar.close.amount),
                 ts=bar.closes_at,
                 reason=why,
+                protective_stop=None if protective_stop is None else Money(protective_stop),
             )
         )
 

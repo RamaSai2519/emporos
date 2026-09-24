@@ -41,6 +41,10 @@ class Signal:
     ts: datetime  # the market event the strategy decided on, never wall-clock time
     reason: str
     trigger_price: Money | None = None
+    # Where the strategy would abandon an ENTRY (EM-189): the risk engine measures the trade's
+    # worst case as |limit - stop| x quantity. Absent means unknown, which a configured per-trade
+    # limit refuses.
+    protective_stop: Money | None = None
 
     def __post_init__(self) -> None:
         if not self.strategy_run_id or not self.instrument_id:
@@ -57,6 +61,21 @@ class Signal:
         if self.limit_price <= Money.zero():
             raise ValueError("signal limit price must be positive")
         self._check_trigger()
+        self._check_protective_stop()
+
+    def _check_protective_stop(self) -> None:
+        stop = self.protective_stop
+        if stop is None:
+            return
+        if self.kind is not SignalKind.ENTRY:
+            raise ValueError("only an entry carries a protective stop")
+        against = (
+            stop >= self.limit_price if self.side is OrderSide.BUY else stop <= self.limit_price
+        )
+        if stop <= Money.zero() or against:
+            raise ValueError(
+                "the protective stop must be positive and on the losing side of the limit"
+            )
 
     def _check_trigger(self) -> None:
         if self.order_type is OrderType.STOPLOSS_LIMIT:

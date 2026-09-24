@@ -99,6 +99,16 @@ class TestOrb:
         assert signal.quantity == 490 and signal.limit_price == Money.of("102")  # 50,000 // 102
         assert "opening range 99..101" in signal.reason
 
+    def test_every_entry_states_its_protective_stop_on_the_losing_side(self) -> None:
+        (long,) = Harness("orb_v1", ORB).feed(
+            [*orb_opening(), bar(DAY1, 4, "100", "102.5", "100", "102")]
+        )
+        (short,) = Harness("orb_v1", ORB).feed(
+            [*orb_opening(), bar(DAY1, 4, "100", "100", "97.5", "98")]
+        )
+        assert long.protective_stop is not None and long.protective_stop < long.limit_price
+        assert short.protective_stop is not None and short.protective_stop > short.limit_price
+
     def test_a_close_below_the_range_is_a_short_entry_unless_shorting_is_off(self) -> None:
         breakdown = bar(DAY1, 4, "100", "100", "97.5", "98")
         (short,) = Harness("orb_v1", ORB).feed([*orb_opening(), breakdown])

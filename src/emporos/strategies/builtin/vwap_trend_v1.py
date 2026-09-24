@@ -166,6 +166,8 @@ class VwapTrendV1(IntradayStrategy):
         else:
             return
         mode = "pullback" if self._p.pullback else "continuation"
-        if self._enter(bar, side, f"{mode} with VWAP {vwap:.2f} and EMAs {fast:.2f}/{slow:.2f}"):
+        if self._enter(
+            bar, side, f"{mode} with VWAP {vwap:.2f} and EMAs {fast:.2f}/{slow:.2f}", stop=stop
+        ):
             track.entries += 1
             track.stop, track.target = stop, target

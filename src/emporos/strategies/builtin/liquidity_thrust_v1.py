@@ -150,6 +150,7 @@ class LiquidityThrustV1(IntradayStrategy):
             f"volume {bar.volume} >= {self._p.vol_surge_mult}x the "
             f"{self._p.vol_window}-bar average ({prior_avg_volume:.0f}), close at "
             f"{close_location:.0%} of the bar's range",
+            stop=stop,
         ):
             track.entries += 1
             track.stop, track.target = stop, target

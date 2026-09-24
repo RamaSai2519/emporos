@@ -148,6 +148,8 @@ class EmaPullbackV1(IntradayStrategy):
             )
         else:
             return
-        if self._enter(bar, side, f"pullback to the {self._p.fast_ema} EMA {fast:.2f} held"):
+        if self._enter(
+            bar, side, f"pullback to the {self._p.fast_ema} EMA {fast:.2f} held", stop=stop
+        ):
             track.entries += 1
             track.stop, track.target = stop, target
