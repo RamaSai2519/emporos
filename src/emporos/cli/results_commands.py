@@ -25,11 +25,10 @@ from emporos.research.results_filings import FilingLedger
 from emporos.research.universe_lists import ConstituentList
 
 DEFAULT_EVENTS_DIR = Path("docs/research/edge-search/events")
-FIRST_DAY = date(2016, 10, 3)
 
 _DIR = typer.Option(DEFAULT_LIST_DIR, help="The directory holding the committed constituent lists.")
 _OUT = typer.Option(DEFAULT_EVENTS_DIR, help="Where the append-only filing ledger lives.")
-_FROM = typer.Option(FIRST_DAY, formats=["%Y-%m-%d"], help="First day to ask for.")
+_FROM = typer.Option(datetime(2016, 10, 3), formats=["%Y-%m-%d"], help="First day to ask for.")
 _TO = typer.Option(..., "--to", formats=["%Y-%m-%d"], help="Last day to ask for (inclusive).")
 _GAP = typer.Option(3.0, help="Seconds between requests (at least 1).")
 

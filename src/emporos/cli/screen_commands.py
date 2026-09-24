@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
@@ -33,7 +34,7 @@ from emporos.domain.research_experiments import ExperimentDeclaration
 from emporos.domain.sizing import SizeResolver
 from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
-from emporos.research.cell_run import ArmResult, CellScreenRun, ScanFactory
+from emporos.research.cell_run import ArmResult, BarSource, CellScreenRun, ScanFactory
 from emporos.research.history_audit import HistoryAudit
 from emporos.research.partition import DISCOVERY, DataSplit
 from emporos.research.scans.base import ScanExecution, SignalScan
@@ -42,8 +43,11 @@ from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
 from emporos.research.scans.range_compression import CompressionParameters, range_compression_scan
 from emporos.research.scans.range_compression import declared_arms as compression_arms
 from emporos.research.scans.raw_gap import RawGapParameters, declared_arms, raw_gap_scan
+from emporos.research.scans.regime_gate import TrailingPercentileDays, session_openings
 from emporos.research.scans.shock_reversal import ShockReversalParameters, shock_reversal_scan
 from emporos.research.scans.shock_reversal import declared_arms as shock_reversal_arms
+from emporos.research.scans.vix_shock_reversal import VixReversalParameters, vix_shock_reversal_scan
+from emporos.research.scans.vix_shock_reversal import declared_arms as vix_reversal_arms
 from emporos.research.screen_costs import ScreenCostModel, ScreenCostScenario
 from emporos.research.screen_evaluator import ScreenEvaluator
 from emporos.research.screen_ledger import JsonlScreenLedger
@@ -77,8 +81,17 @@ class ScreenCell(Protocol):
 
     def label(self, point: Mapping[str, str]) -> str: ...
 
+    def prepare(self, bars: BarSource) -> None:
+        """Load whatever the cell needs besides the instruments' own bars (a regime series)."""
+        ...
 
-class RawGapCell:
+
+class _NoPreparation:
+    def prepare(self, bars: BarSource) -> None:
+        return None
+
+
+class RawGapCell(_NoPreparation):
     """The recipe for cell L3-raw-gap-hold-to-close."""
 
     slug = "l3-raw-gap-hold-to-close"
@@ -93,7 +106,7 @@ class RawGapCell:
         return f"{point['gap_threshold_pct']}% {point['direction']} bar{point['entry_bar']}"
 
 
-class OrbRvolCell:
+class OrbRvolCell(_NoPreparation):
     """The recipe for cell L3-orb-high-rvol-wide-range."""
 
     slug = "l3-orb-high-rvol-wide-range"
@@ -110,7 +123,7 @@ class OrbRvolCell:
         )
 
 
-class ShockReversalCell:
+class ShockReversalCell(_NoPreparation):
     """The recipe for the first-hour gap-reversal cells: one scan, one declaration per cell."""
 
     def __init__(self, slug: str) -> None:
@@ -126,7 +139,7 @@ class ShockReversalCell:
         return f"gap>={point['gap_threshold_pct']}% retrace>={point['retrace_min']}"
 
 
-class CompressionCell:
+class CompressionCell(_NoPreparation):
     """The recipe for cell L4-nr7-inside-day-breakout."""
 
     slug = "l4-nr7-inside-day-breakout"
@@ -141,6 +154,37 @@ class CompressionCell:
         return f"{point['condition']} break buffer {point['buffer_bps']}bps"
 
 
+class VixRegimeCell:
+    """The recipe for cell L4-india-vix-regime: the INDIA VIX's opens gate each arm's days."""
+
+    slug = "l4-india-vix-regime"
+    VIX_SERIES_ID = "NSE:99926017"  # config/reference_series.yaml, token of India VIX
+
+    def __init__(self) -> None:
+        self._openings: dict[date, Decimal] | None = None
+
+    def prepare(self, bars: BarSource) -> None:
+        self._openings = session_openings(bars.bars(self.VIX_SERIES_ID, DISCOVERY))
+        if not self._openings:
+            raise ValueError("no INDIA VIX bars in the cache: run `history fetch-reference` first")
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in vix_reversal_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        if self._openings is None:
+            raise ValueError("the VIX series was not loaded before scanning")
+        parameters = VixReversalParameters.from_point(point)
+        gate = TrailingPercentileDays.from_openings(self._openings, parameters.vix_min_percentile)
+        return vix_shock_reversal_scan(parameters, execution, gate)
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return (
+            f"gap>={point['gap_threshold_pct']}% retrace>={point['retrace_min']} "
+            f"vix>=p{point['vix_min_percentile']}"
+        )
+
+
 CELLS: Mapping[str, ScreenCell] = {
     c.slug: c
     for c in (
@@ -149,6 +193,7 @@ CELLS: Mapping[str, ScreenCell] = {
         ShockReversalCell("l3-first-hour-shock-reversal"),
         ShockReversalCell("l3-first-hour-reversal-large-gap"),
         CompressionCell(),
+        VixRegimeCell(),
     )
 }
 
@@ -203,7 +248,9 @@ def research_screen(slug: str = _SLUG, ledger: Path = _LEDGER) -> None:
             f"{slug}: {DISCOVERY.first}..{DISCOVERY.last}, "
             f"{size.position_value} rupees per position"
         )
-        results = run.run(slug, recipe.arms(declaration), LocalBars(reader), size)
+        local_bars = LocalBars(reader)
+        recipe.prepare(local_bars)
+        results = run.run(slug, recipe.arms(declaration), local_bars, size)
     except (EmporosError, ValueError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"screen failed: {message}", fg=typer.colors.RED)
