@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, time
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 
 from emporos.core.clock import IST
@@ -29,11 +29,15 @@ __all__ = [
     "ExitSimulator",
     "NoEntry",
     "entry_time",
+    "price_level",
+    "touch",
 ]
 
 AFTER_HOURS_FIRST_ENTRY = time(9, 20)  # skips the opening print
 LAST_ENTRY = time(15, 25)  # a decision after this waits for the next session
 SESSION_END = time(15, 30)
+TICK = Decimal("0.05")
+_HUNDRED = Decimal(100)
 
 
 class ExitReason(StrEnum):
@@ -168,33 +172,16 @@ class ExitSimulator:
         for bar in bars:
             if _ist(bar.closes_at).time() > until:
                 return None
-            hit = self._touch(bar.open.amount, bar.high.amount, bar.low.amount, side, stop, target)
+            hit = touch(bar.open.amount, bar.high.amount, bar.low.amount, side, stop, target)
             if hit is not None:
                 price, reason = hit
                 return ExitFill(bar.closes_at, price, reason)
         return None
 
-    @staticmethod
-    def _touch(
-        open_: Decimal, high: Decimal, low: Decimal, side: Side, stop: Decimal, target: Decimal
-    ) -> tuple[Decimal, ExitReason] | None:
-        """The stop first when a bar reaches both; a bar opening past a level fills at its open."""
-        if side is Side.LONG:
-            if low <= stop:
-                return min(open_, stop), ExitReason.STOP
-            if high >= target:
-                return max(open_, target), ExitReason.TARGET
-        else:
-            if high >= stop:
-                return max(open_, stop), ExitReason.STOP
-            if low <= target:
-                return min(open_, target), ExitReason.TARGET
-        return None
-
     def _daily_hit(
         self, bar: DailyBar, side: Side, stop: Decimal, target: Decimal
     ) -> ExitFill | None:
-        hit = self._touch(bar.open, bar.high, bar.low, side, stop, target)
+        hit = touch(bar.open, bar.high, bar.low, side, stop, target)
         if hit is None:
             return None
         price, reason = hit
@@ -206,6 +193,32 @@ class ExitSimulator:
         eligible = [b for b in bars if _ist(b.closes_at).time() <= cutoff]
         last = eligible[-1] if eligible else bars[-1]
         return ExitFill(last.closes_at, last.close.amount, ExitReason.SQUARE_OFF)
+
+
+def price_level(reference: Decimal, side: Side, pct: float, *, against: bool) -> Decimal:
+    """The stop (`against`) or the target, `pct` percent from the reference, on the 0.05 tick."""
+    move = reference * Decimal(str(pct)) / _HUNDRED
+    below = (side is Side.LONG) == against
+    raw = reference - move if below else reference + move
+    return (raw / TICK).quantize(Decimal(1), rounding=ROUND_HALF_UP) * TICK
+
+
+def touch(
+    open_: Decimal, high: Decimal, low: Decimal, side: Side, stop: Decimal, target: Decimal
+) -> tuple[Decimal, ExitReason] | None:
+    """The stop first when a bar reaches both; a bar opening past a level fills at its open. The
+    side is the direction of the POSITION (or, for an option, of the underlying view)."""
+    if side is Side.LONG:
+        if low <= stop:
+            return min(open_, stop), ExitReason.STOP
+        if high >= target:
+            return max(open_, target), ExitReason.TARGET
+    else:
+        if high >= stop:
+            return max(open_, stop), ExitReason.STOP
+        if low <= target:
+            return min(open_, target), ExitReason.TARGET
+    return None
 
 
 def _daily_close(day: date) -> datetime:

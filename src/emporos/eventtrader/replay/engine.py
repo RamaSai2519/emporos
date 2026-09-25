@@ -11,7 +11,7 @@ from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Protocol
 
 from emporos.core.clock import IST
@@ -25,6 +25,7 @@ from emporos.eventtrader.replay.fills import (
     ExitFill,
     ExitSimulator,
     entry_time,
+    price_level,
 )
 from emporos.eventtrader.replay.market import MarketData
 from emporos.eventtrader.replay.records import Scenario, TradeLeg, TradeRecord
@@ -46,8 +47,6 @@ __all__ = [
 ]
 
 LATENCY = timedelta(minutes=2)
-TICK = Decimal("0.05")
-_HUNDRED = Decimal(100)
 
 
 class Decider(Protocol):
@@ -192,8 +191,8 @@ class ReplayEngine:
         if reference is None:
             stats.refused["no_price"] += 1
             return
-        stop = _level(reference, plan.side, plan.stop_pct, against=True)
-        target = _level(reference, plan.side, plan.target_pct, against=False)
+        stop = price_level(reference, plan.side, plan.stop_pct, against=True)
+        target = price_level(reference, plan.side, plan.target_pct, against=False)
         scale = self._posture.scale_for(placed_at.astimezone(IST).date())
         proposal = EntryProposal(
             event.instrument_id, product, plan.side, reference, stop, placed_at
@@ -253,11 +252,3 @@ class ReplayEngine:
             gross, self._costs.cost(leg, Scenario.BENCHMARK),
             self._costs.cost(leg, Scenario.ADVERSE), token_cost,
         )  # fmt: skip
-
-
-def _level(reference: Decimal, side: Side, pct: float, *, against: bool) -> Decimal:
-    """The stop (`against`) or the target, `pct` percent from the reference, on the tick."""
-    move = reference * Decimal(str(pct)) / _HUNDRED
-    below = (side is Side.LONG) == against
-    raw = reference - move if below else reference + move
-    return (raw / TICK).quantize(Decimal(1), rounding=ROUND_HALF_UP) * TICK
