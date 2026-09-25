@@ -45,6 +45,7 @@ from emporos.research.market_context.posture_state import (
     NumericPostureInputs,
     PostureSection,
 )
+from emporos.research.market_context.sectors import DEFAULT_SECTOR_TABLE, SectorMapLoader
 
 NIFTY_ID = "NSE:99926000"
 VIX_ID = "NSE:99926017"
@@ -110,6 +111,18 @@ def research_collect_global_cues(
         raise typer.Exit(code=2)
 
 
+D1_CONSTITUENTS = (
+    Path("config/universe/d1/nifty100.csv"), Path("config/universe/d1/niftymidcap150.csv"),
+)  # fmt: skip
+
+
+def _committed_sectors() -> SectorMap:
+    """The industry -> sector index map from the committed files (empty if run outside the repo)."""
+    if not DEFAULT_SECTOR_TABLE.exists():
+        return SectorMap({})
+    return SectorMapLoader().load([p for p in D1_CONSTITUENTS if p.exists()])
+
+
 def build_context_builder(
     loader: BarLoader, first: date, last: date, fo_dir: Path = DEFAULT_FO_STOCK_DIR,
     sectors: SectorMap | None = None, capacity: int = 64,
@@ -118,7 +131,11 @@ def build_context_builder(
     `capacity` is how many names' bars are held: a replay walks every name in time order."""
     series = BarSeriesCache(loader, first, last, capacity=capacity)
     return AsOfContextBuilder(
-        series, NIFTY_ID, VIX_ID, sectors or SectorMap({}), FoOpenInterest(FoDayStore(fo_dir))
+        series,
+        NIFTY_ID,
+        VIX_ID,
+        sectors if sectors is not None else _committed_sectors(),
+        FoOpenInterest(FoDayStore(fo_dir)),
     )
 
 
