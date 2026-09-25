@@ -1,0 +1,59 @@
+# Declared BEFORE any data run (PROFIT_PLAN.md §2.1). EM-228, Track A cell A1. Designed by the head
+# session from the literature and from UNSIGNED facts only (delivery costs, EM-222): no return of
+# this rule on our data has been seen.
+#
+# Rules (daily bars, decisions at a session's close, fills at the next session's raw open, A-F5):
+# * Universe: the D1 research names (config/universe/d1/universe.yaml `included`), membership
+#   AllMembers until A-F3 lands (today's constituents: survivorship-biased, declared; the same-universe
+#   equal-weight benchmark carries the same bias and is the bar to beat, PROFIT_PLAN §2.5).
+# * Signal, on adjusted closes (A-F2): momentum = close[t-21] / close[t-L-21] - 1, where L is the
+#   lookback (126 or 252 sessions): the last month is skipped (short-term reversal). A name needs the
+#   full window of sessions to be ranked.
+# * Regime (the "hold" posture, PROFIT_PLAN §9): NIFTY 50 close > its 200-session simple average at
+#   the decision close. When the filter is off: sell every holding and hold cash; no entries.
+# * Rebalance on the declared calendar (first session of each week, or of each month): target = the
+#   top N names by momentum among names with momentum > 0. Hysteresis: a holding is kept while it
+#   ranks in the top 2N; otherwise it is sold. Empty slots are filled from the top of the ranking.
+#   Equal rupee slots, slot = equity / N at the fill, whole shares, never resized while held.
+# * Stop (PROFIT_PLAN §3.5, the live rule): a holding is sold when its adjusted close has fallen by
+#   (0.02 x equity at entry) / (entry position value) from its entry price, that is, a loss of 2% of
+#   capital. Checked at every close, exit at the next open (a gap can make the loss larger: that is
+#   the real rule, modelled as is).
+# * Aggressive posture = concentration, never leverage: N = 3 instead of 5.
+# 2 (lookback 126, 252) x 2 (rebalance weekly, monthly) x 2 (max_positions 5, 3) = 8 arms.
+#
+# Data: Discovery only (start of data to 2024-12-31; the effective start is the 252+21 session
+# warm-up, about 2017-11, reported by the run). Capital Rs 1,00,000, delivery fee schedule
+# angelone-delivery-2026-09-25 (verified: false), PROFIT_PLAN §3.1 slippage (benchmark 10 bps per
+# side, adverse 1.5x fees + 25 bps). Cash earns nothing. No screen runs before the adjustment ledger
+# (EM-221) explains or quarantines every >= 15% discontinuity (PROFIT_PLAN §2.6).
+family: strategy
+slug: a1-momentum-trend-filter
+hypothesis: >-
+  Among liquid Indian large and mid caps, the names with the strongest 6- or 12-month return
+  (skipping the last month) keep outperforming over the following weeks, and holding the top 3-5 of
+  them only while NIFTY 50 is above its 200-day average earns a higher net Sharpe than holding the
+  whole universe equally, after delivery costs.
+economic_rationale: >-
+  Momentum is the most replicated anomaly across markets, India included (NSE publishes a NIFTY200
+  Momentum 30 index on it). Investors under-react to gradual good news and institutions add to
+  winners slowly (mandate reviews, index inclusion), so trends persist for months. Its known failure
+  is the momentum crash after a bear market, when last year's losers rebound hardest. The trend
+  filter stands aside in exactly those regimes, and the stop caps any one name's damage. Who is on
+  the other side: sellers who anchor on past prices and take profits early, and value buyers
+  rotating out of strength.
+falsification: >-
+  PROFIT_PLAN §3.2, all conditions on Discovery: net CAGR >= 18% at benchmark costs and > 0 at
+  adverse; net Sharpe above the same-universe equal-weight buy-and-hold (same costs, same days);
+  >= 60% of months positive; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; >= 100
+  round trips; positive in >= 60% of calendar years; no name > 25% of net; >= 50% of adjacent arms
+  net positive at benchmark. The 3-name arms must also pass §3.4 (P(drawdown >= 30%) <= 5%). If no
+  arm passes, A1 is SCREEN_REJECT; a child may only come from Discovery output and the head's call.
+parameter_grid:
+  lookback_sessions: ["126", "252"]
+  rebalance: ["weekly", "monthly"]
+  max_positions: ["5", "3"]
+feature_versions:
+  daily_bars_d1: 1
+  adjustment_ledger: 1
+declared_at: 2026-09-25T06:30:00+05:30
