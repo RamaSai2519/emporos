@@ -64,6 +64,7 @@ async def test_replay_answers_from_the_journal_counts_the_tokens_and_never_calls
     reply = await s.mini().complete(request())
 
     assert reply.text == "{}" and s.tally.cost_inr(declared_prices()) > 0
+    assert (s.hits, s.fresh) == (1, 0)
 
 
 async def test_replay_of_a_question_never_asked_is_refused_not_papered_over(tmp_path: Path) -> None:

@@ -106,9 +106,17 @@ class LlmStack:
         self._mini_ceiling = mini_ceiling_usd
         self.tally, self.scopes = TokenTally(), ScopedTallies()
         self.mini_budget = UsdBudget(mini_ceiling_usd)
+        self._journaled: JournaledClient | None = None
+        self._mini: LlmClient | None = None
 
     def mini(self) -> LlmClient:
-        """Jev: openai/gpt-4o-mini through the Vercel gateway."""
+        """Jev: openai/gpt-4o-mini through the Vercel gateway. One client for the whole run, so
+        its journal counts are the run's."""
+        if self._mini is None:
+            self._mini = self._build_mini()
+        return self._mini
+
+    def _build_mini(self) -> LlmClient:
         inner: LlmClient | None = None
         if self._record:
             key = self._settings.vercel_gateway_key
@@ -118,11 +126,19 @@ class LlmStack:
                 )
             http = OpenAiCompatibleClient(GATEWAY_URL, key)
             inner = BudgetedClient(http, self.mini_budget, self._prices)
-        journaled = JournaledClient(inner, self._journal, record=self._record)
+        self._journaled = JournaledClient(inner, self._journal, record=self._record)
         guard = CutoffGuardedClient(
-            journaled, KnowledgeCutoffGuard(), {GATEWAY_MODEL: _config(GATEWAY_MODEL)}
+            self._journaled, KnowledgeCutoffGuard(), {GATEWAY_MODEL: _config(GATEWAY_MODEL)}
         )
         return TallyingClient(guard, self.tally, self.scopes)
+
+    @property
+    def hits(self) -> int:
+        return self._journaled.hits if self._journaled else 0
+
+    @property
+    def fresh(self) -> int:
+        return self._journaled.fresh if self._journaled else 0
 
     def pipeline(self, spec: VariantSpec) -> DecisionPipeline:
         client = self.mini()

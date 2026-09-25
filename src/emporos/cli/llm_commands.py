@@ -104,7 +104,7 @@ _JOURNAL = typer.Option(DEFAULT_JOURNAL, help="The call journal (local, not git)
 _REPORTS = typer.Option(DEFAULT_REPORTS, help="Where the report and CSVs go.")
 _LEDGER = typer.Option(DEFAULT_LEDGER, help="The counted-looks ledger.")
 _CONCURRENCY = typer.Option(8, min=1, help="Calls in flight.")
-_CEILING = typer.Option(8.0, help="A hard USD ceiling on mini's calls.")
+_CEILING = typer.Option(25.0, help="A runaway guard: a hard USD ceiling on mini's calls.")
 _RUNS = typer.Option(1000, min=1, help="Coin-flip control runs.")
 _REPLAY = typer.Option(False, help="Answer only from the journal; never call.")
 _ESTIMATE = typer.Option(False, help="Print the size of the run and stop.")
@@ -189,6 +189,7 @@ async def _run(
     runner = VariantRunner(
         identity, stack.pipeline(spec), data.engines(), data.context, stack.scopes,
         declared_prices(), data.sessions, spec.triage_threshold, None, concurrency, control_runs,
+        calls=stack,
     )  # fmt: skip
     outcome = await runner.run(named)
     report = outcome.report

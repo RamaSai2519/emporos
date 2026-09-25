@@ -5,15 +5,22 @@ from __future__ import annotations
 from datetime import date, timedelta
 from decimal import Decimal
 
+import pytest
+
 from emporos.eventtrader.llm.guards import ScopedTallies
 from emporos.eventtrader.llm.pricing import PriceTable
 from emporos.eventtrader.pipeline import PipelineDecision, Verdict
 from emporos.eventtrader.posture import PostureSchedule
 from emporos.eventtrader.replay.engine import Decider, PostureSource, ReplayEngine, TokenMeter
 from emporos.eventtrader.replay.fills import ExitReason
-from emporos.eventtrader.replay.report import VariantIdentity
+from emporos.eventtrader.replay.report import VariantIdentity, render_report
 from emporos.eventtrader.risk.engine import RiskEngine
-from emporos.eventtrader.runner import CachedContext, VariantRunner
+from emporos.eventtrader.runner import (
+    DEV_WINDOW,
+    CachedContext,
+    DevWindowViolation,
+    VariantRunner,
+)
 from emporos.eventtrader.stages.models import (
     Horizon,
     Posture,
@@ -61,7 +68,10 @@ def make_market():  # type: ignore[no-untyped-def]
 
 
 def runner(
-    decider: DictDecider, posture: PostureSchedule | None = None, runs: int = 20
+    decider: DictDecider,
+    posture: PostureSchedule | None = None,
+    runs: int = 20,
+    calls: Meter | None = None,
 ) -> VariantRunner:
     m = make_market()
 
@@ -73,7 +83,7 @@ def runner(
     )
     return VariantRunner(
         identity, decider, engines, NoContext(), ScopedTallies(), PriceTable({}, D(88)),
-        m.sessions, 60, posture, control_runs=runs, bootstrap_paths=50,
+        m.sessions, 60, posture, control_runs=runs, bootstrap_paths=50, calls=calls,
     )  # fmt: skip
 
 
@@ -149,3 +159,58 @@ def test_the_snapshot_digest_changes_with_an_events_text_or_the_set_of_events() 
     assert events_digest([a, b]) == events_digest([a, b])
     assert events_digest([a, b]) != events_digest([a, event(event_id="B", text="three")])
     assert events_digest([a, b]).startswith("2-") and events_digest([a]) != events_digest([a, b])
+
+
+class Meter:
+    def __init__(self) -> None:
+        self.hits, self.fresh = 0, 0
+
+
+class MeteredDict(DictDecider):
+    def __init__(self, answers: dict[str, PipelineDecision], meter: Meter) -> None:
+        super().__init__(answers)
+        self._meter = meter
+
+    async def decide(self, item: EventInput) -> PipelineDecision:
+        self._meter.fresh += 2
+        self._meter.hits += 5
+        return await super().decide(item)
+
+
+async def test_a_run_reports_the_calls_it_made_against_those_the_journal_answered() -> None:
+    meter = Meter()
+    meter.hits, meter.fresh = 100, 100  # what earlier variants used is not this run's
+    r = runner(MeteredDict(answers(), meter), calls=meter)
+    outcome = await r.run(events(), with_control=False)
+
+    assert (outcome.report.fresh_calls, outcome.report.journal_hits) == (6, 15)
+    assert "6 fresh, 15 answered from the journal" in render_report(outcome.report)
+
+
+async def test_no_decision_dated_after_the_dev_window_is_ever_asked_for() -> None:
+    decider = DictDecider(answers())
+    late = event(
+        event_id="L1", published_at=at(date(2025, 1, 2), 10), usable_from=at(date(2025, 1, 2), 10)
+    )
+
+    with pytest.raises(DevWindowViolation, match="2025-01-02"):
+        await runner(decider).run([*events(), late])
+
+    assert decider.calls == 0  # refused before a single decision
+
+
+async def test_the_window_edges_are_in_and_a_decision_pushed_past_midnight_is_out() -> None:
+    edge = event(
+        event_id="Z", instrument_id=X, published_at=at(date(2024, 12, 31), 15, 25),
+        usable_from=at(date(2024, 12, 31), 15, 25),
+    )  # fmt: skip
+    past = event(
+        event_id="P", instrument_id=X, published_at=at(date(2024, 12, 31), 23, 59),
+        usable_from=at(date(2024, 12, 31), 23, 59),
+    )  # fmt: skip
+
+    DEV_WINDOW.check([edge])
+    with pytest.raises(DevWindowViolation):
+        DEV_WINDOW.check([past])  # decided at 00:01 on 2025-01-01
+    with pytest.raises(DevWindowViolation, match="session"):
+        DEV_WINDOW.check([], [date(2025, 1, 1)])

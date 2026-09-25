@@ -115,14 +115,18 @@ class JournaledClient:
         if record and inner is None:
             raise ValueError("record mode needs a client to record from")
         self._inner, self._journal, self._record = inner, journal, record
+        self.hits = 0  # answered from the journal
+        self.fresh = 0  # sent to the model
 
     async def complete(self, request: LlmRequest) -> LlmReply:
         recorded = self._journal.get(request.request_hash)
         if recorded is not None:
+            self.hits += 1
             return recorded.reply()
         if not self._record or self._inner is None:
             raise NotRecorded(f"{request.stage}: {request.request_hash[:12]} was never recorded")
         reply = await self._inner.complete(request)
+        self.fresh += 1
         self._journal.append(
             Recording(
                 request.request_hash,

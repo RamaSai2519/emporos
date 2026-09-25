@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
@@ -95,6 +96,8 @@ class VariantReport:
     control: ControlResult | None = None
     baseline: ScenarioMetrics | None = None  # a diagnostic, never a gate
     baseline_rule: str = ""
+    journal_hits: int = 0  # calls answered from the journal
+    fresh_calls: int = 0  # calls that reached the model
 
     @property
     def passed(self) -> bool:
@@ -126,7 +129,9 @@ class LlmLedger:
             "max_drawdown": str(b.max_drawdown), "daily_t": b.daily_t, "p_loss": report.p_loss,
             "control_p": report.control.p_value if report.control else None,
             "failed_checks": [bar.name for bar in report.bars if not bar.passed],
-            "passed": report.passed, "files": files, "recorded_at": recorded_at.isoformat(),
+            "passed": report.passed, "journal_hits": report.journal_hits,
+            "fresh_calls": report.fresh_calls, "files": files,
+            "recorded_at": recorded_at.isoformat(),
         }  # fmt: skip
         self._path.parent.mkdir(parents=True, exist_ok=True)
         with self._path.open("a", encoding="utf-8") as handle:
@@ -157,6 +162,7 @@ def render_report(report: VariantReport) -> str:
         "",
         f"events {r.stats.events}; verdicts {dict(sorted(r.stats.verdicts.items()))}",
         f"skipped {dict(sorted(r.stats.skipped.items()))}",
+        f"calls: {report.fresh_calls} fresh, {report.journal_hits} answered from the journal",
         f"refused by reason {dict(sorted(r.stats.refused.items()))}",
         f"approved, not filled {dict(sorted(r.stats.no_entry.items()))}",
     ]
@@ -173,6 +179,7 @@ def render_report(report: VariantReport) -> str:
         f"  [{'PASS' if b.passed else 'FAIL'}] {b.name}: {b.value} (need {b.threshold})"
         for b in report.bars
     ]
+    lines += ["", *_per_instrument(r.trades)]
     if report.control is not None:
         c = report.control
         lines += [
@@ -185,6 +192,19 @@ def render_report(report: VariantReport) -> str:
         lines += ["", f"triage-only baseline (DIAGNOSTIC, never a gate; {report.baseline_rule}):"]
         lines += _metrics_lines("benchmark", report.baseline)
     return "\n".join(lines) + "\n"
+
+
+def _per_instrument(trades: tuple[TradeRecord, ...]) -> list[str]:
+    """Trades and benchmark net by name, most trades first: shows concentration at a glance."""
+    by_name: dict[str, list[Decimal]] = defaultdict(list)
+    for t in trades:
+        by_name[t.symbol].append(t.net_benchmark)
+    ordered = sorted(by_name.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    lines = [f"trades per instrument ({len(ordered)} names; net at benchmark, before tokens):"]
+    lines += [
+        f"  {name}: {len(nets)} trades, {_money(sum(nets, Decimal(0)))}" for name, nets in ordered
+    ]
+    return lines
 
 
 def _pct(value: float | None) -> str:
