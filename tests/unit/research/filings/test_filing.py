@@ -70,3 +70,8 @@ class TestParse:
         (filing,) = parse(row(attchmntFile=None, attchmntText=None))
 
         assert (filing.attachment_url, filing.subject) == ("", "")
+
+    def test_a_dash_in_place_of_an_attachment_link_is_no_attachment(self) -> None:
+        (filing,) = parse(row(attchmntFile="-"))
+
+        assert filing.attachment_url == ""

@@ -44,6 +44,12 @@ class Filing:
             raise ValueError("a filing needs a symbol and the exchange's own id")
 
 
+def _attachment(value: object) -> str:
+    """The attachment link, or "" when the feed has none (it writes "-" for no attachment)."""
+    url = str(value or "").strip()
+    return url if url.startswith(("http://", "https://")) else ""
+
+
 def _stamp(value: object) -> datetime | None:
     if not isinstance(value, str) or not value.strip():
         return None
@@ -72,7 +78,7 @@ def parse_nse_filings(body: bytes, source_url: str, fetched_on: date) -> Sequenc
                 submitted,
                 str(row.get("desc") or "").strip(),
                 " ".join(str(row.get("attchmntText") or "").split()),
-                str(row.get("attchmntFile") or "").strip(),
+                _attachment(row.get("attchmntFile")),
                 source_url,
                 fetched_on,
             )
