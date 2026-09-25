@@ -28,6 +28,7 @@ from emporos.eventtrader.replay.report import (
     write_daily_csv,
     write_trades_csv,
 )
+from emporos.eventtrader.replay.table import load_summaries, render_table, summary_of
 from emporos.eventtrader.runner import RunIncomplete, VariantRunner, events_digest
 from emporos.eventtrader.stages.prompts import (
     ARBITER_V1,
@@ -219,12 +220,19 @@ async def _run(
         "report": str(reports / f"{spec.name}-report.txt"),
         "trades": str(reports / f"{spec.name}-trades.csv"),
         "daily": str(reports / f"{spec.name}-daily.csv"),
+        "summary": str(reports / f"{spec.name}-summary.json"),
     }
     reports.mkdir(parents=True, exist_ok=True)
     text = render_report(report)
     Path(files["report"]).write_text(text, encoding="utf-8")
     write_trades_csv(Path(files["trades"]), report.result.trades)
     write_daily_csv(Path(files["daily"]), report.benchmark, report.adverse)
+    Path(files["summary"]).write_text(json.dumps(summary_of(report), indent=1), encoding="utf-8")
     added = LlmLedger(ledger).append(report, SystemClock().now(), files)
     typer.echo(text)
     typer.echo(f"ledger: {'one look added' if added else 'already counted'} ({ledger})")
+
+
+def research_llm_variant_table(reports: Path = _REPORTS) -> None:
+    """The variants side by side, from the summaries their runs left in the reports directory."""
+    typer.echo(render_table(load_summaries(reports)))
