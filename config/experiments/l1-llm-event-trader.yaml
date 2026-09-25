@@ -1,0 +1,156 @@
+# Declared BEFORE any Dev run (PROFIT_PLAN.md §12, EM-240; operator direction of 2026-09-25). Not yet
+# run: no LLM call has been made for this experiment, no event has been read, no result exists. The
+# machinery (stages, pipeline, risk engine, replay) is tested on scripted fakes only.
+#
+# What is tested. Whether language models that read each NSE/BSE filing and headline of a D1 name,
+# with the market's as-of numbers beside it, can choose trades (which instrument, which direction,
+# where the stop and target sit) that earn more than their costs, behind a code-enforced risk
+# engine, on a window the models cannot remember. Both models declare a knowledge cutoff of
+# 2023-10-01; the guard allows nothing before 2024-01-01 (cutoff + 90 days), and every call, replayed
+# or live, is checked against it. Company names are shown to the models (§12.1); the date guard, not
+# anonymity, is what keeps this honest.
+#
+# THE PIPELINE (§12.3), each stage its own class, temperature 0, JSON-object mode, strict validation,
+# one retry with a reminder on an invalid reply and then NO TRADE, every call journalled (record once,
+# replay free):
+#   Triage  (Jev = openai/gpt-4o-mini via the Vercel gateway): material? direction, expected move,
+#           horizon (intraday | swing | none), already priced in?, confidence 0-100. One call per event.
+#           An event goes on only if material, its horizon is not "none" and its confidence >=
+#           `triage_threshold`.
+#   Panel   (Jev): three independent personas on the same item, bull, bear and tape reader, each with a
+#           side (long | short | none), conviction 0-100 and an instrument. Runs only after triage.
+#   Judge   (Jev): reads the item, the numbers and the three views; trade or no trade, instrument
+#           (cash_intraday | cash_swing | call | put), side, stop % and target % of the entry, hold
+#           days (0 = intraday). A trade needs the judge's yes AND, when the panel is on, at least 2 of
+#           the 3 panellists on the judge's side.
+#   Arbiter (gpt-4o pinned to gpt-4o-2024-08-06, OpenAI direct, key from the environment): optional,
+#           tested ONCE, see below.
+#   Posture (Jev, once before the open, 09:00 IST, from the previous evening's headlines and the
+#           index/VIX state): hold | normal | aggressive. Scales the risk budgets: hold 0, normal 0.6,
+#           aggressive 1.0 of every budget. It never overrides a limit.
+#   Prompts: triage-v1 7518c525..., bull-v1 5533b69d..., bear-v1 8f387fff..., tape-v1 0a6c668e...,
+#           judge-v1 b70546bf..., arbiter-v1 01c0513c..., posture-v1 09585777... (full sha256 in the
+#           code, src/emporos/eventtrader/stages/prompts.py; any change is a new declaration).
+#
+# THE RISK ENGINE (§12.4), one object for the backtest, paper and live. Cash quantity =
+# floor(Rs 2,000 x posture scale / |entry - stop|), position value <= Rs 50,000 intraday, Rs 25,000 per
+# swing name. An option: whole lots whose premium <= Rs 5,000 x scale. Refused: an intraday stop wider
+# than 5% or a swing stop wider than 12%; a stop on the wrong side; any intraday entry from 14:45 IST
+# (all intraday squared off at 15:15); a second position in a name we hold (so no averaging down); more
+# than 3 intraday or 4 swing (options count as swing) positions open; open risk above Rs 25,000; a cash
+# swing SHORT (delivery cannot be shorted: a bearish swing view is a put); selling an option. The
+# daily halt: when today's P&L, realised plus open positions marked to market with each open loss
+# counted at no more than its stop, reaches -Rs 5,000, no new entry that day. The total kill: at -Rs
+# 25,000 in total (realised plus open marked) everything is closed and the track stops; only the
+# operator restarts it. Stops are only ever tightened. Limit orders only. INTERPRETATION TO CHECK: the
+# daily halt is read as the day's marked P&L, not as "every open position assumed stopped out"
+# (which would forbid holding the 3 + 4 positions the limits allow); say if the second was meant.
+#
+# THE REPLAY (event-driven, Dev = events published 2024-01-01 .. 2024-12-31). Events in
+# (published_at, id) order, deduplicated across NSE and BSE. Decision time = the event's usable_from
+# (the exchange's dissemination time; the NEXT 09:15 for a date-only headline) + 2 minutes; nothing
+# published after it reaches a prompt (a test feeds later items and requires an identical prompt).
+# The as-of context is built from bars closed at or before the decision time. Market-wide items (no
+# instrument) feed the posture only; a name with no bars or no token is skipped and counted.
+#   Intraday cash: the entry is a marketable limit at the last completed 5-minute bar's close, a buffer
+#     of 5 bps through it, tried on the FIRST bar that starts at or after the decision time and only
+#     that bar (strictly through, 10% of the bar's volume, else no trade: no chasing), on the shared
+#     IntradayScan fill rules. Exits: stop, target, the 15:15 square-off; a bar that reaches both
+#     stop and target counts as the stop; a bar that opens beyond the stop exits at its open.
+#     Intraday prices are the scan's own reference prices and the costs are the program's intraday
+#     schedule: BENCHMARK and ADVERSE (config/robustness/benchmark.yaml), unchanged.
+#   Swing cash: daily bars. Entry at the close of the session of the decision if the decision is
+#     before 15:00 IST, else at the next session's close; exits on the first daily bar whose low
+#     (high, for a short) reaches the stop (at the stop, or at the open if it opened beyond it), whose
+#     high reaches the target (at the target), or at the close of the session `hold_days` after entry.
+#     Delivery costs: SwingCostModel BENCHMARK (10 bps a side) and ADVERSE (25 bps, fees x 1.5).
+#   Options (swing horizon only, bhavcopy settle/close): a call or put on the name, monthly expiry with
+#     at least 15 calendar days left, the listed strike nearest the underlying's close, entry at the
+#     day's close price of the contract as for swing cash, exit at the close of the first session on
+#     which the UNDERLYING reaches the judge's stop or target, or after `hold_days`, or the session
+#     before expiry. Costs: the Track B F&O schedule, BENCHMARK and ADVERSE slippage. A contract with
+#     no traded price on the entry or exit day, or a premium above the budget, is REFUSED and counted
+#     ("no contract"); options on the intraday horizon are not tested here (paper only).
+#   TOKEN COST is charged to the P&L: tokens in and out of every call, at the declared prices below,
+#     converted at the declared rate, also for calls answered from the journal (a replay must carry
+#     what the calls cost when they were made).
+#   Prices (USD per million tokens, OpenAI list prices, to be checked against the invoice):
+#     openai/gpt-4o-mini in 0.15 out 0.60; gpt-4o-2024-08-06 in 2.50 out 10.00. USD/INR 88.00.
+#
+# VARIANTS RUN ON DEV (each a counted look, docs/research/profit/screens.jsonl, track L; at most 6):
+#   v1_t60         triage_threshold 60, panel on,  posture off
+#   v2_t75         triage_threshold 75, panel on,  posture off
+#   v3_nopanel_t60 triage_threshold 60, panel OFF (triage, then the judge alone), posture off
+#   v4_posture_t60 triage_threshold 60, panel on,  posture ON
+#   v5_posture_t75 triage_threshold 75, panel on,  posture ON
+#   v6_arbiter     the arbiter A/B on the BEST of v1..v5 (rule below): the paired test of §12.3 step 4
+#                  on at most 150 of that variant's judge-approved candidates, the earliest 150 in
+#                  event order, gpt-4o with the arbiter's veto against the same candidates without it,
+#                  a hard USD 2.50 ceiling for the whole Dev A/B (the operator has USD 4 on the key),
+#                  the worst-case spend shown to the head before any gpt-4o call. It enters the frozen
+#                  variant only if it raises Dev net P&L per trade after its own cost.
+#   THE BEST OF v1..v5 is fixed now: the highest Dev net expectancy per trade at ADVERSE costs after
+#   token cost among the variants with at least 30 trades. If none has net expectancy > 0 at adverse
+#   costs after token cost, Track L is closed at Dev: no arbiter run, no Test run.
+#
+# THE COIN-FLIP CONTROL (all variants that trade, reported for the frozen one): the same events'
+# approved trades, the same instruments, sizes from the same stops, the same risk engine and costs, with
+# each trade's SIDE decided by a seeded fair coin (a cash swing that flips to short becomes the put),
+# 1,000 runs, seed 20260925. p = (1 + runs whose total net P&L is at least the real run's) / 1001.
+#
+# BARS (§12.5, fixed now). Dev is descriptive and chooses; the verdict is the one Test run of the frozen
+# variant on 2025-01-01..2026-03-18. There, all must hold, net of costs AND token cost: net P&L > 0 at
+# ADVERSE costs; net expectancy per trade > 0 at BENCHMARK costs; >= 60 trades; t of the daily net P&L
+# >= 2.0; max drawdown < Rs 15,000; the section 3.4 bootstrap P(losing Rs 25,000 within 12 months) <=
+# 10%; >= 55% of months with trades net positive; no name above 30% of net profit; the coin-flip
+# control beaten at p < 0.05. Paper (>= 4 weeks, >= 30 closed trades) and live under §12.5 follow only a
+# pass. The vault stays sealed.
+#
+# PRIOR, stated before the run: about 10% that the frozen variant passes Test (§12.6). Listed
+# companies' filings reach thousands of faster readers at the same second and the one earlier cell
+# that touched these events (L2, results) found the news priced in within 5 minutes; the most likely
+# place for an edge is the swing horizon, where the market digests over days.
+#
+# KNOWN LIMITS, declared now: (a) the models' pretraining may contain information about 2024 companies
+# through later data; the guard keeps them from the period before their cutoff but nothing can prove
+# they did not see 2024 text after it (they cannot: the snapshots were frozen), so Dev is the honest
+# window and 2025-2026 the honest test; (b) filings' text is what the store holds (the announcement
+# text first, the PDF where extracted): a thin text is a thin prompt; (c) headlines with a date but no
+# time are usable only from the next open; (d) D1 is today's NIFTY 100 and Midcap 150 plus F&O names:
+# survivorship flatters longs; (e) options are priced from end-of-day settle/close prices only, so the
+# spread is an assumption; (f) the fills are simulated (marketable limit, one bar, 10% of volume): a
+# real fill after news is worse; (g) LLM output at temperature 0 is not bit-reproducible across
+# provider updates, which is why every call is journalled and replayed; (h) a stop set by a model
+# is a hypothesis about where the idea is wrong, not a measured level; (i) six variants and one coin
+# flip test are counted looks against program-wide N (docs/research/profit/screens.jsonl).
+family: strategy
+slug: l1-llm-event-trader
+hypothesis: >-
+  A pipeline of language models (triage, a bull, bear and tape-reader panel, a judge, an optional
+  arbiter, a daily posture) that reads each filing and headline of a D1 name with the market's as-of
+  numbers chooses intraday, swing and option-buying trades that, sized and limited by a code-enforced
+  risk engine, earn a positive net P&L after costs and the models' own token cost on 2024 events, and
+  beat a coin flip on the same trades' direction at p < 0.05.
+economic_rationale: >-
+  Reading text is what language models do well and no earlier cell in this program used text. A filing
+  or headline changes a company's prospects in ways a price threshold cannot see (a large order, a
+  regulatory outcome, guidance, a management change), and the market digests some of it over days, not
+  seconds, especially where several readers must agree on what it means. The counterparties are the
+  slower readers, and holders who sell into news for reasons that are not about value. The panel
+  guards against a single model's over-reading; the tape reader asks what the price already shows;
+  the risk engine keeps a wrong model from costing more than the declared budgets.
+falsification: >-
+  Dev: if no variant among v1..v5 has a net expectancy per trade above zero at ADVERSE costs after
+  token cost with at least 30 trades, Track L is closed and nothing is run on Test. Test: rejected at
+  the first §12.5 bar the frozen variant fails, or if the coin-flip control is not beaten at p < 0.05.
+  A changed prompt, rule or variant after Test needs a new declaration and has no untouched window
+  left except paper.
+parameter_grid:
+  variant: ["v1_t60", "v2_t75", "v3_nopanel_t60", "v4_posture_t60", "v5_posture_t75", "v6_arbiter"]
+feature_versions:
+  eventtrader_pipeline: 1
+  eventtrader_risk_engine: 1
+  eventtrader_replay: 1
+  eventtrader_prompts: 1
+position_value: "50000"
+declared_at: 2026-09-25T22:00:00+05:30
