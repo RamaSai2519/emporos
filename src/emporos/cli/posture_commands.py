@@ -17,13 +17,16 @@ from emporos.cli.intraday_bars import VaultedIntradayBars
 from emporos.core.clock import IST, AsyncioSleeper, Sleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.eventtrader.events import EventStore
 from emporos.research.d1_universe import DEFAULT_MANIFEST
 from emporos.research.filings.collector import CollectionHalted
 from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, ParquetEventStore
 from emporos.research.filings.polite import PoliteGet, SourceRefused
 from emporos.research.filings.raw_store import FetchLedger
+from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.market_context.bars import BarLoader, BarSeriesCache
 from emporos.research.market_context.breadth import Breadth, SessionCloseTable
+from emporos.research.market_context.builder import AsOfContextBuilder, SectorMap
 from emporos.research.market_context.global_cues import (
     CUES,
     DEFAULT_CUES_LEDGER,
@@ -33,6 +36,7 @@ from emporos.research.market_context.global_cues import (
     CueFeed,
     GlobalCues,
 )
+from emporos.research.market_context.open_interest import FoOpenInterest
 from emporos.research.market_context.posture_state import (
     BreadthSection,
     FilingCounts,
@@ -46,6 +50,7 @@ NIFTY_ID = "NSE:99926000"
 VIX_ID = "NSE:99926017"
 FIRST_DAY = datetime(2024, 1, 1)
 LAST_DAY = datetime(2026, 3, 18)
+DEFAULT_FO_STOCK_DIR = Path.home() / ".cache" / "emporos" / "fo_stock_v1"
 DEFAULT_CLOSES_FILE = Path.home() / ".cache" / "emporos" / "market-context" / "session-closes.json"
 
 _FROM = typer.Option(FIRST_DAY, formats=["%Y-%m-%d"], help="First day.")
@@ -105,8 +110,19 @@ def research_collect_global_cues(
         raise typer.Exit(code=2)
 
 
+def build_context_builder(
+    loader: BarLoader, first: date, last: date, fo_dir: Path = DEFAULT_FO_STOCK_DIR,
+    sectors: SectorMap | None = None,
+) -> AsOfContextBuilder:  # fmt: skip
+    """The per-event context over real bars, with F&O open interest from the stock bhavcopy."""
+    series = BarSeriesCache(loader, first, last)
+    return AsOfContextBuilder(
+        series, NIFTY_ID, VIX_ID, sectors or SectorMap({}), FoOpenInterest(FoDayStore(fo_dir))
+    )
+
+
 def build_posture_inputs(
-    loader: BarLoader, store: ParquetEventStore, cues_dir: Path, feed: CueFeed,
+    loader: BarLoader, store: EventStore, cues_dir: Path, feed: CueFeed,
     names: dict[str, str], first: date, last: date, closes_file: Path = DEFAULT_CLOSES_FILE,
 ) -> NumericPostureInputs:  # fmt: skip
     """The posture inputs over real bars, real events and the collected cues."""
