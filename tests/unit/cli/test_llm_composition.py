@@ -12,7 +12,7 @@ from emporos.cli.llm_commands import prompts_hash
 from emporos.cli.llm_composition import LlmStack, declared_prices
 from emporos.core.config import Settings
 from emporos.eventtrader.llm.client import LlmRequest
-from emporos.eventtrader.llm.http_clients import GATEWAY_MODEL, OPENAI_MODEL
+from emporos.eventtrader.llm.http_clients import MINI_MODEL, OPENAI_MODEL
 from emporos.eventtrader.llm.journal import JsonlJournal, NotRecorded, Recording
 from emporos.eventtrader.variants import VARIANTS, variant
 from emporos.jev.leakage import JevLeakageError
@@ -22,14 +22,14 @@ D = Decimal
 
 def request(day: int = 2, year: int = 2024) -> LlmRequest:
     return LlmRequest(
-        "triage", GATEWAY_MODEL, "triage-v1", "h", "sys", "{}", 50,
+        "triage", MINI_MODEL, "triage-v1", "h", "sys", "{}", 50,
         datetime(year, 3, day, 6, tzinfo=UTC),
     )  # fmt: skip
 
 
 def stack(tmp_path: Path, *, record: bool = False) -> LlmStack:
     return LlmStack(
-        Settings(_env_file=None, VERCEL_GATEWAY_KEY="k" if record else None),  # type: ignore[call-arg]
+        Settings(_env_file=None),  # type: ignore[call-arg]
         tmp_path / "j.jsonl", declared_prices(), record=record, mini_ceiling_usd=D(1),
     )  # fmt: skip
 
@@ -38,7 +38,8 @@ def test_the_prices_are_the_declarations() -> None:
     prices = declared_prices()
 
     assert prices.usd_inr == D("88.00")
-    assert prices.cost_usd(GATEWAY_MODEL, 1_000_000, 1_000_000) == D("0.75")
+    assert prices.cost_usd(MINI_MODEL, 1_000_000, 1_000_000) == D("0.75")
+    assert MINI_MODEL == "gpt-4o-mini-2024-07-18"
     assert prices.cost_usd(OPENAI_MODEL, 1_000_000, 1_000_000) == D("12.50")
 
 
@@ -49,14 +50,14 @@ async def test_replay_answers_from_the_journal_counts_the_tokens_and_never_calls
         Recording(
             request().request_hash,
             "triage",
-            GATEWAY_MODEL,
+            MINI_MODEL,
             "triage-v1",
             "h",
             "t",
             "{}",
             100,
             10,
-            GATEWAY_MODEL,
+            MINI_MODEL,
         )
     )
     s = stack(tmp_path)
@@ -77,10 +78,11 @@ async def test_the_date_guard_stands_in_front_of_the_journal(tmp_path: Path) -> 
         await stack(tmp_path).mini().complete(request(year=2023))
 
 
-def test_recording_needs_the_gateway_key(tmp_path: Path) -> None:
+def test_recording_needs_the_openai_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     from emporos.core.errors import ConfigurationError
 
-    with pytest.raises(ConfigurationError, match="VERCEL_GATEWAY_KEY"):
+    with pytest.raises(ConfigurationError, match="OPENAI_API_KEY"):
         LlmStack(
             Settings(_env_file=None), tmp_path / "j", declared_prices(), record=True,  # type: ignore[call-arg]
             mini_ceiling_usd=D(1),

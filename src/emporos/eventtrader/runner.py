@@ -15,7 +15,7 @@ orders the steps and applies the rules that are not a component's to bend:
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from decimal import Decimal
@@ -149,6 +149,7 @@ class VariantRunner:
         bootstrap_paths: int = 10_000,
         window: DevWindow = DEV_WINDOW,
         calls: CallMeter | None = None,
+        prefiltered: Mapping[str, int] | None = None,
     ) -> None:
         self._identity, self._decider, self._engines = identity, decider, engines
         self._context = CachedContext(context)
@@ -157,6 +158,7 @@ class VariantRunner:
         self._concurrency, self._control_runs = concurrency, control_runs
         self._bootstrap = LossBootstrap(paths=bootstrap_paths)
         self._window, self._calls = window, calls
+        self._prefiltered = dict(prefiltered or {})
 
     async def run(self, events: Sequence[MarketEvent], with_control: bool = True) -> VariantOutcome:
         self._window.check(events, self._sessions)
@@ -181,7 +183,7 @@ class VariantRunner:
         baseline, rule = await self._baseline(events, decided)
         report = VariantReport(
             self._identity, result, benchmark, adverse, p_loss, tuple(bars), control, baseline,
-            rule, hits, fresh,
+            rule, hits, fresh, self._prefiltered,
         )  # fmt: skip
         return VariantOutcome(report, decided)
 

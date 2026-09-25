@@ -14,13 +14,16 @@ from pathlib import Path
 
 import typer
 
-from emporos.cli.llm_composition import DevData, LlmStack, declared_prices
+from emporos.cli.llm_composition import DAILY_TOKEN_CAP, DevData, LlmStack, declared_prices
 from emporos.cli.posture_commands import build_posture_inputs
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.eventtrader.estimate import estimate_run
 from emporos.eventtrader.events import MarketEvent
+from emporos.eventtrader.llm.http_clients import MINI_MODEL
 from emporos.eventtrader.posture import PosturePlanner
+from emporos.eventtrader.prefilter import CategoryPreFilter
 from emporos.eventtrader.replay.report import (
     LlmLedger,
     VariantIdentity,
@@ -39,7 +42,6 @@ from emporos.eventtrader.stages.prompts import (
     TAPE_V1,
     TRIAGE_V1,
 )
-from emporos.eventtrader.stages.stages import TriageStage
 from emporos.eventtrader.variants import VariantSpec, variant
 from emporos.jev.prompts import JevPrompt
 from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, ParquetEventStore
@@ -75,27 +77,27 @@ def _window(first: date, last: date, store: ParquetEventStore) -> list[MarketEve
     return list(store.events_between(start, end))
 
 
-def _estimate_line(name: str, stack: LlmStack, data: DevData, named: list[MarketEvent]) -> str:
+PASS_RATES = (0.10, 0.20, 0.30)  # the share of events triage passes on: unknown until asked
+
+
+def _estimate_lines(stack: LlmStack, data: DevData, kept: list[MarketEvent]) -> list[str]:
     from emporos.eventtrader.replay.engine import decision_input
 
-    stage = TriageStage(stack.mini(), "x")  # only its renderer is used
-    chars = 0
-    for event in named:
-        user = json.dumps(stage.render(decision_input(event, data.context)), sort_keys=True)
-        chars += len(TRIAGE_V1.system_text) + len(user)
-    tokens_in = chars // CHARS_PER_TOKEN
-    tokens_out = len(named) * TRIAGE_OUTPUT_TOKENS
-    prices = declared_prices()
-    mini = next(iter(prices.prices))
-    usd = prices.cost_usd(mini, tokens_in, tokens_out)
-    per_event = usd / len(named) if named else Decimal(0)
-    later = per_event * LATER_STAGE_CALLS
-    return (
-        f"Dev {name}: {len(named)} triage calls, ~{tokens_in / 1e6:.1f}M tokens in and "
-        f"~{tokens_out / 1e6:.1f}M out, about USD {usd:.2f} at the declared mini prices; each "
-        f"event passing triage adds {LATER_STAGE_CALLS} calls (about USD {later:.4f} at triage's "
-        "size); a repeat run is answered from the journal"
-    )
+    items = [decision_input(event, data.context) for event in kept]
+    lines = []
+    for e in estimate_run(items, len(data.sessions), PASS_RATES, declared_prices(), MINI_MODEL):
+        lines.append(f"if triage passes {e.pass_rate:.0%} of {len(items)} events (v1-v5 together):")
+        lines += [
+            f"  {s.name:<36} {s.calls:>7} calls {s.tokens_in / 1e6:>6.2f}M in "
+            f"{s.tokens_out / 1e6:>5.2f}M out  USD {s.usd:.3f}"
+            for s in e.stages
+        ]
+        lines.append(
+            f"  TOTAL {e.calls} calls, USD {e.usd:.2f} on normal calls, USD {e.usd_batch:.2f} "
+            f"through the Batch API (half price); ceiling USD 3.00, "
+            f"{'WITHIN' if e.usd <= 3 else 'OVER'} on normal calls"
+        )
+    return lines
 
 
 _VARIANT = typer.Argument(..., help="v1_t60, v2_t75, v3_nopanel_t60, ...")
@@ -108,7 +110,10 @@ _JOURNAL = typer.Option(DEFAULT_JOURNAL, help="The call journal (local, not git)
 _REPORTS = typer.Option(DEFAULT_REPORTS, help="Where the report and CSVs go.")
 _LEDGER = typer.Option(DEFAULT_LEDGER, help="The counted-looks ledger.")
 _CONCURRENCY = typer.Option(8, min=1, help="Calls in flight.")
-_CEILING = typer.Option(25.0, help="A runaway guard: a hard USD ceiling on mini's calls.")
+_CEILING = typer.Option(
+    25.0, help="A runaway guard: a USD ceiling at list price on ALL Dev mini calls, across runs."
+)
+_DAILY = typer.Option(DAILY_TOKEN_CAP, min=1, help="Tokens per UTC day; pauses past it.")
 _RUNS = typer.Option(1000, min=1, help="Coin-flip control runs.")
 _REPLAY = typer.Option(False, help="Answer only from the journal; never call.")
 _ESTIMATE = typer.Option(False, help="Print the size of the run and stop.")
@@ -133,6 +138,7 @@ def research_run_llm_variant(
     estimate_only: bool = _ESTIMATE,
     no_options: bool = _NO_OPTIONS,
     cues: Path = _CUES,
+    daily_token_cap: int = _DAILY,
 ) -> None:
     """Run one Dev variant: decide, replay, report; one counted look."""
     try:
@@ -155,6 +161,7 @@ def research_run_llm_variant(
                 estimate_only,
                 no_options,
                 cues,
+                daily_token_cap,
             )  # fmt: skip
         )
     except (EmporosError, ValueError, OSError, KeyError, RunIncomplete) as error:
@@ -167,6 +174,7 @@ async def _run(
     spec: VariantSpec, first: date, last: date, events_dir: Path, snapshot: str, stock_fo: Path,
     journal: Path, reports: Path, ledger: Path, concurrency: int, ceiling: Decimal,
     control_runs: int, replay_only: bool, estimate_only: bool, no_options: bool, cues: Path,
+    daily_token_cap: int,
 ) -> None:  # fmt: skip
     if last > LAST_DAY or first < FIRST_DAY:
         raise ValueError("Dev is 2024-01-01..2024-12-31: the vault seals what is after")
@@ -176,19 +184,25 @@ async def _run(
     data = DevData(Settings.default(), first, last, stock_fo, chains=not no_options)
     stack = LlmStack(
         Settings.default(), journal, declared_prices(), record=not (replay_only or estimate_only),
-        mini_ceiling_usd=ceiling,
+        mini_ceiling_usd=ceiling, daily_token_cap=daily_token_cap, log=typer.echo,
     )  # fmt: skip
     events = _window(first, last, ParquetEventStore(events_dir))
     named = [e for e in events if e.instrument_id in data.instrument_ids]
+    kept, dropped = CategoryPreFilter().split(named)
     typer.echo(
         f"events {len(events)}; skipped {len(events) - len(named)} with no instrument or outside "
         f"D1 research names; snapshot {snapshot} = {events_digest(events)}"
     )
+    typer.echo(
+        f"pre-filter drops {sum(dropped.values())} routine filings before triage "
+        f"({dict(dropped.most_common())}); {len(kept)} events go on"
+    )
     if estimate_only:
-        typer.echo(_estimate_line(spec.name, stack, data, named))
+        for line in _estimate_lines(stack, data, kept):
+            typer.echo(line)
         return
     identity = VariantIdentity(
-        HYPOTHESIS, spec.name, first, last, prompts_hash(), ("openai/gpt-4o-mini",),
+        HYPOTHESIS, spec.name, first, last, prompts_hash(), (MINI_MODEL,),
         f"{snapshot}:{events_digest(events)}",
     )  # fmt: skip
     schedule = None
@@ -211,10 +225,9 @@ async def _run(
     runner = VariantRunner(
         identity, stack.pipeline(spec), data.engines(), data.context, stack.scopes,
         declared_prices(), data.sessions, spec.triage_threshold, schedule, concurrency,
-        control_runs,
-        calls=stack,
+        control_runs, calls=stack, prefiltered=dict(dropped),
     )  # fmt: skip
-    outcome = await runner.run(named)
+    outcome = await runner.run(kept)
     report = outcome.report
     files = {
         "report": str(reports / f"{spec.name}-report.txt"),
@@ -227,9 +240,11 @@ async def _run(
     Path(files["report"]).write_text(text, encoding="utf-8")
     write_trades_csv(Path(files["trades"]), report.result.trades)
     write_daily_csv(Path(files["daily"]), report.benchmark, report.adverse)
-    Path(files["summary"]).write_text(json.dumps(summary_of(report), indent=1), encoding="utf-8")
+    summary = {**summary_of(report), "tokens_by_day": stack.token_usage()}
+    Path(files["summary"]).write_text(json.dumps(summary, indent=1), encoding="utf-8")
     added = LlmLedger(ledger).append(report, SystemClock().now(), files)
     typer.echo(text)
+    typer.echo(f"tokens by UTC day (input + output): {stack.token_usage()}")
     typer.echo(f"ledger: {'one look added' if added else 'already counted'} ({ledger})")
 
 

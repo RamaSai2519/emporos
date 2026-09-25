@@ -61,6 +61,7 @@ def summary_of(report: VariantReport) -> dict[str, Any]:
         ],
         "fresh_calls": report.fresh_calls,
         "journal_hits": report.journal_hits,
+        "prefiltered": dict(report.prefiltered),
     }
 
 

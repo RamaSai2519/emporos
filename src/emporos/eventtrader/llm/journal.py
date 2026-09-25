@@ -8,10 +8,12 @@ exactly what the model said."""
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from emporos.core.clock import Clock, SystemClock
 from emporos.core.errors import DefinitiveError
 from emporos.eventtrader.llm.client import LlmClient, LlmReply, LlmRequest
 
@@ -41,6 +43,7 @@ class Recording:
     tokens_in: int
     tokens_out: int
     answered_by: str
+    recorded_at: str = ""  # when the call was made (UTC, ISO): the daily token cap counts by it
 
     def reply(self) -> LlmReply:
         return LlmReply(self.text, self.tokens_in, self.tokens_out, self.answered_by, True)
@@ -48,6 +51,8 @@ class Recording:
 
 class LlmJournal(Protocol):
     def get(self, request_hash: str) -> Recording | None: ...
+
+    def recordings(self) -> Iterable[Recording]: ...
 
     def append(self, recording: Recording) -> bool:
         """True when written; False when the question was already recorded (the first stands)."""
@@ -66,6 +71,9 @@ class InMemoryJournal:
             return False
         self._records[recording.request_hash] = recording
         return True
+
+    def recordings(self) -> Iterable[Recording]:
+        return list(self._records.values())
 
     def __len__(self) -> int:
         return len(self._records)
@@ -101,6 +109,9 @@ class JsonlJournal:
                         self._records[record.request_hash] = record
         return self._records
 
+    def recordings(self) -> Iterable[Recording]:
+        return list(self._load().values())
+
     def __len__(self) -> int:
         return len(self._load())
 
@@ -111,10 +122,18 @@ class JournaledClient:
     `NotRecorded`, so an incomplete recording is visible and is never papered over with a live
     call."""
 
-    def __init__(self, inner: LlmClient | None, journal: LlmJournal, *, record: bool) -> None:
+    def __init__(
+        self,
+        inner: LlmClient | None,
+        journal: LlmJournal,
+        *,
+        record: bool,
+        clock: Clock | None = None,
+    ) -> None:
         if record and inner is None:
             raise ValueError("record mode needs a client to record from")
         self._inner, self._journal, self._record = inner, journal, record
+        self._clock = clock or SystemClock()
         self.hits = 0  # answered from the journal
         self.fresh = 0  # sent to the model
 
@@ -139,6 +158,7 @@ class JournaledClient:
                 reply.tokens_in,
                 reply.tokens_out,
                 reply.model,
+                self._clock.now().isoformat(),
             )  # fmt: skip
         )
         return reply

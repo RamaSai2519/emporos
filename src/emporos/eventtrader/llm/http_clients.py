@@ -19,6 +19,7 @@ from emporos.eventtrader.llm.client import LlmReply, LlmRequest
 __all__ = [
     "GATEWAY_MODEL",
     "GATEWAY_URL",
+    "MINI_MODEL",
     "OPENAI_MODEL",
     "OPENAI_URL",
     "LlmTransportError",
@@ -28,6 +29,7 @@ __all__ = [
 GATEWAY_URL = "https://ai-gateway.vercel.sh"
 GATEWAY_MODEL = "openai/gpt-4o-mini"
 OPENAI_URL = "https://api.openai.com"
+MINI_MODEL = "gpt-4o-mini-2024-07-18"  # Jev on OpenAI direct: a pinned snapshot, cutoff 2023-10-01
 OPENAI_MODEL = "gpt-4o-2024-08-06"  # a pinned snapshot: a moving alias could change its cutoff
 
 
@@ -48,6 +50,22 @@ class _Factory:
         return httpx.AsyncClient(
             base_url=self.base_url, timeout=httpx.Timeout(self.timeout_seconds), verify=True
         )
+
+
+MAX_BACKOFF_SECONDS = 60.0
+
+
+def _retry_after(response: httpx.Response) -> float | None:
+    """The server's own wait (seconds) on a rate limit, when it says one."""
+    try:
+        return float(response.headers["retry-after"])
+    except (KeyError, ValueError):
+        return None
+
+
+def _backoff(attempt: int, retry_after: float | None) -> float:
+    """2, 4, 8 ... seconds, or what the server asked for if that is longer; never over a minute."""
+    return float(min(MAX_BACKOFF_SECONDS, max(2.0 * 2**attempt, retry_after or 0.0)))
 
 
 def _final(status: int) -> bool:
@@ -86,12 +104,14 @@ class OpenAiCompatibleClient:
         }
         last = "no attempt"
         for attempt in range(self._attempts):
+            retry_after: float | None = None
             try:
                 async with self._clients.create() as client:
                     response = await client.post(
                         "/v1/chat/completions", json=body,
                         headers={"Authorization": f"Bearer {self._key}"},
                     )  # fmt: skip
+                retry_after = _retry_after(response)
                 response.raise_for_status()
                 return self._parse(response.json(), request)
             except (httpx.TransportError, httpx.HTTPStatusError, ValueError, KeyError) as error:
@@ -99,7 +119,7 @@ class OpenAiCompatibleClient:
                 if isinstance(error, httpx.HTTPStatusError) and _final(error.response.status_code):
                     break  # a client error will not fix itself
             if attempt < self._attempts - 1:
-                await self._sleeper.sleep(2.0 * (attempt + 1))
+                await self._sleeper.sleep(_backoff(attempt, retry_after))
         raise LlmTransportError(f"{request.stage}: {last}")
 
     @staticmethod

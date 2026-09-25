@@ -9,6 +9,8 @@ only and are never logged."""
 
 from __future__ import annotations
 
+import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -20,11 +22,13 @@ from emporos.cli.corporate_actions_commands import DEFAULT_TOKENS, research_symb
 from emporos.cli.intraday_bars import VaultedIntradayBars
 from emporos.cli.posture_commands import build_context_builder
 from emporos.cli.swing_worlds import delivery_schedule
+from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import ConfigurationError
 from emporos.eventtrader.events import ContextBuilder
-from emporos.eventtrader.llm.budget import BudgetedClient, UsdBudget
+from emporos.eventtrader.llm.budget import BudgetedClient, UsdBudget, journal_spend_usd
 from emporos.eventtrader.llm.client import LlmClient
+from emporos.eventtrader.llm.daily_cap import DailyTokenCap, TokenCappedClient, usage_by_day
 from emporos.eventtrader.llm.guards import (
     CutoffGuardedClient,
     ScopedTallies,
@@ -32,9 +36,9 @@ from emporos.eventtrader.llm.guards import (
     TokenTally,
 )
 from emporos.eventtrader.llm.http_clients import (
-    GATEWAY_MODEL,
-    GATEWAY_URL,
+    MINI_MODEL,
     OPENAI_MODEL,
+    OPENAI_URL,
     OpenAiCompatibleClient,
 )
 from emporos.eventtrader.llm.journal import JournaledClient, JsonlJournal
@@ -73,13 +77,15 @@ CONTEXT_CACHE = 200  # every D1 name and the indices: events walk across all nam
 CONTEXT_WARMUP_DAYS = 45  # calendar days of bars before the window, for the 20-session numbers
 POSITION_VALUE = Decimal(50_000)
 USD_INR = Decimal("88.00")
+DAILY_TOKEN_CAP = 9_000_000  # per UTC day, just under the 10M complimentary allowance
+RATE_LIMIT_ATTEMPTS = 6  # 2, 4, 8, 16, 32 s between them, or what the server's Retry-After says
 
 
 def declared_prices() -> PriceTable:
     """The prices the declaration fixes (USD per million tokens) and its USD/INR rate."""
     return PriceTable(
         {
-            GATEWAY_MODEL: ModelPrice(Decimal("0.15"), Decimal("0.60")),
+            MINI_MODEL: ModelPrice(Decimal("0.15"), Decimal("0.60")),
             OPENAI_MODEL: ModelPrice(Decimal("2.50"), Decimal("10.00")),
         },
         USD_INR,
@@ -98,18 +104,31 @@ class LlmStack:
         *,
         record: bool,
         mini_ceiling_usd: Decimal,
+        daily_token_cap: int = DAILY_TOKEN_CAP,
+        log: Callable[[str], None] = lambda _message: None,
     ) -> None:
         self._settings, self._prices, self._record = settings, prices, record
         self._journal = JsonlJournal(journal)
         self._mini_ceiling = mini_ceiling_usd
         self.tally, self.scopes = TokenTally(), ScopedTallies()
-        self.mini_budget = UsdBudget(mini_ceiling_usd)
+        spent = journal_spend_usd(
+            [r for r in self._journal.recordings() if r.model == MINI_MODEL], prices
+        )  # the ceiling is for ALL Dev runs, not this process
+        self.mini_budget = UsdBudget(mini_ceiling_usd, spent_usd=spent)
+        self._clock = SystemClock()
+        self.daily_cap = DailyTokenCap(
+            daily_token_cap,
+            usage_by_day(self._journal.recordings(), MINI_MODEL),
+            self._clock,
+            AsyncioSleeper(),
+            log,
+        )
         self._journaled: JournaledClient | None = None
         self._mini: LlmClient | None = None
 
     def mini(self) -> LlmClient:
-        """Jev: openai/gpt-4o-mini through the Vercel gateway. One client for the whole run, so
-        its journal counts are the run's."""
+        """Jev: gpt-4o-mini, the pinned 2024-07-18 snapshot, on OpenAI direct. One client for the
+        whole run, so its journal counts are the run's."""
         if self._mini is None:
             self._mini = self._build_mini()
         return self._mini
@@ -117,18 +136,23 @@ class LlmStack:
     def _build_mini(self) -> LlmClient:
         inner: LlmClient | None = None
         if self._record:
-            key = self._settings.vercel_gateway_key
+            key = os.environ.get("OPENAI_API_KEY")
             if not key:
-                raise ConfigurationError(
-                    "VERCEL_GATEWAY_KEY is not set (read from the environment)"
-                )
-            http = OpenAiCompatibleClient(GATEWAY_URL, key)
-            inner = BudgetedClient(http, self.mini_budget, self._prices)
-        self._journaled = JournaledClient(inner, self._journal, record=self._record)
+                raise ConfigurationError("OPENAI_API_KEY is not set (read from the environment)")
+            http = OpenAiCompatibleClient(OPENAI_URL, key, attempts=RATE_LIMIT_ATTEMPTS)
+            budgeted = BudgetedClient(http, self.mini_budget, self._prices)
+            inner = TokenCappedClient(budgeted, self.daily_cap)
+        self._journaled = JournaledClient(
+            inner, self._journal, record=self._record, clock=self._clock
+        )
         guard = CutoffGuardedClient(
-            self._journaled, KnowledgeCutoffGuard(), {GATEWAY_MODEL: _config(GATEWAY_MODEL)}
+            self._journaled, KnowledgeCutoffGuard(), {MINI_MODEL: _config(MINI_MODEL)}
         )
         return TallyingClient(guard, self.tally, self.scopes)
+
+    def token_usage(self) -> dict[str, int]:
+        """Tokens used per UTC day (the journal's and this run's)."""
+        return {d.isoformat(): n for d, n in self.daily_cap.usage().items()}
 
     @property
     def hits(self) -> int:
@@ -141,22 +165,22 @@ class LlmStack:
     def pipeline(self, spec: VariantSpec) -> DecisionPipeline:
         client = self.mini()
         panel = (
-            PanelistStage.bull(client, GATEWAY_MODEL),
-            PanelistStage.bear(client, GATEWAY_MODEL),
-            PanelistStage.tape(client, GATEWAY_MODEL),
+            PanelistStage.bull(client, MINI_MODEL),
+            PanelistStage.bear(client, MINI_MODEL),
+            PanelistStage.tape(client, MINI_MODEL),
         )
         return DecisionPipeline(
             PipelineConfig(spec.triage_threshold, panel_enabled=spec.panel),
-            TriageStage(client, GATEWAY_MODEL),
+            TriageStage(client, MINI_MODEL),
             panel,
-            JudgeStage(client, GATEWAY_MODEL),
+            JudgeStage(client, MINI_MODEL),
         )
 
     def posture_stage(self) -> PostureStage:
-        return PostureStage(self.mini(), GATEWAY_MODEL)
+        return PostureStage(self.mini(), MINI_MODEL)
 
     def triage_stage(self) -> TriageStage:
-        return TriageStage(self.mini(), GATEWAY_MODEL)
+        return TriageStage(self.mini(), MINI_MODEL)
 
 
 def _config(model: str) -> JevConfig:

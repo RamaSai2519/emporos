@@ -11,7 +11,8 @@ import csv
 import hashlib
 import json
 from collections import defaultdict
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -98,6 +99,7 @@ class VariantReport:
     baseline_rule: str = ""
     journal_hits: int = 0  # calls answered from the journal
     fresh_calls: int = 0  # calls that reached the model
+    prefiltered: Mapping[str, int] = field(default_factory=dict)  # routine filings dropped
 
     @property
     def passed(self) -> bool:
@@ -130,7 +132,8 @@ class LlmLedger:
             "control_p": report.control.p_value if report.control else None,
             "failed_checks": [bar.name for bar in report.bars if not bar.passed],
             "passed": report.passed, "journal_hits": report.journal_hits,
-            "fresh_calls": report.fresh_calls, "files": files,
+            "fresh_calls": report.fresh_calls,
+            "prefiltered": dict(report.prefiltered), "files": files,
             "recorded_at": recorded_at.isoformat(),
         }  # fmt: skip
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,6 +166,8 @@ def render_report(report: VariantReport) -> str:
         f"events {r.stats.events}; verdicts {dict(sorted(r.stats.verdicts.items()))}",
         f"skipped {dict(sorted(r.stats.skipped.items()))}",
         f"calls: {report.fresh_calls} fresh, {report.journal_hits} answered from the journal",
+        f"pre-filtered before triage {sum(report.prefiltered.values())}: "
+        f"{dict(sorted(report.prefiltered.items()))}",
         f"refused by reason {dict(sorted(r.stats.refused.items()))}",
         f"approved, not filled {dict(sorted(r.stats.no_entry.items()))}",
     ]

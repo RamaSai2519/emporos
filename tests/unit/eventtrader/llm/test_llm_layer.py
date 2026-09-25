@@ -13,7 +13,13 @@ import pytest
 
 from emporos.core.clock import FixedClock
 from emporos.core.errors import ConfigurationError
-from emporos.eventtrader.llm.budget import BudgetedClient, BudgetRefused, UsdBudget, worst_case_usd
+from emporos.eventtrader.llm.budget import (
+    BudgetedClient,
+    BudgetRefused,
+    UsdBudget,
+    journal_spend_usd,
+    worst_case_usd,
+)
 from emporos.eventtrader.llm.client import LlmReply, LlmRequest
 from emporos.eventtrader.llm.guards import CutoffGuardedClient, TallyingClient, TokenTally
 from emporos.eventtrader.llm.http_clients import (
@@ -27,6 +33,7 @@ from emporos.eventtrader.llm.journal import (
     JournaledClient,
     JsonlJournal,
     NotRecorded,
+    Recording,
 )
 from emporos.eventtrader.llm.pricing import ModelPrice, PriceTable
 from emporos.jev.config import JevConfig
@@ -131,6 +138,49 @@ class TestPricingAndBudget:
 
         assert inner.calls == 3 and budget.spent_usd <= budget.ceiling_usd
 
+    async def test_calls_in_flight_count_against_the_ceiling_so_many_at_once_cannot_overshoot(
+        self,
+    ) -> None:
+        import asyncio
+
+        class Slow:
+            async def complete(self, r: LlmRequest) -> LlmReply:
+                await asyncio.sleep(0.01)
+                return LlmReply("{}", 10, 10, r.model)
+
+        one = PRICES.cost_usd(OPENAI_MODEL, len("system text") + len('{"a":1}'), 300)
+        budget = UsdBudget(one * Decimal("2.5"))  # room for two in flight, not three
+        client = BudgetedClient(Slow(), budget, PRICES)
+
+        results = await asyncio.gather(*[client.complete(request()) for _ in range(3)],
+                                       return_exceptions=True)  # fmt: skip
+
+        assert sum(isinstance(r, BudgetRefused) for r in results) == 1
+        assert budget.reserved_usd == 0 and budget.calls == 2
+
+    async def test_a_call_that_failed_gives_its_reservation_back(self) -> None:
+        class Broken:
+            async def complete(self, r: LlmRequest) -> LlmReply:
+                raise LlmTransportError("down")
+
+        budget = UsdBudget(Decimal("1"))
+        with pytest.raises(LlmTransportError):
+            await BudgetedClient(Broken(), budget, PRICES).complete(request())
+
+        assert budget.reserved_usd == 0 and budget.spent_usd == 0
+
+    def test_the_spend_that_outlives_a_process_is_what_the_journal_holds(self) -> None:
+        def rec(h: str) -> Recording:
+            return Recording(
+                h, "s", GATEWAY_MODEL, "v", "p", "t", "{}", 1_000_000, 0, GATEWAY_MODEL
+            )
+
+        journal = InMemoryJournal()
+        journal.append(rec("a"))
+        journal.append(rec("b"))
+
+        assert journal_spend_usd(journal.recordings(), PRICES) == Decimal("0.30")
+
     def test_a_ceiling_must_be_positive(self) -> None:
         with pytest.raises(ValueError, match="positive"):
             UsdBudget(Decimal(0))
@@ -234,7 +284,12 @@ class TestGuardAndTally:
         assert tally.cost_inr(PRICES) == by_stage["judge"] + by_stage["triage"]
 
 
-def http_client(handler: object, attempts: int = 2, key: str = "sk-test") -> OpenAiCompatibleClient:
+def http_client(
+    handler: object,
+    attempts: int = 2,
+    key: str = "sk-test",
+    sleeper: AdvancingSleeper | None = None,
+) -> OpenAiCompatibleClient:
     class Factory:
         def create(self) -> httpx.AsyncClient:
             return httpx.AsyncClient(
@@ -247,7 +302,7 @@ def http_client(handler: object, attempts: int = 2, key: str = "sk-test") -> Ope
         key,
         attempts=attempts,
         factory=Factory(),
-        sleeper=AdvancingSleeper(clock),
+        sleeper=sleeper or AdvancingSleeper(clock),
     )
 
 
@@ -325,6 +380,20 @@ class TestHttpClient:
             return httpx.Response(code, json=ok_body() if code == 200 else {})
 
         assert (await http_client(handler).complete(request())).tokens_out == 30
+
+    async def test_a_rate_limit_waits_what_the_server_asks_and_backs_off_when_it_does_not(
+        self,
+    ) -> None:
+        sleeper = AdvancingSleeper(FixedClock(AS_OF))
+        replies = iter([(429, {"retry-after": "20"}), (429, {}), (429, {}), (200, {})])
+
+        def handler(r: httpx.Request) -> httpx.Response:
+            code, headers = next(replies)
+            return httpx.Response(code, json=ok_body() if code == 200 else {}, headers=headers)
+
+        await http_client(handler, attempts=6, sleeper=sleeper).complete(request())
+
+        assert sleeper.sleeps == [20.0, 4.0, 8.0]  # the server's 20 s, then 2^1 x 2 and 2^2 x 2
 
     def test_the_key_comes_from_the_caller_and_is_required(self) -> None:
         with pytest.raises(ConfigurationError, match="API key"):

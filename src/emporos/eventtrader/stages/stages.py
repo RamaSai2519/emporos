@@ -78,7 +78,10 @@ class EventInput:
 
 
 def _value(v: str | float) -> str | float:
-    return round(v, 4) if isinstance(v, float) else v
+    """Compact numbers: a prompt is billed by the token, and a fifth decimal is not information."""
+    if not isinstance(v, float):
+        return v
+    return round(v) if abs(v) >= 1000 else round(v, 2)
 
 
 class TriageStage(JsonStage[EventInput, TriageResult]):
