@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  EM-236. Starts the emporos-worker instance at 08:40 IST and stops it at 15:50 IST on weekdays so the
+  L1 quote recorder (emporos-quotes.service) runs unattended. Scheduler role: StartInstances and
+  StopInstances on that one instance, nothing else. Never touches the worker unit.
+
+Parameters:
+  InstanceId:
+    Type: String
+    Default: i-0cec4ddd7cdd5f96d
+    AllowedPattern: "^i-[0-9a-f]{8,17}$"
+    Description: The emporos-worker instance (ap-south-1).
+  State:
+    Type: String
+    Default: ENABLED
+    AllowedValues: [ENABLED, DISABLED]
+    Description: DISABLED keeps the stack and pauses both schedules (the instance is then left as it is).
+
+Resources:
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: emporos-quotes-scheduler
+      Description: Lets EventBridge Scheduler start and stop the one emporos-worker instance.
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: start-stop-the-worker-instance
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:StartInstances
+                  - ec2:StopInstances
+                Resource: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${InstanceId}
+
+  StartSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: emporos-quotes-start
+      Description: Start the emporos-worker instance at 08:40 IST, Monday to Friday.
+      State: !Ref State
+      ScheduleExpression: cron(40 8 ? * MON-FRI *)
+      ScheduleExpressionTimezone: Asia/Kolkata
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Target:
+        Arn: arn:aws:scheduler:::aws-sdk:ec2:startInstances
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: !Sub '{"InstanceIds":["${InstanceId}"]}'
+        RetryPolicy:
+          MaximumRetryAttempts: 3
+          MaximumEventAgeInSeconds: 900
+
+  StopSchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: emporos-quotes-stop
+      Description: Stop the emporos-worker instance at 15:50 IST, Monday to Friday.
+      State: !Ref State
+      ScheduleExpression: cron(50 15 ? * MON-FRI *)
+      ScheduleExpressionTimezone: Asia/Kolkata
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Target:
+        Arn: arn:aws:scheduler:::aws-sdk:ec2:stopInstances
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: !Sub '{"InstanceIds":["${InstanceId}"]}'
+        RetryPolicy:
+          MaximumRetryAttempts: 3
+          MaximumEventAgeInSeconds: 900
+
+Outputs:
+  StartSchedule:
+    Value: !Ref StartSchedule
+  StopSchedule:
+    Value: !Ref StopSchedule

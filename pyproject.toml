@@ -189,6 +189,19 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "the quotes-only process places no order and runs no strategy (EM-236)"
+type = "forbidden"
+source_modules = ["emporos.cli.quote_daemon", "emporos.broker.angelone.quote_source"]
+allow_indirect_imports = true  # the D1 manifest reader pulls research code in; direct use is barred
+forbidden_modules = [
+    "emporos.broker.angelone.adapter", "emporos.broker.paper", "emporos.execution",
+    "emporos.risk", "emporos.strategies", "emporos.session", "emporos.backtest",
+    "emporos.opportunity", "emporos.persistence.mongo", "emporos.persistence.repositories",
+    "emporos.cli.worker_composition", "emporos.cli.live_worker", "emporos.cli.live_paper_worker",
+    "pymongo",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]

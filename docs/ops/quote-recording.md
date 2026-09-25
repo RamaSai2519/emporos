@@ -43,10 +43,113 @@ and counted. Nothing goes to Mongo.
 - **Crash-safe.** Rows are written every 10 polls and at 15:30 as new files (written to a temporary
   name, then renamed). A file is never rewritten. A crash loses at most the last ten minutes; a
   restart resumes cleanly, and the new files sit beside the old.
-- It needs the worker to be running. The host is stopped when not in use, so someone has to start it
-  before 09:15 on each trading day (below). Nothing starts it by itself.
+- Unattended, it is the `emporos-quotes` unit below; alongside a paper worker it is the
+  `--record-quotes` flag. Either way something has to be running from before 09:15 IST.
 
-## Turn it on
+## Unattended recording (EM-236): apply, verify, disable
+
+Recording runs by itself every weekday: EventBridge Scheduler starts the instance at **08:40 IST** and
+stops it at **15:50 IST**; `emporos-quotes.service` starts at boot, waits for 09:15, records until
+15:30, writes the last files, uploads the day to S3 and exits. It runs `emporos worker record-quotes`,
+which is **quotes only**: no strategy, no risk engine, no execution, no Mongo, never live, and the one
+broker call it can make is the quote endpoint (a test pins that the whole day touches only login,
+quotes and logout). `emporos-worker.service` stays disabled and is not touched by any of this.
+
+What it does on its own: a weekend start logs in to nothing and exits 0; an exchange holiday (three
+polls in a row with every quote stamped an earlier day) writes and uploads nothing and exits 0, and the
+instance is stopped at 15:50 as usual; a crash mid-day restarts the recorder (new part files beside the
+old); a stop signal writes what is in memory and uploads before exiting.
+
+**IAM: no change needed.** Checked on 2026-09-25: the instance role `emporos-worker-role` already has
+`s3:PutObject`, `s3:GetObject` and `s3:ListBucket` on `emporos-cold-135808951082-ap-south-1`, and the
+host's `S3_BUCKET` parameter points at it. Files land at
+`s3://emporos-cold-135808951082-ap-south-1/quotes/date=YYYY-MM-DD/part-*.parquet`.
+
+The one-session rule: Angel One keeps one session per client code, so the recorder and the trading
+worker must not run together (each login kills the other's session). The unit skips its start while
+`emporos-worker` is active; to run the worker on a trading day, `sudo systemctl stop emporos-quotes`
+first, and pause the stop schedule (State=DISABLED below) or the instance is stopped at 15:50 under
+it. **Nobody logs in to Angel One from the dev machine between 08:30 and 16:00 IST on a weekday**: it
+would end the host's session and lose that day's quotes from that minute.
+
+### Apply (the operator, in this order)
+
+Needs credentials that can create a CloudFormation stack with a named IAM role and EventBridge
+schedules (the `journeymen` operator policy is SSM and start/stop only, so use an admin profile for
+step 2).
+
+```bash
+export AWS_REGION=ap-south-1
+export EMPOROS_INSTANCE=i-0cec4ddd7cdd5f96d
+
+# 1. Get the code onto the host (after this change is pushed to origin). Start the instance if it is
+#    stopped (production-host.md, "Start"), then, in a Session Manager shell:
+aws ssm start-session --target $EMPOROS_INSTANCE
+sudo -u emporos -H bash -c 'cd /opt/emporos/app && git pull --ff-only && /opt/emporos/.local/bin/pipenv sync'
+sudo -u emporos -H git -C /opt/emporos/app log --oneline -1      # matches what was pushed
+
+# 2. Deploy the schedule stack (from the repo checkout on your machine)
+aws cloudformation deploy --stack-name emporos-quote-recording \
+  --template-file infra/quote-recording-schedule.yaml --capabilities CAPABILITY_NAMED_IAM
+
+# 3. Install and enable the unit on the host (same session as step 1). Enabling starts nothing now.
+sudo install -m 644 /opt/emporos/app/infra/systemd/emporos-quotes.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable emporos-quotes
+systemctl is-enabled emporos-quotes emporos-worker             # enabled, disabled
+sudo -u emporos -H bash -c 'cd /opt/emporos/app && /opt/emporos/.local/bin/pipenv run emporos worker record-quotes --help'
+```
+
+If step 3 happens on a weekday before 09:15 IST you can start it at once
+(`sudo systemctl start emporos-quotes`); otherwise leave the instance to be stopped by hand and the
+schedule brings it up at the next 08:40.
+
+### Verify
+
+```bash
+aws scheduler get-schedule --name emporos-quotes-start --query '[State,ScheduleExpression,ScheduleExpressionTimezone]'
+aws scheduler get-schedule --name emporos-quotes-stop  --query '[State,ScheduleExpression,ScheduleExpressionTimezone]'
+```
+
+On the first trading morning (about 08:50 IST, over Session Manager):
+
+```bash
+systemctl status emporos-quotes                     # active (running); waiting for 09:15 is normal
+journalctl -u emporos-quotes -f                     # no errors; "quote recorder rate limited" only occasionally
+sudo -u emporos -H bash -c 'cd /opt/emporos/app && /opt/emporos/.local/bin/pipenv run emporos quotes summary'
+```
+
+After 15:50 the instance is stopped. From your machine, check the day landed:
+
+```bash
+aws s3 ls s3://emporos-cold-135808951082-ap-south-1/quotes/date=$(date +%F)/ | wc -l    # 37 or 38 files
+```
+
+A healthy day is in "Check it is working" above. `journalctl -u emporos-quotes` ends with
+`quote recording day recorded: RecorderCounters(...)` and `quote upload: DayUpload(uploaded=N ...)`.
+A holiday reads `day holiday` and uploads 0. An `upload_failed` above 0 exits with status 2 and the
+unit retries; a re-run sends only what is missing.
+
+### Disable, pause, remove
+
+```bash
+# Pause the schedules (the instance stays as it is); resume with State=ENABLED
+aws cloudformation deploy --stack-name emporos-quote-recording \
+  --template-file infra/quote-recording-schedule.yaml --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides State=DISABLED
+
+# Stop the recorder on the host and keep it from starting at boot
+sudo systemctl disable --now emporos-quotes
+
+# Remove everything (the schedules and their role); the recorded files stay on the host and in S3
+aws cloudformation delete-stack --stack-name emporos-quote-recording
+sudo systemctl disable --now emporos-quotes && sudo rm /etc/systemd/system/emporos-quotes.service && sudo systemctl daemon-reload
+```
+
+Cost: the instance now runs about 7 hours on each weekday (about $0.02 an hour, roughly $3 a month)
+instead of being stopped, including exchange holidays.
+
+## Turn it on (with a paper worker)
 
 The flag exists on both worker commands: `emporos worker run --record-quotes` (paper) and
 `emporos worker live --record-quotes`. Options: `--quotes-dir PATH` (default `data/quotes`) and
@@ -96,7 +199,9 @@ two-sided book share above 95% and a median spread of a few basis points (a few 
 
 ## Getting the files off the host
 
-The files are local data and are not to be committed. The host has no SSH, so use a presigned upload:
+Unattended days are uploaded to S3 by the unit itself (above). Download a month with
+`aws s3 sync s3://emporos-cold-135808951082-ap-south-1/quotes/ data/quotes/`. For files from a
+manual run, use a presigned upload:
 from a machine with the `journeymen` credentials create a presigned PUT for a bucket you own, run
 the upload on the host with `curl -T`, and download from S3:
 
@@ -121,11 +226,7 @@ loses at most ten minutes of rows.
 
 ## What is not done, and needs the operator
 
-- **Nothing starts the host or the worker by itself.** Recording needs a start each trading day. An
-  EventBridge schedule that starts the instance around 08:45 IST, a systemd timer for the worker unit
-  and a stop after 15:45 would make it unattended; that changes the "stopped when not in use" cost
-  stance of the host, so it is not built.
-- The paper worker also needs Atlas (its journals). That is unchanged by this change.
+- The stack and the unit are built and tested in the repository; **the operator applies them** (above).
 - Holiday detection is by the exchange timestamp of each quote, not a calendar.
 - Which holdout names are recorded does not decide what research may read: the D1 seeded holdout
   rule still applies to any analysis of these files.

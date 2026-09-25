@@ -19,6 +19,7 @@ from emporos.cli.live_launch import (
 from emporos.cli.live_paper_worker import DEFAULT_PAPER_CASH, LivePaperWorker, PaperWorkerOptions
 from emporos.cli.live_venue import AngelOneLiveVenueOpener
 from emporos.cli.live_worker import LiveWorker, LiveWorkerOptions
+from emporos.cli.quote_daemon import QuoteDaemon
 from emporos.cli.quote_recording import DEFAULT_QUOTES_DIR, d1_plan
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.worker_composition import WorkerTuning
@@ -208,3 +209,26 @@ def worker_live(
     )
     if outcome.failure:
         raise typer.Exit(code=2)
+
+
+@worker_app.command("record-quotes")
+def worker_record_quotes(
+    quotes_dir: Path = _QUOTES_DIR,
+    quote_interval: int = _QUOTE_INTERVAL,
+) -> None:
+    """Record L1 quotes for the D1 names for one day, and do nothing else. No strategy, no risk
+    engine, no execution, no orders, no Mongo, never live: it logs in to Angel One for the quote
+    endpoint only. It waits for 09:15, writes Parquet until 15:30, then uploads the day's files to
+    S3_BUCKET (when set). A weekend or an exchange holiday writes nothing and exits 0.
+    """
+    plan = d1_plan(quotes_dir, quote_interval)
+    daemon = QuoteDaemon(Settings.default(), plan, SystemClock(), AsyncioSleeper(), RandomJitter())
+    try:
+        result = asyncio.run(daemon.run())
+    except (EmporosError, ValueError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"quote recorder failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"day {result.outcome.value}; uploaded {result.uploaded}")
+    if result.exit_code:
+        raise typer.Exit(code=result.exit_code)

@@ -1,0 +1,33 @@
+# EM-236. Records L1 quotes for the D1 names on the production host, unattended.
+# Quotes only: `worker record-quotes` has no strategy, risk, execution, Mongo or order code in it.
+# It shares nothing with emporos-worker.service, which stays disabled and is not touched here.
+#
+# One Angel One session per client code: this unit and emporos-worker.service must never run at the
+# same time (each login kills the other's session). The condition below skips the start while the
+# worker is active; stop this unit before starting the worker (docs/ops/quote-recording.md).
+[Unit]
+Description=Emporos L1 quote recorder (quotes only, no orders)
+Requires=emporos-env.service
+After=emporos-env.service network-online.target time-sync.target
+Wants=network-online.target
+StartLimitIntervalSec=900
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=emporos
+Group=emporos
+WorkingDirectory=/opt/emporos/app
+EnvironmentFile=/run/emporos/env
+# The trading worker is up: skip quietly (a skipped unit is not a failure, so nothing restarts it).
+ExecCondition=/bin/sh -c 'if systemctl is-active --quiet emporos-worker.service; then logger -t emporos-quotes "worker active: recorder not started"; exit 1; fi'
+ExecStart=/opt/emporos/.local/bin/pipenv run emporos worker record-quotes
+Restart=on-failure
+RestartSec=30
+# SIGTERM (the 15:50 instance stop) makes the process write what it holds and upload before exit.
+TimeoutStopSec=120
+KillSignal=SIGTERM
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

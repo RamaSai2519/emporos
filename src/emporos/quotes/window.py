@@ -22,3 +22,8 @@ class RecordingWindow:
     def contains(self, moment: datetime) -> bool:
         local = moment.astimezone(IST)
         return local.weekday() < 5 and self._opens <= local.time() < self._closes
+
+    def is_after_close(self, moment: datetime) -> bool:
+        """The session has ended on this IST day, or it is a weekend (nothing to wait for)."""
+        local = moment.astimezone(IST)
+        return local.weekday() >= 5 or local.time() >= self._closes
