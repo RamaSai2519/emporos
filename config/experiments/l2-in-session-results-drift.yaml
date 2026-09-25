@@ -1,0 +1,89 @@
+# Declared BEFORE any directional data run or any scan code (EDGE_SEARCH_PLAN.md §3.1). PROFIT_PLAN.md
+# §6 Track C, assigned by the head session on 2026-09-25. Search-map lane L2 (event-driven days), cell
+# L2-in-session-results-drift. Not yet run: no direction or P&L of this cell has been seen.
+#
+# What is new. Every earlier L2 cell (EM-209, EM-213) used only results published OUTSIDE the session
+# (before 09:15 or after 15:30), which the opening auction absorbs, and SKIPPED the results published
+# DURING the session (1,447 on the D1 names for the fade cell). A mid-session release cannot be
+# pre-positioned, and slower participants read a results filing over hours rather than seconds
+# (Chan 2003, Bernard and Thomas: news-driven moves drift). The moves are often several percent, so a
+# gross above the 0.495% adverse break-even is plausible in a way it was not for a threshold on gaps.
+#
+# The rules (one scan, per name per event):
+# * Events. The first-public results filing of each results season for a D1 name (the D5 ledger,
+#   `results_by_symbol`), whose exchange dissemination time `public_at` falls between 09:15 and 14:30
+#   IST on a weekday. Filings outside that window are not part of this cell (they are the earlier
+#   cells'), and are counted as skipped.
+# * Anchor. The close of the last 5-minute bar that ENDS at or before `public_at`. An event with no
+#   such bar that day (a filing in the first minutes of the session) has no anchor and is skipped.
+# * Reaction bar. The first 5-minute bar that STARTS at or after `public_at` + 5 minutes (a
+#   dissemination buffer, so a bar that began before the release can never be the reaction bar). If
+#   that bar starts more than 10 minutes after the buffer (a hole in the bars) the event is skipped.
+# * Signal. m = reaction bar close / anchor close - 1. If |m| >= `theta_pct`, enter at the reaction
+#   bar's close through the shared IntradayScan order path (marketable limit on the next bar, 10% of
+#   bar volume, strictly-through fills; the 14:45 entry cutoff applies), hold to the 15:15 square-off,
+#   no stop, no target. Side: `continuation` trades with the sign of m; `fade` trades against it.
+#   One trade per name per event.
+# * Rs 50,000 per position. D1 universe (config/universe/d1/universe.yaml, `--universe d1`), Discovery
+#   only. Confirmation, the vault and the D1 instrument holdout are not touched.
+# 2 (theta 1.5, 3.0) x 2 (continuation, fade) = 4 arms, each a counted look.
+#
+# Why `fade` is an arm. It is the declared control, not a hedge: a first reaction to a headline
+# number may be an over-reaction (the L3 and L17 cells found first-hour over-reactions that give back),
+# and continuation and fade cannot both hold. If `fade` is the better arm, that is evidence about the
+# mechanism, and per EDGE_SEARCH_PLAN §3.7 it earns no child from this declaration: a reversal needs
+# its own declaration and rationale.
+#
+# Evidence used to design it (Discovery, D1 names, UNSIGNED: absolute magnitudes only, no direction and
+# no P&L; script kept in the session scratchpad). In-session first-public events with an anchor and a
+# reaction bar: 1,041 over 2016-2024 (43 in 2016 from October, then 154, 143, 108, 99, 130, 85, 143 and
+# 136 a year; 3,181 first-public events fall outside the window and 26 have no session bars). For
+# |m| >= 1.5%: 345 events, median |m| 2.445%, median |reaction close -> 15:15| 1.408%. For |m| >= 3.0%:
+# 114 events, median |m| 3.822%, median |reaction close -> 15:15| 1.990%. The median absolute move to
+# the close therefore clears the S1 bar of about 0.99% at Rs 50,000 at both thetas. KNOWN ISSUE, from
+# the same probe and stated now: 114 events at theta 3.0% cannot reach the S2 floor of 300 trades, so
+# the two theta-3.0 arms can inform the lane's decision on gross but cannot pass S2 on count; the
+# theta-1.5 arms have 345 events before any order fails to fill, so they are close to the floor.
+#
+# PRIOR, stated before the run: about 10%. The mechanism is documented for results announcements and
+# the moves are large, but two facts pull the other way: every gap and continuation cell in this
+# program (EM-201, EM-213) had gross at or below zero for continuation, and mid-cap spreads on a
+# results release are wide and unmeasured (D7), which the adverse scenario only approximates.
+#
+# KNOWN LIMITS, declared now: (a) D1 is today's NIFTY 100 and Midcap 150 (survivorship: the long side
+# on a name that survived is flattered, so long and short counts are reported separately); (b) the D5
+# ledger has holes (about a third of 2022 is missing, ABBOTINDIA and MCX have no events), so events
+# used per year is reported and a missing event is a missed trade, not a leaked one; (c) `public_at`
+# is the exchange's dissemination time to the minute, and a release in the same bar as another
+# release's reaction is treated independently; (d) the scan is advisory (no engine strategy to prove
+# parity against); (e) actions under 15% are not caught (quarantine only).
+family: strategy
+slug: l2-in-session-results-drift
+hypothesis: >-
+  When a D1 name's results are published during the session and the first 5-minute bar after a
+  five-minute dissemination buffer has already moved at least 1.5% (or 3.0%) from the price just
+  before the release, the move continues in the same direction until the 15:15 square-off, earning a
+  gross per trade above the adverse round-trip cost at Rs 50,000.
+economic_rationale: >-
+  A mid-session release cannot be positioned for through the opening auction, which is where the
+  earlier overnight results were absorbed. Faster participants react within minutes; slower ones (funds,
+  retail, analysts updating models) read the filing and act over hours, so the price keeps moving in
+  the direction of the news (post-earnings-announcement drift compressed into a session; Chan 2003
+  finds news-driven moves drifting, and Bernard and Thomas the slow incorporation of earnings). The
+  other side is the sellers or buyers who quote too tightly around the release and the participants who
+  act late. The fade control tests the opposite view (liquidity providers repriced too far).
+falsification: >-
+  Rejected at the first stage it fails. S1: the median absolute gross move from the entry to the exit
+  on the traded events is below 2x the mean adverse round-trip cost at Rs 50,000: INFEASIBLE. S2: net
+  t >= 3.0, at least 300 trades, net positive in at least 60% of calendar years, no instrument above
+  50% of net profit, net expectancy > 0 at benchmark costs and mean gross at least the adverse
+  break-even (about 0.495%). Fixed now, before the run: if the continuation arms' mean gross is under
+  0.25%, the lane gets no child. No other theta, no other buffer, no stop and no reversal of direction
+  is tried from this cell's output (a reversal is a new hypothesis, EDGE_SEARCH_PLAN §3.7).
+parameter_grid:
+  theta_pct: ["1.5", "3.0"]
+  direction: ["continuation", "fade"]
+feature_versions:
+  in_session_results_reaction: 1
+position_value: "50000"
+declared_at: 2026-09-25T11:50:00+05:30
