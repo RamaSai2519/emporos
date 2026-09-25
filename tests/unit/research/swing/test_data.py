@@ -1,4 +1,4 @@
-"""EM-223: the swing series and dataset, the as-of view, and the quarantine flattening."""
+"""EM-223: the swing series and dataset, the as-of view, and the artifact flattening."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
-from tests.unit.research.swing.support import QuarantineSet, dataset, series, sessions
+from tests.unit.research.swing.support import ArtifactSet, dataset, series, sessions
 
 from emporos.research.adjustments import ActionKind, AdjustmentFactor, AdjustmentLedger
 from emporos.research.swing.data import AsOfView, SwingDataset, SwingSeries
@@ -34,20 +34,20 @@ class TestSeries:
         assert s.multipliers[3:] == (Decimal(1), Decimal(1))
         assert s.raw[0].close.amount == 100  # fills still use what was traded
 
-    def test_a_quarantined_gap_is_flattened_so_no_return_contains_it(self) -> None:
+    def test_an_artifact_gap_is_flattened_so_no_return_contains_it(self) -> None:
         raw = [("100", "100"), ("100", "100"), ("140", "141"), ("141", "142"), ("142", "143")]
-        s = series(X, DAYS, raw, quarantine=QuarantineSet({X: [DAYS[2]]}))
+        s = series(X, DAYS, raw, artifacts=ArtifactSet({X: [DAYS[2]]}))
 
         closes = [b.close.amount for b in s.analysis]
         assert closes[:2] == [140, 140]  # the earlier bars now sit at the post-gap level
-        assert s.analysis[2].open.amount == closes[1]  # no gap into the quarantined session
+        assert s.analysis[2].open.amount == closes[1]  # no gap into the artifact session
         assert closes[2:] == [141, 142, 143]
         assert s.neutralised == (DAYS[2],)
         assert s.multipliers[0] == Decimal("1.4")
 
-    def test_two_quarantined_gaps_compound(self) -> None:
+    def test_two_artifact_gaps_compound(self) -> None:
         raw = [("100", "100"), ("200", "200"), ("200", "200"), ("400", "400"), ("400", "400")]
-        s = series(X, DAYS, raw, quarantine=QuarantineSet({X: [DAYS[1], DAYS[3]]}))
+        s = series(X, DAYS, raw, artifacts=ArtifactSet({X: [DAYS[1], DAYS[3]]}))
 
         assert [b.close.amount for b in s.analysis] == [400, 400, 400, 400, 400]
         assert s.neutralised == (DAYS[1], DAYS[3])
@@ -110,7 +110,7 @@ class TestAsOfView:
 
     def test_neutralised_sessions_are_visible_only_once_they_have_happened(self) -> None:
         raw = [("100", "100"), ("100", "100"), ("140", "141"), ("141", "142"), ("142", "143")]
-        d = dataset(series(X, DAYS, raw, quarantine=QuarantineSet({X: [DAYS[2]]})))
+        d = dataset(series(X, DAYS, raw, artifacts=ArtifactSet({X: [DAYS[2]]})))
 
         assert not AsOfView(d, DAYS[1]).neutralised_within(X, 5)
         assert AsOfView(d, DAYS[2]).neutralised_within(X, 5)

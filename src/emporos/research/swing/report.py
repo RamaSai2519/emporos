@@ -7,6 +7,7 @@ concentrated arms, and (A2) the reaction sessions used per year (the cell's own 
 from __future__ import annotations
 
 from collections.abc import Sequence
+from decimal import Decimal
 
 from emporos.research.swing.metrics import SwingMetrics, SwingStats
 from emporos.research.swing.runner import ArmReport, CellReport
@@ -78,6 +79,14 @@ def format_report(report: CellReport) -> list[str]:
         lines.append(f"{a.label}: {'; '.join(a.verdict.failed_checks) or 'passed every check'}")
         lines.append(
             f"  {a.note}" + ("" if a.counted else "  [already in the ledger: not recounted]")
+        )
+    lines += ["", "REAL gaps a held position went through (traded through, never zeroed):"]
+    for a in arms:
+        held = a.real_gaps_held
+        total = sum((e.pnl for e in held), Decimal(0))
+        lines.append(f"{a.label}: {len(held)} gap(s), Rs {total:,.0f} in all")
+        lines.extend(
+            f"    {e.day} {e.instrument_id} gap {e.gap:+.1%}: Rs {e.pnl:+,.0f}" for e in held
         )
     lines += ["", *report.notes]
     return lines

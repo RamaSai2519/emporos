@@ -34,6 +34,7 @@ from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
 from emporos.portfolio.fee_schedules import FeeScheduleLibrary
 from emporos.research.adjustments import DEFAULT_LEDGER, AdjustmentLedger
 from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Universe
+from emporos.research.gap_classes import GapClass
 from emporos.research.partition import DISCOVERY
 from emporos.research.results_filings import FilingLedger
 from emporos.research.scans.event_days import results_by_symbol
@@ -115,7 +116,8 @@ def research_screen_swing(
                 VaultFiles().load(),
             )
         )
-        built = SwingDatasetBuilder(bars, factors).build(
+        index = IndexSeries(bars.bars(NIFTY_50, DISCOVERY.first, DISCOVERY.last))
+        built = SwingDatasetBuilder(bars, factors, index).build(
             list(universe.instrument_ids), DISCOVERY.first, DISCOVERY.last
         )
         if built.names_without_bars:
@@ -123,9 +125,7 @@ def research_screen_swing(
                 f"no daily bars for {len(built.names_without_bars)} names "
                 f"(first: {built.names_without_bars[0]}): run build-daily-bars first"
             )
-        regime = IndexTrendRegime(
-            IndexSeries(bars.bars(NIFTY_50, DISCOVERY.first, DISCOVERY.last)), REGIME_WINDOW
-        )
+        regime = IndexTrendRegime(index, REGIME_WINDOW)
         symbols = research_symbols(manifest, tokens)
         by_instrument = _published_by_instrument(events, symbols, set(universe.instrument_ids))
         sessions: dict[str, list[date]] = defaultdict(list)
@@ -144,11 +144,13 @@ def research_screen_swing(
         label = f"{universe.universe_label}+adj-{factors.content_hash[:8]}"
         runner = SwingCellRunner(
             screen, env, CAPITAL, label, JsonlSwingLedger(ledger), DailyPnlStore(pnl_dir),
-            SystemClock().now(),
+            SystemClock().now(), built.of_class(GapClass.REAL),
         )  # fmt: skip
         typer.echo(
             f"{slug}: {len(built.dataset.instrument_ids)} names, {built.audit.sessions_checked} "
-            f"sessions, {len(built.audit.quarantined)} quarantined gaps, adjustment ledger "
+            f"sessions, gaps >= 15%: {len(built.of_class(GapClass.EXPLAINED))} explained, "
+            f"{len(built.of_class(GapClass.ARTIFACT))} artifacts flattened, "
+            f"{len(built.of_class(GapClass.REAL))} real (traded through), adjustment ledger "
             f"{len(factors)} factors, capital {CAPITAL}, delivery schedule {schedule.name} "
             f"(verified: {schedule.verified})"
         )

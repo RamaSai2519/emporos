@@ -53,6 +53,14 @@ class IndexSeries:
     def first_day(self) -> date | None:
         return self._days[0] if self._days else None
 
+    def close_to_close(self, day: date) -> Decimal | None:
+        """The index's move on session `day` (close over the previous close, minus 1), or None
+        when `day` is not one of its sessions or it has no previous one."""
+        i = bisect_right(self._days, day) - 1
+        if i < 1 or self._days[i] != day or self._closes[i - 1] <= 0:
+            return None
+        return self._closes[i] / self._closes[i - 1] - 1
+
 
 class IndexTrendRegime:
     def __init__(self, index: IndexSeries, window: int = 200) -> None:

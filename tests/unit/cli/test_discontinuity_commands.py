@@ -26,7 +26,7 @@ def manifest(path: Path, included: tuple[str, ...]) -> Path:
     return path
 
 
-def test_it_quarantines_an_unexplained_gap_and_writes_the_findings(tmp_path: Path) -> None:
+def test_it_classifies_a_gap_and_writes_the_rule_and_the_reason(tmp_path: Path) -> None:
     root = tmp_path / "derived"
     DailyBarStore(CandleCacheFiles(root)).write(
         X, [daily(date(2026, 1, 1), "1000", "1000"), daily(D2, "500", "500")]
@@ -44,12 +44,17 @@ def test_it_quarantines_an_unexplained_gap_and_writes_the_findings(tmp_path: Pat
     )  # fmt: skip
 
     assert result.exit_code == 0, result.output
-    assert "1 quarantined" in result.output
+    assert "'artifact': 1" in result.output
     document = yaml.safe_load(out.read_text(encoding="utf-8"))
     assert document["sessions_checked"] == 2
     assert [(f["instrument_id"], f["status"]) for f in document["findings"]] == [
         (X, "split_shaped")
     ]
+    (row,) = document["findings"]
+    assert row["class"] == "artifact"
+    assert "split-shaped" in row["reason"]
+    assert document["by_class"] == {"explained": 0, "real": 0, "artifact": 1}
+    assert "never zeroed or quarantined" in document["rule"]
 
 
 def test_a_missing_ledger_is_a_clean_failure(tmp_path: Path) -> None:

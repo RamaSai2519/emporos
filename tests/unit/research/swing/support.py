@@ -13,8 +13,8 @@ from emporos.domain.money import Money
 from emporos.research.adjustments import AdjustmentLedger, PriceAdjuster
 from emporos.research.swing.costs import CostScenario, SwingCostModel
 from emporos.research.swing.data import (
+    ArtifactGaps,
     AsOfView,
-    Quarantine,
     SwingDataset,
     SwingSeries,
     SwingSeriesFactory,
@@ -68,7 +68,7 @@ def series(
     days: Sequence[date],
     opens_closes: Sequence[tuple[str, str]],
     ledger: AdjustmentLedger | None = None,
-    quarantine: Quarantine | None = None,
+    artifacts: ArtifactGaps | None = None,
     volumes: Sequence[int] | None = None,
 ) -> SwingSeries:
     vols = volumes or [1000] * len(days)
@@ -77,7 +77,7 @@ def series(
         for d, (o, c), v in zip(days, opens_closes, vols, strict=True)
     ]
     adjusted = PriceAdjuster(ledger or AdjustmentLedger()).adjust(instrument_id, raw)
-    return SwingSeriesFactory(quarantine).build(adjusted)
+    return SwingSeriesFactory(artifacts).build(adjusted)
 
 
 def dataset(*all_series: SwingSeries) -> SwingDataset:
@@ -101,11 +101,11 @@ def hold(instrument_id: str, from_day: date, until_day: date) -> Scripted:
     return Scripted(lambda c: [Intent(instrument_id)] if from_day <= c.day < until_day else [])
 
 
-class QuarantineSet:
+class ArtifactSet:
     def __init__(self, pairs: Mapping[str, Sequence[date]]) -> None:
         self._pairs = {(i, d) for i, days in pairs.items() for d in days}
 
-    def is_quarantined(self, instrument_id: str, day: date) -> bool:
+    def is_artifact(self, instrument_id: str, day: date) -> bool:
         return (instrument_id, day) in self._pairs
 
 

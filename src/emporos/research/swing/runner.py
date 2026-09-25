@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 
+from emporos.research.gap_classes import GapVerdict
 from emporos.research.swing.cells import (
     AGGRESSIVE_MAX_POSITIONS,
     CellEnvironment,
@@ -24,6 +25,7 @@ from emporos.research.swing.cells import (
     arm_label,
     arm_points,
 )
+from emporos.research.swing.exposure import RealGapExposure, real_gap_exposure
 from emporos.research.swing.ledger import (
     DailyPnlStore,
     JsonlSwingLedger,
@@ -53,6 +55,7 @@ class ArmReport:
     first_entry_day: date | None
     effective_start: date | None  # the first session the arm could act on
     note: str  # the strategy's own record
+    real_gaps_held: tuple[RealGapExposure, ...]  # every real gap a held position went through
     counted: bool  # False when the identical arm was already in the ledger
 
 
@@ -75,6 +78,7 @@ class SwingCellRunner:
         ledger: JsonlSwingLedger,
         pnl: DailyPnlStore,
         now: datetime,
+        real_gaps: Sequence[GapVerdict] = (),
     ) -> None:
         self._screen = screen
         self._env = env
@@ -83,6 +87,7 @@ class SwingCellRunner:
         self._ledger = ledger
         self._pnl = pnl
         self._now = now
+        self._real_gaps = tuple(real_gaps)
 
     def run(self, cell: SwingCell, grid: Mapping[str, Sequence[str]]) -> CellReport:
         calendar = self._env.dataset.calendar
@@ -103,8 +108,18 @@ class SwingCellRunner:
                 int(point["max_positions"]),
             )  # fmt: skip
             path = self._pnl.write(identity.screen_id, outcome)
+            held = real_gap_exposure(outcome.arm, self._env.dataset, self._real_gaps)
             counted = self._ledger.record(
-                SwingRecord(identity, outcome, verdict, share, self._now, path)
+                SwingRecord(
+                    identity,
+                    outcome,
+                    verdict,
+                    share,
+                    self._now,
+                    path,
+                    len(held),
+                    sum((e.pnl for e in held), Decimal(0)),
+                )  # fmt: skip
             )
             trades = outcome.arm.trades
             first_entry = min((t.entry_day for t in trades), default=None)
@@ -119,6 +134,7 @@ class SwingCellRunner:
                     first_entry,
                     cell.effective_start(outcome.strategy, self._env),
                     cell.arm_notes(outcome.strategy),
+                    held,
                     counted,
                 )  # fmt: skip
             )

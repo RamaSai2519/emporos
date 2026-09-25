@@ -11,267 +11,454 @@ findings:
   day: '2024-11-21'
   raw_ratio: '0.8019'
   status: unexplained
+  class: real
+  reason: a large single-name move (-19.8%)
+  index_move: '-0.0052'
 - instrument_id: NSE:10738
   day: '2020-03-23'
   raw_ratio: '0.8333'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -16.7%)
+  index_move: '-0.1298'
 - instrument_id: NSE:10794
   day: '2022-05-10'
   raw_ratio: '0.1998'
   status: explained
   shape: 1/5
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0038'
 - instrument_id: NSE:11703
   day: '2020-03-23'
   raw_ratio: '0.8010'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -19.9%)
+  index_move: '-0.1298'
 - instrument_id: NSE:11915
   day: '2020-07-23'
   raw_ratio: '0.8000'
   status: unexplained
+  class: real
+  reason: a large single-name move (-20.0%)
+  index_move: '0.0074'
 - instrument_id: NSE:13786
   day: '2024-04-15'
   raw_ratio: '0.8427'
   status: unexplained
+  class: real
+  reason: a large single-name move (-15.7%)
+  index_move: '-0.0107'
 - instrument_id: NSE:14418
   day: '2018-10-01'
   raw_ratio: '0.7332'
   status: split_shaped
   shape: 3/4
+  class: artifact
+  reason: split-shaped (3/4) and the index did not move with it
+  index_move: '0.0071'
 - instrument_id: NSE:14418
   day: '2021-03-08'
   raw_ratio: '0.7553'
   status: explained
   shape: 3/4
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0012'
 - instrument_id: NSE:14977
   day: '2021-09-07'
   raw_ratio: '0.7490'
   status: explained
   shape: 3/4
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0009'
 - instrument_id: NSE:15332
   day: '2018-10-12'
   raw_ratio: '0.7131'
   status: split_shaped
   shape: 3/4
+  class: artifact
+  reason: split-shaped (3/4) and the index did not move with it
+  index_move: '0.0232'
 - instrument_id: NSE:15355
   day: '2020-08-13'
   raw_ratio: '0.7548'
   status: explained
   shape: 3/4
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0007'
 - instrument_id: NSE:1624
   day: '2018-04-05'
   raw_ratio: '0.6735'
   status: explained
   shape: 2/3
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0194'
 - instrument_id: NSE:1633
   day: '2020-01-01'
   raw_ratio: '0.5003'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0012'
 - instrument_id: NSE:1633
   day: '2020-03-23'
   raw_ratio: '1.1794'
   status: unexplained
+  class: real
+  reason: a large single-name move (+17.9%)
+  index_move: '-0.1298'
 - instrument_id: NSE:1633
   day: '2020-04-07'
   raw_ratio: '1.1547'
   status: unexplained
+  class: real
+  reason: the index moved +8.8% the same session (gap +15.5%)
+  index_move: '0.0876'
 - instrument_id: NSE:1633
   day: '2025-04-07'
   raw_ratio: '0.8300'
   status: unexplained
+  class: real
+  reason: a large single-name move (-17.0%)
+  index_move: '-0.0294'
 - instrument_id: NSE:16675
   day: '2020-09-08'
   raw_ratio: '0.1006'
   status: explained
   shape: 1/10
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0033'
 - instrument_id: NSE:17818
   day: '2020-03-23'
   raw_ratio: '0.8204'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -18.0%)
+  index_move: '-0.1298'
 - instrument_id: NSE:17869
   day: '2020-03-23'
   raw_ratio: '0.8150'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -18.5%)
+  index_move: '-0.1298'
 - instrument_id: NSE:17903
   day: '2020-03-30'
   raw_ratio: '1.1933'
   status: unexplained
+  class: real
+  reason: a large single-name move (+19.3%)
+  index_move: '-0.0438'
 - instrument_id: NSE:17963
   day: '2021-12-31'
   raw_ratio: '0.0998'
   status: explained
   shape: 1/10
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0087'
 - instrument_id: NSE:18365
   day: '2022-03-24'
   raw_ratio: '0.4992'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0013'
 - instrument_id: NSE:18921
   day: '2018-03-09'
   raw_ratio: '0.4474'
   status: explained
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0015'
 - instrument_id: NSE:18921
   day: '2020-03-23'
   raw_ratio: '0.7999'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -20.0%)
+  index_move: '-0.1298'
 - instrument_id: NSE:18921
   day: '2021-06-10'
   raw_ratio: '0.5411'
   status: unexplained
+  class: artifact
+  reason: -45.9% is larger than 25% and the index did not move
+  index_move: '0.0065'
 - instrument_id: NSE:18921
   day: '2023-12-20'
   raw_ratio: '1.1507'
   status: unexplained
+  class: real
+  reason: a large single-name move (+15.1%)
+  index_move: '-0.0161'
 - instrument_id: NSE:2029
   day: '2024-01-23'
   raw_ratio: '1.1551'
   status: unexplained
+  class: real
+  reason: a large single-name move (+15.5%)
+  index_move: '-0.0183'
 - instrument_id: NSE:21238
   day: '2018-04-18'
   raw_ratio: '0.5035'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '-0.0021'
 - instrument_id: NSE:21508
   day: '2022-01-04'
   raw_ratio: '0.5000'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0105'
 - instrument_id: NSE:21690
   day: '2018-10-01'
   raw_ratio: '0.2002'
   status: explained
   shape: 1/5
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0071'
 - instrument_id: NSE:2303
   day: '2020-03-23'
   raw_ratio: '0.8316'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -16.8%)
+  index_move: '-0.1298'
 - instrument_id: NSE:2303
   day: '2021-09-24'
   raw_ratio: '0.5026'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0017'
 - instrument_id: NSE:2475
   day: '2020-03-23'
   raw_ratio: '0.8383'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -16.2%)
+  index_move: '-0.1298'
 - instrument_id: NSE:25780
   day: '2017-04-28'
   raw_ratio: '0.1972'
   status: split_shaped
   shape: 1/5
+  class: artifact
+  reason: split-shaped (1/5) and the index did not move with it
+  index_move: '-0.0040'
 - instrument_id: NSE:25780
   day: '2017-05-02'
   raw_ratio: '4.9998'
   status: split_shaped
   shape: '5'
+  class: artifact
+  reason: split-shaped (5) and the index did not move with it
+  index_move: '0.0010'
 - instrument_id: NSE:25780
   day: '2017-10-17'
   raw_ratio: '0.2025'
   status: split_shaped
   shape: 1/5
+  class: artifact
+  reason: split-shaped (1/5) and the index did not move with it
+  index_move: '0.0004'
 - instrument_id: NSE:25780
   day: '2017-10-18'
   raw_ratio: '5.0174'
   status: split_shaped
   shape: '5'
+  class: artifact
+  reason: split-shaped (5) and the index did not move with it
+  index_move: '-0.0023'
 - instrument_id: NSE:25780
   day: '2018-10-01'
   raw_ratio: '0.1983'
   status: explained
   shape: 1/5
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0071'
 - instrument_id: NSE:25780
   day: '2018-12-03'
   raw_ratio: '0.4999'
   status: split_shaped
   shape: 1/2
+  class: artifact
+  reason: split-shaped (1/2) and the index did not move with it
+  index_move: '0.0006'
 - instrument_id: NSE:31181
   day: '2020-03-23'
   raw_ratio: '0.8035'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -19.7%)
+  index_move: '-0.1298'
 - instrument_id: NSE:3220
   day: '2021-05-26'
   raw_ratio: '0.4900'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0061'
 - instrument_id: NSE:3273
   day: '2018-01-12'
   raw_ratio: '0.2002'
   status: explained
   shape: 1/5
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0028'
 - instrument_id: NSE:3456
   day: '2019-10-29'
   raw_ratio: '1.2056'
   status: unexplained
+  class: real
+  reason: a large single-name move (+20.6%)
+  index_move: '0.0175'
 - instrument_id: NSE:3499
   day: '2020-07-28'
   raw_ratio: '0.1008'
   status: explained
   shape: 1/10
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0152'
 - instrument_id: NSE:3499
   day: '2022-07-26'
   raw_ratio: '10.1176'
   status: split_shaped
   shape: '10'
+  class: artifact
+  reason: split-shaped (10) and the index did not move with it
+  index_move: '-0.0088'
 - instrument_id: NSE:3499
   day: '2022-07-28'
   raw_ratio: '0.1023'
   status: split_shaped
   shape: 1/10
+  class: artifact
+  reason: split-shaped (1/10) and the index did not move with it
+  index_move: '0.0173'
 - instrument_id: NSE:3518
   day: '2018-04-13'
   raw_ratio: '0.5035'
   status: explained
   shape: 1/2
+  class: explained
+  reason: an exchange split/bonus explains it
+  index_move: '0.0021'
 - instrument_id: NSE:3563
   day: '2024-11-21'
   raw_ratio: '0.8248'
   status: unexplained
+  class: real
+  reason: a large single-name move (-17.5%)
+  index_move: '-0.0052'
 - instrument_id: NSE:357
   day: '2026-02-03'
   raw_ratio: '1.1518'
   status: unexplained
+  class: real
+  reason: a large single-name move (+15.2%)
+  index_move: '0.0253'
 - instrument_id: NSE:4204
   day: '2020-01-01'
   raw_ratio: '0.5553'
   status: unexplained
+  class: artifact
+  reason: -44.5% is larger than 25% and the index did not move
+  index_move: '0.0012'
 - instrument_id: NSE:4244
   day: '2020-03-23'
   raw_ratio: '0.8458'
   status: unexplained
+  class: real
+  reason: the index moved -13.0% the same session (gap -15.4%)
+  index_move: '-0.1298'
 - instrument_id: NSE:4717
   day: '2018-06-28'
   raw_ratio: '0.6618'
   status: split_shaped
   shape: 2/3
+  class: artifact
+  reason: split-shaped (2/3) and the index did not move with it
+  index_move: '-0.0077'
 - instrument_id: NSE:6066
   day: '2019-10-14'
   raw_ratio: '1.1842'
   status: unexplained
+  class: real
+  reason: a large single-name move (+18.4%)
+  index_move: '0.0032'
 - instrument_id: NSE:6066
   day: '2024-11-21'
   raw_ratio: '0.8274'
   status: unexplained
+  class: real
+  reason: a large single-name move (-17.3%)
+  index_move: '-0.0052'
 - instrument_id: NSE:6705
   day: '2024-02-01'
   raw_ratio: '0.7998'
   status: unexplained
+  class: real
+  reason: a large single-name move (-20.0%)
+  index_move: '-0.0008'
 - instrument_id: NSE:6705
   day: '2024-02-02'
   raw_ratio: '0.8000'
   status: unexplained
+  class: real
+  reason: a large single-name move (-20.0%)
+  index_move: '0.0076'
 - instrument_id: NSE:760
   day: '2019-08-20'
   raw_ratio: '0.8022'
   status: unexplained
+  class: real
+  reason: a large single-name move (-19.8%)
+  index_move: '-0.0033'
 - instrument_id: NSE:760
   day: '2019-08-21'
   raw_ratio: '0.8007'
   status: unexplained
+  class: real
+  reason: a large single-name move (-19.9%)
+  index_move: '-0.0089'
 - instrument_id: NSE:8075
   day: '2020-03-13'
   raw_ratio: '0.8497'
   status: unexplained
+  class: real
+  reason: a large single-name move (-15.0%)
+  index_move: '0.0381'
 - instrument_id: NSE:9683
   day: '2020-03-13'
   raw_ratio: '0.8455'
   status: unexplained
+  class: real
+  reason: a large single-name move (-15.5%)
+  index_move: '0.0381'
+rule: A gap the ledger explains is explained. Otherwise it is REAL when the NIFTY 50 close-to-close move that session has
+  the gap's sign and at least half its size; else an ARTIFACT (neutralised) when it is split-shaped or larger than 25%; else
+  REAL. Real gaps are traded through, never zeroed or quarantined (research.gap_classes).
+by_class:
+  explained: 19
+  real: 29
+  artifact: 12

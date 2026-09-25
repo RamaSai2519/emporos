@@ -2,13 +2,14 @@
 
 `SwingSeries` is one instrument's daily bars twice over, session for session: the RAW bars (the
 prices the exchange traded at: what a fill uses) and the ANALYSIS bars (adjusted for the ledger's
-splits and bonuses, and with any quarantined gap flattened: what a signal and a valuation read).
+splits and bonuses, and with any artifact gap flattened: what a signal and a valuation read).
 `multiplier[i]` is analysis price over raw price on session i, so a raw price is
 `analysis / multiplier` and a whole-share position keeps its value across an ex-date.
 
-A quarantined session (a >=15% open gap nothing explains) is not traded through: its gap is removed
-from the analysis series as if it were an unrecorded split, so no return in the series contains it.
-That costs a genuine move if it was one; it never adds a false one. The count is reported.
+An ARTIFACT session (a >= 15% open gap that is a fetch-chunk boundary of the broker's history, not a
+move: see `research.gap_classes`) has its gap removed from the analysis series as if it were an
+unrecorded split, so no return in the series contains it, and a signal's lookback never sees a
+fake jump. A REAL gap is never passed to this class: it stays in the series and is traded through.
 
 `AsOfView` is the only way a strategy sees prices: bars up to and including the decision session,
 with no argument that could name a later one.
@@ -28,11 +29,11 @@ from emporos.domain.candles import Candle
 from emporos.domain.money import Money
 from emporos.research.adjustments import AdjustedSeries
 
-__all__ = ["AsOfView", "Quarantine", "SwingDataset", "SwingSeries", "SwingSeriesFactory"]
+__all__ = ["AsOfView", "ArtifactGaps", "SwingDataset", "SwingSeries", "SwingSeriesFactory"]
 
 
-class Quarantine(Protocol):
-    def is_quarantined(self, instrument_id: str, day: date) -> bool: ...
+class ArtifactGaps(Protocol):
+    def is_artifact(self, instrument_id: str, day: date) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -42,7 +43,7 @@ class SwingSeries:
     raw: tuple[Candle, ...]
     analysis: tuple[Candle, ...]
     multipliers: tuple[Decimal, ...]  # analysis / raw, per session
-    neutralised: tuple[date, ...]  # quarantined sessions whose gap was flattened
+    neutralised: tuple[date, ...]  # artifact sessions whose gap was flattened
 
     def __post_init__(self) -> None:
         sizes = {len(self.days), len(self.raw), len(self.analysis), len(self.multipliers)}
@@ -62,10 +63,10 @@ class SwingSeries:
 
 
 class SwingSeriesFactory:
-    """`AdjustedSeries` and a quarantine to a `SwingSeries`."""
+    """`AdjustedSeries` and the artifact gaps to a `SwingSeries`."""
 
-    def __init__(self, quarantine: Quarantine | None = None) -> None:
-        self._quarantine = quarantine
+    def __init__(self, artifacts: ArtifactGaps | None = None) -> None:
+        self._artifacts = artifacts
 
     def build(self, adjusted: AdjustedSeries) -> SwingSeries:
         raw, analysis = adjusted.raw, adjusted.adjusted
@@ -75,9 +76,9 @@ class SwingSeriesFactory:
         days = tuple(bar.ts.astimezone(IST).date() for bar in raw)
         scales = [Decimal(1)] * len(raw)  # what each earlier bar is multiplied by, cumulatively
         flattened: list[date] = []
-        if self._quarantine is not None:
+        if self._artifacts is not None:
             for i in range(len(raw) - 1, 0, -1):
-                if self._quarantine.is_quarantined(instrument_id, days[i]):
+                if self._artifacts.is_artifact(instrument_id, days[i]):
                     gap = analysis[i].open.amount / analysis[i - 1].close.amount
                     flattened.append(days[i])
                     for j in range(i):
@@ -173,7 +174,7 @@ class AsOfView:
         return series.analysis[max(0, end + 1 - sessions) : end + 1]
 
     def neutralised_within(self, instrument_id: str, sessions: int) -> bool:
-        """Whether a quarantined gap was flattened in the name's last `sessions` bars."""
+        """Whether an artifact gap was flattened in the name's last `sessions` bars."""
         series = self._dataset.series(instrument_id)
         end = series.last_index_on_or_before(self._day)
         if end is None:

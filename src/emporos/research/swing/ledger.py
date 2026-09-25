@@ -63,6 +63,8 @@ class SwingRecord:
     neighbour_share: float | None
     recorded_at: datetime
     pnl_file: str
+    real_gaps_held: int = 0
+    real_gap_pnl: Decimal = Decimal(0)
 
     def as_document(self) -> dict[str, object]:
         i, o = self.identity, self.outcome
@@ -101,6 +103,8 @@ class SwingRecord:
             "passed": self.verdict.passed,
             "failed_checks": list(self.verdict.failed_checks),
             "pnl_file": self.pnl_file,
+            "real_gaps_held": self.real_gaps_held,
+            "real_gap_pnl": str(self.real_gap_pnl),
             "recorded_at": self.recorded_at.isoformat(),
         }
 

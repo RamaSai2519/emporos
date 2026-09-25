@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 from tests.unit.research.swing.support import (
     ZERO_SCHEDULE,
-    QuarantineSet,
+    ArtifactSet,
     Scripted,
     dataset,
     free_costs,
@@ -95,7 +95,7 @@ class TestOnePosition:
         del data
 
 
-class TestSplitsAndQuarantine:
+class TestSplitsAndArtifacts:
     def test_a_split_changes_the_share_count_and_not_the_value(self) -> None:
         ledger = AdjustmentLedger(
             [AdjustmentFactor(X, DAYS[3], Decimal("0.5"), ActionKind.SPLIT, "s")]
@@ -110,9 +110,9 @@ class TestSplitsAndQuarantine:
         assert trade.quantity == 100  # bought as 100 raw shares
         assert trade.net_pnl == 3200
 
-    def test_a_quarantined_gap_is_not_earned(self) -> None:
+    def test_an_artifact_gap_is_not_earned(self) -> None:
         raw = [("100", "100"), ("100", "100"), ("140", "141"), ("141", "142"), ("142", "143")]
-        data = dataset(series(X, DAYS, raw, quarantine=QuarantineSet({X: [DAYS[2]]})))
+        data = dataset(series(X, DAYS, raw, artifacts=ArtifactSet({X: [DAYS[2]]})))
 
         run = SwingSimulator(data, hold(X, DAYS[0], DAYS[4]), config(), free_costs()).run()
 

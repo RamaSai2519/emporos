@@ -8,7 +8,7 @@ Nothing here touches the network or a database."""
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 import typer
@@ -25,8 +25,17 @@ from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
 from emporos.research.adjustments import DEFAULT_LEDGER, AdjustmentLedger
 from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Manifest
 from emporos.research.discontinuities import DiscontinuityAudit, DiscontinuityStatus
+from emporos.research.gap_classes import GapClass, GapClassifier
 from emporos.research.partition import CONFIRMATION, DISCOVERY
+from emporos.research.swing.regime import IndexSeries
 
+NIFTY_50 = "NSE:99926000"
+RULE = (
+    "A gap the ledger explains is explained. Otherwise it is REAL when the NIFTY 50 close-to-close "
+    "move that session has the gap's sign and at least half its size; else an ARTIFACT "
+    "(neutralised) when it is split-shaped or larger than 25%; else REAL. Real gaps are traded "
+    "through, never zeroed or quarantined (research.gap_classes)."
+)
 DEFAULT_REPORT = Path("docs/research/profit/discontinuities.yaml")
 
 _MANIFEST = typer.Option(DEFAULT_MANIFEST, help="The committed D1 universe manifest.")
@@ -61,8 +70,20 @@ def research_audit_discontinuities(
         report = DiscontinuityAudit(factors).audit_all(
             (i, _daily_bars(reader, i)) for i in universe.included
         )
+        index = IndexSeries(_daily_bars(reader, NIFTY_50))
+        classifier = GapClassifier(index)
+        verdicts = {(f.instrument_id, f.day): classifier.classify(f) for f in report.findings}
         out.parent.mkdir(parents=True, exist_ok=True)
         document = report.to_document(factors.content_hash)
+        document["rule"] = RULE
+        document["by_class"] = {
+            c.value: sum(1 for v in verdicts.values() if v.gap_class is c) for c in GapClass
+        }
+        for row in document["findings"]:
+            verdict = verdicts[(row["instrument_id"], date.fromisoformat(row["day"]))]
+            row["class"] = verdict.gap_class.value
+            row["reason"] = verdict.reason
+            row["index_move"] = None if verdict.index_move is None else f"{verdict.index_move:.4f}"
         out.write_text(yaml.safe_dump(document, sort_keys=False, width=120), encoding="utf-8")
     except (EmporosError, ValueError, OSError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
@@ -73,5 +94,5 @@ def research_audit_discontinuities(
         f"{report.sessions_checked} sessions over {len(universe.included)} names, "
         f"{len(report.findings)} gaps >=15%: "
         + ", ".join(f"{status.value} {counts[status]}" for status in DiscontinuityStatus)
-        + f"; {len(report.quarantined)} quarantined; written to {out}"
+        + f"; by class {document['by_class']}; written to {out}"
     )

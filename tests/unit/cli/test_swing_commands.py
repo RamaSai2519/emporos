@@ -71,6 +71,8 @@ def test_it_screens_every_arm_and_records_each_once(tmp_path: Path) -> None:
     assert "net return per calendar year" in result.output
     assert "P(drawdown>=30%)" in result.output
     assert "regime defined from" in result.output
+    assert "REAL gaps a held position went through" in result.output
+    assert "real (traded through)" in result.output
 
 
 def test_running_it_again_does_not_add_looks(tmp_path: Path) -> None:
