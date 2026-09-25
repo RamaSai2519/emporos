@@ -42,6 +42,7 @@ from emporos.cli.filings_commands import (
     research_build_events,
     research_collect_filings,
     research_extract_filing_text,
+    research_extraction_progress,
     research_filings_report,
     research_freeze_events,
     research_track_l_coverage,
@@ -107,6 +108,7 @@ research_app.command("screen-book")(research_screen_book)
 research_app.command("screen-core")(research_screen_core)
 research_app.command("collect-filings")(research_collect_filings)
 research_app.command("freeze-events")(research_freeze_events)
+research_app.command("extraction-progress")(research_extraction_progress)
 research_app.command("collect-global-cues")(research_collect_global_cues)
 research_app.command("posture-inputs")(research_posture_inputs)
 research_app.command("extract-filing-text")(research_extract_filing_text)

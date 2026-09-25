@@ -47,6 +47,7 @@ from emporos.research.filings.nse_source import NseFilingSource
 from emporos.research.filings.pdf_text import PdftotextExtractor
 from emporos.research.filings.polite import PoliteGet, SourceRefused
 from emporos.research.filings.priority import AttachmentPriority
+from emporos.research.filings.progress import ExtractionProgress
 from emporos.research.filings.raw_store import (
     DEFAULT_FILINGS_LEDGER,
     DEFAULT_RAW_DIR,
@@ -245,6 +246,33 @@ def research_freeze_events(
         raise typer.Exit(code=1) from error
     typer.echo(f"snapshot {snapshot.root}: {record['events']} events, {record['text_status']}")
     typer.echo(f"attachments held {record['attachments_held']}; files verified: {verified}")
+
+
+_PROGRESS_FROM = typer.Option(datetime(2024, 1, 1), formats=["%Y-%m-%d"], help="First day.")
+_PROGRESS_TO = typer.Option(datetime(2024, 12, 31), "--to", formats=["%Y-%m-%d"], help="Last day.")
+_TIER = typer.Option(1, help="Priority tier: 1 is MATERIAL.")
+_ANY_NAME = typer.Option(False, "--any-name", help="Count names without an instrument id too.")
+
+
+def research_extraction_progress(
+    tokens: Path = _TOKENS,
+    raw: Path = _RAW,
+    ledger: Path = _LEDGER,
+    text: Path = _TEXT,
+    first: datetime = _PROGRESS_FROM,
+    last: datetime = _PROGRESS_TO,
+    tier: int = _TIER,
+    any_name: bool = _ANY_NAME,
+) -> None:
+    """Is the tier's attachment text extracted? Exit 0 when nothing is pending, 3 while it is."""
+    filings = CollectedFilings(RawFilingStore(raw), FetchLedger(ledger))
+    texts = {a.url: a for a in AttachmentTextStore(text).all()}
+    progress = ExtractionProgress.of(
+        filings, texts, _instrument_ids(tokens), first.date(), last.date(), tier, not any_name
+    )
+    typer.echo(f"{'DONE' if progress.done else 'PENDING'}: {progress.detail()}")
+    if not progress.done:
+        raise typer.Exit(code=3)
 
 
 def research_filings_report(
