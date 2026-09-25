@@ -26,11 +26,13 @@ from emporos.research.swing.regime import (
     RebalanceCalendar,
     WeeklyCalendar,
 )
+from emporos.research.swing.rotation import EtfDualMomentum
 from emporos.research.swing.rules import LossStop, SwingStrategy
 
 __all__ = [
-    "AGGRESSIVE_MAX_POSITIONS", "CELLS", "CellEnvironment", "EarningsDriftCell", "MomentumCell",
-    "BookRiskMomentumCell", "SwingCell", "adjacent_arms", "arm_points", "arm_label",
+    "AGGRESSIVE_MAX_POSITIONS", "CELLS", "ROTATION_CELLS", "BookRiskMomentumCell",
+    "CellEnvironment", "EarningsDriftCell", "EtfRotationCell", "MomentumCell", "SwingCell",
+    "adjacent_arms", "arm_label", "arm_points",
 ]  # fmt: skip
 
 AGGRESSIVE_MAX_POSITIONS = 3
@@ -43,10 +45,17 @@ class CellEnvironment:
     """What a recipe may draw on: the data, the regime, the stop, and (A2) the reaction sessions."""
 
     dataset: SwingDataset
-    regime: IndexTrendRegime
+    regime: IndexTrendRegime | None
     stop: LossStop
     reactions: ReactionSessions | None = None
     index: IndexSeries | None = None  # NIFTY 50: A1b's volatility target reads it
+
+    @property
+    def trend(self) -> IndexTrendRegime:
+        """The NIFTY 200-session regime; the stock cells need it, the ETF rotation does not."""
+        if self.regime is None:
+            raise ValueError("this cell needs the trend regime and the environment has none")
+        return self.regime
 
 
 class SwingCell(Protocol):
@@ -115,7 +124,7 @@ class MomentumCell:
             int(point["lookback_sessions"]),
             int(point["max_positions"]),
             self._CALENDARS[point["rebalance"]](),
-            env.regime,
+            env.trend,
             env.stop,
         )
 
@@ -137,7 +146,7 @@ class MomentumCell:
     def cell_notes(self, env: CellEnvironment) -> list[str]:
         return [
             "regime defined from "
-            f"{env.regime.first_defined_day(env.dataset.calendar)} (NIFTY 50 > 200-session average)"
+            f"{env.trend.first_defined_day(env.dataset.calendar)} (NIFTY 50 > 200-session average)"
         ]
 
 
@@ -154,7 +163,7 @@ class EarningsDriftCell:
             int(point["hold_sessions"]),
             int(point["max_positions"]),
             env.reactions,
-            env.regime,
+            env.trend,
             env.stop,
         )
 
@@ -165,7 +174,7 @@ class EarningsDriftCell:
         return self.max_positions(point) <= AGGRESSIVE_MAX_POSITIONS
 
     def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
-        return env.regime.first_defined_day(env.dataset.calendar)
+        return env.trend.first_defined_day(env.dataset.calendar)
 
     def arm_notes(self, strategy: SwingStrategy) -> str:
         if not isinstance(strategy, PostEarningsDrift):
@@ -201,13 +210,13 @@ class BookRiskMomentumCell:
 
     def strategy(self, point: Point, env: CellEnvironment) -> BookRiskRules:
         calendar = self._CALENDARS[point["rebalance"]]()
-        momentum = MomentumTrend(self.LOOKBACK, self.MAX_POSITIONS, calendar, env.regime, env.stop)
+        momentum = MomentumTrend(self.LOOKBACK, self.MAX_POSITIONS, calendar, env.trend, env.stop)
         inner: SwingStrategy = momentum
         if point["vol_target"] != "off":
             if env.index is None:
                 raise ValueError("the volatility target needs the index series")
             inner = VolTargeted(momentum, env.index, Decimal(point["vol_target"]) / 100)
-        return BookRiskRules(inner, calendar, env.regime)
+        return BookRiskRules(inner, calendar, env.trend)
 
     def max_positions(self, point: Point) -> int:
         return self.MAX_POSITIONS
@@ -243,10 +252,48 @@ class BookRiskMomentumCell:
     def cell_notes(self, env: CellEnvironment) -> list[str]:
         return [
             "regime defined from "
-            f"{env.regime.first_defined_day(env.dataset.calendar)} (NIFTY 50 > 200-session average)"
+            f"{env.trend.first_defined_day(env.dataset.calendar)} (NIFTY 50 > 200-session average)"
         ]
 
 
 CELLS: Mapping[str, SwingCell] = {
     c.slug: c for c in (MomentumCell(), EarningsDriftCell(), BookRiskMomentumCell())
 }
+
+
+class EtfRotationCell:
+    """A5 (config/experiments/a5-etf-dual-momentum.yaml): the assets are the dataset's."""
+
+    slug = "a5-etf-dual-momentum"
+
+    def strategy(self, point: Point, env: CellEnvironment) -> EtfDualMomentum:
+        return EtfDualMomentum(
+            point["score"], int(point["top_k"]), env.dataset.instrument_ids, MonthlyCalendar()
+        )
+
+    def max_positions(self, point: Point) -> int:
+        return int(point["top_k"])
+
+    def aggressive(self, point: Point) -> bool:
+        return False
+
+    def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
+        return strategy.record.first_ranked_day if isinstance(strategy, EtfDualMomentum) else None
+
+    def arm_notes(self, strategy: SwingStrategy) -> str:
+        if not isinstance(strategy, EtfDualMomentum):
+            return ""
+        r = strategy.record
+        return (
+            f"{r.rebalances} months ranked, {r.months_all_cash} all-cash, "
+            f"months held per asset {dict(sorted(r.months_held.items()))}"
+        )
+
+    def cell_notes(self, env: CellEnvironment) -> list[str]:
+        return [
+            f"assets: {', '.join(env.dataset.instrument_ids)}; "
+            f"data {env.dataset.calendar[0]}..{env.dataset.calendar[-1]}"
+        ]
+
+
+ROTATION_CELLS: Mapping[str, SwingCell] = {EtfRotationCell.slug: EtfRotationCell()}

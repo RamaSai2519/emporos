@@ -22,6 +22,7 @@ from emporos.cli.corporate_actions_commands import (
 from emporos.cli.d1_universe_commands import research_d1_universe
 from emporos.cli.daily_bars_commands import research_build_daily_bars
 from emporos.cli.discontinuity_commands import research_audit_discontinuities
+from emporos.cli.etf_bars_commands import research_fetch_etf_bars
 from emporos.cli.experiment_backfill import (
     DEFAULT_STRATEGIES_DIR,
     BackfillSources,
@@ -41,6 +42,7 @@ from emporos.cli.index_notice_commands import research_collect_index_notices
 from emporos.cli.option_screen_commands import research_screen_options
 from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
+from emporos.cli.rotation_commands import research_screen_rotation
 from emporos.cli.screen_commands import research_screen
 from emporos.cli.swing_commands import research_screen_swing
 from emporos.cli.vault_commands import vault_app
@@ -81,8 +83,10 @@ research_app.command("build-daily-bars")(research_build_daily_bars)
 research_app.command("collect-actions")(research_collect_actions)
 research_app.command("build-adjustments")(research_build_adjustments)
 research_app.command("screen-swing")(research_screen_swing)
+research_app.command("screen-rotation")(research_screen_rotation)
 research_app.command("collect-index-notices")(research_collect_index_notices)
 research_app.command("build-index-changes")(research_build_index_changes)
+research_app.command("fetch-etf-bars")(research_fetch_etf_bars)
 research_app.command("audit-discontinuities")(research_audit_discontinuities)
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")

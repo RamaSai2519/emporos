@@ -339,3 +339,80 @@ class TestHandComputedParity:
         assert run.equity[1] == Decimal("50100") - Decimal("82.96") + 100 * Decimal(
             5
         )  # marked at 505
+
+
+class TestCashYield:
+    def test_idle_cash_accrues_the_annual_yield_per_session(self) -> None:
+        data = dataset(series(X, sessions(253), [("100", "100")] * 253))
+        config = SwingConfig(Decimal(10000), 1, cash_yield=Decimal("0.05"))
+
+        run = SwingSimulator(data, Scripted(lambda c: []), config, free_costs()).run()
+
+        assert run.equity[0] == 10000  # nothing carried into the first session
+        assert run.equity[252] == pytest.approx(
+            Decimal(10500), rel=Decimal("0.0000001")
+        )  # 252 accruals
+
+    def test_no_yield_no_accrual(self) -> None:
+        data = dataset(series(X, DAYS, [("100", "100")] * 5))
+
+        run = SwingSimulator(data, Scripted(lambda c: []), config(), free_costs()).run()
+
+        assert run.equity == (10000,) * 5
+
+    def test_a_negative_yield_is_refused(self) -> None:
+        with pytest.raises(ValueError, match="not negative"):
+            SwingConfig(Decimal(1000), 1, cash_yield=Decimal("-0.01"))
+
+
+class TestSlice:
+    def test_a_run_sliced_from_a_day_restarts_from_the_previous_close(self) -> None:
+        data = dataset(series(X, DAYS, rise()))
+        run = SwingSimulator(data, hold(X, DAYS[0], DAYS[4]), config(), free_costs()).run()
+
+        part = run.slice_from(DAYS[2])
+
+        assert part.days == run.days[2:]
+        assert part.capital == run.equity[1]  # 11,000
+        assert part.equity == run.equity[2:]
+        assert part.daily_pnl[0] == run.equity[2] - run.equity[1]
+        assert part.trades == ()  # the only trade was bought on DAYS[1], before the slice
+        assert part.invested_days == sum(run.invested_flags[2:])
+
+    def test_a_slice_from_the_first_day_is_the_run(self) -> None:
+        data = dataset(series(X, DAYS, rise()))
+        run = SwingSimulator(data, hold(X, DAYS[0], DAYS[4]), config(), free_costs()).run()
+
+        assert run.slice_from(DAYS[0]) is run
+
+    def test_a_slice_past_the_end_is_refused(self) -> None:
+        data = dataset(series(X, DAYS, rise()))
+        run = SwingSimulator(data, hold(X, DAYS[0], DAYS[4]), config(), free_costs()).run()
+
+        with pytest.raises(ValueError, match="no session on or after"):
+            run.slice_from(date(2030, 1, 1))
+
+
+class TestStartDay:
+    def test_the_run_starts_on_the_start_day_and_earlier_bars_are_history_a_signal_can_read(
+        self,
+    ) -> None:
+        data = dataset(series(X, DAYS, rise()))
+        seen: list[int] = []
+
+        def script(c):  # type: ignore[no-untyped-def]
+            seen.append(len(c.view.history(X, 100)))
+            return []
+
+        cfg = SwingConfig(Decimal(10000), 1, start_day=DAYS[2])
+        run = SwingSimulator(data, Scripted(script), cfg, free_costs()).run()
+
+        assert run.days == tuple(DAYS[2:])
+        assert seen == [3, 4]  # the first decision (session 2) sees the 3 bars up to it
+
+    def test_a_start_day_after_the_data_is_refused(self) -> None:
+        data = dataset(series(X, DAYS, rise()))
+
+        with pytest.raises(ValueError, match="no session on or after"):
+            late = SwingConfig(Decimal(1), 1, start_day=date(2030, 1, 1))
+            SwingSimulator(data, Scripted(lambda c: []), late, free_costs()).run()

@@ -157,8 +157,11 @@ class TestFile:
         with pytest.raises(ConfigurationError, match="index-change file"):
             load_changes(path)
 
-    def test_the_shipped_file_is_empty_and_loads(self) -> None:
-        assert load_changes() == []
+    def test_the_shipped_file_loads_and_every_change_names_its_source(self) -> None:
+        changes = load_changes()
+
+        assert changes == sorted(changes, key=lambda c: (c.effective, c.index))
+        assert all("fetched" in c.source for c in changes)
 
 
 def test_it_gates_what_the_swing_simulator_is_offered() -> None:

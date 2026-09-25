@@ -21,7 +21,9 @@ from emporos.research.swing.regime import (
     IndexSeries,
     IndexTrendRegime,
     MonthlyCalendar,
+    QuarterlyCalendar,
     WeeklyCalendar,
+    YearlyCalendar,
 )
 from emporos.research.swing.rules import LossStop
 
@@ -152,3 +154,27 @@ class TestLossStop:
         for bad in ("0", "1", "-0.1"):
             with pytest.raises(ValueError, match="fraction"):
                 LossStop(Decimal(bad))
+
+
+class TestLongerCalendars:
+    TRADED = (date(2025, 12, 30), date(2026, 1, 2), date(2026, 2, 3), date(2026, 3, 31),
+              date(2026, 4, 1), date(2026, 6, 30), date(2026, 7, 1), date(2027, 1, 4))  # fmt: skip
+
+    def flags(self, calendar: QuarterlyCalendar | YearlyCalendar) -> list[bool]:
+        data = dataset(series(X, self.TRADED, [("1", "1")] * len(self.TRADED)))
+        return [calendar.is_rebalance(AsOfView(data, d)) for d in self.TRADED]
+
+    def test_quarterly_is_the_first_session_of_each_calendar_quarter(self) -> None:
+        assert self.flags(QuarterlyCalendar()) == [
+            True,
+            True,
+            False,
+            False,
+            True,
+            False,
+            True,
+            True,
+        ]
+
+    def test_yearly_is_the_first_session_of_each_calendar_year(self) -> None:
+        assert self.flags(YearlyCalendar()) == [True, True, False, False, False, False, False, True]

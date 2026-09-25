@@ -27,7 +27,8 @@ from emporos.research.swing.data import AsOfView
 from emporos.research.swing.rules import DecisionContext
 
 __all__ = [
-    "IndexSeries", "IndexTrendRegime", "MonthlyCalendar", "RebalanceCalendar", "WeeklyCalendar",
+    "IndexSeries", "IndexTrendRegime", "MonthlyCalendar", "QuarterlyCalendar", "RebalanceCalendar",
+    "WeeklyCalendar", "YearlyCalendar",
 ]  # fmt: skip
 
 
@@ -105,3 +106,13 @@ class WeeklyCalendar(_PeriodCalendar):
 class MonthlyCalendar(_PeriodCalendar):
     def _period(self, day: date) -> tuple[int, ...]:
         return (day.year, day.month)
+
+
+class QuarterlyCalendar(_PeriodCalendar):
+    def _period(self, day: date) -> tuple[int, ...]:
+        return (day.year, (day.month - 1) // 3)
+
+
+class YearlyCalendar(_PeriodCalendar):
+    def _period(self, day: date) -> tuple[int, ...]:
+        return (day.year,)

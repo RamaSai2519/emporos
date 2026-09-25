@@ -1,0 +1,322 @@
+fetched_on: '2026-09-25'
+rejected_bars: 0
+etfs:
+- symbol: NIFTYBEES-EQ
+  instrument_id: NSE:10576
+  bars: 6013
+  first_day: '2002-01-08'
+  last_day: '2026-03-18'
+  bars_per_year:
+    2002: 246
+    2003: 254
+    2004: 253
+    2005: 251
+    2006: 250
+    2007: 249
+    2008: 246
+    2009: 243
+    2010: 252
+    2011: 247
+    2012: 251
+    2013: 250
+    2014: 244
+    2015: 248
+    2016: 247
+    2017: 248
+    2018: 246
+    2019: 245
+    2020: 250
+    2021: 248
+    2022: 248
+    2023: 246
+    2024: 249
+    2025: 249
+    2026: 53
+  sparse_windows: []
+  gaps_against_nifty:
+  - '2020-05-26'
+  discontinuities:
+  - day: '2005-02-09'
+    raw_ratio: '1.1706'
+    class: real
+    reason: a large single-name move (+17.1%)
+  - day: '2005-07-25'
+    raw_ratio: '1.1798'
+    class: real
+    reason: a large single-name move (+18.0%)
+  - day: '2005-09-12'
+    raw_ratio: '0.8357'
+    class: real
+    reason: a large single-name move (-16.4%)
+  - day: '2005-09-22'
+    raw_ratio: '1.1822'
+    class: real
+    reason: a large single-name move (+18.2%)
+  - day: '2005-10-03'
+    raw_ratio: '1.1892'
+    class: real
+    reason: a large single-name move (+18.9%)
+  - day: '2006-01-06'
+    raw_ratio: '0.8044'
+    class: real
+    reason: a large single-name move (-19.6%)
+  - day: '2006-03-14'
+    raw_ratio: '1.1878'
+    class: real
+    reason: a large single-name move (+18.8%)
+  - day: '2006-05-09'
+    raw_ratio: '1.1919'
+    class: real
+    reason: a large single-name move (+19.2%)
+  - day: '2006-06-01'
+    raw_ratio: '1.1931'
+    class: real
+    reason: a large single-name move (+19.3%)
+  - day: '2006-06-14'
+    raw_ratio: '0.8024'
+    class: real
+    reason: a large single-name move (-19.8%)
+  - day: '2006-08-11'
+    raw_ratio: '1.1743'
+    class: real
+    reason: a large single-name move (+17.4%)
+  - day: '2006-12-13'
+    raw_ratio: '1.1731'
+    class: real
+    reason: a large single-name move (+17.3%)
+  - day: '2006-12-14'
+    raw_ratio: '1.1540'
+    class: real
+    reason: a large single-name move (+15.4%)
+  - day: '2008-01-10'
+    raw_ratio: '1.1957'
+    class: real
+    reason: a large single-name move (+19.6%)
+  - day: '2008-02-26'
+    raw_ratio: '0.8241'
+    class: real
+    reason: a large single-name move (-17.6%)
+  - day: '2016-11-29'
+    raw_ratio: '0.8048'
+    class: real
+    reason: a large single-name move (-19.5%)
+  - day: '2020-03-05'
+    raw_ratio: '1.1962'
+    class: real
+    reason: a large single-name move (+19.6%)
+  - day: '2020-10-26'
+    raw_ratio: '1.1502'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2021-03-26'
+    raw_ratio: '1.1925'
+    class: real
+    reason: a large single-name move (+19.3%)
+  gap_classes:
+    real: 19
+- symbol: JUNIORBEES-EQ
+  instrument_id: NSE:10939
+  bars: 5530
+  first_day: '2003-03-06'
+  last_day: '2026-03-18'
+  bars_per_year:
+    2003: 148
+    2004: 198
+    2005: 199
+    2006: 227
+    2007: 248
+    2008: 246
+    2009: 242
+    2010: 252
+    2011: 247
+    2012: 251
+    2013: 250
+    2014: 244
+    2015: 248
+    2016: 247
+    2017: 248
+    2018: 246
+    2019: 245
+    2020: 251
+    2021: 248
+    2022: 248
+    2023: 246
+    2024: 249
+    2025: 249
+    2026: 53
+  sparse_windows:
+  - - '2003-01-01'
+    - 148
+  - - '2004-01-01'
+    - 198
+  - - '2004-12-31'
+    - 199
+  gaps_against_nifty: []
+  discontinuities:
+  - day: '2003-04-03'
+    raw_ratio: '0.8400'
+    class: real
+    reason: a large single-name move (-16.0%)
+  - day: '2003-10-08'
+    raw_ratio: '0.8333'
+    class: real
+    reason: a large single-name move (-16.7%)
+  - day: '2004-01-14'
+    raw_ratio: '0.8168'
+    class: real
+    reason: a large single-name move (-18.3%)
+  - day: '2004-03-18'
+    raw_ratio: '0.8286'
+    class: real
+    reason: a large single-name move (-17.1%)
+  - day: '2004-05-20'
+    raw_ratio: '1.1600'
+    class: real
+    reason: a large single-name move (+16.0%)
+  - day: '2005-03-30'
+    raw_ratio: '1.1732'
+    class: real
+    reason: a large single-name move (+17.3%)
+  - day: '2005-05-17'
+    raw_ratio: '1.1583'
+    class: real
+    reason: a large single-name move (+15.8%)
+  - day: '2005-06-14'
+    raw_ratio: '1.1824'
+    class: real
+    reason: a large single-name move (+18.2%)
+  - day: '2005-07-22'
+    raw_ratio: '1.1976'
+    class: real
+    reason: a large single-name move (+19.8%)
+  - day: '2005-08-01'
+    raw_ratio: '1.1760'
+    class: real
+    reason: a large single-name move (+17.6%)
+  - day: '2005-09-14'
+    raw_ratio: '0.8380'
+    class: real
+    reason: a large single-name move (-16.2%)
+  - day: '2005-09-29'
+    raw_ratio: '1.1868'
+    class: real
+    reason: a large single-name move (+18.7%)
+  - day: '2005-11-22'
+    raw_ratio: '1.1850'
+    class: real
+    reason: a large single-name move (+18.5%)
+  - day: '2005-11-26'
+    raw_ratio: '0.8078'
+    class: real
+    reason: a large single-name move (-19.2%)
+  - day: '2006-01-18'
+    raw_ratio: '0.8129'
+    class: real
+    reason: a large single-name move (-18.7%)
+  - day: '2006-04-28'
+    raw_ratio: '0.8000'
+    class: real
+    reason: a large single-name move (-20.0%)
+  - day: '2006-06-08'
+    raw_ratio: '0.8398'
+    class: real
+    reason: a large single-name move (-16.0%)
+  - day: '2008-03-14'
+    raw_ratio: '1.1951'
+    class: real
+    reason: a large single-name move (+19.5%)
+  - day: '2011-01-18'
+    raw_ratio: '1.1545'
+    class: real
+    reason: a large single-name move (+15.5%)
+  - day: '2020-08-24'
+    raw_ratio: '1.1501'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2020-08-26'
+    raw_ratio: '1.1500'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2020-08-31'
+    raw_ratio: '1.1501'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2020-09-09'
+    raw_ratio: '1.1805'
+    class: real
+    reason: a large single-name move (+18.0%)
+  - day: '2020-10-30'
+    raw_ratio: '1.1597'
+    class: real
+    reason: a large single-name move (+16.0%)
+  - day: '2020-11-06'
+    raw_ratio: '1.1800'
+    class: real
+    reason: a large single-name move (+18.0%)
+  - day: '2020-11-10'
+    raw_ratio: '1.1501'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2021-08-27'
+    raw_ratio: '1.1798'
+    class: real
+    reason: a large single-name move (+18.0%)
+  - day: '2021-09-24'
+    raw_ratio: '1.1500'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2021-09-29'
+    raw_ratio: '1.1501'
+    class: real
+    reason: a large single-name move (+15.0%)
+  - day: '2021-10-27'
+    raw_ratio: '1.1798'
+    class: real
+    reason: a large single-name move (+18.0%)
+  - day: '2022-01-25'
+    raw_ratio: '1.1652'
+    class: real
+    reason: a large single-name move (+16.5%)
+  - day: '2022-05-16'
+    raw_ratio: '1.1567'
+    class: real
+    reason: a large single-name move (+15.7%)
+  gap_classes:
+    real: 32
+- symbol: GOLDBEES-EQ
+  instrument_id: NSE:14428
+  bars: 4710
+  first_day: '2007-03-19'
+  last_day: '2026-03-18'
+  bars_per_year:
+    2007: 198
+    2008: 246
+    2009: 243
+    2010: 253
+    2011: 247
+    2012: 252
+    2013: 250
+    2014: 243
+    2015: 248
+    2016: 247
+    2017: 248
+    2018: 246
+    2019: 245
+    2020: 251
+    2021: 248
+    2022: 248
+    2023: 246
+    2024: 249
+    2025: 249
+    2026: 53
+  sparse_windows:
+  - - '2006-12-31'
+    - 197
+  gaps_against_nifty: []
+  discontinuities:
+  - day: '2022-04-29'
+    raw_ratio: '1.1832'
+    class: real
+    reason: a large single-name move (+18.3%)
+  gap_classes:
+    real: 1

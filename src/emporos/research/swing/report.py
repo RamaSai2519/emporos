@@ -23,9 +23,9 @@ def _num(value: float | None, digits: int = 2) -> str:
     return "n/a" if value is None else f"{value:.{digits}f}"
 
 
-def _benchmark_line(stats: SwingStats) -> str:
+def _benchmark_line(stats: SwingStats, label: str) -> str:
     return (
-        f"benchmark (same-universe equal-weight buy-and-hold, same costs): net CAGR "
+        f"benchmark ({label}): net CAGR "
         f"{_pct(stats.net_cagr)}, net Sharpe {_num(stats.net_sharpe)}, max drawdown "
         f"{_pct(stats.max_drawdown)}, positive months {_pct(stats.positive_month_share, 0)}"
     )
@@ -55,7 +55,7 @@ def format_report(report: CellReport) -> list[str]:
     arms: Sequence[ArmReport] = report.arms
     lines = [
         f"{report.slug}: Discovery {report.first_day}..{report.last_day}, {len(arms)} arms",
-        _benchmark_line(arms[0].outcome.universe_stats),
+        _benchmark_line(arms[0].outcome.universe_stats, report.benchmark_label),
         "",
         HEADER,
         *(_row(a) for a in arms),

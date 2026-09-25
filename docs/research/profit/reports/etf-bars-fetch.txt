@@ -1,0 +1,4 @@
+NIFTYBEES-EQ: 6013 bars 2002-01-08..2026-03-18, 0 sparse window(s), 1 session(s) missing since the index series starts, gaps by class {'real': 19}
+JUNIORBEES-EQ: 5530 bars 2003-03-06..2026-03-18, 3 sparse window(s), 0 session(s) missing since the index series starts, gaps by class {'real': 32}
+GOLDBEES-EQ: 4710 bars 2007-03-19..2026-03-18, 1 sparse window(s), 0 session(s) missing since the index series starts, gaps by class {'real': 1}
+0 invalid bar(s) skipped; audit written to docs/research/profit/etf-bars-report.yaml

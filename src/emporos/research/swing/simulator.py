@@ -48,8 +48,17 @@ class SwingConfig:
     capital: Decimal
     max_positions: int
     max_size_multiple: Decimal = Decimal(1)
+    cash_yield: Decimal = Decimal(0)  # annual, accrued per session on cash held overnight
+    start_day: date | None = None  # first session simulated; earlier bars are history a signal sees
+
+    @property
+    def cash_growth_per_session(self) -> Decimal:
+        """`(1 + cash_yield) ** (1 / 252)`: cash held into a session is multiplied by this."""
+        return (1 + self.cash_yield) ** (Decimal(1) / 252)
 
     def __post_init__(self) -> None:
+        if self.cash_yield < 0:
+            raise ValueError("a cash yield is not negative")
         if self.capital <= 0:
             raise ValueError("capital is positive")
         if self.max_positions < 1:
@@ -85,6 +94,21 @@ class SwingRun:
     fees: Decimal
     skipped_entries: int  # buys that did not fit, or whose name had no bar
     invested_flags: tuple[bool, ...] = ()  # per session: closed with at least one holding
+
+    def slice_from(self, first: date) -> SwingRun:
+        """The run from `first` on, as if it had started then with what the book held the session
+        before: for reporting a sub-period. Trades are those bought on or after `first`."""
+        start = next((i for i, d in enumerate(self.days) if d >= first), None)
+        if start is None:
+            raise ValueError(f"the run has no session on or after {first}")
+        if start == 0:
+            return self
+        flags = self.invested_flags[start:] if self.invested_flags else ()
+        trades = tuple(t for t in self.trades if t.entry_day >= first)
+        return SwingRun(
+            self.days[start:], self.equity[start:], sum(flags), trades, self.equity[start - 1],
+            sum((t.fees for t in trades), Decimal(0)), 0, flags,
+        )  # fmt: skip
 
     @property
     def days_in_cash(self) -> int:
@@ -136,6 +160,7 @@ class SwingSimulator:
         calendar = self._data.calendar
         if not calendar:
             raise ValueError("there are no sessions to simulate")
+        first = self._first_index(calendar)
         state = _State(self._config.capital)
         equity: list[Decimal] = []
         invested = 0
@@ -143,7 +168,11 @@ class SwingSimulator:
         pending_exits: set[str] = set()
         pending_entries: list[Intent] = []
         last = len(calendar) - 1
-        for i, day in enumerate(calendar):
+        growth = self._config.cash_growth_per_session
+        for i in range(first, len(calendar)):
+            day = calendar[i]
+            if i > first:
+                state.cash *= growth
             self._fill_exits(state, i, day, pending_exits)
             self._fill_entries(state, i, day, pending_entries)
             pending_entries = []
@@ -156,9 +185,18 @@ class SwingSimulator:
             if i < last:
                 pending_exits, pending_entries = self._decide(state, i, day, value)
         return SwingRun(
-            calendar, tuple(equity), invested, tuple(state.trades), self._config.capital,
+            calendar[first:], tuple(equity), invested, tuple(state.trades), self._config.capital,
             state.fees, state.skipped, tuple(flags),
         )  # fmt: skip
+
+    def _first_index(self, calendar: tuple[date, ...]) -> int:
+        start = self._config.start_day
+        if start is None:
+            return 0
+        index = next((i for i, d in enumerate(calendar) if d >= start), None)
+        if index is None:
+            raise ValueError(f"the data has no session on or after {start}")
+        return index
 
     # -- fills --------------------------------------------------------------------------------
 

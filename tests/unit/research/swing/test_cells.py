@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -13,9 +14,11 @@ from tests.unit.research.swing.support import ZERO_SCHEDULE, bar, dataset, serie
 from emporos.research.swing.bootstrap import BlockBootstrap
 from emporos.research.swing.cells import (
     CELLS,
+    ROTATION_CELLS,
     BookRiskMomentumCell,
     CellEnvironment,
     EarningsDriftCell,
+    EtfRotationCell,
     MomentumCell,
     adjacent_arms,
     arm_label,
@@ -266,3 +269,65 @@ class TestBookRiskCell:
         grid = {"rebalance": ["weekly", "monthly"], "vol_target": ["off", "15"]}
 
         assert all(len(v) == 2 for v in adjacent_arms(grid).values())
+
+
+class TestRotationCell:
+    def point(self, score: str = "blend", k: str = "2") -> dict[str, str]:
+        return {"score": score, "top_k": k}
+
+    def test_it_is_registered_apart_from_the_stock_cells(self) -> None:
+        assert set(ROTATION_CELLS) == {"a5-etf-dual-momentum"}
+        assert "a5-etf-dual-momentum" not in CELLS
+
+    def test_it_builds_the_rotation_over_the_datasets_assets_with_k_slots(self) -> None:
+        from emporos.research.swing.rotation import EtfDualMomentum
+
+        cell = EtfRotationCell()
+        strategy = cell.strategy(self.point("12-1", "1"), env())
+
+        assert isinstance(strategy, EtfDualMomentum)
+        assert strategy._assets == ("NSE:1", "NSE:2")
+        assert strategy._k == 1
+        assert cell.max_positions(self.point("12-1", "1")) == 1
+        assert cell.aggressive(self.point()) is False
+
+    def test_the_stock_cells_refuse_an_environment_without_the_regime(self) -> None:
+        base = env()
+        bare = CellEnvironment(base.dataset, None, base.stop)
+
+        with pytest.raises(ValueError, match="trend regime"):
+            MomentumCell().strategy(
+                {"lookback_sessions": "126", "rebalance": "weekly", "max_positions": "5"}, bare
+            )
+
+    def test_the_arm_note_reports_months_ranked_cash_and_holdings(self) -> None:
+        cell = EtfRotationCell()
+
+        assert "months ranked" in cell.arm_notes(cell.strategy(self.point(), env()))
+
+
+def test_the_runner_starts_every_arm_on_the_given_day_and_names_the_run_by_it(
+    tmp_path: Path,
+) -> None:
+    from datetime import date
+
+    base = TestRunner()
+    e = env()
+    screen = SwingScreenRun(
+        e.dataset, ZERO_SCHEDULE, SwingScreenRun.universe(e.dataset, ZERO_SCHEDULE),
+        bootstrap=BlockBootstrap(paths=10),
+    )  # fmt: skip
+    start = e.dataset.calendar[40]
+    runner = SwingCellRunner(
+        screen, e, Decimal(100000), "u", JsonlSwingLedger(tmp_path / "s.jsonl"),
+        DailyPnlStore(tmp_path / "pnl"), datetime(2026, 9, 25, tzinfo=UTC),
+        start_day=start,
+    )  # fmt: skip
+
+    report = runner.run(MomentumCell(), base.GRID)
+
+    assert report.first_day == start
+    assert all(a.outcome.arm.days[0] == start for a in report.arms)
+    first_line = json.loads((tmp_path / "s.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert first_line["first_day"] == start.isoformat()
+    assert isinstance(start, date)

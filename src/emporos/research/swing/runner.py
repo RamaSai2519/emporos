@@ -40,7 +40,9 @@ from emporos.research.swing.screen import (
 )
 from emporos.research.swing.simulator import SwingConfig
 
-__all__ = ["ArmReport", "CellReport", "SwingCellRunner"]
+__all__ = ["BENCHMARK_LABEL", "ArmReport", "CellReport", "SwingCellRunner"]
+
+BENCHMARK_LABEL = "same-universe equal-weight buy-and-hold, same costs"
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,7 @@ class CellReport:
     last_day: date
     arms: tuple[ArmReport, ...]
     notes: tuple[str, ...]
+    benchmark_label: str
 
 
 class SwingCellRunner:
@@ -78,6 +81,9 @@ class SwingCellRunner:
         pnl: DailyPnlStore,
         now: datetime,
         real_gaps: Sequence[GapVerdict] = (),
+        benchmark_label: str = BENCHMARK_LABEL,
+        cash_yield: Decimal = Decimal(0),
+        start_day: date | None = None,
     ) -> None:
         self._screen = screen
         self._env = env
@@ -87,9 +93,11 @@ class SwingCellRunner:
         self._pnl = pnl
         self._now = now
         self._real_gaps = tuple(real_gaps)
+        self._benchmark_label = benchmark_label
+        self._cash_yield = cash_yield
+        self._start_day = start_day
 
     def run(self, cell: SwingCell, grid: Mapping[str, Sequence[str]]) -> CellReport:
-        calendar = self._env.dataset.calendar
         points = arm_points(grid)
         outcomes = [self._run_arm(cell, point) for point in points]
         positive = {
@@ -102,8 +110,9 @@ class SwingCellRunner:
             share = neighbour_share(label, positive, adjacent)
             aggressive = cell.aggressive(point)
             verdict = judge(outcome, share, aggressive=aggressive)
+            first_day, last_day = outcome.arm.days[0], outcome.arm.days[-1]
             identity = SwingIdentity(
-                cell.slug, point, self._universe, calendar[0], calendar[-1], self._capital,
+                cell.slug, point, self._universe, first_day, last_day, self._capital,
                 cell.max_positions(point),
             )  # fmt: skip
             path = self._pnl.write(identity.screen_id, outcome)
@@ -138,9 +147,19 @@ class SwingCellRunner:
                 )  # fmt: skip
             )
         return CellReport(
-            cell.slug, calendar[0], calendar[-1], tuple(reports), tuple(cell.cell_notes(self._env))
+            cell.slug,
+            reports[0].outcome.arm.days[0],
+            reports[0].outcome.arm.days[-1],
+            tuple(reports),
+            tuple(cell.cell_notes(self._env)),
+            self._benchmark_label,
         )
 
     def _run_arm(self, cell: SwingCell, point: Mapping[str, str]) -> ArmOutcome:
-        config = SwingConfig(self._capital, cell.max_positions(point))
+        config = SwingConfig(
+            self._capital,
+            cell.max_positions(point),
+            cash_yield=self._cash_yield,
+            start_day=self._start_day,
+        )
         return self._screen.run(lambda: cell.strategy(point, self._env), config)
