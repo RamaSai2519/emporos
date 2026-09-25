@@ -24,7 +24,8 @@
 #      nr_break           nr4, nr7, inside; buffer 5 bps                 -> nr4_break, nr7_break, inside_break
 #      index_trend_leader index move >= 0.3%, rank by volume, by move    -> leader_volume, leader_move  (L5)
 #      in_session_results theta 1.0%, continuation, fade                 -> results_continuation, results_fade
-#    15 trigger types. If a declared loose value is refused by a scan's own parameter validation, the
+#    14 trigger types (2 + 1 + 1 + 1 + 1 + 1 + 3 + 2 + 2; the first draft said 15, a miscount of the list
+#    above, which is the declaration). If a declared loose value is refused by a scan's own parameter validation, the
 #    nearest value it accepts is used and the substitution is printed in the dataset report BEFORE any
 #    model is trained. A trigger type is never dropped, tuned or re-weighted from its own P&L. One row
 #    per FILL (a signal whose order never filled is not a row). Overlapping triggers on one name-day give
