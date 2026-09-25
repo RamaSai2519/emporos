@@ -189,6 +189,36 @@ horizon), sizing and the §12.4 risk engine, and costs at benchmark and adverse.
    rotation (IT and pharma on USD/INR, OMCs on crude, banks on RBI).
 8. **Results with a strong con-call tone** (C2): drift over 3-10 days after the first reaction.
 
+## 7a. From drivers to options (operator, 2026-09-26: options buying is the end use)
+
+Buying an option pays only if the move after entry is BIGGER than the move the option price already
+assumes, and comes soon enough to beat time decay. A driver can be right on direction and still
+lose money in options if the implied volatility already priced it (the classic results-day IV crush).
+So the atlas adds, for every driver class:
+- **Implied move at availability:** the ATM straddle price / underlying, from the day's settle prices
+  (stock options, fo_stock_v1; index options, the index archive), and an implied volatility per
+  contract (Black-76 on the future, the RBI repo rate as the risk-free rate, from the settle price and
+  days to expiry). The IV series is a new derived dataset.
+- **Realised versus implied:** |tradeable remainder| over the horizon ÷ the implied move for that horizon.
+  A class where the realised move beats the implied one (ratio > 1.3 after adverse option costs) is an
+  OPTIONS candidate even if its cash edge is too small, and vice versa.
+- **IV behaviour around the cause:** IV before availability, the next day and over +5 days
+  (crush after scheduled events, expansion after surprises). Scheduled causes (results, RBI, FOMC,
+  Budget) are expected to be priced in IV; unscheduled ones (orders, group contagion, block deals,
+  regulatory action) may not be, and that is the most likely place for an options edge.
+- **Payoff simulation:** for candidate classes, buying the Amendment B contract (ATM to 2 strikes OTM,
+  premium ≤ Rs 5,000, monthly with ≥ 15 days left; for index causes, the nearest weekly with ≥ 2 days
+  left) at the first settle price after availability, and exiting on the atlas horizon, with the Track B
+  options costs at benchmark and adverse.
+- **Intraday options need intraday option prices,** which we do not have historically. From now on the
+  EC2 recorder should also record L1 quotes of near-the-money NIFTY and BANKNIFTY options (the nearest
+  2 weekly expiries, ±5 strikes, calls and puts) and the ATM ±2 strikes of the 20 most liquid stock
+  options, within the broker's rate limits, so that intraday option hypotheses can be tested forward
+  in paper within weeks.
+
+Options hypotheses from the atlas follow §6: declared, back-tested where the cause is numeric
+(2017-11..2023, with the stock F&O archive extended back if needed), Test once, then paper.
+
 ## 8. Work split and order
 
 | Step | Who | Needs | Output |
@@ -201,6 +231,8 @@ horizon), sizing and the §12.4 risk engine, and costs at benchmark and adverse.
 | 4 | Agent 2 | 3a | The edge table, all-occurrences base rates |
 | 5 | Head | 4 | Chooses at most 8 hypotheses and writes their declarations |
 | 6 | Agent 2 | 5 | Back-test years (numeric) and Test runs, one each |
+| 7a | Agent 2 | 1 | Recorder extension: near-the-money index and top-20 stock option quotes (starts collecting forward data at once) |
+| 7b | Agent 1 | fo_stock_v1 | Daily IV and implied-move dataset for stock and index options, 2017-11..2026-03-18 (extend the stock F&O archive back to 2017-11) |
 
 Track T1 is parked (low prior, and Agent 1 is needed for data). Track L Dev continues on its timer.
 
