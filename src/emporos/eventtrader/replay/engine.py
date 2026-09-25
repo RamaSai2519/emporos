@@ -7,7 +7,7 @@ whole path is simulated when it is entered; the book then knows when it is open 
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -44,6 +44,7 @@ __all__ = [
     "RunResult",
     "RunStats",
     "TokenMeter",
+    "decision_input",
 ]
 
 LATENCY = timedelta(minutes=2)
@@ -100,6 +101,7 @@ class RunStats:
     refused: Counter[str] = field(default_factory=Counter)  # by risk rule or placement reason
     no_entry: Counter[str] = field(default_factory=Counter)  # approved, but the order did not fill
     killed_at: datetime | None = None
+    token_cost_by_day: dict[date, Decimal] = field(default_factory=lambda: defaultdict(Decimal))
 
     @property
     def trades_attempted(self) -> int:
@@ -115,6 +117,13 @@ class RunResult:
     def net(self, scenario: Scenario) -> Decimal:
         """Total net P&L after costs and after the models' own token cost."""
         return sum((t.net(scenario) for t in self.trades), Decimal(0)) - self.token_cost_inr
+
+
+def decision_input(event: MarketEvent, context: ContextBuilder) -> EventInput:
+    """What the decider sees for an event: decided 2 minutes after it is usable, on the context as
+    of that moment. Shared by the replay and the prefetch so they cannot differ."""
+    decision_at = event.usable_from + LATENCY
+    return EventInput(event, context.context(event, decision_at), decision_at)
 
 
 class ReplayEngine:
@@ -161,11 +170,12 @@ class ReplayEngine:
             stats.killed_at = decision_at
             stats.skipped["track_stopped"] += 1
             return
-        item = EventInput(event, self._context.context(event, decision_at), decision_at)
+        item = decision_input(event, self._context)
         before = self._tokens.total_inr()
         decision = await self._decider.decide(item)
         spent = self._tokens.total_inr() - before
         stats.verdicts[decision.verdict.value] += 1
+        stats.token_cost_by_day[decision_at.astimezone(IST).date()] += spent
         if decision.verdict is not Verdict.TRADE or decision.plan is None:
             return
         self._enter(event, decision.plan, decision_at, spent, book, stats)

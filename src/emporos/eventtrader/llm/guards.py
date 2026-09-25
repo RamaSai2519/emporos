@@ -7,6 +7,9 @@ the prompt or not (§12.1)."""
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -15,7 +18,7 @@ from emporos.eventtrader.llm.pricing import PriceTable
 from emporos.jev.config import JevConfig
 from emporos.jev.leakage import KnowledgeCutoffGuard
 
-__all__ = ["CutoffGuardedClient", "TallyingClient", "TokenTally"]
+__all__ = ["CutoffGuardedClient", "ScopedTallies", "TallyingClient", "TokenTally"]
 
 
 class CutoffGuardedClient:
@@ -63,13 +66,44 @@ class TokenTally:
         return dict(out)
 
 
-class TallyingClient:
-    """Outermost decorator: counts every reply, journal or live."""
+class ScopedTallies:
+    """Tokens per scope (an event), also when many events are decided at once: the scope is carried
+    by the task's context, so every call made under `scope(key)` lands in that key's tally."""
 
-    def __init__(self, inner: LlmClient, tally: TokenTally) -> None:
-        self._inner, self._tally = inner, tally
+    def __init__(self) -> None:
+        self._current: ContextVar[TokenTally | None] = ContextVar("token_scope", default=None)
+        self._by_key: dict[str, TokenTally] = {}
+
+    @contextmanager
+    def scope(self, key: str) -> Iterator[TokenTally]:
+        tally = self._by_key.setdefault(key, TokenTally())
+        marker = self._current.set(tally)
+        try:
+            yield tally
+        finally:
+            self._current.reset(marker)
+
+    def add(self, request: LlmRequest, reply: LlmReply) -> None:
+        tally = self._current.get()
+        if tally is not None:
+            tally.add(request, reply)
+
+    def tally(self, key: str) -> TokenTally:
+        return self._by_key.get(key, TokenTally())
+
+
+class TallyingClient:
+    """Outermost decorator: counts every reply, journal or live, in the run's tally and, when a
+    scope is open, in that scope's."""
+
+    def __init__(
+        self, inner: LlmClient, tally: TokenTally, scoped: ScopedTallies | None = None
+    ) -> None:
+        self._inner, self._tally, self._scoped = inner, tally, scoped
 
     async def complete(self, request: LlmRequest) -> LlmReply:
         reply = await self._inner.complete(request)
         self._tally.add(request, reply)
+        if self._scoped is not None:
+            self._scoped.add(request, reply)
         return reply
