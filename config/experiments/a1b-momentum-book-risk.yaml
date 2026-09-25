@@ -1,0 +1,61 @@
+# Declared BEFORE any run of these rules (PROFIT_PLAN.md §2.1). EM-232, Track A child of A1
+# (EM-228), by the head session.
+#
+# Why this child (§7.4 of EDGE_SEARCH_PLAN, from A1's Discovery output only): every A1 arm passed
+# CAGR >= 18%, adverse CAGR > 0 and (7 of 8) monthly t >= 2.5, with net Sharpe mostly above the
+# same-universe benchmark. Every arm failed on the SHAPE of returns: worst month -11..-17%, max
+# drawdown 34-50%, 2018 down 12-31%. The failure mode is drawdown, not a missing signal. The fix is
+# the book-level risk rules PROFIT_PLAN §3.5 declared on 2026-09-25 BEFORE any Track A result
+# existed, which A1 did not model, plus one published volatility-management rule (Moreira and Muir
+# 2017; Barroso and Santa-Clara 2015 for momentum crashes). No A1 parameter is tuned: the parent
+# arms are fixed at lookback 252 and 5 names, the neighbourhood where both rebalance calendars were
+# strongest and every arm passed §3.4. The 3-name arms failed §3.4, so they are not carried.
+#
+# Rules = A1 unchanged (declaration a1-momentum-trend-filter.yaml, as built at 5c04e34, including:
+# a stopped-out name may be re-bought at a later rebalance if it still ranks; only names with
+# momentum > 0 are ranked, so a holding whose momentum turns <= 0 is sold at the next rebalance),
+# lookback 252, max_positions 5, PLUS:
+# * Month halt (§3.5): when book equity at a close is 6% or more below the book equity at the close
+#   before the month's first session, no new entries for the rest of that calendar month. Holdings
+#   are kept; stops stay active.
+# * Kill (§3.5): when book equity at a close is 15% or more below its running peak, sell everything
+#   at the next open and hold cash. Re-entry: the first rebalance session of a LATER calendar month
+#   on which the regime filter is on; the running peak is reset to equity at that re-entry.
+# * vol_target (the arm): `off` = slots of equity / 5 as in A1. `15` = exposure = min(1, 0.15 /
+#   sigma), where sigma is the annualised (x sqrt(252)) standard deviation of NIFTY 50 daily
+#   close-to-close returns over the previous 20 sessions, known at the decision close. New slots are
+#   exposure x equity / 5; held positions are not resized; the rest is cash.
+# 2 (rebalance weekly, monthly) x 2 (vol_target off, 15) = 4 arms.
+#
+# Reporting (both measures, the §3.2 bar is unchanged): months net positive over ALL months (the
+# §3.2 bar as written) AND over months with any exposure; the number of all-cash months; the number
+# of month halts and kills and the dates. Data, costs, universe and caveats as A1 (Discovery only;
+# survivorship; flat 10 bps slippage flatters late large positions).
+family: strategy
+slug: a1b-momentum-book-risk
+hypothesis: >-
+  The A1 momentum book (252-session lookback, 5 names, NIFTY 200-day filter, 2%-of-book stop) run
+  under the PROFIT_PLAN §3.5 book-level risk rules, optionally with 15% volatility targeting on
+  NIFTY's recent volatility, keeps most of its net return while bringing the worst month and the
+  maximum drawdown inside the §3.2 bars.
+economic_rationale: >-
+  The momentum premium comes from slow diffusion of information and institutional herding; its
+  losses concentrate in sharp reversals and high-volatility markets, when crowded winners are sold
+  together. Cutting exposure when market volatility is high, halting entries after a bad month,
+  and stepping aside after a deep drawdown remove the part of the return distribution where the
+  premium is weakest and the losses cluster. The premium itself is earned in the calmer trending
+  regimes, which the overlay leaves untouched.
+falsification: >-
+  PROFIT_PLAN §3.2 unchanged, all conditions on Discovery: net CAGR >= 18% at benchmark costs and
+  > 0 at adverse; net Sharpe above the same-universe equal-weight buy-and-hold; >= 60% of months
+  positive; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; >= 100 round trips; positive
+  in >= 60% of years; no name > 25% of net; >= 50% of adjacent arms net positive; §3.4 reported. If
+  no arm passes, the momentum family is closed on Discovery and only a combined book (A4) may use
+  it as a component.
+parameter_grid:
+  rebalance: ["weekly", "monthly"]
+  vol_target: ["off", "15"]
+feature_versions:
+  daily_bars_d1: 1
+  adjustment_ledger: 1
+declared_at: 2026-09-25T09:30:00+05:30
