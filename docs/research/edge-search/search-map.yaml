@@ -133,7 +133,13 @@ cells:
     requires: [F2, F2B, F3, F3B, F4, VAULT, D2]
     experiments: [EXP-20260924-l4-india-vix-regime-31cf0fed]
     lesson: "6 arms on Discovery at Rs 50,000, all feasible (median |move| 1.02-1.52%, so a VIX gate does select large days) but none passes: gross 0.16-0.28% barely moves against the ungated reversal (0.19-0.35%), net -0.07..+0.05% with t under 0.5; the stricter p0.8 gate is worse than p0.6 (fewer trades, lower gross). Large days are necessary but not sufficient: the fade has no more edge on them (advisory scan)"
-  - {id: L5-early-trend-day-leaders,    lane: L5, hypothesis: early-trend-day-leaders,    status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2, D3]}
+  - id: L5-early-trend-day-leaders
+    lane: L5
+    hypothesis: l5-index-trend-day-leader
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D1, D2]
+    experiments: [EXP-20260925-l5-index-trend-day-leader-cc746676]
+    lesson: "4 arms on D1 (148 names, Discovery, Rs 50,000): on days NIFTY moves 0.4-0.5% in its first hour, ride the top-1 name that leads the index in its direction to 15:15. All feasible (median |move| 1.09-1.44%) and all rejected: gross +0.034% (0.4%, ranked by first-hour volume vs its own baseline), -0.104% (0.5%, volume), +0.070% and +0.085% (ranked by the same-direction move), net -0.15..-0.34%, t -0.8..-2.6, 331-507 trades (194/313 long/short on the first arm). Participation does not predict continuation; the falsification fixed in the declaration (no volume-ranked arm at gross >= 0.25%) is met, so the index-trend continuation lane is closed with no child. The extended-name (move) ranking was marginally better than the participation ranking, the opposite of L17's finding that extended names revert, and both are within noise of zero (advisory scan)"
   # --- P2 ---------------------------------------------------------------------------------------
   - {id: L6-meta-label-rejected-entries, lane: L6, hypothesis: meta-label-rejected-entries, status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT]}
   - {id: L7-nifty-leads-constituents,   lane: L7, hypothesis: nifty-leads-constituents,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D2]}
