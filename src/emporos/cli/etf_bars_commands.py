@@ -26,7 +26,7 @@ from emporos.broker.angelone.factory import AngelOneStackFactory
 from emporos.broker.backoff import RandomJitter
 from emporos.cli.cold_storage import DEFAULT_COLD_DIR, cold_archive
 from emporos.cli.daily_bars_commands import derived_candle_root
-from emporos.cli.swing_commands import NIFTY_50
+from emporos.cli.swing_worlds import NIFTY_50
 from emporos.core.clock import IST, AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError

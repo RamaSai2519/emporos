@@ -8,7 +8,13 @@ from math import sqrt
 
 import pytest
 
-from emporos.research.swing.metrics import SwingMetrics, max_drawdown, period_returns, sharpe
+from emporos.research.swing.metrics import (
+    SwingMetrics,
+    max_drawdown,
+    monthly_returns,
+    period_returns,
+    sharpe,
+)
 from emporos.research.swing.simulator import SwingRun, Trade
 
 D = Decimal
@@ -123,6 +129,19 @@ class TestStats:
         assert s.max_instrument_share == pytest.approx(200 / 250)  # A +200 of total +250
         assert s.round_trips == 4
 
+    def test_an_exempt_instrument_counts_in_the_total_but_not_as_the_largest(self) -> None:
+        trades = (trade("A", "300"), trade("B", "100"), trade("C", "-50"))
+        s = SwingMetrics.of(run(list(self.DAYS), ["1100"] * 4, trades=trades), frozenset({"A"}))
+
+        assert s.max_instrument_share == pytest.approx(100 / 350)  # B +100 of the total +350
+
+    def test_a_book_of_only_exempt_instruments_has_no_concentration(self) -> None:
+        s = SwingMetrics.of(
+            run(list(self.DAYS), ["1100"] * 4, trades=(trade("A", "300"),)), frozenset({"A"})
+        )
+
+        assert s.max_instrument_share == 0.0
+
     def test_concentration_is_undefined_without_a_profit(self) -> None:
         s = SwingMetrics.of(run(list(self.DAYS), ["1000"] * 4, trades=(trade("A", "-10"),)))
 
@@ -158,6 +177,7 @@ class TestExposureMonths:
         assert s.all_cash_months == 1
         assert s.positive_month_share_exposed == 0.5  # January up, March down
         assert s.positive_month_share == pytest.approx(1 / 3)  # over ALL months: only January is up
+        assert s.negative_month_share == pytest.approx(1 / 3)  # only March is down; February flat
 
     def test_a_month_is_exposed_if_any_session_in_it_closed_invested(self) -> None:
         s = self.stats(["1000", "1010", "1010", "1010", "1010", "1010"],
@@ -173,3 +193,13 @@ class TestExposureMonths:
             None,
             3,
         )
+
+
+class TestMonthlyReturns:
+    def test_each_calendar_month_against_the_one_before_and_the_first_against_capital(self) -> None:
+        days = [date(2026, 1, 15), date(2026, 1, 30), date(2026, 2, 27)]
+        r = run(days, ["1050", "1100", "990"])
+
+        got = monthly_returns(r)
+
+        assert got == {(2026, 1): pytest.approx(0.10), (2026, 2): pytest.approx(-0.10)}

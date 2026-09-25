@@ -10,16 +10,13 @@ sub-period is reported, not a second look."""
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
 import typer
-import yaml
 
-from emporos.backtest.vault import VaultedCandleReader
-from emporos.cli.cold_storage import DEFAULT_COLD_DIR
-from emporos.cli.daily_bars_commands import derived_candle_root
 from emporos.cli.etf_bars_commands import DEFAULT_REPORT
 from emporos.cli.experiment_declarations import (
     DEFAULT_DECLARATIONS_DIR,
@@ -27,18 +24,10 @@ from emporos.cli.experiment_declarations import (
     ExperimentDeclarationLoader,
 )
 from emporos.cli.experiment_provenance import GitRepository
-from emporos.cli.swing_bars import VaultedDailyBars
-from emporos.cli.swing_commands import CAPITAL, NIFTY_50
-from emporos.cli.vault_files import VaultFiles
+from emporos.cli.swing_worlds import CAPITAL, EtfWorldLoader, delivery_schedule
 from emporos.core.clock import SystemClock
-from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
-from emporos.domain.fees import TradeProduct
-from emporos.persistence.candle_cache import CandleCacheFiles, ColdArchiveFiles, FileCandleReader
-from emporos.portfolio.fee_schedules import FeeScheduleLibrary
-from emporos.research.adjustments import AdjustmentLedger
 from emporos.research.gap_classes import GapClass
-from emporos.research.partition import DISCOVERY
 from emporos.research.swing.bootstrap import BlockBootstrap
 from emporos.research.swing.cells import ROTATION_CELLS, CellEnvironment
 from emporos.research.swing.costs import BENCHMARK, SwingCostModel
@@ -48,13 +37,16 @@ from emporos.research.swing.ledger import (
     DailyPnlStore,
     JsonlSwingLedger,
 )
-from emporos.research.swing.loading import SwingDatasetBuilder
-from emporos.research.swing.metrics import SwingMetrics, SwingStats
-from emporos.research.swing.regime import IndexSeries, YearlyCalendar
-from emporos.research.swing.report import format_report
+from emporos.research.swing.metrics import SwingMetrics
+from emporos.research.swing.regime import YearlyCalendar
+from emporos.research.swing.report import (
+    format_report,
+    instrument_share_lines,
+    sub_period_lines,
+)
 from emporos.research.swing.rules import LossStop
 from emporos.research.swing.runner import CellReport, SwingCellRunner
-from emporos.research.swing.screen import SwingScreenRun
+from emporos.research.swing.screen import SwingScreenRun, judge
 from emporos.research.swing.weighted import WeightedBuyHold
 
 CASH_YIELD = Decimal("0.05")  # declared in a5-etf-dual-momentum.yaml: a liquid-fund stand-in
@@ -71,30 +63,21 @@ _ROOT = typer.Option(None, help="Derived-candle root (the NIFTY 50 series, for t
 _PATHS = typer.Option(10_000, help="Bootstrap paths: the plan's number; fewer only for tests.")
 
 
-def _sub_period(report: CellReport) -> list[str]:
+def _exempt_verdicts(report: CellReport, etfs: frozenset[str]) -> list[str]:
+    """The arms re-judged with the index ETFs exempt from the single-name check (§3.2, amended).
+    The recorded verdicts stand; this shows whether the exemption would have changed any."""
     lines = [
         "",
-        f"sub-period from {SUB_PERIOD_START} (report only, benchmark costs; the arms' own runs,"
-        " sliced):",
-        f"{'arm':<40} {'CAGR':>7} {'Sharpe':>6} {'m+ all':>7} {'m+ exp':>7} {'worst':>7} "
-        f"{'maxDD':>6} {'trips':>5}",
+        "re-judged with the ETFs exempt from the concentration check (recorded verdicts stand):",
     ]
     for arm in report.arms:
-        s = SwingMetrics.of(arm.outcome.arm.slice_from(SUB_PERIOD_START))
-        lines.append(_sub_row(arm.label, s))
+        outcome = replace(arm.outcome, stats=SwingMetrics.of(arm.outcome.arm, etfs))
+        verdict = judge(outcome, arm.neighbour_share)
+        lines.append(
+            f"{arm.label:<40} {'PASS' if verdict.passed else 'reject'}: "
+            f"{'; '.join(verdict.failed_checks) or 'passed every check'}"
+        )
     return lines
-
-
-def _sub_row(label: str, s: SwingStats) -> str:
-    def pct(v: float | None, d: int = 1) -> str:
-        return "n/a" if v is None else f"{v * 100:.{d}f}%"
-
-    sharpe = "n/a" if s.net_sharpe is None else f"{s.net_sharpe:.2f}"
-    return (
-        f"{label:<40} {pct(s.net_cagr):>7} {sharpe:>6} {pct(s.positive_month_share, 0):>7} "
-        f"{pct(s.positive_month_share_exposed, 0):>7} {pct(s.worst_month):>7} "
-        f"{pct(s.max_drawdown):>6} {s.round_trips:>5}"
-    )
 
 
 def research_screen_rotation(
@@ -115,37 +98,9 @@ def research_screen_rotation(
         declaration = DeclarationGate(ExperimentDeclarationLoader(), GitRepository()).load(
             DEFAULT_DECLARATIONS_DIR / f"{slug}.yaml"
         )
-        audit = yaml.safe_load(etf_report.read_text(encoding="utf-8"))
-        ids = {e["symbol"]: e["instrument_id"] for e in audit["etfs"]}
-        first = min(date.fromisoformat(e["first_day"]) for e in audit["etfs"])
-        settings = Settings.default()
-        cold = VaultedDailyBars(
-            VaultedCandleReader(
-                FileCandleReader(
-                    [ColdArchiveFiles(Path(settings.cold_archive_dir or DEFAULT_COLD_DIR))],
-                    memoize=False,
-                ),
-                VaultFiles().load(),
-            )
-        )
-        nifty = VaultedDailyBars(
-            VaultedCandleReader(
-                FileCandleReader(
-                    [CandleCacheFiles(root or derived_candle_root(settings))], memoize=False
-                ),
-                VaultFiles().load(),
-            )
-        )
-        index = IndexSeries(nifty.bars(NIFTY_50, DISCOVERY.first, DISCOVERY.last))
-        built = SwingDatasetBuilder(cold, AdjustmentLedger(), index).build(
-            list(ids.values()), first, DISCOVERY.last
-        )
-        if built.names_without_bars:
-            raise ValueError(f"no bars for {built.names_without_bars}: run fetch-etf-bars first")
-        # every arm and the benchmark are judged over the same days: from the first session on which
-        # ALL the ETFs have 253 sessions of history (the earlier bars are history a signal reads)
-        start_day = max(built.dataset.series(i).days[252] for i in built.dataset.instrument_ids)
-        schedule = FeeScheduleLibrary.from_directory(product=TradeProduct.DELIVERY).earliest
+        world = EtfWorldLoader(etf_report, root).load()
+        ids, built, index, start_day = world.ids, world.built, world.index, world.start_day
+        schedule = delivery_schedule()
         benchmark = WeightedBuyHold(
             built.dataset,
             {ids[s]: w for s, w in BENCHMARK_WEIGHTS.items()},
@@ -178,7 +133,11 @@ def research_screen_rotation(
         raise typer.Exit(code=1) from error
     for line in format_report(report):
         typer.echo(line)
-    for line in _sub_period(report):
+    runs = [(arm.label, arm.outcome.arm) for arm in report.arms]
+    names = {instrument: symbol for symbol, instrument in ids.items()}
+    for line in instrument_share_lines(runs, names, "each ETF's share of net trade profit:"):
         typer.echo(line)
-    sub = SwingMetrics.of(benchmark.slice_from(SUB_PERIOD_START))
-    typer.echo(_sub_row("BENCHMARK 60/40", sub))
+    for line in _exempt_verdicts(report, frozenset(names)):
+        typer.echo(line)
+    for line in sub_period_lines([*runs, ("BENCHMARK 60/40", benchmark)], SUB_PERIOD_START):
+        typer.echo(line)

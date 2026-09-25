@@ -15,6 +15,7 @@ looser one. A name that starts trading later is bought when it does, at an equal
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date
 from decimal import Decimal
 
 from emporos.research.swing.costs import SwingCostModel
@@ -41,6 +42,7 @@ class EqualWeightBenchmark:
         costs: SwingCostModel,
         membership: Membership | None = None,
         notional_per_name: Decimal = DEFAULT_NOTIONAL_PER_NAME,
+        start_day: date | None = None,
     ) -> None:
         if notional_per_name <= 0:
             raise ValueError("a benchmark slot is positive")
@@ -48,12 +50,13 @@ class EqualWeightBenchmark:
         self._costs = costs
         self._membership = membership
         self._notional = notional_per_name
+        self._start = start_day
 
     def run(self) -> SwingRun:
         names = len(self._dataset.instrument_ids)
         if names == 0:
             raise ValueError("a benchmark needs at least one name")
-        config = SwingConfig(self._notional * names, names)
+        config = SwingConfig(self._notional * names, names, start_day=self._start)
         return SwingSimulator(
             self._dataset, HoldEverything(), config, self._costs, self._membership
         ).run()

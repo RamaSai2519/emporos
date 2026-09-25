@@ -7,12 +7,14 @@ concentrated arms, and (A2) the reaction sessions used per year (the cell's own 
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date
 from decimal import Decimal
 
 from emporos.research.swing.metrics import SwingMetrics, SwingStats
 from emporos.research.swing.runner import ArmReport, CellReport
+from emporos.research.swing.simulator import SwingRun
 
-__all__ = ["format_report"]
+__all__ = ["format_report", "instrument_share_lines", "sub_period_lines"]
 
 
 def _pct(value: float | None, digits: int = 1) -> str:
@@ -37,7 +39,8 @@ def _row(arm: ArmReport) -> str:
         f"{arm.label:<62} {'PASS' if arm.verdict.passed else 'reject':<6} "
         f"{arm.effective_start or 'n/a'!s:<10} {arm.first_entry_day or 'n/a'!s:<10} "
         f"{_pct(s.net_cagr):>7} {_pct(arm.outcome.adverse_stats.net_cagr):>7} "
-        f"{_num(s.net_sharpe):>6} {_pct(s.positive_month_share, 0):>5} {_pct(s.worst_month):>7} "
+        f"{_num(s.net_sharpe):>6} {_pct(s.positive_month_share_exposed, 0):>5} "
+        f"{_pct(s.negative_month_share, 0):>5} {_pct(s.worst_month):>7} "
         f"{_pct(s.max_drawdown):>6} {_num(s.monthly_t):>5} {s.round_trips:>5} "
         f"{_pct(s.positive_year_share, 0):>5} {_pct(s.max_instrument_share, 0):>5} "
         f"{_pct(arm.neighbour_share, 0):>5} {s.days_in_cash:>5}/{s.days}"
@@ -46,8 +49,8 @@ def _row(arm: ArmReport) -> str:
 
 HEADER = (
     f"{'arm':<62} {'result':<6} {'starts':<10} {'1st buy':<10} {'CAGR':>7} {'adv':>7} "
-    f"{'Sharpe':>6} {'m+':>5} {'worst':>7} {'maxDD':>6} {'t':>5} {'trips':>5} {'y+':>5} "
-    f"{'conc':>5} {'nbr':>5} {'cash days':>9}"
+    f"{'Sharpe':>6} {'m+exp':>5} {'m-all':>5} {'worst':>7} {'maxDD':>6} {'t':>5} {'trips':>5} "
+    f"{'y+':>5} {'conc':>5} {'nbr':>5} {'cash days':>9}"
 )
 
 
@@ -82,14 +85,16 @@ def format_report(report: CellReport) -> list[str]:
         )
     lines += [
         "",
-        "months net positive: over ALL months (the §3.2 bar) and over months with exposure:",
+        "months (§3.2 as amended: >= 60% of months with exposure positive AND <= 40% of ALL "
+        "months negative); the old all-months positive share for comparison:",
     ]
     for a in arms:
         s = a.outcome.stats
         lines.append(
-            f"{a.label:<62} all {s.months} months: {_pct(s.positive_month_share, 0)} positive; "
-            f"{s.months_with_exposure} with exposure: {_pct(s.positive_month_share_exposed, 0)} "
-            f"positive; {s.all_cash_months} all-cash months"
+            f"{a.label:<62} {s.months_with_exposure} months with exposure: "
+            f"{_pct(s.positive_month_share_exposed, 0)} positive; all {s.months} months: "
+            f"{_pct(s.negative_month_share, 0)} negative, {_pct(s.positive_month_share, 0)} "
+            f"positive (old bar); {s.all_cash_months} all-cash months"
         )
     lines += ["", "REAL gaps a held position went through (traded through, never zeroed):"]
     for a in arms:
@@ -100,4 +105,45 @@ def format_report(report: CellReport) -> list[str]:
             f"    {e.day} {e.instrument_id} gap {e.gap:+.1%}: Rs {e.pnl:+,.0f}" for e in held
         )
     lines += ["", *report.notes]
+    return lines
+
+
+def _sub_row(label: str, s: SwingStats) -> str:
+    return (
+        f"{label:<40} {_pct(s.net_cagr):>7} {_num(s.net_sharpe):>6} "
+        f"{_pct(s.positive_month_share_exposed, 0):>7} {_pct(s.negative_month_share, 0):>7} "
+        f"{_pct(s.worst_month):>7} {_pct(s.max_drawdown):>6} {s.round_trips:>5}"
+    )
+
+
+def sub_period_lines(runs: Sequence[tuple[str, SwingRun]], first: date) -> list[str]:
+    """Each named run's headline numbers from `first` on (a slice of the run, not a second look)."""
+    lines = [
+        "",
+        f"sub-period from {first} (report only, benchmark costs; the runs' own, sliced):",
+        f"{'':<40} {'CAGR':>7} {'Sharpe':>6} {'m+ exp':>7} {'m- all':>7} {'worst':>7} "
+        f"{'maxDD':>6} {'trips':>5}",
+    ]
+    lines += [_sub_row(name, SwingMetrics.of(run.slice_from(first))) for name, run in runs]
+    return lines
+
+
+def instrument_share_lines(
+    runs: Sequence[tuple[str, SwingRun]], names: dict[str, str], heading: str
+) -> list[str]:
+    """Each named instrument's net profit as a share of the run's total net profit (the
+    concentration convention: trades' P&L, the total defined only when positive). For the index
+    ETFs the §3.2 check does not apply, but the share is reported."""
+    lines = ["", heading]
+    for label, run in runs:
+        by_name = run.pnl_by_instrument
+        total = sum(by_name.values(), Decimal(0))
+        if total <= 0:
+            lines.append(f"{label:<40} no net trade profit (Rs {total:,.0f}): share undefined")
+            continue
+        parts = ", ".join(
+            f"{symbol} {_pct(float(by_name.get(instrument, Decimal(0)) / total), 0)}"
+            for instrument, symbol in names.items()
+        )
+        lines.append(f"{label:<40} of net trade profit Rs {total:,.0f}: {parts}")
     return lines

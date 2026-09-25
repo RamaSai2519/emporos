@@ -13,7 +13,7 @@ import yaml
 from typer.testing import CliRunner
 
 from emporos.cli.experiment_commands import research_app
-from emporos.cli.swing_commands import NIFTY_50
+from emporos.cli.swing_worlds import NIFTY_50
 from emporos.domain.candles import Candle
 from emporos.persistence.candle_cache import CandleCacheFiles
 from emporos.persistence.candle_cold import ParquetCandleCodec

@@ -97,6 +97,7 @@ class SwingRecord:
             "months_with_exposure": s.months_with_exposure,
             "positive_month_share_exposed": s.positive_month_share_exposed,
             "all_cash_months": s.all_cash_months,
+            "negative_month_share": s.negative_month_share,
             "max_instrument_share": s.max_instrument_share,
             "neighbour_share": self.neighbour_share,
             "p_drawdown_30": r.p_drawdown_30,

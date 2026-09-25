@@ -1,0 +1,21 @@
+ADDENDUM (2026-09-25) to a5-etf-dual-momentum.txt, after PROFIT_PLAN §3.2 was amended at e4f5b24: a broad index ETF is exempt from the 25% single-name check, and its share of net profit is reported. Recorded verdicts stand (no line in screens.jsonl changes). Below: each ETF's share of each arm's net trade profit, and the four arms re-judged with the ETFs exempt (and the amended months bar): all four are still rejected, on other checks. The sub-period block repeats the original report's, with the amended months columns.
+
+each ETF's share of net trade profit:
+score=12-1 top_k=1                       of net trade profit Rs 452,585: NIFTYBEES-EQ -1%, JUNIORBEES-EQ 58%, GOLDBEES-EQ 43%
+score=12-1 top_k=2                       of net trade profit Rs 379,319: NIFTYBEES-EQ 29%, JUNIORBEES-EQ 44%, GOLDBEES-EQ 27%
+score=blend top_k=1                      of net trade profit Rs 816,310: NIFTYBEES-EQ -23%, JUNIORBEES-EQ 75%, GOLDBEES-EQ 49%
+score=blend top_k=2                      of net trade profit Rs 586,227: NIFTYBEES-EQ 21%, JUNIORBEES-EQ 57%, GOLDBEES-EQ 22%
+
+re-judged with the ETFs exempt from the concentration check (recorded verdicts stand):
+score=12-1 top_k=1                       reject: net CAGR >= 18% at benchmark costs; net Sharpe beats the same-universe equal-weight buy-and-hold; worst month >= -10%; round trips >= 100
+score=12-1 top_k=2                       reject: net CAGR >= 18% at benchmark costs; net Sharpe beats the same-universe equal-weight buy-and-hold; round trips >= 100
+score=blend top_k=1                      reject: net CAGR >= 18% at benchmark costs; net Sharpe beats the same-universe equal-weight buy-and-hold; worst month >= -10%; max drawdown <= 25%; round trips >= 100
+score=blend top_k=2                      reject: net CAGR >= 18% at benchmark costs; round trips >= 100
+
+sub-period from 2017-11-13 (report only, benchmark costs; the runs' own, sliced):
+                                            CAGR Sharpe  m+ exp  m- all   worst  maxDD trips
+score=12-1 top_k=1                          6.4%   0.48     56%     44%   -9.3%  22.3%    21
+score=12-1 top_k=2                          7.5%   0.70     60%     40%   -9.4%  18.4%    28
+score=blend top_k=1                         7.7%   0.53     58%     42%   -9.8%  33.1%    25
+score=blend top_k=2                        10.6%   0.91     62%     38%   -9.3%  13.7%    25
+BENCHMARK 60/40                            13.8%   1.33     69%     31%  -11.7%  22.9%     0

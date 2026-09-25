@@ -39,6 +39,7 @@ def stats(**over: object) -> SwingStats:
         net_cagr=0.30, net_sharpe=1.5, total_return=0.3, months=60, positive_month_share=0.7,
         worst_month=-0.05, monthly_t=3.0, years=5, positive_year_share=0.8, max_drawdown=0.15,
         round_trips=150, days=1250, days_in_cash=300, max_instrument_share=0.15, net_profit=30000.0,
+        months_with_exposure=50, positive_month_share_exposed=0.7, negative_month_share=0.3,
     )  # fmt: skip
     return replace(base, **over)  # type: ignore[arg-type]
 
@@ -66,11 +67,8 @@ class TestBar:
     def test_the_thresholds_are_the_plans_and_pinned(self) -> None:
         bar = SwingBar()
 
-        assert (bar.min_net_cagr, bar.min_positive_month_share, bar.min_worst_month) == (
-            0.18,
-            0.60,
-            -0.10,
-        )
+        assert (bar.min_net_cagr, bar.min_worst_month) == (0.18, -0.10)
+        assert (bar.min_exposed_positive_month_share, bar.max_negative_month_share) == (0.60, 0.40)
         assert (bar.max_drawdown, bar.min_monthly_t, bar.min_round_trips) == (0.25, 2.5, 100)
         assert (bar.min_positive_year_share, bar.max_instrument_share) == (0.60, 0.25)
         assert (bar.min_neighbour_share, bar.aggressive_max_p_drawdown) == (0.50, 0.05)
@@ -87,15 +85,17 @@ class TestJudge:
         ("field", "value", "check"),
         [
             ("net_cagr", 0.17, "net CAGR >= 18%"),
-            ("positive_month_share", 0.59, "months net positive"),
+            ("positive_month_share_exposed", 0.59, "months with exposure net positive"),
+            ("positive_month_share_exposed", None, "months with exposure net positive"),
+            ("negative_month_share", 0.41, "all months net negative"),
             ("worst_month", -0.11, "worst month"),
             ("max_drawdown", 0.26, "max drawdown"),
             ("monthly_t", 2.4, "monthly t"),
             ("monthly_t", None, "monthly t"),
             ("round_trips", 99, "round trips"),
             ("positive_year_share", 0.59, "calendar years"),
-            ("max_instrument_share", 0.26, "no instrument"),
-            ("max_instrument_share", None, "no instrument"),
+            ("max_instrument_share", 0.26, "no single stock"),
+            ("max_instrument_share", None, "no single stock"),
         ],
     )
     def test_each_bar_is_a_hard_line(self, field: str, value: object, check: str) -> None:
@@ -107,7 +107,8 @@ class TestJudge:
     def test_a_bar_met_exactly_passes(self) -> None:
         exact = stats(
             net_cagr=0.18,
-            positive_month_share=0.60,
+            positive_month_share_exposed=0.60,
+            negative_month_share=0.40,
             worst_month=-0.10,
             max_drawdown=0.25,
             monthly_t=2.5,

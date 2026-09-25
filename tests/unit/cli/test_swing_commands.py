@@ -10,7 +10,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from emporos.cli.experiment_commands import research_app
-from emporos.cli.swing_commands import NIFTY_50
+from emporos.cli.swing_worlds import NIFTY_50
 from emporos.persistence.candle_cache import CandleCacheFiles
 from emporos.research.d1_universe import D1Manifest, LiquidityRule
 from emporos.research.daily_bars import DailyBarStore
@@ -150,7 +150,7 @@ def test_a1b_runs_its_four_arms_and_reports_exposure_months_halts_and_kills(tmp_
     lines = (tmp_path / "screens.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(lines) == 4
     assert {json.loads(line)["max_positions"] for line in lines} == {5}
-    assert "months net positive: over ALL months" in result.output
+    assert "old all-months positive share for comparison" in result.output
     assert "all-cash months" in result.output
     assert "halts [" in result.output
     assert "kills [" in result.output

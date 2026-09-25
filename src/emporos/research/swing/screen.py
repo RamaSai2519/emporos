@@ -34,10 +34,14 @@ __all__ = ["ArmOutcome", "SwingBar", "SwingScreenRun", "SwingVerdict", "judge", 
 
 @dataclass(frozen=True)
 class SwingBar:
-    """PROFIT_PLAN §3.2 and §3.4, verbatim."""
+    """PROFIT_PLAN §3.2 (as amended at e4f5b24) and §3.4, verbatim. The months bar is two checks:
+    at least 60% of the months with any exposure net positive, and at most 40% of ALL months net
+    negative: an all-cash month is neither a win nor a loss, and a book cannot pass by sitting
+    out."""
 
     min_net_cagr: float = 0.18
-    min_positive_month_share: float = 0.60
+    min_exposed_positive_month_share: float = 0.60
+    max_negative_month_share: float = 0.40
     min_worst_month: float = -0.10
     max_drawdown: float = 0.25
     min_monthly_t: float = 2.5
@@ -147,7 +151,12 @@ def judge(
         sharpe is not None and universe is not None and sharpe > universe,
         "net Sharpe beats the same-universe equal-weight buy-and-hold",
     )
-    check(s.positive_month_share >= bar.min_positive_month_share, "months net positive >= 60%")
+    exposed = s.positive_month_share_exposed
+    check(
+        exposed is not None and exposed >= bar.min_exposed_positive_month_share,
+        "months with exposure net positive >= 60%",
+    )
+    check(s.negative_month_share <= bar.max_negative_month_share, "all months net negative <= 40%")
     check(s.worst_month >= bar.min_worst_month, "worst month >= -10%")
     check(s.max_drawdown <= bar.max_drawdown, "max drawdown <= 25%")
     check(s.monthly_t is not None and s.monthly_t >= bar.min_monthly_t, "monthly t >= 2.5")
@@ -155,7 +164,7 @@ def judge(
     check(s.positive_year_share >= bar.min_positive_year_share, "calendar years positive >= 60%")
     check(
         s.max_instrument_share is not None and s.max_instrument_share <= bar.max_instrument_share,
-        "no instrument > 25% of net profit",
+        "no single stock > 25% of net profit (a broad index ETF is exempt)",
     )
     check(
         neighbours is not None and neighbours >= bar.min_neighbour_share,

@@ -14,6 +14,8 @@ Conventions, fixed here so every arm is measured the same way:
 * The t-statistic of the monthly returns is mean / (sample sd / sqrt(months)).
 * Concentration is the largest instrument's net profit over the total net profit; it is only
   defined when the total is positive, and only positive contributions count towards the largest.
+  A caller may name instruments exempt from the largest (A4: index ETFs are not single-name risk);
+  they still count in the total.
 """
 
 from __future__ import annotations
@@ -27,7 +29,9 @@ from typing import Literal
 
 from emporos.research.swing.simulator import SwingRun
 
-__all__ = ["SwingMetrics", "SwingStats", "max_drawdown", "period_returns", "sharpe"]
+__all__ = [
+    "SwingMetrics", "SwingStats", "max_drawdown", "monthly_returns", "period_returns", "sharpe",
+]  # fmt: skip
 
 TRADING_DAYS = 252
 Period = Literal["month", "year"]
@@ -53,6 +57,7 @@ class SwingStats:
     months_with_exposure: int = 0  # months in which some session closed with a holding
     positive_month_share_exposed: float | None = None  # ...and the share of those net positive
     all_cash_months: int = 0
+    negative_month_share: float = 0.0  # over ALL months: the share net negative (§3.2, amended)
 
 
 def sharpe(returns: Sequence[float]) -> float | None:
@@ -91,9 +96,16 @@ def period_returns(
     return returns
 
 
+def monthly_returns(run: SwingRun) -> dict[tuple[int, int], float]:
+    """(year, month) -> that month's return, the first month against the initial capital."""
+    keys = sorted({(d.year, d.month) for d in run.days})
+    values = period_returns(run.days, run.equity, run.capital, by="month")
+    return dict(zip(keys, values, strict=True))
+
+
 class SwingMetrics:
     @staticmethod
-    def of(run: SwingRun) -> SwingStats:
+    def of(run: SwingRun, exempt: frozenset[str] = frozenset()) -> SwingStats:
         if not run.days:
             raise ValueError("a run with no sessions has no metrics")
         daily = SwingMetrics.daily_returns(run)
@@ -118,7 +130,7 @@ class SwingMetrics:
             round_trips=len(run.trades),
             days=len(run.days),
             days_in_cash=run.days_in_cash,
-            max_instrument_share=SwingMetrics._concentration(run),
+            max_instrument_share=SwingMetrics._concentration(run, exempt),
             net_profit=float(run.equity[-1] - run.capital),
             months_with_exposure=sum(exposed.values()),
             positive_month_share_exposed=(
@@ -127,6 +139,7 @@ class SwingMetrics:
                 else None
             ),
             all_cash_months=sum(1 for e in exposed.values() if not e),
+            negative_month_share=sum(m < 0 for m in months) / len(months),
         )
 
     @staticmethod
@@ -172,9 +185,10 @@ class SwingMetrics:
         return mean / (sqrt(variance) / sqrt(len(values)))
 
     @staticmethod
-    def _concentration(run: SwingRun) -> float | None:
+    def _concentration(run: SwingRun, exempt: frozenset[str]) -> float | None:
         by_name = run.pnl_by_instrument
         total = sum(by_name.values(), Decimal(0))
         if total <= 0:
             return None
-        return float(max(max(by_name.values()), Decimal(0)) / total)
+        counted = [v for n, v in by_name.items() if n not in exempt]
+        return float(max(max(counted, default=Decimal(0)), Decimal(0)) / total)
