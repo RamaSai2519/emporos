@@ -27,11 +27,12 @@
 #           tested ONCE, see below.
 #   Posture (Jev, once before the open, 09:00 IST, from NUMBERS ONLY (amended 2026-09-26, no headline
 #           source exists): NIFTY and INDIA VIX state, D1 breadth, the previous session's global closes
-#           (S&P 500, Nasdaq, USD/INR, Brent, US 10-year) and the previous day's count of material
-#           filings, all known at 09:00): hold | normal | aggressive. Scales the risk budgets: hold 0, normal 0.6,
+#           (S&P 500, Nasdaq, USD/INR, Brent, US 10-year; NOT YET FETCHABLE, so absent until a
+#           source is reachable, and the prompt says absent means not available) and the previous
+#           night's count of material filings, all known at 09:00): hold | normal | aggressive. Scales the risk budgets: hold 0, normal 0.6,
 #           aggressive 1.0 of every budget. It never overrides a limit.
 #   Prompts: triage-v1 7518c525..., bull-v1 5533b69d..., bear-v1 8f387fff..., tape-v1 0a6c668e...,
-#           judge-v1 b70546bf..., arbiter-v1 01c0513c..., posture-v2 02f7fae0... (full sha256 in the
+#           judge-v1 b70546bf..., arbiter-v1 01c0513c..., posture-v2 45c91798... (full sha256 in the
 #           code, src/emporos/eventtrader/stages/prompts.py; any change is a new declaration).
 #
 # THE RISK ENGINE (§12.4), one object for the backtest, paper and live. Cash quantity =

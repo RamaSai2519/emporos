@@ -92,8 +92,9 @@ ARBITER_V1 = JevPrompt(
 POSTURE_V2 = JevPrompt(
     "posture-v2",
     "You set the trader's posture for the day before the market opens, from numbers only: the "
-    "index and volatility state, market breadth, the previous session's global closes and the "
-    "count of material company filings the day before. "
+    "index and volatility state, market breadth, the previous session's global closes when they "
+    "are given (absent means not available, not neutral) and the count of material company "
+    "filings the night before. "
     '"hold" means take no new positions today; "normal" is the usual size; "aggressive" is the '
     "largest size allowed. Choose hold when the picture is unusually uncertain or hostile."
     + _RULES
