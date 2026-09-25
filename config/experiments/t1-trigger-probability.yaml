@@ -1,0 +1,147 @@
+# Declared BEFORE any dataset build or training run (PROFIT_PLAN.md §2.1 and §11, operator direction of
+# 2026-09-25; EM-238 under EM-219). Not yet run: no label, no trigger P&L, no feature value of this
+# cell has been computed. The machinery (trigger recorder, features, models) is written after this file
+# is committed, and is tested on synthetic bars only.
+#
+# What is tested. Whether a probability model over the as-of state at an intraday trigger can pick the
+# few trigger fills that win often enough, and pay enough when they win, to clear the adverse-cost
+# break-even at Rs 25,000 a trade. Every trade the program's intraday scans took on D1 lost money on
+# average; the hypothesis is that some of them are conditionally good and the conditions are knowable
+# at the signal bar's close. A high win rate alone is not an edge (B1 won 82% of its trades and lost), so
+# the rule needs the EXPECTED NET at adverse costs above zero as well as the probability.
+#
+# 1. TRIGGERS (Discovery only, D1 universe, the shared IntradayScan order path: a signal at a bar's
+#    close is a marketable limit that can fill on the next bar only, 10% of bar volume, strictly-through
+#    fills, no new entries after 14:45, square-off 15:15). ONE configuration per trigger type, at the
+#    LOOSEST setting declared below, so the model, not a threshold, decides what is strong (the
+#    trigger's own strength is a feature). Position value Rs 25,000 for every trigger.
+#      raw_gap            gap >= 0.5%, entry bar 1                       -> gap_continuation, gap_fade
+#      shock_reversal     gap >= 0.5%, first-hour retrace >= 0.25        -> shock_reversal
+#      top_shock          daily top-shock fade, gap floor 0.5%, all news -> top_shock_fade  (L17)
+#      orb_rvol           rvol >= 1.0, opening-range width >= 25 bps, exit close -> orb_rvol
+#      vwap_reversion     entry_z 1.5, rsi_extreme 35 (v1 defaults 2.0 / 30) -> vwap_reversion
+#      rsi_pullback       rsi_entry 15 (v1 default 10)                   -> rsi_pullback
+#      nr_break           nr4, nr7, inside; buffer 5 bps                 -> nr4_break, nr7_break, inside_break
+#      index_trend_leader index move >= 0.3%, rank by volume, by move    -> leader_volume, leader_move  (L5)
+#      in_session_results theta 1.0%, continuation, fade                 -> results_continuation, results_fade
+#    15 trigger types. If a declared loose value is refused by a scan's own parameter validation, the
+#    nearest value it accepts is used and the substitution is printed in the dataset report BEFORE any
+#    model is trained. A trigger type is never dropped, tuned or re-weighted from its own P&L. One row
+#    per FILL (a signal whose order never filled is not a row). Overlapping triggers on one name-day give
+#    one row each; the trigger type is a feature and the row count per name-day is reported.
+#
+# 2. FEATURES, computed only from bars at or before the signal bar's close and from days before the
+#    signal day (a test feeds bars after the signal bar with absurd values and requires identical
+#    features). Never the symbol, the date, the year or any identifier.
+#      trigger type (one-hot); side; the trigger's own strength (gap %, first-hour retrace fraction,
+#      rvol, opening-range width, entry z, RSI, index move, in-session move m, as applicable, else missing)
+#      name: returns over 1, 5 and 20 sessions (daily closes up to the previous session); realised
+#        volatility over the same 5 and 20 sessions; ATR% (14 five-minute bars); gap %; first-hour
+#        return and first-hour retrace (as of the signal bar when the signal is inside the first hour)
+#      volume versus its time-of-day norm (cumulative volume to the signal bar over the mean of the
+#        same cumulative over the previous 20 sessions); distance of the close to the session VWAP (%)
+#      NIFTY: return so far today (signal bar close vs previous close), gap; INDIA VIX close level of the
+#        previous session, its 252-session percentile, and its return so far today
+#      sector: the return so far today of the NIFTY sector index the name's D3 industry maps to
+#        (IT, Auto, FMCG, Pharma, Metal, Energy, Realty, PSU Bank, Pvt Bank, Media, Infra, Fin Service);
+#        an industry with no index is MISSING for that name
+#      D1 breadth: share of D1 names above their own session VWAP at the signal bar (only names with a bar
+#        at or before it)
+#      time: minutes since the open; weekday; calendar days to the monthly F&O expiry (last Thursday)
+#      results: sessions since the name's last first-public results filing and sessions until its next
+#        one (D5 ledger; missing when none is on file)
+#      liquidity decile: decile (within D1, as of the previous session) of the 20-session median traded
+#        value
+#    The logistic model imputes a missing value with the training median and adds a missing-flag column;
+#    the boosted model takes missing natively.
+#
+# 3. LABEL. y = 1 if the trade's net P&L at BENCHMARK costs (the screener's cost scenario: benchmark
+#    slippage, statutory charges and brokerage at Rs 25,000) is > 0. Also stored per row: the gross
+#    return, the net return at benchmark costs and the net return at ADVERSE costs. The label uses no
+#    information past the trade's exit.
+#
+# 4. MODELS, hyperparameters fixed here, no inner search. Walk-forward by calendar year Y = 2018..2024
+#    over Discovery: the calibration year is Y-1 and the base model is trained on all years before Y-1
+#    (so the calibration data is out-of-sample for it); isotonic calibration (increasing, clipped to
+#    [0,1]) is fitted on the calibration year's base-model probabilities; year Y is then predicted with
+#    base model + calibrator. A 1-session purge drops the training rows of the last session before each
+#    boundary. The pooled out-of-sample predictions of 2018..2024 are the screen. Fold 2018's base model
+#    has only the months of D1 history before 2017; the number of training rows per fold is reported.
+#      logistic: L2 (C = 1.0), standardised features, lbfgs, max_iter 1000, class_weight none
+#      gbm:      HistGradientBoostingClassifier(max_depth=3, learning_rate=0.05, max_iter=300,
+#                min_samples_leaf=200, l2_regularization=0.0, early_stopping=False, random_state=20260925)
+#
+# 5. RULE. Take a trade only if calibrated P >= threshold AND the expected net per trade at ADVERSE
+#    costs is > 0, where expected net = P x mean_win - (1 - P) x mean_loss and mean_win and mean_loss
+#    (net at adverse costs, in rupees, of the calibration year's winning and losing rows) come from the
+#    calibration year's rows in the SAME calibrated-probability bin (bins of width 0.05 from 0.50; a bin
+#    with fewer than 30 calibration rows is merged with its lower neighbour until it has 30; if the
+#    calibration year has too few rows to give a bin, the rule takes no trade in that fold). At most one
+#    position per name per day (the earliest qualifying signal). No cross-instrument limits are modelled
+#    (advisory screen, as every scan here). The trades the rule takes per year are logged for every arm;
+#    if the 0.80 arms take almost none, that is a finding, not a defect.
+#    Arms: model {logistic, gbm} x threshold {0.70, 0.80} = 4, each a counted look
+#    (docs/research/profit/screens.jsonl, Track T).
+#
+# 6. JUDGEMENT, all fixed now. EDGE_SEARCH_PLAN §6 S2 on each arm's pooled out-of-sample trades
+#    (net expectancy > 0 at benchmark costs AND mean gross >= the adverse break-even; net t >= 3.0;
+#    >= 300 trades; net positive in >= 60% of the calendar years 2018-2024 in which it traded; no single
+#    instrument > 50% of net). PLUS calibration: over ALL pooled out-of-sample rows the model scored
+#    P >= 0.80, at least 75% must actually win, and there must be at least 100 such rows; otherwise the
+#    arm is rejected whatever its P&L. The reliability table (predicted-probability deciles of all
+#    out-of-sample rows against the realised win rate and row count) is reported for both models.
+#
+# 7. JEV, only after step 6 and only if an arm has out-of-sample trades in 2024. The existing Jev harness
+#    in record mode on that arm's trades of 2024-01-01..2024-12-31 (the cutoff guard for gpt-4o-mini's
+#    2023-10-01 cutoff allows nothing earlier), anonymised, --max-requests = trades + 10%, the
+#    worst-case spend shown to the head first. Judged as Jev-confirm-required versus the rule alone, net
+#    of Jev's token cost, under config/experiments/jev_incremental_v1.yaml. Every call is journalled.
+#
+# PRIOR, stated before the run: about 3%. Fifteen prior gap, reversal, breakout and results cells in this
+# program had gross at or below zero; the model can only re-weight what those triggers already carry.
+# What could still work: a conditional edge in the tails of the features (index and VIX state, breadth)
+# that no single-threshold scan could express. What pulls the other way: pooled rows are correlated
+# (a market-wide day gives many rows), the label is a coin flip near 0.5 at these costs, and the adverse
+# expectation must be above zero, not only the probability.
+#
+# KNOWN LIMITS, declared now: (a) D1 is today's NIFTY 100 and Midcap 150: survivorship flatters longs;
+# (b) rows on one day share the market's move, so the effective sample is far smaller than the row
+# count, which is why the t-statistic is computed on per-day mean net returns as well as per trade and
+# the smaller t is the one judged; (c) the trigger set was chosen from 15 earlier cells' names, a
+# hindsight choice that is counted in N through the ledger; (d) the D5 results ledger has holes (about a
+# third of 2022), so the results features are missing then; (e) the sector index covers only some
+# industries; (f) the scans are advisory (no engine strategy for the new loose settings), so a pass needs
+# parity cases before any live use; (g) Discovery only: Confirmation and the vault are not touched.
+family: feature
+slug: t1-trigger-probability
+hypothesis: >-
+  A calibrated probability model over the as-of features at the signal bar of the program's intraday
+  triggers on D1 picks the fills whose net P&L at benchmark costs is positive. Trading only those with
+  calibrated P at or above 0.70 or 0.80 and a positive expected net at adverse costs, walk-forward by
+  year, earns a net expectancy above zero at benchmark costs, with trades scored 0.80 or higher winning
+  at least 75% of the time out of sample.
+economic_rationale: >-
+  Each trigger is a known behavioural pattern (gap continuation or fade, over-reaction to a top shock,
+  opening-range breakout on volume, reversion to VWAP, results drift). Each earns nothing on average
+  after costs because it works only in some states of the market: the counterparties are liquidity
+  providers and slower participants whose losses concentrate when the index, volatility and breadth
+  align with the trigger. A model that conditions on that state can concentrate the trades in the states
+  where the pattern pays more than its cost.
+falsification: >-
+  Rejected at the first EDGE_SEARCH_PLAN §6 S2 bar an arm fails on its pooled out-of-sample trades (net
+  expectancy > 0 at benchmark costs and gross per trade at least the adverse break-even; net t >= 3.0 on
+  the smaller of the per-trade and per-day statistics; >= 300 trades; >= 60% of the years 2018-2024
+  positive; no instrument above 50% of net), or if the trades scored P >= 0.80 win less than 75% of the
+  time out of sample or number fewer than 100. Also rejected: an arm that takes fewer than 300 trades
+  in total. No trigger is added, removed or re-tuned from this output; a child needs its own
+  declaration (EDGE_SEARCH_PLAN §3.7).
+parameter_grid:
+  model: ["logistic", "gbm"]
+  threshold: ["0.70", "0.80"]
+feature_versions:
+  intraday_trigger_fills: 1
+  trigger_asof_features: 1
+  walk_forward_year_folds: 1
+  isotonic_calibration_last_train_year: 1
+position_value: "25000"
+declared_at: 2026-09-25T20:00:00+05:30
