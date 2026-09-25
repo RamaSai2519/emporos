@@ -1,0 +1,57 @@
+# Declared BEFORE any data run (PROFIT_PLAN.md §2.1). EM-233, Track A cell A5, by the head session.
+# A published rule (Antonacci's dual momentum; Faber's tactical allocation), not derived from any
+# of our results. No price of these ETFs has been looked at.
+#
+# Why now: the momentum family (A1, A1b) earns 28-42% net CAGR on Discovery but fails the §3.2
+# shape bars (drawdown 31-50%, worst month -11..-17%), and spends 21-29 of 99 months in cash. A book
+# that holds gold when equity trends break is the textbook complement. A5 must stand on its own;
+# the combination with momentum is declared separately (a4-momentum-rotation-book.yaml), before
+# A5 runs.
+#
+# Rules (daily bars, decisions at the close of the first session of each calendar month, fills at
+# the next session's open, whole units, delivery costs):
+# * Assets: NIFTYBEES (NIFTY 50 ETF), JUNIORBEES (NIFTY Next 50 ETF), GOLDBEES (gold ETF). Bars from
+#   the broker's history API (throttled, cold tier). Cash earns a declared 5.0% a year, accrued
+#   daily (a liquid-fund/LIQUIDBEES stand-in, stated as an assumption and reported separately).
+# * Momentum score per asset: `12-1` = close[t-21] / close[t-252] - 1; `blend` = the mean of the
+#   3-, 6- and 12-month returns (63, 126, 252 sessions, each ending at t).
+# * An asset qualifies if its close is above its 200-session simple average AND its score > 0
+#   (absolute momentum). Hold the top K qualifying assets by score, equal rupee weights; if fewer
+#   than K qualify, the rest is cash.
+# * No stop (a monthly allocation across three broad assets; PROFIT_PLAN §3.5's per-position stop is
+#   for single stocks; the book rules are reported, not applied, here).
+# 2 (score 12-1, blend) x 2 (K 1, 2) = 4 arms.
+#
+# Data: Discovery only, from the first session on which all three ETFs have 252 + 21 prior sessions
+# (reported; GOLDBEES lists in 2007, so about 2008-2009) to 2024-12-31. Also report the sub-period
+# from 2017-11-13 (the momentum book's start). Capital Rs 1,00,000. Known limits: ETF dividends
+# (small, NIFTYBEES/JUNIORBEES) are not added; tracking error and ETF premium/discount are real
+# prices, so they are in; gold is priced in rupees (it includes the currency).
+family: strategy
+slug: a5-etf-dual-momentum
+hypothesis: >-
+  Rotating monthly among a NIFTY 50 ETF, a NIFTY Next 50 ETF and a gold ETF, holding only those
+  in an absolute uptrend and otherwise earning cash, gives a return stream with much smaller
+  drawdowns than Indian equities and returns above cash, after delivery costs.
+economic_rationale: >-
+  Time-series momentum across asset classes is documented over a century of data (Moskowitz, Ooi
+  and Pedersen): trends persist because investors under-react and then herd, and risk appetite
+  moves slowly. Gold in rupees tends to rise when Indian equities fall on global stress and
+  currency weakness, so the rotation steps out of equity bear markets into an asset that often
+  trends up in them. The absolute filter moves to cash when nothing trends. Who is on the other
+  side: allocators who rebalance mechanically against trends, and investors who anchor on past
+  prices.
+falsification: >-
+  PROFIT_PLAN §3.2 on Discovery: net CAGR >= 18% at benchmark costs and > 0 at adverse; for this
+  multi-asset book the benchmark is a 60/40 NIFTYBEES/GOLDBEES buy-and-hold rebalanced yearly (same
+  costs, same days), which must be beaten on net Sharpe; >= 60% of months positive (report the
+  exposure-month measure too); worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; >= 100
+  round trips (if fewer, report it: a monthly three-asset rotation may not trade 100 times, and
+  that is a failed check, not a waiver); positive in >= 60% of years. If no arm passes alone, A5
+  can still enter the A4 book, which is judged on its own.
+parameter_grid:
+  score: ["12-1", "blend"]
+  top_k: ["1", "2"]
+feature_versions:
+  etf_daily_bars: 1
+declared_at: 2026-09-25T10:15:00+05:30

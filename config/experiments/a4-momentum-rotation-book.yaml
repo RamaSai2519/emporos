@@ -1,0 +1,54 @@
+# Declared BEFORE A5 has run (PROFIT_PLAN.md §2.1). EM-233, Track A cell A4, by the head session.
+# The combination rule and BOTH components are fixed here, before the second component's result
+# exists, so neither side can be chosen to flatter the other.
+#
+# Plan note, stated openly: PROFIT_PLAN §4 A4 said "equal-risk blend of every A-cell that passes
+# S3". No A-cell passes S2 alone, and the momentum family's declared fate (a1b falsification) is
+# "only a combined book may use it as a component". This cell is that combined book. The head
+# chose the equity component AFTER seeing A1b's four arms: weekly / vol 15, the arm with the lowest
+# drawdown and a §3.4 pass. All four A1b arms were within 28-33% CAGR and 1.30-1.40 Sharpe, so the
+# selection effect is small, but it is a selection, it is counted, and it is disclosed here.
+#
+# Book:
+# * Equity sleeve: the A1b book exactly as built at e643405, arm rebalance=weekly, vol_target=15
+#   (A1 at lookback 252, 5 names, NIFTY 200-day regime, 2%-of-book stop, §3.5 month halt and kill,
+#   vol targeting), run on its sleeve's capital.
+# * Defensive sleeve: the A5 book exactly as declared (a5-etf-dual-momentum.yaml), arm score=blend,
+#   top_k=2, cash at 5.0% a year, run on its sleeve's capital. Chosen now, before A5 runs: two
+#   assets and a blended score are the more diversified setting.
+# * Split (the arm): equity/defensive = 60/40 or 50/50 of book equity, restored at the first session
+#   of each calendar quarter by trading the difference (costs charged; whole shares; a sleeve's
+#   positions are trimmed pro rata).
+# 2 arms (split 60/40, 50/50).
+#
+# Data: Discovery, from 2017-11-13 (the equity sleeve's start) to 2024-12-31. Capital Rs 1,00,000.
+# Survivorship caveat of the equity sleeve applies (AllMembers until A-F3), and the §3.2 benchmark is
+# the same-weight blend of the two sleeves' own benchmarks (the D1 equal-weight buy-and-hold and the
+# 60/40 NIFTYBEES/GOLDBEES buy-and-hold), same costs, same days.
+family: strategy
+slug: a4-momentum-rotation-book
+hypothesis: >-
+  A book holding the A1b momentum sleeve and the A5 ETF rotation sleeve, rebalanced quarterly at a
+  fixed split, keeps most of the momentum sleeve's return while its drawdowns and worst months fall
+  inside the PROFIT_PLAN §3.2 bars, because the rotation sleeve holds gold or cash when equity
+  trends break.
+economic_rationale: >-
+  The two sleeves earn different premia with different failure regimes: stock momentum suffers in
+  sharp equity reversals and high volatility; the rotation sleeve steps out of equity in exactly
+  those regimes and often holds gold, which in rupees tends to rise under global stress. Combining
+  return streams with low or negative correlation in their bad months lowers drawdown more than it
+  lowers return.
+falsification: >-
+  PROFIT_PLAN §3.2 on Discovery, applied to the whole book: net CAGR >= 18% at benchmark costs and
+  > 0 at adverse; net Sharpe above the blended benchmark; >= 60% of months positive (the
+  exposure-month measure reported too); worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5;
+  >= 100 round trips; positive in >= 60% of years; §3.4 reported. Also report the correlation of
+  the two sleeves' monthly returns overall and in the equity sleeve's worst 12 months. If neither
+  arm passes, the combination is closed on Discovery.
+parameter_grid:
+  split: ["60/40", "50/50"]
+feature_versions:
+  daily_bars_d1: 1
+  adjustment_ledger: 1
+  etf_daily_bars: 1
+declared_at: 2026-09-25T10:20:00+05:30
