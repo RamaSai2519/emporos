@@ -1,0 +1,18 @@
+# Symbols that notices used before a company's symbol (or name) changed, each mapped to the symbol
+# the name trades under in today's lists and tokens.csv. The instrument id (the token) is the same
+# across the change, so the as-of membership can follow the name. Only NSE symbol changes that I
+# know of and whose new symbol is a D1 name are listed; each is checkable against the notice's
+# company name. A rename missing here leaves that name un-tradable before its rename in the as-of
+# stress (the conservative direction), and is reported by the stress run.
+# NOT machine-verified: needs the head's eye. Evidence = (company name in the notice -> company
+# name in today's nifty100.csv / niftymidcap150.csv).
+aliases:
+- {old: ADANITRANS, current: ADANIENSOL, note: Adani Transmission Ltd. -> Adani Energy Solutions Ltd.}
+- {old: NIITTECH, current: COFORGE, note: NIIT Technologies Ltd. -> Coforge Ltd.}
+- {old: L&TFH, current: LTF, note: L&T Finance Holdings Ltd. -> L&T Finance Ltd.}
+- {old: SRTRANSFIN, current: SHRIRAMFIN, note: Shriram Transport Finance Co. Ltd. -> Shriram Finance Ltd.}
+- {old: ADANIGAS, current: ATGL, note: Adani Gas Ltd. -> Adani Total Gas Ltd.}
+- {old: GMRINFRA, current: GMRAIRPORT, note: GMR Infrastructure Ltd. -> GMR Airports Ltd.}
+- {old: RNAM, current: NAM-INDIA, note: Reliance Nippon Life Asset Management Ltd. -> Nippon Life India Asset Management Ltd.}
+- {old: LTI, current: LTM, note: Larsen & Toubro Infotech Ltd. -> LTM Ltd. (was LTIMindtree, symbol LTIM; ISIN INE214T01019 in nifty100.csv)}
+- {old: MINDAIND, current: UNOMINDA, note: Minda Industries Ltd. -> UNO Minda Ltd.}

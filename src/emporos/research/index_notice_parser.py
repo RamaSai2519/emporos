@@ -30,11 +30,11 @@ from emporos.research.index_membership import IndexChange
 
 __all__ = ["ChangeBuilder", "NoticeParser", "ParsedNotice", "Section", "SectionKind"]
 
-_DATE = r"([A-Z][a-z]{2,8}\.? ?\d{1,2},? ?\d{4})"
+_DATE = r"([A-Z][a-z]{2,8}\.?\s*\d{1,2},?\s*\d{4})"
 _EFFECTIVE = re.compile(
     r"(?:effective\s+from|w\.e\.f\.?|effective\s+on)\s*(?:the\s+)?" + _DATE, re.I
 )
-_HEADING = re.compile(r"^\s*(\d{1,2})\)\s+(.+?)\s*$", re.M)
+_HEADING = re.compile(r"^\s*(\d{1,2}|[a-z])\)\s+(.+?)\s*$", re.M)
 _MODE = re.compile(r"being\s+(excluded|included)\s*:", re.I)
 _THEMATIC = re.compile(
     r"quality|alpha|value|volatil|liquid|momentum|equalweight|growth|dividend|lowvol|sector|leader"

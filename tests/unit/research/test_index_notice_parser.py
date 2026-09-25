@@ -145,6 +145,45 @@ class TestParser:
 
         assert section.effective == date(2021, 3, 31)
 
+    def test_lettered_sub_headings_under_a_numbered_one_are_read(self) -> None:
+        text = """
+These changes shall become effective from September 29, 2023 (close of September 28, 2023).
+1) Replacements on account of semi-annual review of broad market indices:
+
+a) Nifty Next 50
+
+The following companies are being excluded:
+
+   Sr. No.    Company Name                     Symbol
+     1        ACC Ltd.                         ACC
+
+The following companies are being included:
+
+   Sr. No.    Company Name                     Symbol
+     1        Punjab National Bank             PNB
+
+b) Nifty 500
+
+The following companies are being excluded:
+
+   Sr. No.    Company Name                     Symbol
+     1        BASF India Ltd.                  BASF
+"""
+        parsed = NoticeParser().parse("n", text)
+
+        assert [(s.kind, s.effective, s.excluded, s.included) for s in parsed.sections] == [
+            (SectionKind.NEXT_50, date(2023, 9, 29), ("ACC",), ("PNB",))
+        ]
+
+    def test_a_date_broken_between_the_month_and_the_day_is_found(self) -> None:
+        text = (
+            "These changes shall become effective from March\n31, 2022 (close of March 30).\n\n"
+            "1) NIFTY 50\n\nThe following company is being excluded:\n\n"
+            "  Sr. No.   Company Name    Symbol\n     1      X Ltd.        XX\n"
+        )
+
+        assert NoticeParser().parse("n", text).sections[0].effective == date(2022, 3, 31)
+
     def test_a_section_with_no_date_before_it_is_kept_but_reported(self) -> None:
         text = "1)  NIFTY 50\nThe following company is being excluded:\n  1   A Ltd.        AAA\n"
 

@@ -41,12 +41,19 @@ FIRST_DAY = date(2016, 9, 1)
 _ITEM = re.compile(
     r"data-date=\"([^\"]+)\".*?<a href='(/Press_Release/[^']+\.pdf)'[^>]*>([^<]+)</a>", re.DOTALL
 )
-_RELEVANT = re.compile(r"replacement|change|exclusion|inclusion|reconstitution|constituent", re.I)
-_IRRELEVANT = re.compile(
-    r"fixed income|nifty ipo|sme emerge|esg|g-sec|waves|india fpi|corporate action|methodology|"
-    r"criteria",
-    re.I,
+_RELEVANT = re.compile(
+    r"replacement|change|exclusion|inclusion|reconstitution|constituent|deferment|rebalancing", re.I
 )
+_IRRELEVANT = re.compile(
+    r"fixed income|nifty ipo|sme emerge|esg|g-sec|waves|india fpi|corporate action", re.I
+)
+# A notice that only revises a criterion or a methodology changes no list; but the periodic reviews
+# are titled "Replacements in indices and revision in criteria", and those ARE the list changes, so
+# the words exclude a title only when it names no list change (a replacement, a
+# reconstitution, a deferment or a rebalancing); EM-224: they hid 16 notices, among them 13 reviews
+# and the COVID deferment of the March 2020 review.
+_RULES_ONLY = re.compile(r"methodology|criteria", re.I)
+_LIST_CHANGE = re.compile(r"replacement|reconstitution|deferment|rebalancing", re.I)
 
 
 @dataclass(frozen=True)
@@ -82,6 +89,7 @@ def select_candidates(refs: Sequence[NoticeRef], since: date = FIRST_DAY) -> lis
     chosen = [
         r for r in refs
         if r.notice_date >= since and _RELEVANT.search(r.title) and not _IRRELEVANT.search(r.title)
+        and (_LIST_CHANGE.search(r.title) or not _RULES_ONLY.search(r.title))
     ]  # fmt: skip
     return sorted(chosen, key=lambda r: (r.notice_date, r.url))
 

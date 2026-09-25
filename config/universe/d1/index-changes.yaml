@@ -369,6 +369,26 @@ changes:
   - RPOWER
   - SPARC
   source: https://www.niftyindices.com/Press_Release/ind_prs28082019.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2019-09-27'
+  added:
+  - TTKPRESTIG
+  removed:
+  - THOMASCOOK
+  source: https://www.niftyindices.com/Press_Release/ind_prs17092019.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2019-12-27'
+  added:
+  - AARTIIND
+  - LALPATHLAB
+  - POLYCAB
+  - SCHAEFFLER
+  removed:
+  - ALBK
+  - CORPBANK
+  - ORIENTBANK
+  - TATACHEM
+  source: https://www.niftyindices.com/Press_Release/ind_prs16122019.pdf fetched 2026-09-25
 - index: NIFTY 100
   effective: '2020-03-19'
   added:
@@ -383,13 +403,6 @@ changes:
   removed:
   - ADANITRANS
   source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf fetched 2026-09-25
-- index: NIFTY MIDCAP 150
-  effective: '2020-03-19'
-  added:
-  - PVR
-  removed:
-  - YESBANK
-  source: https://www.niftyindices.com/Press_Release/ind_prs19032020.pdf fetched 2026-09-25
 - index: NIFTY 100
   effective: '2020-06-26'
   added:
@@ -447,6 +460,54 @@ changes:
   removed:
   - VEDL
   source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2020-09-25'
+  added:
+  - ADANIGREEN
+  - ALKEM
+  - LTI
+  - TATACONSUM
+  removed:
+  - NHPC
+  - PAGEIND
+  - SRTRANSFIN
+  - ZEEL
+  source: https://www.niftyindices.com/Press_Release/ind_prs20082020.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2020-09-25'
+  added:
+  - ADANIENT
+  - ASTRAZEN
+  - ITI
+  - JMFINANCIL
+  - METROPOLIS
+  - NAVINFLUOR
+  - NHPC
+  - PAGEIND
+  - SFL
+  - SRTRANSFIN
+  - TATACHEM
+  - TIINDIA
+  - YESBANK
+  - ZEEL
+  - ZYDUSWELL
+  removed:
+  - ADANIGREEN
+  - ADANIPOWER
+  - ALKEM
+  - BLUEDART
+  - CENTRALBK
+  - EIHOTEL
+  - HEXAWARE
+  - IDBI
+  - IOB
+  - JUBILANT
+  - LTI
+  - PNBHOUSING
+  - QUESS
+  - TATACONSUM
+  - UCOBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs20082020.pdf fetched 2026-09-25
 - index: NIFTY 100
   effective: '2021-03-31'
   added:
@@ -509,12 +570,107 @@ changes:
   - MOTHERSUMI
   source: https://www.niftyindices.com/Press_Release/ind_prs15062021.pdf fetched 2026-09-25
 - index: NIFTY MIDCAP 150
+  effective: '2021-09-30'
+  added:
+  - ABBOTINDIA
+  - AFFLE
+  - ALKEM
+  - ALKYLAMINE
+  - APLAPOLLO
+  - BLUEDART
+  - HINDCOPPER
+  - INDIANB
+  - IRFC
+  - KAJARIACER
+  - LINDEINDIA
+  - LODHA
+  - MRF
+  - NATIONALUM
+  - PETRONET
+  - UBL
+  - VAIBHAVGBL
+  - WABCOINDIA
+  removed:
+  - AKZOINDIA
+  - ASTRAZEN
+  - BANKBARODA
+  - BBTC
+  - CESC
+  - CHOLAFIN
+  - CREDITACC
+  - GODREJAGRO
+  - IBULHSGFIN
+  - IDBI
+  - IIFLWAM
+  - JINDALSTEL
+  - JMFINANCIL
+  - PGHL
+  - PIIND
+  - SAIL
+  - SJVN
+  - VGUARD
+  source: https://www.niftyindices.com/Press_Release/ind_prs15092021.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
   effective: '2021-10-29'
   added:
   - SONACOMS
   removed:
   - GMRINFRA
   source: https://www.niftyindices.com/Press_Release/ind_prs22102021.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2022-03-31'
+  added:
+  - MINDTREE
+  - NYKAA
+  - PAYTM
+  - SRF
+  - ZOMATO
+  removed:
+  - AUROPHARMA
+  - HINDPETRO
+  - IGL
+  - JINDALSTEL
+  - YESBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs24022022_1.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2022-03-31'
+  added:
+  - AUROPHARMA
+  - CGPOWER
+  - CLEAN
+  - FLUOROCHEM
+  - GRINDWELL
+  - HAPPSTMNDS
+  - HINDPETRO
+  - IDBI
+  - IEX
+  - IGL
+  - JINDALSTEL
+  - NUVOCO
+  - POLICYBZR
+  - STARHEALTH
+  - TRIDENT
+  - TTML
+  - YESBANK
+  removed:
+  - AMARAJABAT
+  - CASTROLIND
+  - CHOLAHLDNG
+  - CUB
+  - DHANI
+  - GILLETTE
+  - HINDCOPPER
+  - ITI
+  - MGL
+  - MINDTREE
+  - MOTILALOFS
+  - RBLBANK
+  - SRF
+  - SUVENPHAR
+  - TTKPRESTIG
+  - VAIBHAVGBL
+  - ZYDUSWELL
+  source: https://www.niftyindices.com/Press_Release/ind_prs24022022_1.pdf fetched 2026-09-25
 - index: NIFTY MIDCAP 150
   effective: '2022-05-04'
   added:
@@ -645,6 +801,52 @@ changes:
   - JINDALSTEL
   source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf fetched 2026-09-25
 - index: NIFTY 100
+  effective: '2023-09-29'
+  added:
+  - PNB
+  - SHRIRAMFIN
+  - TRENT
+  - TVSMOTOR
+  - ZYDUSLIFE
+  removed:
+  - ACC
+  - HDFCAMC
+  - INDUSTOWER
+  - NYKAA
+  - PAGEIND
+  source: https://www.niftyindices.com/Press_Release/ind_prs17082023.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2023-09-29'
+  added:
+  - ACC
+  - BDL
+  - CARBORUNIV
+  - FACT
+  - HDFCAMC
+  - INDUSTOWER
+  - JSL
+  - KPITTECH
+  - MAHABANK
+  - MAZDOCK
+  - NYKAA
+  - PAGEIND
+  - RVNL
+  removed:
+  - AAVAS
+  - AFFLE
+  - ALKYLAMINE
+  - CLEAN
+  - FINEORG
+  - HAPPSTMNDS
+  - NAM-INDIA
+  - PNB
+  - SHRIRAMFIN
+  - TRENT
+  - TTML
+  - TVSMOTOR
+  - ZYDUSLIFE
+  source: https://www.niftyindices.com/Press_Release/ind_prs17082023.pdf fetched 2026-09-25
+- index: NIFTY 100
   effective: '2024-03-28'
   added:
   - ADANIPOWER
@@ -692,6 +894,118 @@ changes:
   - VINATIORGA
   - WHIRLPOOL
   source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2024-09-30'
+  added:
+  - BHEL
+  - JSWENERGY
+  - LODHA
+  - NHPC
+  - UNIONBANK
+  removed:
+  - BERGEPAINT
+  - COLPAL
+  - MARICO
+  - SBICARD
+  - SRF
+  source: https://www.niftyindices.com/Press_Release/ind_prs23082024.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2024-09-30'
+  added:
+  - BERGEPAINT
+  - BHARTIHEXA
+  - CENTRALBK
+  - COCHINSHIP
+  - COLPAL
+  - EXIDEIND
+  - HUDCO
+  - IOB
+  - IRB
+  - IREDA
+  - MARICO
+  - MEDANTA
+  - MRPL
+  - NAM-INDIA
+  - NLCINDIA
+  - POWERINDIA
+  - SBICARD
+  - SRF
+  - TATAINVEST
+  removed:
+  - ATUL
+  - BATAINDIA
+  - BHEL
+  - DEVYANI
+  - IDEA
+  - ISEC
+  - JSWENERGY
+  - KAJARIACER
+  - KANSAINER
+  - LALPATHLAB
+  - LAURUSLABS
+  - LODHA
+  - MANYAVAR
+  - NHPC
+  - PEL
+  - RAMCOCEM
+  - SUMICHEM
+  - UNIONBANK
+  - ZEEL
+  source: https://www.niftyindices.com/Press_Release/ind_prs23082024.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2025-03-28'
+  added:
+  - BAJAJHFL
+  - CGPOWER
+  - HYUNDAI
+  - INDHOTEL
+  - SWIGGY
+  removed:
+  - ATGL
+  - BHEL
+  - IRCTC
+  - NHPC
+  - UNIONBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022025.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2025-03-28'
+  added:
+  - 360ONE
+  - APARINDS
+  - ATGL
+  - BHEL
+  - BLUESTARCO
+  - GLENMARK
+  - GVT&D
+  - IRCTC
+  - MOTILALOFS
+  - NATIONALUM
+  - NHPC
+  - NTPCGREEN
+  - OLAELEC
+  - PREMIERENE
+  - UNIONBANK
+  - VMM
+  - WAAREEENER
+  removed:
+  - BAYERCROP
+  - CARBORUNIV
+  - CGPOWER
+  - DELHIVERY
+  - FACT
+  - GRINDWELL
+  - IDBI
+  - INDHOTEL
+  - IOB
+  - METROBRAND
+  - PGHH
+  - POONAWALLA
+  - SKFINDIA
+  - SUNDRMFAST
+  - TATACHEM
+  - TIMKEN
+  - ZFCVINDIA
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022025.pdf fetched 2026-09-25
 - index: NIFTY 100
   effective: '2025-09-30'
   added:

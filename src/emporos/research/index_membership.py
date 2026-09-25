@@ -34,11 +34,12 @@ import yaml
 from emporos.core.errors import ConfigurationError
 
 __all__ = [
-    "DEFAULT_CHANGES", "AsOfMembership", "IndexChange", "MembershipTimeline", "load_changes",
-    "save_changes",
+    "DEFAULT_ALIASES", "DEFAULT_CHANGES", "AsOfMembership", "IndexChange", "MembershipTimeline",
+    "load_aliases", "load_changes", "resolve_symbols", "save_changes",
 ]  # fmt: skip
 
 DEFAULT_CHANGES = Path("config/universe/d1/index-changes.yaml")
+DEFAULT_ALIASES = Path("config/universe/d1/symbol-aliases.yaml")
 
 
 @dataclass(frozen=True)
@@ -114,6 +115,7 @@ class AsOfMembership:
         """`instruments` maps a symbol to its instrument id; a symbol with none is not tradable."""
         self._timelines = tuple(timelines)
         self._ids = dict(instruments)
+        self._by_day: dict[date, frozenset[str]] = {}
 
     @property
     def coverage_start(self) -> date | None:
@@ -125,10 +127,39 @@ class AsOfMembership:
         return [line for t in self._timelines for line in t.inconsistencies]
 
     def symbols_on(self, day: date) -> frozenset[str]:
-        return frozenset().union(*(t.members_on(day) for t in self._timelines))
+        if day not in self._by_day:
+            self._by_day[day] = frozenset().union(*(t.members_on(day) for t in self._timelines))
+        return self._by_day[day]
 
     def is_member(self, instrument_id: str, day: date) -> bool:
-        return any(self._ids.get(symbol) == instrument_id for symbol in self.symbols_on(day))
+        return instrument_id in self.instruments_on(day)
+
+    def instruments_on(self, day: date) -> frozenset[str]:
+        """The instrument ids that were members on `day` (a symbol with no id is left out)."""
+        return frozenset(
+            self._ids[symbol] for symbol in self.symbols_on(day) if symbol in self._ids
+        )
+
+
+def load_aliases(path: Path = DEFAULT_ALIASES) -> dict[str, str]:
+    """old symbol -> the symbol it trades under today (an absent file: none)."""
+    if not path.is_file():
+        return {}
+    try:
+        raw: Any = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return {str(a["old"]): str(a["current"]) for a in raw.get("aliases") or []}
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise ConfigurationError(f"{path} is not a symbol-alias file: {error}") from error
+
+
+def resolve_symbols(instruments: Mapping[str, str], aliases: Mapping[str, str]) -> dict[str, str]:
+    """symbol -> instrument id, with each old symbol pointing at its current symbol's instrument
+    (a name keeps its instrument id through a rename; the notices carry the symbol of their day)."""
+    out = dict(instruments)
+    for old, current in aliases.items():
+        if current in instruments:
+            out.setdefault(old, instruments[current])
+    return out
 
 
 def load_changes(path: Path = DEFAULT_CHANGES) -> list[IndexChange]:

@@ -33,6 +33,7 @@ from emporos.research.index_notice_parser import ChangeBuilder, NoticeParser, Pa
 
 D1_DIR = Path("config/universe/d1")
 DEFAULT_REPORT = Path("docs/research/profit/index-changes-report.yaml")
+DEFAULT_VOIDS = D1_DIR / "index-notice-voids.yaml"
 CURRENT_LISTS: Mapping[str, str] = {
     "NIFTY 100": "nifty100.csv",
     "NIFTY MIDCAP 150": "niftymidcap150.csv",
@@ -50,6 +51,7 @@ _PROVENANCE = typer.Option(DEFAULT_PROVENANCE, help="The fetch record.")
 _OUT = typer.Option(DEFAULT_CHANGES, help="The change file to write.")
 _REPORT = typer.Option(DEFAULT_REPORT, help="The consistency report to write.")
 _D1 = typer.Option(D1_DIR, help="The directory of today's constituent lists.")
+_VOIDS = typer.Option(DEFAULT_VOIDS, help="Notices whose replacements NSE cancelled.")
 
 
 class TextExtractor(Protocol):
@@ -67,6 +69,14 @@ class PdftotextExtractor:
         return done.stdout
 
 
+def load_voids(path: Path) -> dict[str, str]:
+    """notice name -> why its replacements never took effect (absent file: none)."""
+    if not path.is_file():
+        return {}
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return {str(v["notice"]): str(v["reason"]) for v in raw.get("voids", [])}
+
+
 def current_symbols(path: Path) -> set[str]:
     with path.open(encoding="utf-8", newline="") as handle:
         return {row["Symbol"].strip() for row in csv.DictReader(handle) if row.get("Symbol")}
@@ -82,9 +92,11 @@ class IndexChangeBuild:
         provenance: Path,
         current: Mapping[str, set[str]],
         as_of: date | None = None,
+        voided: Mapping[str, str] | None = None,
     ) -> tuple[list[IndexChange], dict[str, object]]:
         """`as_of` is the day `current` was fetched: a change announced but not yet effective on it
-        is not in the list yet, so it is left out (and counted)."""
+        is not in the list yet, so it is left out (and counted). `voided` maps a notice to the
+        reason NSE itself cancelled its replacements (they never took effect): they are dropped."""
         rows = [
             json.loads(line) for line in provenance.read_text(encoding="utf-8").splitlines() if line
         ]
@@ -101,7 +113,9 @@ class IndexChangeBuild:
                 notices.append(NoticeParser().parse(name, self._extractor.text(pdf)))
             except (ValueError, OSError) as error:
                 unreadable.append(f"{name}: {error}")
-        built, problems = ChangeBuilder().build([n for n in notices if n.sections], sources)
+        cancelled = dict(voided or {})
+        live = [n for n in notices if n.sections and n.name not in cancelled]
+        built, problems = ChangeBuilder().build(live, sources)
         changes = [c for c in built if as_of is None or c.effective <= as_of]
         report: dict[str, object] = {
             "current_lists_as_of": as_of.isoformat() if as_of else None,
@@ -110,6 +124,7 @@ class IndexChangeBuild:
             "notices_with_relevant_sections": sum(1 for n in notices if n.sections),
             "changes": len(changes),
             "unreadable_pdfs": unreadable,
+            "voided_notices": cancelled,
             "unread_sections": {n.name: list(n.unread) for n in notices if n.unread},
             "builder_problems": problems,
         }
@@ -134,6 +149,7 @@ def research_build_index_changes(
     out: Path = _OUT,
     report: Path = _REPORT,
     d1: Path = _D1,
+    voids: Path = _VOIDS,
 ) -> None:
     """Read the fetched notices into the change file and check it against today's lists."""
     try:
@@ -142,7 +158,7 @@ def research_build_index_changes(
             str(yaml.safe_load((d1 / "SOURCE.yaml").read_text())["fetched_on"])
         )
         changes, document = IndexChangeBuild(PdftotextExtractor()).run(
-            notices, provenance, current, as_of
+            notices, provenance, current, as_of, load_voids(voids)
         )
         save_changes(changes, out, HEADER)
         report.parent.mkdir(parents=True, exist_ok=True)

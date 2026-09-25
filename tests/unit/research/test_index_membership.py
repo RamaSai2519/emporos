@@ -12,7 +12,9 @@ from emporos.research.index_membership import (
     AsOfMembership,
     IndexChange,
     MembershipTimeline,
+    load_aliases,
     load_changes,
+    resolve_symbols,
 )
 
 N100 = "NIFTY 100"
@@ -113,6 +115,20 @@ class TestAsOfMembership:
         assert m.is_member("NSE:1", date(2026, 1, 1))
         assert not m.is_member("NSE:9", date(2026, 1, 1))
 
+    def test_the_instruments_on_a_day_are_those_of_the_member_symbols(self) -> None:
+        m = self.build()
+
+        assert m.instruments_on(date(2020, 6, 1)) == {"NSE:1", "NSE:3", "NSE:4"}
+
+    def test_a_renamed_symbol_follows_its_instrument(self) -> None:
+        ids = resolve_symbols({"NEW": "NSE:7"}, {"OLD": "NEW", "GONE": "MISSING"})
+        m = AsOfMembership([MembershipTimeline(N100, {"NEW"}, [change(D2, added="NEW")])], ids)
+        m_old = AsOfMembership([MembershipTimeline(N100, {"X"}, [change(D2, removed="OLD")])], ids)
+
+        assert m.is_member("NSE:7", D3)
+        assert m_old.is_member("NSE:7", D1)  # a member under its old symbol before D2
+        assert "GONE" not in ids  # an alias to a symbol we do not trade resolves to nothing
+
     def test_coverage_starts_at_the_latest_first_record_and_is_unknown_without_one(self) -> None:
         assert self.build().coverage_start == D2
         empty = AsOfMembership([MembershipTimeline(N100, {"A"}, [])], {})
@@ -182,3 +198,37 @@ def test_it_gates_what_the_swing_simulator_is_offered() -> None:
     SwingSimulator(data, strategy, SwingConfig(Decimal(1000), 1), free_costs(), membership).run()
 
     assert [set(c.tradable) for c in strategy.seen] == [{"NSE:1"}, {"NSE:1"}, {"NSE:1", "NSE:2"}]
+
+
+class TestAliases:
+    def test_an_absent_file_is_no_aliases(self, tmp_path: Path) -> None:
+        assert load_aliases(tmp_path / "none.yaml") == {}
+
+    def test_the_file_maps_old_symbols_to_current_ones(self, tmp_path: Path) -> None:
+        path = tmp_path / "a.yaml"
+        path.write_text("aliases:\n- {old: A, current: B, note: renamed}\n", encoding="utf-8")
+
+        assert load_aliases(path) == {"A": "B"}
+
+    def test_a_malformed_file_is_a_configuration_error(self, tmp_path: Path) -> None:
+        path = tmp_path / "a.yaml"
+        path.write_text("aliases:\n- {old: A}\n", encoding="utf-8")
+
+        with pytest.raises(ConfigurationError, match="alias"):
+            load_aliases(path)
+
+    def test_the_committed_aliases_all_point_at_today_symbols(self) -> None:
+        import csv
+
+        lists = [
+            {
+                r["Symbol"]
+                for r in csv.DictReader(
+                    Path(f"config/universe/d1/{n}.csv").read_text(encoding="utf-8").splitlines()
+                )
+            }
+            for n in ("nifty100", "niftymidcap150")
+        ]
+
+        for old, current in load_aliases().items():
+            assert any(current in symbols for symbols in lists), (old, current)

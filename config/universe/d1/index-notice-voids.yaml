@@ -1,0 +1,14 @@
+# Notices whose replacements NSE Indices cancelled: they are read as never having happened
+# (research build-index-changes drops them). Every entry cites the notice that cancelled it.
+voids:
+- notice: ind_prs18022020
+  reason: >-
+    The March 2020 periodic review (effective March 27, 2020) was deferred on March 23 and 25, 2020
+    (ind_prs23032020, ind_prs25032020) and declared "null and void" on May 13, 2020
+    (ind_prs13052020, item A.1), except for NIFTY 50 and NIFTY Bank, which were rebalanced on
+    March 19, 2020 (ind_prs16032020, which stands). The review was redone with a May 31 cut-off
+    and took effect June 26, 2020 (ind_prs10062020, which stands).
+- notice: ind_prs12032020
+  reason: Replacements effective March 27, 2020, null and void per ind_prs13052020 item A.1.
+- notice: ind_prs19032020
+  reason: Replacements effective March 27, 2020, null and void per ind_prs13052020 item A.1.

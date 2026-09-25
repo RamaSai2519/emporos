@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from emporos.cli.index_change_commands import IndexChangeBuild
+from emporos.cli.index_change_commands import IndexChangeBuild, load_voids
 from emporos.research.index_membership import load_changes, save_changes
 
 NOTICE = """
@@ -122,3 +122,32 @@ def test_the_change_file_round_trips(tmp_path: Path) -> None:
     assert (
         yaml.safe_load(path.read_text(encoding="utf-8"))["changes"][0]["effective"] == "2021-03-31"
     )
+
+
+def test_a_notice_nse_cancelled_is_read_as_never_having_happened(tmp_path: Path) -> None:
+    prov = provenance(tmp_path, ["ind_prs23022021"])
+    build = IndexChangeBuild(FakeExtractor({"ind_prs23022021.pdf": NOTICE}))
+
+    changes, report = build.run(
+        tmp_path, prov, {"NIFTY 100": {"GAIL"}}, voided={"ind_prs23022021": "null and void"}
+    )
+
+    assert changes == []
+    assert report["voided_notices"] == {"ind_prs23022021": "null and void"}
+
+
+def test_the_void_file_maps_notices_to_reasons(tmp_path: Path) -> None:
+    path = tmp_path / "voids.yaml"
+    path.write_text("voids:\n- {notice: ind_prs1, reason: cancelled by ind_prs2}\n", "utf-8")
+
+    assert load_voids(path) == {"ind_prs1": "cancelled by ind_prs2"}
+    assert load_voids(tmp_path / "none.yaml") == {}
+
+
+def test_the_committed_voids_name_notices_that_exist_in_the_fetch_record() -> None:
+    names = {
+        Path(json.loads(line)["url"]).name.removesuffix(".pdf")
+        for line in Path("docs/research/profit/index-notices.jsonl").read_text().splitlines()
+    }
+
+    assert set(load_voids(Path("config/universe/d1/index-notice-voids.yaml"))) <= names

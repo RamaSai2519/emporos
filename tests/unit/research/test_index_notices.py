@@ -102,6 +102,25 @@ class TestCandidates:
 
         assert select_candidates(parse_listing(page)) == []
 
+    @pytest.mark.parametrize(
+        "title",
+        [
+            "Replacements in indices and revision in criteria",  # 2021-09-15, a real review
+            "Revision in criteria and replacements in indices",  # 2021-08-23
+            "Replacements in indices and revision in criteria w.e.f. September 30, 2024",
+            "Index reconstitution and revision in eligibility criteria",  # 2020-05-13
+            "Deferment of Index Rebalancing",  # 2020-03-23
+            "Revision in Nifty Transportation & Logistics index methodology and replacements in "
+            "indices w.e.f. August 08, 2022",
+        ],
+    )
+    def test_a_periodic_review_titled_with_criteria_is_a_candidate(self, title: str) -> None:
+        page = (
+            f"data-date=\"Sep 15, 2021\" <a href='/Press_Release/ind_prs15092021.pdf'>{title}</a>"
+        )
+
+        assert [c.title for c in select_candidates(parse_listing(page))] == [title]
+
     def test_notices_before_the_window_are_not(self) -> None:
         assert all(
             c.notice_date >= date(2016, 9, 1) for c in select_candidates(parse_listing(PAGE))
