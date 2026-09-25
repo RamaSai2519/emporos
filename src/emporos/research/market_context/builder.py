@@ -21,8 +21,10 @@ Keys (percentages are in percent; every price is on the raw series):
 * `nifty_move_since_prev_close_pct`, `nifty_ret_5d_pct`; `sector_index` (its name) and
   `sector_move_since_prev_close_pct`; `india_vix` and `india_vix_change_pct` since its previous
   close.
-* F&O open interest: not present. The archive holds index contracts only (no stock-derivative
-  rows), so the keys are omitted rather than guessed."""
+* F&O open interest (only when an `OpenInterestSource` is given; see `open_interest.py`): `oi_asof`,
+  `fut_open_interest`, `fut_oi_change_pct`, `fut_oi_vs_5d_avg`, `fut_settle_change_pct`,
+  `fut_basis_pct`, `put_call_oi_ratio`, from the last bhavcopy dated before the decision day. A name
+  that is not an F&O stock, or a builder without the source, has none of them."""
 
 from __future__ import annotations
 
@@ -32,12 +34,13 @@ from datetime import date, datetime, time
 from itertools import pairwise
 from math import isfinite, sqrt
 from statistics import median
+from typing import Protocol
 
 from emporos.core.clock import IST
 from emporos.eventtrader.events import MarketContext, MarketEvent
 from emporos.research.market_context.bars import BarSeriesCache, IntradayBars, SessionBars
 
-__all__ = ["CONTEXT_KEYS", "AsOfContextBuilder", "SectorMap"]
+__all__ = ["CONTEXT_KEYS", "AsOfContextBuilder", "OpenInterestSource", "SectorMap"]
 
 SESSION_END = time(15, 30)
 NORM_SESSIONS = 20
@@ -48,8 +51,16 @@ CONTEXT_KEYS = (
     "session", "last_session", "last_price", "prev_close", "move_since_prev_close_pct",
     "move_since_event_pct", "vwap_distance_pct", "volume_vs_norm", "ret_5d_pct", "ret_20d_pct",
     "vol_20d_pct", "nifty_move_since_prev_close_pct", "nifty_ret_5d_pct", "sector_index",
-    "sector_move_since_prev_close_pct", "india_vix", "india_vix_change_pct",
+    "sector_move_since_prev_close_pct", "india_vix", "india_vix_change_pct", "oi_asof",
+    "fut_open_interest", "fut_oi_change_pct", "fut_oi_vs_5d_avg", "fut_settle_change_pct",
+    "fut_basis_pct", "put_call_oi_ratio",
 )  # fmt: skip
+
+
+class OpenInterestSource(Protocol):
+    def lines(self, symbol: str, decision_day: date) -> Mapping[str, float | str]:
+        """The symbol's F&O lines known before `decision_day`, or nothing."""
+        ...
 
 
 @dataclass(frozen=True)
@@ -109,18 +120,27 @@ def _put(lines: dict[str, str | float], key: str, value: float | None) -> None:
 
 class AsOfContextBuilder:
     def __init__(
-        self, series: BarSeriesCache, nifty_id: str, vix_id: str, sectors: SectorMap
+        self,
+        series: BarSeriesCache,
+        nifty_id: str,
+        vix_id: str,
+        sectors: SectorMap,
+        open_interest: OpenInterestSource | None = None,
     ) -> None:
         self._series = series
         self._nifty = nifty_id
         self._vix = vix_id
         self._sectors = sectors
+        self._open_interest = open_interest
 
     def context(self, event: MarketEvent, decision_at: datetime) -> MarketContext:
         lines: dict[str, str | float] = {}
         if event.instrument_id:
             self._name_lines(lines, event, decision_at)
         self._market_lines(lines, event.symbol, decision_at)
+        if self._open_interest is not None:
+            day = decision_at.astimezone(IST).date()
+            lines.update(self._open_interest.lines(event.symbol, day))
         return MarketContext(lines)
 
     # -- the name -------------------------------------------------------------------------------
