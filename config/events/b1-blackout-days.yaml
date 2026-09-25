@@ -1,0 +1,31 @@
+# Blackout days for the B1 regime filter (EM-226, PROFIT_PLAN.md §5 B1): a spread is not opened if
+# one of these days falls from its entry day through its expiry day. Two kinds of scheduled shock
+# only: a Union Budget presentation (interim budgets and the full budgets of July 2019 and July 2024
+# included) and a general-election result day.
+#
+# RBI MPC decisions are NOT listed, by the head's ruling of 2026-09-25: they come about every eight
+# weeks and a spread stays open 21 to 49 days, so a rule against them would block most entries and
+# starve the 100-trade floor; and an MPC day is rarely a tail day for the index. Unscheduled shocks
+# are handled by the Rs 5,000 width cap and the 2x-credit stop.
+#
+# Compiled 2026-09-25 from public pages (PROFIT_PLAN §8); every row names the page it was read on.
+# The Union Budget dates are from the Wikipedia page named (a table read by a summariser); both pages
+# were fetched and the two 2024-07 dates disagree (the 22nd in the table, the 23rd on the page of
+# that budget), so both are listed: a blackout a day too wide costs one day of entries.
+# Covers 2017-02 through 2025-02 (Discovery plus the expiries that run past 2024-12-31). Confirmation
+# needs 2025-03 onward: add rows in a new commit, never edit these.
+events:
+  - {date: "2017-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2018-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2019-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2019-05-23", kind: election_result, source: "https://en.wikipedia.org/wiki/2019_Indian_general_election"}
+  - {date: "2019-07-05", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2020-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2021-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2022-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2023-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2024-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}
+  - {date: "2024-06-04", kind: election_result, source: "https://en.wikipedia.org/wiki/2024_Indian_general_election"}
+  - {date: "2024-07-22", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India (its table lists the 22nd)"}
+  - {date: "2024-07-23", kind: union_budget, source: "https://en.wikipedia.org/wiki/2024_Union_budget_of_India (states the 23rd)"}
+  - {date: "2025-02-01", kind: union_budget, source: "https://en.wikipedia.org/wiki/Union_budget_of_India"}

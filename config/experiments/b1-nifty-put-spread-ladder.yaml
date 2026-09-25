@@ -1,0 +1,113 @@
+# Declared BEFORE any real-data run (PROFIT_PLAN.md §2.1, §5 B1). Design by the head session on
+# 2026-09-25; machinery is EM-226 (options backtester) and EM-225 (F&O archive as a ChainSource).
+# Not yet run: no result of this cell has been seen, and the backtester has only ever run on
+# hand-built chains in its tests.
+#
+# What is tested. Whether selling NIFTY index put credit spreads, a few at a time on a weekly
+# ladder, earns a net return that clears the bars of PROFIT_PLAN §3.2 for Track B at Rs 1,00,000 of
+# capital, after fees, slippage and the margin the spreads block.
+#
+# Rules (every one is fixed here; nothing is tuned after a result):
+# * Underlying and expiry. NIFTY 50 options, MONTHLY expiries only (the expiries that are also a
+#   future's expiry: weeklies exist only since 2019 and the design must be uniform over Discovery).
+#   The expiry is the nearer of those with 21 to 49 calendar days left.
+# * Ladder. On the FIRST trading session of each ISO calendar week, open at most one put credit
+#   spread on that expiry. At most `ladder_depth` spreads are open at once (a spread is open from its
+#   entry to its exit or settlement). Skip the week if the ladder is full, or if the margin of every
+#   open spread plus the new one (each: worst-case loss plus 10%) would exceed capital plus realised
+#   profit. Lots are ALWAYS 1: the aggressive tier adds concurrent spreads, never a bigger one, so
+#   PROFIT_PLAN §3.5's per-spread cap holds.
+# * Strikes. sd = NIFTY close x (India VIX close / 100) x sqrt(DTE / 365). The short put is the listed
+#   strike nearest to (close - k x sd), at or below it. The long put is the widest listed strike below
+#   the short whose (short - long) x lot size is at most Rs 5,000 (5% of capital, §3.5). If none
+#   exists the week is skipped. Only strikes present in that day's chain are used. Both legs must
+#   have TRADED that day (contracts > 0): a stale close is not a price.
+# * Fills and costs. At the day's close plus slippage: benchmark 1 tick + 0.5% of premium per leg
+#   fill; adverse 2 ticks + 1.5% of premium and 1.5x the statutory charges. Every leg fill is its own
+#   order (Rs 20 brokerage each). Fees from config/fees/fo/angelone-fo-options-2026-09-25.yaml,
+#   `verified: false`.
+# * Exits, tried in this order each day: loss of 2x the credit (stop), 50% of the credit kept
+#   (target), 7 calendar days to expiry (time); otherwise the spread settles on expiry day at
+#   intrinsic value against the exchange's final settlement level: the settlement price of the
+#   expiring NIFTY future in that day's bhavcopy (the exchange settles both on the index close).
+#   The 5-minute close is never used to settle (it was 0.12% off on 2024-09-26); if an expiry day
+#   has no expiring future row the run stops.
+# * Regime filter (`filter = on`): NIFTY close above its 200-session average, AND India VIX close
+#   between the 20th and 80th percentile of its previous 252 closes, AND no listed event day
+#   (config/events/b1-blackout-days.yaml: Union Budget days and general-election result days)
+#   from the entry day through the expiry day. RBI MPC decisions are NOT blackout days: they come
+#   about every eight weeks, a spread stays open 21 to 49 days, so a rule against them would block
+#   most entries and starve the 100-trade floor, and an MPC day is rarely a tail day for the index;
+#   unscheduled shocks are what the width cap and the 2x stop are for. `filter = off` applies none
+#   of these.
+# * Conviction (`ladder_depth = 3`). Two spreads may be open at any time; the third slot is usable
+#   only on a day when the India VIX close is between the 50th and 80th percentile of its previous
+#   252 closes AND NIFTY close > its 50-session average > its 200-session average. `ladder_depth = 2`
+#   never opens a third.
+# 2 (k 1.0, 1.5) x 2 (filter on, off) x 2 (ladder_depth 2, 3) = 8 arms, each a counted look
+# (docs/research/profit/screens.jsonl).
+#
+# Data: Discovery only (through 2024-12-31), NIFTY 5m closes for the index level of days before the
+# UDiFF archive (July 2024) and India VIX, from the D2 series. The index level is used for the
+# strike selection only, never to settle. The first tradable day is set by the
+# 252-session VIX warm-up and the 200-session average from 2016-10 (about 2017-10); the run reports
+# the actual start. Confirmation and the vault are not touched.
+#
+# Evidence used to design it: none from results. Unsigned facts only: the F&O archive's lot sizes
+# and strike grid decide how wide a Rs 5,000 wing can be (about 50 to 65 points on a 75-unit lot
+# before November 2024).
+#
+# Bars (PROFIT_PLAN §3.2, Track B): net CAGR at least 18% at benchmark costs and above 0 at adverse;
+# beats cash at 6.5%; at least 60% of calendar months net positive; worst month not below -10%; max
+# drawdown at most 25%; monthly-return t-stat at least 2.5; at least 100 round trips; positive in at
+# least 60% of calendar years; at least half of the declared adjacent arms also net positive at
+# benchmark. Plus §3.4 risk of ruin for the depth-3 arms: P(drawdown >= 30%) at most 5%.
+#
+# PRIOR, stated before the run: thin. A spread capped at Rs 5,000 of risk on a 75-unit lot is only
+# about 50 to 65 points wide, so the credit is small, and four legs of fees and slippage take a real
+# bite out of it. The chance any arm passes the bars is low, and the depth-3 arms multiply exposure
+# to the same regime.
+#
+# KNOWN LIMITS, declared now: (a) end-of-day closes only: no intraday prices, no bid-ask, so
+# slippage is an assumption; (b) the margin is an estimate (worst-case loss plus 10%), unreconciled
+# with a broker statement; (c) before July 2024 the archive carries no index level and no lot size:
+# the level (strike selection and the trend and volatility filters) is the last 5-minute bar of the
+# NIFTY series, up to about 0.1% off the official close, and the lot size is inferred from futures
+# turnover (both checked on the overlap and reported); (d) the blackout list is Union Budgets and
+# election results from Wikipedia pages, one date disagreeing between two pages (both listed);
+# (e) STT on exercise is an assumption; (f) NIFTY monthly options only, so the result says nothing
+# about weeklies or other indices.
+family: strategy
+slug: b1-nifty-put-spread-ladder
+hypothesis: >-
+  A weekly ladder of NIFTY monthly put credit spreads (short strike about 1 to 1.5 standard
+  deviations below the close, wing capped at Rs 5,000 of loss, exits at 50% of the credit, 2x the
+  credit lost, or 7 days left), opened with at most two or three spreads at a time, earns a net return
+  above cash at 6.5% after fees, slippage and margin, with most months positive and a bounded drawdown.
+economic_rationale: >-
+  Index put sellers are paid the volatility risk premium: hedgers and lottery-ticket buyers overpay
+  for crash protection, so implied volatility exceeds the volatility that is later realised on
+  average. The seller is paid to bear crash risk and loses when volatility jumps. The regime filter
+  avoids the conditions in which realised volatility tends to jump: a market below its long trend,
+  an unusually low or high volatility index, and scheduled shocks (the Union Budget, a
+  general-election result). The counterparties are the hedgers and speculators who pay for
+  protection.
+falsification: >-
+  Rejected at the first PROFIT_PLAN §3.2 bar an arm fails: net CAGR at least 18% at benchmark costs
+  and above 0 at adverse costs; beats cash at 6.5%; at least 60% of calendar months net positive;
+  worst month not below -10%; max drawdown at most 25%; monthly-return t-stat at least 2.5; at least
+  100 round trips; positive in at least 60% of calendar years; at least half of the declared adjacent
+  arms also net positive at benchmark. A depth-3 arm additionally needs P(drawdown >= 30%) at most 5%
+  from the 20-day block bootstrap. If no arm passes, the put-spread ladder is closed on Discovery and
+  the only children allowed are those the head declares from Discovery output (an iron condor
+  (B2) is a separate declaration with its own rationale).
+parameter_grid:
+  k: ["1.0", "1.5"]
+  filter: ["on", "off"]
+  ladder_depth: ["2", "3"]
+feature_versions:
+  nifty_first_session_of_week: 1
+  india_vix_percentile_band: 1
+  put_spread_listed_strikes_5000_cap: 1
+position_value: "100000"
+declared_at: 2026-09-25T06:00:00+05:30
