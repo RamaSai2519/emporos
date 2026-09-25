@@ -12,12 +12,12 @@ The tradeable unit is not a move known at the close but a level crossed while th
 * Swing, stocks: a session that CLOSES at a residual of 2 sigma or more (daily scale); the entry is
   the next session's open.
 
-Forward paths start at the entry reference: for an intraday crossing the close of the bar after the
-crossing bar (the first bar boundary at least 2 minutes after the crossing), for a swing
+Forward paths start at the entry reference: for an intraday crossing the close of the bar after
+the crossing bar (the first bar boundary at least 2 minutes after the crossing), for a swing
 crossing the next open. Every forward figure is in the crossing's direction (positive = the move
-continued), as a percent, once as the residual and once as the raw return. `slip_pct` is what the residual moved
-between the crossing bar's close and the entry reference: continuation already gone before a trader
-could act."""
+continued), as a percent, once as the residual and once as the raw return. `slip_pct` is what
+the residual moved between the crossing bar's close and the entry reference: continuation already
+gone before a trader could act."""
 
 from __future__ import annotations
 
