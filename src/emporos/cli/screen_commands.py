@@ -53,6 +53,11 @@ from emporos.research.scans.event_days import (
     InstrumentSymbols,
     results_by_symbol,
 )
+from emporos.research.scans.in_session_results import (
+    InSessionParameters,
+    InSessionResultsScan,
+)
+from emporos.research.scans.in_session_results import declared_arms as in_session_arms
 from emporos.research.scans.orb_rvol import OrbRvolParameters, orb_rvol_scan
 from emporos.research.scans.orb_rvol import declared_arms as orb_rvol_arms
 from emporos.research.scans.range_compression import CompressionParameters, range_compression_scan
@@ -282,6 +287,61 @@ class EarningsGapCell:
         ]
 
 
+class InSessionResultsCell:
+    """The recipe for L2-in-session-results-drift: results published during the session."""
+
+    slug = "l2-in-session-results-drift"
+
+    def __init__(self) -> None:
+        self._events: dict[str, list[datetime]] | None = None
+        self._symbols: InstrumentSymbols | None = None
+        self._scans: list[InSessionResultsScan] = []
+
+    def prepare(self, bars: BarSource) -> None:
+        ledger = FilingLedger(
+            DEFAULT_EVENTS_DIR / "results-filings.jsonl",
+            DEFAULT_EVENTS_DIR / "results-collected.jsonl",
+        )
+        self._events = results_by_symbol(ledger.load())
+        self._symbols = InstrumentSymbols.load(DEFAULT_TOKEN_TABLE)
+        if not self._events:
+            raise ValueError("no results events: run `emporos research collect-results` first")
+
+    def arms(self, declaration: ExperimentDeclaration) -> list[dict[str, str]]:
+        return [p.as_point() for p in in_session_arms(declaration.parameter_grid)]
+
+    def scan(self, point: Mapping[str, str], execution: ScanExecution) -> SignalScan:
+        if self._events is None or self._symbols is None:
+            raise ValueError("the results events were not loaded before scanning")
+        scan = InSessionResultsScan(
+            InSessionParameters.from_point(point), execution, self._events, self._symbols
+        )
+        self._scans.append(scan)
+        return scan
+
+    def label(self, point: Mapping[str, str]) -> str:
+        return f"|m|>={point['theta_pct']}% {point['direction']}"
+
+    def notes(self) -> list[str]:
+        """Events used per year (every arm sees the same ones, so the first is read), the events
+        skipped and why, and the signals each arm gave by side."""
+        if not self._scans:
+            return []
+        o = self._scans[0].outcome
+        years = " ".join(f"{y}:{n}" for y, n in sorted(o.measured_by_year.items()))
+        lines = [
+            f"in-session events measured per year: {years}",
+            f"skipped: outside the 09:15-14:30 window {o.outside_window}, no session bars "
+            f"{o.no_session_bars}, no anchor bar {o.no_anchor}, "
+            f"no reaction bar {o.no_reaction_bar}",
+        ]
+        for scan in self._scans:
+            lines.append(
+                f"signals long/short: {scan.outcome.long_signals}/{scan.outcome.short_signals}"
+            )
+        return lines
+
+
 CELLS: Mapping[str, ScreenCell] = {
     c.slug: c
     for c in (
@@ -294,6 +354,7 @@ CELLS: Mapping[str, ScreenCell] = {
         EarningsGapCell("l2-earnings-gap-fade"),
         EarningsGapCell("l2-earnings-gap-continuation"),
         EarningsGapCell("l2-earnings-gap-fade-after-first-hour"),
+        InSessionResultsCell(),
     )
 }
 
