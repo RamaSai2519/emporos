@@ -1,8 +1,9 @@
 """Fetch a fixed list of public pages politely, each reply kept verbatim (PROFIT_PLAN §8; EM-244).
 
 One request at a time through `PoliteGet` (an honest agent, a gap, a refusal stops the run), each
-reply written under `<root>/<name>` and ledgered with its URL and fetch time. A page already in the
-ledger is skipped, so a run resumes."""
+reply written under `<root>/<name>` and ledgered with its URL and fetch time. A page is skipped
+only when it is in the ledger AND its reply is still on disk, so a run resumes and a wiped cache
+is fetched again."""
 
 from __future__ import annotations
 
@@ -43,7 +44,7 @@ class PageCollector:
         failed: list[str] = []
         streak = 0
         for page in pages:
-            if (page.source, page.name) in held:
+            if (page.source, page.name) in held and (self._root / page.name).exists():
                 progress(f"{page.name}: already held")
                 continue
             try:

@@ -17,3 +17,227 @@ events:
     source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200315a.htm
     checked_on: 2026-09-26
     note: unscheduled, a Sunday; "For release at 5:00 p.m. EDT", so Monday 02:30 IST
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2018-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2018_Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2018-19; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2019-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2019_Interim-Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Interim budget 2019-20; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2019-07-05
+    at: "11:00"
+    zone: IST
+    source: https://businesstoday.in/union-budget-2019/news/govt-to-present-budget-2019-20-in-lok-sabha-on-july-5/story/358040.html
+    checked_on: 2026-09-26
+    note: "Budget 2019-20; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2020-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2020_Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2020-21; a Saturday, markets open; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2021-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2021_Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2021-22; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2022-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2022-23; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2023-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2023-24; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2024-02-01
+    at: "11:00"
+    zone: IST
+    source: https://prsindia.org/budgets/parliament/interim-union-budget-2024-25-analysis
+    checked_on: 2026-09-26
+    note: "Interim budget 2024-25; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2024-07-23
+    at: "11:00"
+    zone: IST
+    source: https://www.tribuneindia.com/news/india/nirmala-to-table-record-seventh-budget-on-july-23-637371/amp
+    checked_on: 2026-09-26
+    note: "Budget 2024-25; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2025-02-01
+    at: "11:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2025_Union_budget_of_India
+    checked_on: 2026-09-26
+    note: "Budget 2025-26; speech from 11:00 IST"
+  - kind: budget
+    name: "Union Budget speech"
+    date: 2026-02-01
+    at: "11:00"
+    zone: IST
+    source: https://www.visionias.in/blog/syllabus-pyqs/union-budget-2026-date-structure-process-highlights-download-pdf
+    checked_on: 2026-09-26
+    note: "Budget 2026-27; a Sunday, markets opened for it; speech from 11:00 IST"
+  - kind: election_result
+    name: "Gujarat and Himachal Pradesh assembly results"
+    date: 2017-12-18
+    at: "08:00"
+    zone: IST
+    source: https://www.tribuneindia.com/news/archive/nation/himachal-elections-on-nov-9-result-on-dec-18-481632
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Karnataka assembly results"
+    date: 2018-05-15
+    at: "08:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2018_Karnataka_Legislative_Assembly_election
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Rajasthan, Madhya Pradesh, Chhattisgarh, Telangana, Mizoram assembly results"
+    date: 2018-12-11
+    at: "08:00"
+    zone: IST
+    source: https://www.indiatvnews.com/elections/news-assembly-elections-2018-rajasthan-madhya-pradesh-chhattisgarh-telangana-mizoram-dates-of-voting-counting-of-votes-results-december-11-469165
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Lok Sabha general election results"
+    date: 2019-05-23
+    at: "08:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2019_Indian_general_election
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Maharashtra and Haryana assembly results"
+    date: 2019-10-24
+    at: "08:00"
+    zone: IST
+    source: https://www.businesstoday.in/latest/economy-politics/story/maharashtra-haryana-election-results-2019-on-october-24-thursday-watch-live-coverage-on-businesstoday-indiatoday-aajtak-236232-2019-10-23
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Delhi assembly results"
+    date: 2020-02-11
+    at: "08:00"
+    zone: IST
+    source: https://www.ceodelhi.gov.in/DelhiAssemblyElection2020.aspx
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Bihar assembly results"
+    date: 2020-11-10
+    at: "08:00"
+    zone: IST
+    source: https://www.business-standard.com/article/elections/bihar-election-result-2020-live-updates-rjd-tejashwi-yadav-wins-nitish-kumar-bihar-cm-bjp-modi-paswan-highlights-bihar-counting-120110901687_1.html
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "West Bengal, Tamil Nadu, Kerala, Assam, Puducherry assembly results"
+    date: 2021-05-02
+    at: "08:00"
+    zone: IST
+    source: https://www.business-standard.com/article/elections/election-results-2021-live-updates-west-bengal-tamil-nadu-kerala-puducherry-assam-vote-counting-highlights-ldf-dmk-mamata-banerjee-narendra-modi-bjp-tmc-congress-121050200049_1.html
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Uttar Pradesh, Punjab, Uttarakhand, Goa, Manipur assembly results"
+    date: 2022-03-10
+    at: "08:00"
+    zone: IST
+    source: https://amp.scroll.in/latest/1019100/uttar-pradesh-election-results-counting-starts-ec-sends-special-officers-to-varanasi-and-meerut
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Gujarat and Himachal Pradesh assembly results"
+    date: 2022-12-08
+    at: "08:00"
+    zone: IST
+    source: https://en.wikipedia.org/wiki/2022_Gujarat_Legislative_Assembly_election
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Karnataka assembly results"
+    date: 2023-05-13
+    at: "08:00"
+    zone: IST
+    source: https://www.deccanherald.com/elections/karnataka/karnataka-assembly-elections-2023-parties-gear-up-for-results-counting-to-start-at-8am-on-may-13-1218251.html
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Madhya Pradesh, Rajasthan, Chhattisgarh, Telangana assembly results"
+    date: 2023-12-03
+    at: "08:00"
+    zone: IST
+    source: https://www.tribuneindia.com/news/india/five-states-go-to-polls-from-nov-7-to-30-results-on-dec-3-551868
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Lok Sabha general election results"
+    date: 2024-06-04
+    at: "08:00"
+    zone: IST
+    source: https://www.newsonair.gov.in/counting-of-votes-for-all-seven-phases-of-lok-sabha-elections-to-begin-from-8-am-tomorrow
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Haryana and Jammu and Kashmir assembly results"
+    date: 2024-10-08
+    at: "08:00"
+    zone: IST
+    source: https://newsonair.gov.in/counting-of-votes-underway-for-jk-and-haryana-assembly-elections
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Maharashtra and Jharkhand assembly results"
+    date: 2024-11-23
+    at: "08:00"
+    zone: IST
+    source: https://www.newsonair.gov.in/counting-of-votes-for-assembly-elections-in-maharashtra-jharkhand-along-with-by-polls-in-46-assembly-seats-2-parliamentary-constituencies-underway
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Delhi assembly results"
+    date: 2025-02-08
+    at: "08:00"
+    zone: IST
+    source: https://www.indiatvnews.com/delhi/delhi-assembly-elections-results-2025-date-poll-outcome-for-capital-to-be-declared-on-february-8-check-details-2025-02-07-975131
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: election_result
+    name: "Bihar assembly results"
+    date: 2025-11-14
+    at: "08:00"
+    zone: IST
+    source: https://www.newsonair.gov.in/nda-poised-for-landslide-in-bihar-as-results-emerge-for-all-243-seats
+    checked_on: 2026-09-26
+    note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
