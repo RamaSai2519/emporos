@@ -20,10 +20,12 @@ from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.eventtrader.estimate import estimate_run
-from emporos.eventtrader.events import MarketEvent
+from emporos.eventtrader.events import MarketContext, MarketEvent
 from emporos.eventtrader.llm.http_clients import MINI_MODEL
+from emporos.eventtrader.pipeline import Verdict
 from emporos.eventtrader.posture import PosturePlanner
 from emporos.eventtrader.prefilter import CategoryPreFilter
+from emporos.eventtrader.replay.engine import LATENCY
 from emporos.eventtrader.replay.report import (
     LlmLedger,
     VariantIdentity,
@@ -42,6 +44,7 @@ from emporos.eventtrader.stages.prompts import (
     TAPE_V1,
     TRIAGE_V1,
 )
+from emporos.eventtrader.stages.stages import EventInput
 from emporos.eventtrader.variants import VariantSpec, variant
 from emporos.jev.prompts import JevPrompt
 from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, ParquetEventStore
@@ -55,6 +58,8 @@ DEFAULT_REPORTS = Path("docs/research/profit/reports/l1")
 DEFAULT_LEDGER = Path("docs/research/profit/screens.jsonl")
 HYPOTHESIS = "l1-llm-event-trader"
 FIRST_DAY, LAST_DAY = date(2024, 1, 1), date(2024, 12, 31)  # Dev
+EXIT_INCOMPLETE = 3  # too many stage errors: the autorun retries a few times, then halts
+SMOKE_EVENTS = 6
 CHARS_PER_TOKEN = 4  # a rough figure for the estimate only
 TRIAGE_OUTPUT_TOKENS = 80
 LATER_STAGE_CALLS = 4  # bull, bear, tape, judge
@@ -164,7 +169,10 @@ def research_run_llm_variant(
                 daily_token_cap,
             )  # fmt: skip
         )
-    except (EmporosError, ValueError, OSError, KeyError, RunIncomplete) as error:
+    except RunIncomplete as error:
+        typer.secho(f"run-llm-variant incomplete: {error}", fg=typer.colors.RED)
+        raise typer.Exit(code=EXIT_INCOMPLETE) from error
+    except (EmporosError, ValueError, OSError, KeyError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"run-llm-variant failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
@@ -251,3 +259,38 @@ async def _run(
 def research_llm_variant_table(reports: Path = _REPORTS) -> None:
     """The variants side by side, from the summaries their runs left in the reports directory."""
     typer.echo(render_table(load_summaries(reports)))
+
+
+def research_llm_smoke(
+    events_dir: Path = _EVENTS,
+    journal: Path = _JOURNAL,
+    daily_token_cap: int = _DAILY,
+    mini_ceiling_usd: float = _CEILING,
+) -> None:
+    """Six real events through triage on the pinned mini model: the key, the model, the reply
+    format and the journal, before a whole variant is paid for. Counted in the caps."""
+    try:
+        asyncio.run(_smoke(events_dir, journal, daily_token_cap, Decimal(str(mini_ceiling_usd))))
+    except (EmporosError, ValueError, OSError, KeyError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"llm-smoke failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+
+
+async def _smoke(events_dir: Path, journal: Path, cap: int, ceiling: Decimal) -> None:
+    stack = LlmStack(
+        Settings.default(), journal, declared_prices(), record=True, mini_ceiling_usd=ceiling,
+        daily_token_cap=cap, log=typer.echo,
+    )  # fmt: skip
+    events = _window(FIRST_DAY, LAST_DAY, ParquetEventStore(events_dir))
+    kept, _ = CategoryPreFilter().split([e for e in events if e.instrument_id])
+    pipeline = stack.pipeline(variant("v1_t60"))
+    failed = 0
+    for event in kept[:SMOKE_EVENTS]:
+        item = EventInput(event, MarketContext({}), event.usable_from + LATENCY)
+        decision = await pipeline.decide(item)
+        failed += decision.verdict is Verdict.STAGE_ERROR
+        typer.echo(f"smoke {event.event_id}: {decision.verdict.value}")
+    if len(kept) < SMOKE_EVENTS or failed:
+        raise ValueError(f"smoke: {failed} of {SMOKE_EVENTS} events ended in a stage error")
+    typer.echo(f"smoke ok: {stack.fresh} fresh, {stack.hits} journal; tokens {stack.token_usage()}")

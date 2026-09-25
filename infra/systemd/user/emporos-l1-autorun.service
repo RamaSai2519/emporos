@@ -1,0 +1,16 @@
+# Track L Dev, unattended (EM-240). One firing: the next step that can be done, then exit.
+# Install: see docs/ops/l1-dev-autorun.md. Runs from a worktree pinned at one commit, so the code
+# never changes under a running variant. Dev machine only; it calls OpenAI (gpt-4o-mini) and no
+# broker, and never gpt-4o.
+[Unit]
+Description=Emporos Track L Dev autorun (one firing)
+
+[Service]
+Type=oneshot
+TimeoutStartSec=infinity
+WorkingDirectory=%h/Projects/emporos-l1run
+EnvironmentFile=%h/.config/emporos/l1-autorun.env
+Environment=PYTHONPATH=src
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/Projects/emporos/.venv/bin/python -m emporos.cli research dev-autorun l1
+Nice=10

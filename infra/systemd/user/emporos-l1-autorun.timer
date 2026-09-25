@@ -1,0 +1,10 @@
+[Unit]
+Description=Fire the Emporos Track L Dev autorun every 30 minutes
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+Unit=emporos-l1-autorun.service
+
+[Install]
+WantedBy=timers.target

@@ -13,7 +13,7 @@
 # THE PIPELINE (§12.3), each stage its own class, temperature 0, JSON-object mode, strict validation,
 # one retry with a reminder on an invalid reply and then NO TRADE, every call journalled (record once,
 # replay free):
-#   Triage  (Jev = openai/gpt-4o-mini via the Vercel gateway): material? direction, expected move,
+#   Triage  (Jev = gpt-4o-mini-2024-07-18, OpenAI direct, see amendment C): material? direction, expected move,
 #           horizon (intraday | swing | none), already priced in?, confidence 0-100. One call per event.
 #           An event goes on only if material, its horizon is not "none" and its confidence >=
 #           `triage_threshold`.
@@ -148,6 +148,28 @@
 # provider updates, which is why every call is journalled and replayed; (h) a stop set by a model
 # is a hypothesis about where the idea is wrong, not a measured level; (i) six variants and one coin
 # flip test are counted looks against program-wide N (docs/research/profit/screens.jsonl).
+# AMENDMENT C (operator and head, 2026-09-26; declared BEFORE any call, no label or reply seen):
+#  * Model and route: every Jev stage runs gpt-4o-mini-2024-07-18 on OpenAI direct with OPENAI_API_KEY
+#    read from the environment only (never logged, printed or journalled). Normal calls (not Batch),
+#    concurrency 8, exponential backoff on HTTP 429 honouring Retry-After. Nothing at gpt-4o or above
+#    is called without the head's explicit approval of the worst-case spend: the arbiter variant v6
+#    does not run unless the operator tops up and approves, and the unattended run never calls it.
+#  * Spend limits: 9,000,000 tokens (input + output) per UTC day, counted from the journal: the run
+#    pauses at the cap and resumes after 00:00 UTC; tokens are logged per day. A runaway guard of
+#    USD 25 at list price over ALL Dev runs (mini 0.15 in / 0.60 out per million tokens). Token cost
+#    is charged to the P&L at the declared prices, for journal-answered calls as well.
+#  * Pre-filter, fixed before any call (exact NSE category match, nothing learned from outcomes):
+#    Loss of Share Certificates, Issue of Duplicate Share Certificate, Trading Window, Copy of
+#    Newspaper Publication, Certificate under SEBI (Depositories and Participants) Regulations 2018,
+#    Shareholders meeting, ESOP/ESOS/ESPS. Such filings are not decided; the number dropped, by
+#    category, is in every report.
+#  * Text cap: an event's text goes into a prompt truncated to 3,000 characters (under 1,200 tokens
+#    at any plausible tokenisation). Numbers in prompts are rounded (compact). Prompt hashes are
+#    unchanged by this amendment except where the code records them.
+#  * The unattended run (`research dev-autorun l1`): extraction of the 2024 material tier, then the
+#    frozen events snapshot dev-2024-v1, a six-event smoke test, then v1, v2, v3 back to back with
+#    nothing adjusted after seeing one, then v4, v5. More than 2% stage errors in a variant stops the
+#    run as incomplete; a variant never changes mid-run.
 family: strategy
 slug: l1-llm-event-trader
 hypothesis: >-

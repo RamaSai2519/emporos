@@ -15,6 +15,7 @@ from emporos.backtest.experiment_backfill import ReportBackfill
 from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
+from emporos.cli.autorun_commands import research_dev_autorun
 from emporos.cli.book_commands import research_screen_book
 from emporos.cli.core_commands import research_screen_core
 from emporos.cli.corporate_actions_commands import (
@@ -54,7 +55,11 @@ from emporos.cli.fo_stock_commands import (
 )
 from emporos.cli.index_change_commands import research_build_index_changes
 from emporos.cli.index_notice_commands import research_collect_index_notices
-from emporos.cli.llm_commands import research_llm_variant_table, research_run_llm_variant
+from emporos.cli.llm_commands import (
+    research_llm_smoke,
+    research_llm_variant_table,
+    research_run_llm_variant,
+)
 from emporos.cli.option_screen_commands import research_screen_options
 from emporos.cli.posture_commands import research_collect_global_cues, research_posture_inputs
 from emporos.cli.ranked_screen_commands import research_screen_ranked
@@ -117,6 +122,8 @@ research_app.command("filings-report")(research_filings_report)
 research_app.command("track-l-coverage")(research_track_l_coverage)
 research_app.command("run-llm-variant")(research_run_llm_variant)
 research_app.command("llm-variant-table")(research_llm_variant_table)
+research_app.command("llm-smoke")(research_llm_smoke)
+research_app.command("dev-autorun")(research_dev_autorun)
 research_app.command("stress-book")(research_stress_book)
 research_app.command("collect-index-notices")(research_collect_index_notices)
 research_app.command("build-index-changes")(research_build_index_changes)
