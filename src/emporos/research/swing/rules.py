@@ -24,8 +24,8 @@ from typing import Protocol
 from emporos.research.swing.data import AsOfView
 
 __all__ = [
-    "AllMembers", "DecisionContext", "Holding", "Intent", "Membership", "RegimeFilter",
-    "RegimeGated", "SwingStrategy",
+    "AllMembers", "DecisionContext", "Holding", "Intent", "LossStop", "Membership",
+    "RegimeFilter", "RegimeGated", "SwingStrategy",
 ]  # fmt: skip
 
 
@@ -45,6 +45,9 @@ class Holding:
     entry_index: int  # calendar index of the fill
     entry_day: date
     sessions_held: int  # calendar sessions from the fill to the decision, 0 on the fill day
+    entry_price: Decimal  # the fill on the ANALYSIS basis (slippage in), comparable with closes
+    entry_value: Decimal  # shares x the raw fill price: what the position cost, fees aside
+    entry_equity: Decimal  # the book's equity at the fill: the base a stop is a share of
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,25 @@ class DecisionContext:
     holdings: Mapping[str, Holding]
     equity: Decimal
     tradable: frozenset[str]  # names with a bar today that are members today
+
+
+class LossStop:
+    """The PROFIT_PLAN §3.5 stop: sell a holding whose analysis close has fallen by
+    `risk_fraction x entry equity / entry value` from its entry price, so that the loss at the stop
+    is `risk_fraction` of the capital that was in the book when it was bought (a 2% stop on a
+    position that is a fifth of the book is a 10% fall in the name). It is checked at a close and
+    filled at the next open, so a gap can make the loss larger than the stop: that is the rule."""
+
+    def __init__(self, risk_fraction: Decimal = Decimal("0.02")) -> None:
+        if not Decimal(0) < risk_fraction < Decimal(1):
+            raise ValueError("a stop risks a fraction between 0 and 1 of the book")
+        self._risk = risk_fraction
+
+    def fall_that_stops(self, holding: Holding) -> Decimal:
+        return self._risk * holding.entry_equity / holding.entry_value
+
+    def is_hit(self, holding: Holding, analysis_close: Decimal) -> bool:
+        return analysis_close <= holding.entry_price * (1 - self.fall_that_stops(holding))
 
 
 class SwingStrategy(Protocol):

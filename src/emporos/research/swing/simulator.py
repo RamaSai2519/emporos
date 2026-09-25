@@ -111,6 +111,7 @@ class _Position:
     entry_day: date
     entry_price: Decimal
     entry_multiplier: Decimal  # analysis / raw on the entry session
+    entry_equity: Decimal  # the book's equity when it was bought
     entry_fees: Decimal
     cost: Decimal  # cash spent, fees included
 
@@ -213,7 +214,7 @@ class SwingSimulator:
         state.cash -= cost
         state.fees += fees
         state.positions[intent.instrument_id] = _Position(
-            intent.instrument_id, quantity, i, day, price, multiplier, fees, cost
+            intent.instrument_id, quantity, i, day, price, multiplier, equity_now, fees, cost
         )
 
     def _liquidate(self, state: _State, i: int, day: date) -> None:
@@ -271,7 +272,15 @@ class SwingSimulator:
             if self._data.bar_on(n, day) is not None and self._membership.is_member(n, day)
         )  # fmt: skip
         holdings = {
-            n: Holding(n, p.entry_index, p.entry_day, i - p.entry_index)
+            n: Holding(
+                n,
+                p.entry_index,
+                p.entry_day,
+                i - p.entry_index,
+                p.entry_price * p.entry_multiplier,
+                p.quantity * p.entry_price,
+                p.entry_equity,
+            )
             for n, p in state.positions.items()
         }
         context = DecisionContext(day, i, AsOfView(self._data, day), holdings, equity, tradable)

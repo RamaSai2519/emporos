@@ -44,7 +44,7 @@ def outcome() -> ArmOutcome:
         data, ZERO_SCHEDULE, SwingScreenRun.universe(data, ZERO_SCHEDULE),
         bootstrap=BlockBootstrap(paths=10),
     )  # fmt: skip
-    return screen.run(hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
+    return screen.run(lambda: hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
 
 
 def record(ident: SwingIdentity, pnl_file: str = "pnl/x.csv") -> SwingRecord:

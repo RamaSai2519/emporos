@@ -15,7 +15,7 @@ handed to `judge`. Until it is, an arm's verdict says so and cannot pass.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -53,6 +53,7 @@ class ArmOutcome:
     """Everything one arm produced, on the three runs."""
 
     arm: SwingRun  # at BENCHMARK costs
+    strategy: SwingStrategy  # the instance that produced `arm`: its record is the arm's own
     stats: SwingStats
     adverse_stats: SwingStats
     universe_stats: SwingStats  # the equal-weight buy-and-hold, same costs
@@ -93,11 +94,15 @@ class SwingScreenRun:
         costs = SwingCostModel(schedule, BENCHMARK)
         return EqualWeightBenchmark(dataset, costs, membership).run()
 
-    def run(self, strategy: SwingStrategy, config: SwingConfig) -> ArmOutcome:
-        arm = self._simulate(strategy, config, BENCHMARK)
-        adverse = self._simulate(strategy, config, ADVERSE)
+    def run(self, strategy: Callable[[], SwingStrategy], config: SwingConfig) -> ArmOutcome:
+        """`strategy` builds a fresh instance for each run, so no state (or record) carries from
+        the benchmark-cost run into the adverse-cost run."""
+        first = strategy()
+        arm = self._simulate(first, config, BENCHMARK)
+        adverse = self._simulate(strategy(), config, ADVERSE)
         return ArmOutcome(
             arm,
+            first,
             SwingMetrics.of(arm),
             SwingMetrics.of(adverse),
             self._universe_stats,

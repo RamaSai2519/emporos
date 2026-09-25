@@ -12,8 +12,14 @@ from emporos.domain.instruments import Exchange
 from emporos.domain.money import Money
 from emporos.research.adjustments import AdjustmentLedger, PriceAdjuster
 from emporos.research.swing.costs import CostScenario, SwingCostModel
-from emporos.research.swing.data import Quarantine, SwingDataset, SwingSeries, SwingSeriesFactory
-from emporos.research.swing.rules import DecisionContext, Intent
+from emporos.research.swing.data import (
+    AsOfView,
+    Quarantine,
+    SwingDataset,
+    SwingSeries,
+    SwingSeriesFactory,
+)
+from emporos.research.swing.rules import DecisionContext, Holding, Intent
 
 MONDAY = date(2026, 1, 5)
 FREE = CostScenario("free", Decimal(1), Decimal(0))
@@ -63,8 +69,13 @@ def series(
     opens_closes: Sequence[tuple[str, str]],
     ledger: AdjustmentLedger | None = None,
     quarantine: Quarantine | None = None,
+    volumes: Sequence[int] | None = None,
 ) -> SwingSeries:
-    raw = [bar(instrument_id, d, o, c) for d, (o, c) in zip(days, opens_closes, strict=True)]
+    vols = volumes or [1000] * len(days)
+    raw = [
+        bar(instrument_id, d, o, c, v)
+        for d, (o, c), v in zip(days, opens_closes, vols, strict=True)
+    ]
     adjusted = PriceAdjuster(ledger or AdjustmentLedger()).adjust(instrument_id, raw)
     return SwingSeriesFactory(quarantine).build(adjusted)
 
@@ -96,3 +107,35 @@ class QuarantineSet:
 
     def is_quarantined(self, instrument_id: str, day: date) -> bool:
         return (instrument_id, day) in self._pairs
+
+
+def holding(name: str, sessions_held: int = 0, price: str = "100", value: str = "20000",
+            equity: str = "100000") -> Holding:  # fmt: skip
+    return Holding(name, 0, MONDAY, sessions_held, Decimal(price), Decimal(value), Decimal(equity))
+
+
+def context(
+    data: SwingDataset,
+    day: date,
+    holdings: Sequence[Holding] = (),
+    tradable: Sequence[str] | None = None,
+    equity: str = "100000",
+) -> DecisionContext:
+    names = frozenset(tradable if tradable is not None else data.instrument_ids)
+    return DecisionContext(
+        day, data.calendar_index(day), AsOfView(data, day), {h.instrument_id: h for h in holdings},
+        Decimal(equity), names,
+    )  # fmt: skip
+
+
+class Always:
+    """A regime filter (or rebalance calendar) that says the same thing every time."""
+
+    def __init__(self, on: bool) -> None:
+        self._on = on
+
+    def is_on(self, context: DecisionContext) -> bool:
+        return self._on
+
+    def is_rebalance(self, view: AsOfView) -> bool:
+        return self._on

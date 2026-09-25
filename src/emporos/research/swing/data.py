@@ -152,6 +152,12 @@ class AsOfView:
     def instrument_ids(self) -> tuple[str, ...]:
         return self._dataset.instrument_ids
 
+    def previous_session(self) -> date | None:
+        """The calendar session before `day`, or None on the first."""
+        calendar = self._dataset.calendar
+        position = bisect_right(calendar, self._day) - 2
+        return calendar[position] if position >= 0 else None
+
     def sessions(self) -> tuple[date, ...]:
         """The calendar up to and including `day`."""
         calendar = self._dataset.calendar

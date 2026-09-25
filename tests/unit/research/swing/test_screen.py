@@ -52,7 +52,7 @@ def outcome(arm: SwingStats, adverse: SwingStats | None = None, universe: SwingS
         ZERO_SCHEDULE,
         SwingScreenRun.universe(dataset(series(X, DAYS, rising())), ZERO_SCHEDULE),
         bootstrap=BlockBootstrap(paths=10),
-    ).run(hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
+    ).run(lambda: hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
     return replace(
         real,
         stats=arm,
@@ -165,7 +165,7 @@ class TestRun:
         universe = SwingScreenRun.universe(data, ZERO_SCHEDULE)
         screen = SwingScreenRun(data, ZERO_SCHEDULE, universe, bootstrap=BlockBootstrap(paths=20))
 
-        result = screen.run(hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
+        result = screen.run(lambda: hold(X, DAYS[0], DAYS[-2]), SwingConfig(Decimal(10000), 1))
 
         assert result.stats.net_cagr > 0
         assert result.adverse_stats.net_cagr > 0

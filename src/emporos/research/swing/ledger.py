@@ -96,6 +96,8 @@ class SwingRecord:
             "p_drawdown_30": r.p_drawdown_30,
             "p_year_negative": r.p_year_negative,
             "bootstrap_seed": r.seed,
+            "bootstrap_paths": r.paths,
+            "bootstrap_block": r.block,
             "passed": self.verdict.passed,
             "failed_checks": list(self.verdict.failed_checks),
             "pnl_file": self.pnl_file,

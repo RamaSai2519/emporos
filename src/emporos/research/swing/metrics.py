@@ -118,6 +118,19 @@ class SwingMetrics:
         )
 
     @staticmethod
+    def yearly(run: SwingRun) -> dict[int, float]:
+        """Net return per calendar year (a part-year at either end is a part-year return)."""
+        last_of_year: dict[int, Decimal] = {}
+        for day, value in zip(run.days, run.equity, strict=True):
+            last_of_year[day.year] = value
+        out: dict[int, float] = {}
+        previous = run.capital
+        for year in sorted(last_of_year):
+            out[year] = float(last_of_year[year] / previous - 1)
+            previous = last_of_year[year]
+        return out
+
+    @staticmethod
     def daily_returns(run: SwingRun) -> list[float]:
         previous = (run.capital, *run.equity[:-1])
         return [float(now / before - 1) for now, before in zip(run.equity, previous, strict=True)]

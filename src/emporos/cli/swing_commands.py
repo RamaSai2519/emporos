@@ -1,0 +1,161 @@
+"""`emporos research screen-swing <slug>` — run a declared Track A cell (EM-228, EM-229).
+
+Reads the committed declaration (refusing one that was not committed first), the D1 universe, the
+derived daily bars (through the vault reader, Discovery only), the adjustment ledger, the NIFTY 50
+regime series and, for A2, the results events. It refuses to run at all while the adjustment ledger
+is empty: PROFIT_PLAN §2.6 puts corporate actions before any Track A screen. Every arm goes into
+`docs/research/profit/screens.jsonl` once, with its daily P&L file."""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import date, datetime
+from decimal import Decimal
+from pathlib import Path
+
+import typer
+
+from emporos.backtest.vault import VaultedCandleReader
+from emporos.cli.corporate_actions_commands import research_symbols
+from emporos.cli.daily_bars_commands import derived_candle_root
+from emporos.cli.experiment_declarations import (
+    DEFAULT_DECLARATIONS_DIR,
+    DeclarationGate,
+    ExperimentDeclarationLoader,
+)
+from emporos.cli.experiment_provenance import GitRepository
+from emporos.cli.swing_bars import VaultedDailyBars
+from emporos.cli.vault_files import VaultFiles
+from emporos.core.clock import SystemClock
+from emporos.core.config import Settings
+from emporos.core.errors import EmporosError
+from emporos.domain.fees import TradeProduct
+from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
+from emporos.portfolio.fee_schedules import FeeScheduleLibrary
+from emporos.research.adjustments import DEFAULT_LEDGER, AdjustmentLedger
+from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Universe
+from emporos.research.partition import DISCOVERY
+from emporos.research.results_filings import FilingLedger
+from emporos.research.scans.event_days import results_by_symbol
+from emporos.research.swing.bootstrap import BlockBootstrap
+from emporos.research.swing.cells import CELLS, CellEnvironment
+from emporos.research.swing.earnings_drift import ReactionSessions
+from emporos.research.swing.ledger import (
+    DEFAULT_PNL_DIR,
+    DEFAULT_PROFIT_SCREENS,
+    DailyPnlStore,
+    JsonlSwingLedger,
+)
+from emporos.research.swing.loading import SwingDatasetBuilder
+from emporos.research.swing.regime import IndexSeries, IndexTrendRegime
+from emporos.research.swing.report import format_report
+from emporos.research.swing.rules import LossStop
+from emporos.research.swing.runner import SwingCellRunner
+from emporos.research.swing.screen import SwingScreenRun
+
+CAPITAL = Decimal(100_000)  # the declared capital of every Track A cell (PROFIT_PLAN)
+NIFTY_50 = "NSE:99926000"
+REGIME_WINDOW = 200
+DEFAULT_EVENTS_DIR = Path("docs/research/edge-search/events")
+DEFAULT_TOKENS = Path("config/universe/d1/tokens.csv")
+
+_SLUG = typer.Argument(..., help="The declared cell: a1-momentum-trend-filter or a2-...")
+_MANIFEST = typer.Option(DEFAULT_MANIFEST, help="The committed D1 universe manifest.")
+_TOKENS = typer.Option(DEFAULT_TOKENS, help="The D1 symbol-to-token table.")
+_ADJUSTMENTS = typer.Option(DEFAULT_LEDGER, help="The corporate-action adjustment ledger.")
+_LEDGER = typer.Option(DEFAULT_PROFIT_SCREENS, help="The append-only Track A/B screen ledger.")
+_PNL = typer.Option(DEFAULT_PNL_DIR, help="Where each arm's daily P&L file is written.")
+_EVENTS = typer.Option(DEFAULT_EVENTS_DIR, help="The results-events ledger directory.")
+_ROOT = typer.Option(None, help="Derived-candle root (default: beside the candle cache).")
+_PATHS = typer.Option(10_000, help="Bootstrap paths: the plan's number; fewer only for tests.")
+
+
+def _published_by_instrument(
+    events: Path, symbols: dict[str, str], instruments: set[str]
+) -> dict[str, list[datetime]]:
+    ledger = FilingLedger(events / "results-filings.jsonl", events / "results-collected.jsonl")
+    by_symbol = results_by_symbol(ledger.load())
+    return {
+        symbols[s]: moments for s, moments in by_symbol.items() if symbols.get(s) in instruments
+    }
+
+
+def research_screen_swing(
+    slug: str = _SLUG,
+    manifest: Path = _MANIFEST,
+    tokens: Path = _TOKENS,
+    adjustments: Path = _ADJUSTMENTS,
+    ledger: Path = _LEDGER,
+    pnl_dir: Path = _PNL,
+    events: Path = _EVENTS,
+    root: Path | None = _ROOT,
+    bootstrap_paths: int = _PATHS,
+) -> None:
+    """Screen every arm of a declared Track A cell over Discovery."""
+    try:
+        cell = CELLS.get(slug)
+        if cell is None:
+            raise ValueError(f"no swing cell for {slug!r} (known: {', '.join(sorted(CELLS))})")
+        declaration = DeclarationGate(ExperimentDeclarationLoader(), GitRepository()).load(
+            DEFAULT_DECLARATIONS_DIR / f"{slug}.yaml"
+        )
+        factors = AdjustmentLedger.load(adjustments)
+        if len(factors) == 0:
+            raise ValueError(
+                f"{adjustments} has no factors: PROFIT_PLAN §2.6 forbids a Track A screen before "
+                "the corporate-action adjustment ledger is filled (EM-221)"
+            )
+        universe = D1Universe.load(manifest)
+        bars = VaultedDailyBars(
+            VaultedCandleReader(
+                FileCandleReader(
+                    [CandleCacheFiles(root or derived_candle_root(Settings.default()))],
+                    memoize=False,
+                ),
+                VaultFiles().load(),
+            )
+        )
+        built = SwingDatasetBuilder(bars, factors).build(
+            list(universe.instrument_ids), DISCOVERY.first, DISCOVERY.last
+        )
+        if built.names_without_bars:
+            raise ValueError(
+                f"no daily bars for {len(built.names_without_bars)} names "
+                f"(first: {built.names_without_bars[0]}): run build-daily-bars first"
+            )
+        regime = IndexTrendRegime(
+            IndexSeries(bars.bars(NIFTY_50, DISCOVERY.first, DISCOVERY.last)), REGIME_WINDOW
+        )
+        symbols = research_symbols(manifest, tokens)
+        by_instrument = _published_by_instrument(events, symbols, set(universe.instrument_ids))
+        sessions: dict[str, list[date]] = defaultdict(list)
+        for name in built.dataset.instrument_ids:
+            sessions[name] = list(built.dataset.series(name).days)
+        env = CellEnvironment(
+            built.dataset, regime, LossStop(), ReactionSessions.build(by_instrument, sessions)
+        )
+        schedule = FeeScheduleLibrary.from_directory(product=TradeProduct.DELIVERY).earliest
+        screen = SwingScreenRun(
+            built.dataset,
+            schedule,
+            SwingScreenRun.universe(built.dataset, schedule),
+            bootstrap=BlockBootstrap(paths=bootstrap_paths),
+        )
+        label = f"{universe.universe_label}+adj-{factors.content_hash[:8]}"
+        runner = SwingCellRunner(
+            screen, env, CAPITAL, label, JsonlSwingLedger(ledger), DailyPnlStore(pnl_dir),
+            SystemClock().now(),
+        )  # fmt: skip
+        typer.echo(
+            f"{slug}: {len(built.dataset.instrument_ids)} names, {built.audit.sessions_checked} "
+            f"sessions, {len(built.audit.quarantined)} quarantined gaps, adjustment ledger "
+            f"{len(factors)} factors, capital {CAPITAL}, delivery schedule {schedule.name} "
+            f"(verified: {schedule.verified})"
+        )
+        report = runner.run(cell, declaration.parameter_grid)
+    except (EmporosError, ValueError, OSError, KeyError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"screen-swing failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for line in format_report(report):
+        typer.echo(line)
