@@ -64,6 +64,7 @@ from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_stock_chains import StockChains, StockLotBook
 from emporos.research.market_context.bars import BarSeriesCache
 from emporos.research.market_context.builder import AsOfContextBuilder, SectorMap
+from emporos.research.market_context.open_interest import FoOpenInterest
 from emporos.research.scans.base import ScanExecution
 
 __all__ = ["DevData", "DevPaths", "LlmStack", "declared_prices"]
@@ -192,7 +193,10 @@ class DevData:
         self.sessions = session_calendar(adjusted, NIFTY_ID, first, last)
         warm = date.fromordinal(first.toordinal() - CONTEXT_WARMUP_DAYS)
         cache = BarSeriesCache(adjusted, warm, last, capacity=CONTEXT_CACHE)
-        self.context: ContextBuilder = AsOfContextBuilder(cache, NIFTY_ID, VIX_ID, SectorMap({}))
+        interest = FoOpenInterest(stock_fo) if stock_fo is not None else None
+        self.context: ContextBuilder = AsOfContextBuilder(
+            cache, NIFTY_ID, VIX_ID, SectorMap({}), interest
+        )
         self.market = VaultedMarket(adjusted, NoAdjustment(), self.sessions, warm, last)
         self.chains: OptionChains = NoChains()
         if stock_fo is not None:
