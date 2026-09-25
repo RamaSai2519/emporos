@@ -157,7 +157,8 @@ class CueFeed:
 
 def _yahoo_url(symbol: str, first: date, last: date) -> str:
     start = datetime.combine(first, time(0), tzinfo=UTC)
-    end = datetime.combine(last + timedelta(days=1), time(0), tzinfo=UTC)
+    # One second short of the next midnight: a bar stamped at that midnight is the next day's.
+    end = datetime.combine(last + timedelta(days=1), time(0), tzinfo=UTC) - timedelta(seconds=1)
     return (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
         f"?period1={int(start.timestamp())}&period2={int(end.timestamp())}&interval=1d"

@@ -53,7 +53,7 @@ _TO = typer.Option(LAST_DAY, "--to", formats=["%Y-%m-%d"], help="Last day (in)."
 _RAW = typer.Option(DEFAULT_CUES_RAW_DIR, help="Where each FRED reply is kept verbatim (local).")
 _LEDGER = typer.Option(DEFAULT_CUES_LEDGER, help="The append-only fetch ledger.")
 _GAP = typer.Option(3.0, help="Seconds between requests (at least 1).")
-_SOURCE = typer.Option("fred", help="Cue source: fred or yahoo.")
+_SOURCE = typer.Option("yahoo", help="Cue source: yahoo or fred.")
 _EVENTS = typer.Option(DEFAULT_EVENT_DIR, help="The versioned Parquet event store.")
 _MANIFEST = typer.Option(DEFAULT_MANIFEST, help="The committed D1 universe manifest.")
 _TOKENS = typer.Option(DEFAULT_TOKENS, help="The D1 symbol-to-token table.")

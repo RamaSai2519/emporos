@@ -189,6 +189,8 @@ class TestYahoo:
         url = YAHOO.url("^GSPC", FIRST, LAST)
         assert url.startswith("https://query1.finance.yahoo.com/v8/finance/chart/^GSPC?period1=")
         assert "interval=1d" in url
+        period2 = int(url.split("period2=")[1].split("&")[0])
+        assert period2 == int(datetime(2026, 3, 19, tzinfo=UTC).timestamp()) - 1  # the 19th is out
 
     async def test_the_collector_keeps_the_reply_and_stops_on_a_page_that_is_no_data(
         self, tmp_path: Path
