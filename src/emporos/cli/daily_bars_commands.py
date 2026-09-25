@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+import yaml
 
 from emporos.cli.backtest_runtime import candle_cache_root
 from emporos.cli.screen_commands import vaulted_bars
@@ -22,9 +23,13 @@ from emporos.research.daily_bars import DailyBarBuilder, DailyBarStore
 from emporos.research.partition import CONFIRMATION, DISCOVERY
 
 DERIVED_DIR_NAME = "candles-derived"
+DEFAULT_REFERENCE = Path("config/reference_series.yaml")
 
 _MANIFEST = typer.Option(DEFAULT_MANIFEST, help="The committed D1 universe manifest.")
 _OUT = typer.Option(None, help="Derived-candle root (default: beside the candle cache).")
+_REFERENCE = typer.Option(
+    False, "--reference", help="Also build the reference indices (config/reference_series.yaml)."
+)
 _SHARD = typer.Option(
     "1/1",
     help="Build only the names whose position is N mod M, as 'N/M' (N from 1): run M at once.",
@@ -46,8 +51,17 @@ def parse_shard(text: str) -> tuple[int, int]:
     return number - 1, total
 
 
+def reference_instrument_ids(path: Path = DEFAULT_REFERENCE) -> list[str]:
+    """`NSE:<token>` for every series in the reference-series file (indices and India VIX)."""
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return [f"NSE:{entry['token']}" for entry in raw["series"]]
+
+
 def research_build_daily_bars(
-    manifest: Path = _MANIFEST, out: Path | None = _OUT, shard: str = _SHARD
+    manifest: Path = _MANIFEST,
+    out: Path | None = _OUT,
+    shard: str = _SHARD,
+    reference: bool = _REFERENCE,
 ) -> None:
     """Session OHLCV bars for the D1 names from their 5m bars, Discovery and Confirmation."""
     try:
@@ -61,7 +75,8 @@ def research_build_daily_bars(
         )
         residue, total = parse_shard(shard)
         reports = []
-        for instrument_id in universe.included[residue::total]:
+        names = reference_instrument_ids() if reference else universe.included[residue::total]
+        for instrument_id in names:
             report = builder.build(instrument_id)
             reports.append(report)
             typer.echo(

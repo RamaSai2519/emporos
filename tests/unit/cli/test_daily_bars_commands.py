@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from emporos.cli.daily_bars_commands import DERIVED_DIR_NAME, derived_candle_root, parse_shard
+from emporos.cli.daily_bars_commands import (
+    DERIVED_DIR_NAME,
+    derived_candle_root,
+    parse_shard,
+    reference_instrument_ids,
+)
 from emporos.core.config import Settings
 
 
@@ -36,3 +41,11 @@ def test_derived_bars_go_beside_the_candle_cache_never_into_it(tmp_path: Path) -
 
     assert root == tmp_path / DERIVED_DIR_NAME
     assert root != tmp_path / "candles"
+
+
+def test_the_reference_series_are_the_configured_indices() -> None:
+    ids = reference_instrument_ids()
+
+    assert "NSE:99926000" in ids  # NIFTY 50
+    assert "NSE:99926017" in ids  # INDIA VIX
+    assert all(i.startswith("NSE:9992") for i in ids)

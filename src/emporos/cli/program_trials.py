@@ -32,6 +32,7 @@ from emporos.persistence.feature_ledger import MongoFeatureTrialLedger
 from emporos.persistence.lead_lag_ledger import MongoLeadLagTrialLedger
 from emporos.persistence.trial_ledger import MongoTrialLedger
 from emporos.research.screen_ledger import JsonlScreenLedger, ScreenLedgerCounter
+from emporos.research.swing.ledger import DEFAULT_PROFIT_SCREENS
 
 STRATEGY_TRIALS = "strategy trials"
 DEFAULT_HISTORICAL_GRIDS = Path("docs/research/edge-search/historical-trials.yaml")
@@ -44,10 +45,12 @@ class ProgramTrialCountFactory:
         experiments_dir: Path = DEFAULT_EXPERIMENTS_DIR,
         historical_grids: Path = DEFAULT_HISTORICAL_GRIDS,
         screens: Path = DEFAULT_SCREENS,
+        profit_screens: Path = DEFAULT_PROFIT_SCREENS,
     ) -> None:
         self._experiments_dir = experiments_dir
         self._historical_grids = historical_grids
         self._screens = screens
+        self._profit_screens = profit_screens
 
     def build(
         self,
@@ -69,5 +72,6 @@ class ProgramTrialCountFactory:
             HistoricalGridCounter("lead-lag grids (historical)", GridFamily.LEAD_LAG, grids),
             RegistryIndexCounter(self._experiments_dir / INDEX_JSON),
             ScreenLedgerCounter(JsonlScreenLedger(self._screens)),
+            ScreenLedgerCounter(JsonlScreenLedger(self._profit_screens), "profit screens"),
         ]
         return ProgramTrialCount(scored, counters)
