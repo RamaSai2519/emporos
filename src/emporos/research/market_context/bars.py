@@ -54,6 +54,9 @@ class IntradayBars:
         self._first_of: dict[date, int] = {}
         for i, day in enumerate(self._day):
             self._first_of.setdefault(day, i)
+        self._last_of: dict[date, int] = {}
+        for i, day in enumerate(self._day):
+            self._last_of[day] = i
         self._days = sorted(self._first_of)
 
     def __len__(self) -> int:
@@ -87,6 +90,19 @@ class IntradayBars:
             max(0, bisect_left(self._days, day) - count) : bisect_left(self._days, day)
         ]
         return [s for d in days if (s := self.session(d, at)) is not None]
+
+    def closes_before(self, day: date, count: int, at: datetime) -> list[tuple[date, float]]:
+        """(session day, close of its last bar completed by `at`) for the last `count` sessions
+        strictly before `day`, oldest first. The cheap sibling of `sessions_before` for callers
+        that need only the closes."""
+        end = self.completed(at)
+        stop = bisect_left(self._days, day)
+        out: list[tuple[date, float]] = []
+        for d in self._days[max(0, stop - count) : stop]:
+            last = min(self._last_of[d], end - 1)
+            if last >= self._first_of[d]:
+                out.append((d, self._close[last]))
+        return out
 
     def last_session_day_on_or_before(self, day: date, at: datetime) -> date | None:
         """The latest session on or before `day` with a bar closed by `at`."""

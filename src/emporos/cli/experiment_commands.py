@@ -49,6 +49,7 @@ from emporos.cli.fo_archive_commands import research_build_fo_specs, research_co
 from emporos.cli.index_change_commands import research_build_index_changes
 from emporos.cli.index_notice_commands import research_collect_index_notices
 from emporos.cli.option_screen_commands import research_screen_options
+from emporos.cli.posture_commands import research_collect_global_cues, research_posture_inputs
 from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
 from emporos.cli.rotation_commands import research_screen_rotation
@@ -97,6 +98,8 @@ research_app.command("screen-rotation")(research_screen_rotation)
 research_app.command("screen-book")(research_screen_book)
 research_app.command("screen-core")(research_screen_core)
 research_app.command("collect-filings")(research_collect_filings)
+research_app.command("collect-global-cues")(research_collect_global_cues)
+research_app.command("posture-inputs")(research_posture_inputs)
 research_app.command("extract-filing-text")(research_extract_filing_text)
 research_app.command("build-events")(research_build_events)
 research_app.command("filings-report")(research_filings_report)
