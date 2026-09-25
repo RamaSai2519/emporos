@@ -64,10 +64,19 @@ is the binding constraint. Round-trip cost is a fixed ~0.23-0.5%; a 5-20 day mov
 - Net CAGR ≥ 18% at benchmark costs **and** > 0 at adverse costs.
 - Beats the same-universe equal-weight buy-and-hold on net Sharpe (Track A) / beats cash at 6.5%
   (Track B).
-- ≥ 60% of calendar months net positive; worst month ≥ -10%; max drawdown ≤ 25%.
+- Months (amended 2026-09-25, see note): ≥ 60% of months WITH ANY EXPOSURE net positive **and**
+  ≤ 40% of ALL months net negative; worst month ≥ -10%; max drawdown ≤ 25%.
 - Monthly-return t-stat ≥ 2.5; ≥ 100 round trips; positive in ≥ 60% of calendar years.
 - No instrument > 25% of net profit (Track A).
 - Parameter neighbours: ≥ 50% of declared adjacent arms also net positive at benchmark.
+
+  *Amendment note (head, operator-delegated, 2026-09-25, before A4 ran):* the original bar, ≥ 60%
+  of ALL calendar months net positive, counted an all-cash month as a failure, contradicting §9
+  (standing aside is a correct outcome), which was written before any result. The amended bar
+  still counts every losing month against a strategy, and a book cannot pass by sitting in cash.
+  It changes no recorded verdict: every rejected Track A/B arm also fails another §3.2 bar.
+  The single-name concentration check applies to single stocks; a broad index ETF is exempt
+  (its share is still reported).
 
 ### 3.3 Later stages (as EDGE_SEARCH_PLAN §6, adapted)
 - **S3 Confirmation:** net > 0 at adverse, same sign, beats the benchmark of 3.2.
