@@ -14,7 +14,8 @@ text is from the PDF, the source URL and fetch date) for audit and the report.
 
 `text` is the attachment's PDF text when it was extracted and had text, else the feed's own subject
 line, so it is never empty; `text_status` says which it is (`ok`, `image_only`, `not_pdf`,
-`not_found`, `error`, or `none` when the attachment was not fetched)."""
+`not_found`, `error`; `pending` when it has an attachment not fetched yet; `none` when the
+filing has no attachment)."""
 
 from __future__ import annotations
 
@@ -118,7 +119,7 @@ class EventBuilder:
                 continue  # the same filing seen in two windows or two runs
             attachment = texts.get(filing.attachment_url) if filing.attachment_url else None
             usable = attachment is not None and attachment.status == "ok" and attachment.text
-            status = attachment.status if attachment is not None else "none"
+            status = attachment.status if attachment is not None else self._unread(filing)
             rows[event_id] = EventRow(
                 event_id, filing.source, filing.symbol, self._ids.get(filing.symbol, ""),
                 filing.isin, filing.company, filing.published_at.astimezone(UTC),
@@ -128,6 +129,10 @@ class EventBuilder:
                 status, filing.attachment_url, filing.source_url, filing.fetched_on,
             )  # fmt: skip
         return sorted(rows.values(), key=lambda r: (r.published_at, r.event_id))
+
+    @staticmethod
+    def _unread(filing: Filing) -> str:
+        return "pending" if filing.attachment_url else "none"
 
 
 def _month(moment: datetime) -> str:

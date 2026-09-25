@@ -112,3 +112,27 @@ def test_a_bad_ledger_is_a_clean_failure(world: Path) -> None:
 
     assert result.exit_code == 1
     assert "build-events failed" in result.output
+
+
+def test_freeze_events_writes_a_sealed_snapshot_and_refuses_to_rebuild_it(world: Path) -> None:
+    from emporos.research.filings.event_store import ParquetEventStore
+    from emporos.research.filings.snapshot import EventSnapshot
+
+    snapshots = world / "snapshots"
+    freeze = ["freeze-events", "dev-1", *args(world)[:-2], "--snapshots", str(snapshots)]
+
+    first = RUNNER.invoke(research_app, freeze)
+    again = RUNNER.invoke(research_app, freeze)
+
+    root = snapshots / "dev-1"
+    try:
+        assert first.exit_code == 0, first.output
+        assert "2 events" in first.output and "files verified: True" in first.output
+        assert again.exit_code == 1 and "already exists" in again.output
+        events = ParquetEventStore(root).events_between(
+            datetime(2024, 3, 1, tzinfo=UTC), datetime(2024, 4, 1, tzinfo=UTC)
+        )
+        assert [e.text for e in events] == ["results are up", "t2"]
+        assert not (root / "v1" / "manifest.json").stat().st_mode & 0o200  # read-only
+    finally:
+        EventSnapshot(root).seal_removal()

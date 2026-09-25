@@ -62,7 +62,9 @@ class TestBuilder:
             [filing()], {"https://a/1.pdf": text("https://a/1.pdf", "image_only", "")}
         )
 
-        assert (never.text, never.text_status) == ("feed text", "none")
+        assert (never.text, never.text_status) == ("feed text", "pending")
+        (bare,) = self.build([filing(attachment="")], {})
+        assert bare.text_status == "none"
         assert (scan.text, scan.text_status) == ("feed text", "image_only")
 
     def test_a_name_with_no_token_gets_an_empty_instrument_id(self) -> None:

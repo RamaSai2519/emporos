@@ -27,6 +27,7 @@ from emporos.research.filings.attachments import (
     DEFAULT_TEXT_DIR,
     AttachmentCollector,
     AttachmentHalted,
+    AttachmentText,
     AttachmentTextStore,
 )
 from emporos.research.filings.collector import (
@@ -35,7 +36,12 @@ from emporos.research.filings.collector import (
     FilingCollector,
     yearly_windows,
 )
-from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, EventBuilder, ParquetEventStore
+from emporos.research.filings.event_store import (
+    DEFAULT_EVENT_DIR,
+    EventBuilder,
+    EventRow,
+    ParquetEventStore,
+)
 from emporos.research.filings.loading import CollectedFilings
 from emporos.research.filings.nse_source import NseFilingSource
 from emporos.research.filings.pdf_text import PdftotextExtractor
@@ -48,6 +54,7 @@ from emporos.research.filings.raw_store import (
     RawFilingStore,
 )
 from emporos.research.filings.report import filing_report_lines
+from emporos.research.filings.snapshot import DEFAULT_SNAPSHOT_DIR, EventSnapshot
 from emporos.research.filings.universe import FilingUniverse
 from emporos.research.market_context.coverage import BarCoverage, FoCoverage, coverage_lines
 
@@ -184,6 +191,14 @@ def _instrument_ids(tokens: Path) -> dict[str, str]:
         return {row["Symbol"]: f"NSE:{row['Token']}" for row in csv.DictReader(handle)}
 
 
+def _event_rows(
+    tokens: Path, raw: Path, ledger: Path, text: Path
+) -> tuple[list[EventRow], dict[str, AttachmentText]]:
+    filings = CollectedFilings(RawFilingStore(raw), FetchLedger(ledger))
+    texts = {a.url: a for a in AttachmentTextStore(text).all()}
+    return EventBuilder(_instrument_ids(tokens)).build(filings, texts), texts
+
+
 def research_build_events(
     tokens: Path = _TOKENS,
     raw: Path = _RAW,
@@ -193,9 +208,7 @@ def research_build_events(
 ) -> None:
     """Build the versioned event store from the collected filings and the extracted text."""
     try:
-        filings = CollectedFilings(RawFilingStore(raw), FetchLedger(ledger))
-        texts = {a.url: a for a in AttachmentTextStore(text).all()}
-        rows = EventBuilder(_instrument_ids(tokens)).build(filings, texts)
+        rows, texts = _event_rows(tokens, raw, ledger, text)
         months = ParquetEventStore(events).write(
             rows, SystemClock().now(), {"ledger": str(ledger), "attachments_held": len(texts)}
         )
@@ -204,6 +217,34 @@ def research_build_events(
         typer.secho(f"build-events failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
     typer.echo(f"{len(rows)} events in {months} month file(s) under {events}")
+
+
+_NAME = typer.Argument(help="The snapshot's name, e.g. dev-2024 (an existing name is refused).")
+_SNAPSHOTS = typer.Option(DEFAULT_SNAPSHOT_DIR, help="Where frozen snapshots live.")
+
+
+def research_freeze_events(
+    name: str = _NAME,
+    tokens: Path = _TOKENS,
+    raw: Path = _RAW,
+    ledger: Path = _LEDGER,
+    text: Path = _TEXT,
+    snapshots: Path = _SNAPSHOTS,
+) -> None:
+    """Freeze the events as they are now (with the PDF text extracted so far) for a Dev run."""
+    try:
+        rows, texts = _event_rows(tokens, raw, ledger, text)
+        snapshot = EventSnapshot(snapshots / name)
+        record = snapshot.freeze(
+            rows, SystemClock().now(), {"ledger": str(ledger), "attachments_held": len(texts)}
+        )
+        verified = snapshot.verify()
+    except (EmporosError, ValueError, OSError, KeyError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"freeze-events failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"snapshot {snapshot.root}: {record['events']} events, {record['text_status']}")
+    typer.echo(f"attachments held {record['attachments_held']}; files verified: {verified}")
 
 
 def research_filings_report(
