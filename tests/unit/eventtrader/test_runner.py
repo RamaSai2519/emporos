@@ -19,6 +19,7 @@ from emporos.eventtrader.runner import (
     DEV_WINDOW,
     CachedContext,
     DevWindowViolation,
+    RunIncomplete,
     VariantRunner,
 )
 from emporos.eventtrader.stages.models import (
@@ -214,3 +215,13 @@ async def test_the_window_edges_are_in_and_a_decision_pushed_past_midnight_is_ou
         DEV_WINDOW.check([past])  # decided at 00:01 on 2025-01-01
     with pytest.raises(DevWindowViolation, match="session"):
         DEV_WINDOW.check([], [date(2025, 1, 1)])
+
+
+async def test_a_run_whose_calls_mostly_failed_is_not_reported_as_the_models_declining() -> None:
+    broken = {
+        eid: PipelineDecision(eid, Verdict.STAGE_ERROR, errors=("transport: 403",))
+        for eid in ("E1", "E2", "E3")
+    }
+
+    with pytest.raises(RunIncomplete, match="3 of 3 decisions.*403"):
+        await runner(DictDecider(broken)).run(events())

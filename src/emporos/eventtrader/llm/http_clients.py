@@ -25,7 +25,7 @@ __all__ = [
     "OpenAiCompatibleClient",
 ]
 
-GATEWAY_URL = "https://gateway.ai.vercel.sh"
+GATEWAY_URL = "https://ai-gateway.vercel.sh"
 GATEWAY_MODEL = "openai/gpt-4o-mini"
 OPENAI_URL = "https://api.openai.com"
 OPENAI_MODEL = "gpt-4o-2024-08-06"  # a pinned snapshot: a moving alias could change its cutoff

@@ -26,7 +26,7 @@ from emporos.eventtrader.replay.report import (
     write_daily_csv,
     write_trades_csv,
 )
-from emporos.eventtrader.runner import VariantRunner, events_digest
+from emporos.eventtrader.runner import RunIncomplete, VariantRunner, events_digest
 from emporos.eventtrader.stages.prompts import (
     ARBITER_V1,
     BEAR_V1,
@@ -150,7 +150,7 @@ def research_run_llm_variant(
                 no_options,
             )  # fmt: skip
         )
-    except (EmporosError, ValueError, OSError, KeyError) as error:
+    except (EmporosError, ValueError, OSError, KeyError, RunIncomplete) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"run-llm-variant failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error

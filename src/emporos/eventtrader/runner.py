@@ -25,6 +25,7 @@ from emporos.core.clock import IST
 from emporos.eventtrader.events import ContextBuilder, MarketContext, MarketEvent
 from emporos.eventtrader.llm.guards import ScopedTallies
 from emporos.eventtrader.llm.pricing import PriceTable
+from emporos.eventtrader.pipeline import Verdict
 from emporos.eventtrader.posture import PostureSchedule
 from emporos.eventtrader.prefetch import DecisionPrefetcher, PrefetchedDecisions
 from emporos.eventtrader.replay.baseline import TriageOnlyBaseline
@@ -54,11 +55,22 @@ __all__ = [
     "DevWindow",
     "DevWindowViolation",
     "EngineFactory",
+    "MAX_STAGE_ERROR_SHARE",
+    "RunIncomplete",
     "VariantRunner",
     "events_digest",
 ]
 
 EngineFactory = Callable[[Decider, PostureSource | None, TokenMeter | None], ReplayEngine]
+
+
+MAX_STAGE_ERROR_SHARE = 0.02
+
+
+class RunIncomplete(RuntimeError):
+    """Too many decisions ended in a stage error (a transport failure, a refused key): a run that
+    looks like "the models declined" would be a lie. What was answered is in the journal, so a
+    re-run only asks for the rest."""
 
 
 class DevWindowViolation(ValueError):
@@ -153,6 +165,7 @@ class VariantRunner:
         items = [decision_input(e, self._context) for e in named]
         prefetch = DecisionPrefetcher(self._decider, self._scopes, self._prices, self._concurrency)
         decided = await prefetch.run(items)
+        self._require_answers(decided)
         hits, fresh = (
             (self._calls.hits - hits0, self._calls.fresh - fresh0) if self._calls else (0, 0)
         )
@@ -171,6 +184,19 @@ class VariantRunner:
             rule, hits, fresh,
         )  # fmt: skip
         return VariantOutcome(report, decided)
+
+    @staticmethod
+    def _require_answers(decided: PrefetchedDecisions) -> None:
+        answers = decided.decisions().values()
+        broken = sum(1 for d in answers if d.verdict is Verdict.STAGE_ERROR)
+        if answers and broken / len(answers) > MAX_STAGE_ERROR_SHARE:
+            first = next(
+                d.errors[0] for d in answers if d.verdict is Verdict.STAGE_ERROR and d.errors
+            )
+            raise RunIncomplete(
+                f"{broken} of {len(answers)} decisions ended in a stage error (more than "
+                f"{MAX_STAGE_ERROR_SHARE:.0%}); the first: {first[:200]}"
+            )
 
     def _with_posture_cost(self, result: RunResult) -> RunResult:
         if self._posture is None:
