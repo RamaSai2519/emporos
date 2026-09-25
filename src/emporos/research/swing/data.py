@@ -128,6 +128,10 @@ class SwingDataset:
     def series(self, instrument_id: str) -> SwingSeries:
         return self._series[instrument_id]
 
+    def subset(self, instrument_ids: Iterable[str]) -> SwingDataset:
+        """The same series for the named instruments only (the calendar follows what is left)."""
+        return SwingDataset([self._series[i] for i in instrument_ids])
+
     def calendar_index(self, day: date) -> int:
         return self._position[day]
 

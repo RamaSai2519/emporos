@@ -45,6 +45,7 @@ from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
 from emporos.cli.rotation_commands import research_screen_rotation
 from emporos.cli.screen_commands import research_screen
+from emporos.cli.stress_commands import research_stress_book
 from emporos.cli.swing_commands import research_screen_swing
 from emporos.cli.vault_commands import vault_app
 from emporos.core.config import Settings
@@ -86,6 +87,7 @@ research_app.command("build-adjustments")(research_build_adjustments)
 research_app.command("screen-swing")(research_screen_swing)
 research_app.command("screen-rotation")(research_screen_rotation)
 research_app.command("screen-book")(research_screen_book)
+research_app.command("stress-book")(research_stress_book)
 research_app.command("collect-index-notices")(research_collect_index_notices)
 research_app.command("build-index-changes")(research_build_index_changes)
 research_app.command("fetch-etf-bars")(research_fetch_etf_bars)

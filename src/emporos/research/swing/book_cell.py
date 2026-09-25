@@ -19,7 +19,7 @@ from emporos.research.swing.book_screen import SleeveWorld
 from emporos.research.swing.cells import BookRiskMomentumCell, CellEnvironment, EtfRotationCell
 from emporos.research.swing.costs import SwingCostModel
 from emporos.research.swing.regime import YearlyCalendar
-from emporos.research.swing.rules import SwingStrategy
+from emporos.research.swing.rules import Membership, SwingStrategy
 from emporos.research.swing.simulator import SwingRun
 from emporos.research.swing.weighted import WeightedBuyHold
 
@@ -38,6 +38,7 @@ class SleeveInputs:
     capital: Decimal
     start_day: date
     etf_exempt: frozenset[str]
+    stock_membership: Membership | None = None  # None: every D1 name, whenever it has bars
 
 
 class SleeveBookCell:
@@ -57,7 +58,9 @@ class SleeveBookCell:
         equity_cell, defensive_cell = BookRiskMomentumCell(), EtfRotationCell()
 
         def equity_benchmark(costs: SwingCostModel) -> SwingRun:
-            return EqualWeightBenchmark(stock.dataset, costs, start_day=inputs.start_day).run()
+            return EqualWeightBenchmark(
+                stock.dataset, costs, inputs.stock_membership, start_day=inputs.start_day
+            ).run()
 
         def defensive_benchmark(costs: SwingCostModel) -> SwingRun:
             return WeightedBuyHold(
@@ -70,6 +73,7 @@ class SleeveBookCell:
                 EQUITY, stock.dataset,
                 lambda: equity_cell.strategy(self.EQUITY_ARM, stock),
                 equity_cell.max_positions(self.EQUITY_ARM), Decimal(0), equity_benchmark,
+                membership=inputs.stock_membership,
             ),
             SleeveWorld(
                 DEFENSIVE, etf.dataset,

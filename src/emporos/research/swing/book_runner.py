@@ -50,6 +50,8 @@ class BookRunner:
         real_gaps: Sequence[GapVerdict],
         benchmark_label: str,
         max_positions: int,
+        kind: str = "cell",
+        neighbour_share_override: float | None = None,
     ) -> None:
         self._screen = screen
         self._cell = cell
@@ -62,6 +64,8 @@ class BookRunner:
         self._real_gaps = tuple(real_gaps)
         self._benchmark_label = benchmark_label
         self._max_positions = max_positions
+        self._kind = kind
+        self._neighbours = neighbour_share_override
 
     def run(self, grid: Mapping[str, Sequence[str]]) -> BookReport:
         points = arm_points(grid)
@@ -71,7 +75,7 @@ class BookRunner:
         }
         adjacent = adjacent_arms(grid)
         reports = [
-            self._record(p, a, neighbour_share(arm_label(p), positive, adjacent))
+            self._record(p, a, self._share(p, positive, adjacent))
             for p, a in zip(points, arms, strict=True)
         ]
         first, last = arms[0].outcome.arm.days[0], arms[0].outcome.arm.days[-1]
@@ -79,6 +83,17 @@ class BookRunner:
             CellReport(self._cell.slug, first, last, tuple(reports), (), self._benchmark_label),
             tuple(arms),
         )
+
+    def _share(
+        self,
+        point: Mapping[str, str],
+        positive: Mapping[str, bool],
+        adjacent: Mapping[str, Sequence[str]],
+    ) -> float | None:
+        """A stress look has no neighbours to run: it carries the share the Discovery cell had."""
+        if self._neighbours is not None:
+            return self._neighbours
+        return neighbour_share(arm_label(point), positive, adjacent)
 
     def _record(self, point: Mapping[str, str], arm: BookArm, share: float | None) -> ArmReport:
         outcome = arm.outcome
@@ -101,6 +116,7 @@ class BookRunner:
                 path,
                 len(held),
                 sum((e.pnl for e in held), Decimal(0)),
+                self._kind,
             )  # fmt: skip
         )
         note = (

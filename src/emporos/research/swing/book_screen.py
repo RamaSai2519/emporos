@@ -32,7 +32,7 @@ from emporos.research.swing.combine import (
 from emporos.research.swing.costs import ADVERSE, BENCHMARK, CostScenario, SwingCostModel
 from emporos.research.swing.data import SwingDataset
 from emporos.research.swing.metrics import SwingMetrics, monthly_returns
-from emporos.research.swing.rules import SwingStrategy
+from emporos.research.swing.rules import Membership, SwingStrategy
 from emporos.research.swing.screen import ArmOutcome
 from emporos.research.swing.simulator import SwingConfig, SwingRun, SwingSimulator
 
@@ -48,6 +48,7 @@ class SleeveWorld:
     cash_yield: Decimal
     benchmark: Callable[[SwingCostModel], SwingRun]  # the sleeve's own same-universe benchmark
     exempt: frozenset[str] = frozenset()  # instruments the single-name concentration check spares
+    membership: Membership | None = None  # a name is tradable only while a member (as-of stress)
 
 
 @dataclass(frozen=True)
@@ -121,7 +122,7 @@ class BookScreenRun:
                 self._capital * weight, sleeve.max_positions, cash_yield=sleeve.cash_yield,
                 start_day=self._start,
             )  # fmt: skip
-            run = SwingSimulator(sleeve.dataset, strategy, config, costs).run()
+            run = SwingSimulator(sleeve.dataset, strategy, config, costs, sleeve.membership).run()
             runs.append(SleeveRun(sleeve.name, run))
             strategies[sleeve.name] = strategy
         return runs, strategies

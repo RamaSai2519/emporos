@@ -8,7 +8,7 @@ share of net profit, and the sub-period from 2018-01-01 beside the declared wind
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import date
 from decimal import Decimal
 
@@ -53,9 +53,9 @@ def _corr(c: MonthlyCorrelation) -> list[str]:
 
 
 def format_book_report(
-    report: BookReport, etf_names: Mapping[str, str], sub_start: date
+    report: BookReport, etf_names: Mapping[str, str], sub_start: date, preface: Sequence[str] = ()
 ) -> list[str]:
-    lines = [LIMITS, "", CONCENTRATION_NOTE, ""]
+    lines = [*preface, *([""] if preface else []), LIMITS, "", CONCENTRATION_NOTE, ""]
     lines += format_report(report.cell)
     lines += [
         "",

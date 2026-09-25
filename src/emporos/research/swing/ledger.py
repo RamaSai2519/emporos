@@ -65,6 +65,7 @@ class SwingRecord:
     pnl_file: str
     real_gaps_held: int = 0
     real_gap_pnl: Decimal = Decimal(0)
+    kind: str = "cell"  # "robustness" for a stress look on a frozen candidate (still counted)
 
     def as_document(self) -> dict[str, object]:
         i, o = self.identity, self.outcome
@@ -73,6 +74,7 @@ class SwingRecord:
         return {
             "screen_id": i.screen_id,
             "track": "swing",
+            "kind": self.kind,
             "hypothesis": i.hypothesis,
             "parameters": dict(i.parameters),
             "universe": i.universe,
