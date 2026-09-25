@@ -21,14 +21,18 @@ from emporos.broker.angelone.factory import AngelOneStack, AngelOneStackFactory
 from emporos.broker.angelone.quote_source import AngelOneQuoteSource
 from emporos.broker.angelone.transport import HttpClientFactory
 from emporos.broker.backoff import JitterSource
-from emporos.cli.quote_recording import QuoteRecordingPlan
+from emporos.cli.option_master import ScripMasterContracts
+from emporos.cli.quote_recording import OPTIONS_PREFIX, QuoteRecordingPlan
 from emporos.core.clock import IST, Clock, Sleeper
 from emporos.core.config import Settings
 from emporos.persistence.object_store import S3ClientFactory, S3ObjectStore
-from emporos.quotes.day import DayOutcome, QuoteRecordingDay
+from emporos.quotes.day import Companion, DayOutcome, QuoteRecordingDay
+from emporos.quotes.option_recorder import ContractSource, OptionQuoteRecorder
+from emporos.quotes.option_row import ParquetOptionSink
 from emporos.quotes.recorder import QuoteRecorder
 from emporos.quotes.sink import ParquetQuoteSink
-from emporos.quotes.upload import DayUploader, RemoteFiles
+from emporos.quotes.underlyings import INDEX_RULES, index_and_stock_rules
+from emporos.quotes.upload import DayUpload, DayUploader, RemoteFiles
 from emporos.quotes.window import RecordingWindow
 
 __all__ = ["QuoteDaemon", "QuoteDaemonResult"]
@@ -57,9 +61,10 @@ class QuoteDaemon:
         jitter: JitterSource,
         http_factory: HttpClientFactory | None = None,
         store: RemoteFiles | None = None,
+        contracts: ContractSource | None = None,
     ) -> None:
         self._settings, self._plan = settings, plan
-        self._http_factory, self._store = http_factory, store
+        self._http_factory, self._store, self._contracts = http_factory, store, contracts
         self._clock, self._sleeper, self._jitter = clock, sleeper, jitter
 
     async def run(self) -> QuoteDaemonResult:
@@ -68,8 +73,9 @@ class QuoteDaemon:
             self._settings, self._clock, self._sleeper, self._jitter, self._http_factory
         )
         stack = factory.build()
+        source = AngelOneQuoteSource(AngelOneApi(stack.transport))
         recorder = QuoteRecorder(
-            AngelOneQuoteSource(AngelOneApi(stack.transport)),
+            source,
             ParquetQuoteSink(self._plan.directory, self._clock),
             self._plan.instrument_ids,
             self._plan.settings,
@@ -77,8 +83,9 @@ class QuoteDaemon:
             window,
         )
         day = QuoteRecordingDay(
-            recorder, self._clock, self._sleeper, window, self._plan.settings.interval
-        )
+            recorder, self._clock, self._sleeper, window, self._plan.settings.interval,
+            companion=self._option_recorder(source, window),
+        )  # fmt: skip
         task = asyncio.current_task()
         with self._stop_on_signal(task):
             try:
@@ -88,6 +95,24 @@ class QuoteDaemon:
             finally:
                 await self._close(stack)
         return await self._upload(outcome)
+
+    def _option_recorder(
+        self, source: AngelOneQuoteSource, window: RecordingWindow
+    ) -> Companion | None:
+        """The option quotes beside the stock quotes: the same session, the same quote calls."""
+        options = self._plan.options
+        if options is None:
+            return None
+        try:
+            rules = index_and_stock_rules(options.underlyings)
+        except (OSError, KeyError, TypeError, ValueError) as error:
+            _LOG.error("option underlyings not read (%s): recording the indexes only", error)
+            rules = INDEX_RULES
+        contracts = self._contracts or ScripMasterContracts([r.underlying for r in rules])
+        return OptionQuoteRecorder(
+            source, ParquetOptionSink(options.directory, self._clock), contracts, rules,
+            options.settings, self._clock, window,
+        )  # fmt: skip
 
     @contextlib.contextmanager
     def _stop_on_signal(self, task: asyncio.Task[object] | None) -> Iterator[None]:
@@ -119,6 +144,16 @@ class QuoteDaemon:
         today = self._clock.now().astimezone(IST).date()
         report = await DayUploader(store, Path(self._plan.directory)).upload(today)
         _LOG.info("quote upload: %s", report)
+        if self._plan.options is not None:
+            options = await DayUploader(
+                store, Path(self._plan.options.directory), OPTIONS_PREFIX
+            ).upload(today)
+            _LOG.info("option quote upload: %s", options)
+            report = DayUpload(
+                report.uploaded + options.uploaded,
+                report.skipped + options.skipped,
+                report.failed + options.failed,
+            )
         return QuoteDaemonResult(outcome, report.uploaded, report.failed)
 
     def _s3(self) -> S3ObjectStore | None:

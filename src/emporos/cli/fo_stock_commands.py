@@ -8,6 +8,7 @@ dataset (`fo_stock_v1`) and ledger. Development machine only; nothing goes to At
 from __future__ import annotations
 
 import asyncio
+import csv
 from datetime import date, datetime
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from emporos.research.fo_archive_layout import CutoverLayout
 from emporos.research.fo_archive_store import FoDayStore, FoLedger
 from emporos.research.fo_stock_archive import DATASET, StockArchiveReader
 from emporos.research.fo_stock_report import StockArchiveReporter
+from emporos.research.option_universe import top_option_underlyings
 
 DEFAULT_STOCK_DIR = research_dir() / DATASET
 DEFAULT_STOCK_LEDGER = Path("docs/research/profit/fo-stock-ledger.jsonl")
@@ -96,3 +98,38 @@ def research_report_fo_stock_archive(
     )
     for change in report.lot_changes:
         typer.echo(f"  {change.symbol}: {change.old} -> {change.new} from {change.first_seen}")
+
+
+_UNDERLYINGS_OUT = typer.Option(
+    Path("config/universe/quotes/option-underlyings.yaml"), help="The list the recorder reads."
+)
+_TOKENS = typer.Option(Path("config/universe/d1/tokens.csv"), help="The D1 symbol-to-token table.")
+
+
+def research_option_universe(
+    stock_dir: Path = _DIR,
+    out: Path = _UNDERLYINGS_OUT,
+    tokens: Path = _TOKENS,
+    count: int = typer.Option(20, min=1, help="How many names."),
+    sessions: int = typer.Option(1, min=1, help="Most recent sessions to add up."),
+) -> None:
+    """The stock options the quote recorder follows: the most traded, fixed for a month."""
+    with tokens.open(encoding="utf-8", newline="") as handle:
+        spot_ids = {r["Symbol"]: f"NSE:{r['Token']}" for r in csv.DictReader(handle)}
+    days, chosen = top_option_underlyings(FoDayStore(stock_dir), spot_ids, count, sessions)
+    if not chosen:
+        typer.secho("no option rows found in the stock F&O dataset", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+    lines = [
+        "# The stock options whose L1 quotes the recorder follows (EM-246, plan 7a).",
+        f"# Most traded (lots) over {', '.join(d.isoformat() for d in days)} in fo_stock_v1, D1",
+        "# symbol-table names only. Fixed for a month: rebuild with `research option-universe`.",
+        f"# Built {SystemClock().now().date().isoformat()}.",
+        "underlyings:",
+    ]
+    lines += [
+        f'  - {{symbol: {c.symbol}, spot_id: "{c.spot_id}"}}  # {c.lots} lots' for c in chosen
+    ]
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    typer.echo(f"{len(chosen)} underlyings written to {out}")

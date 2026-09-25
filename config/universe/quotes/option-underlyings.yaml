@@ -1,0 +1,25 @@
+# The stock options whose L1 quotes the recorder follows (EM-246, plan 7a).
+# Most traded (lots) over 2026-03-18 in fo_stock_v1, names in
+# the D1 symbol table only. Fixed for a month: rebuild with `research option-universe`.
+# Built 2026-09-25.
+underlyings:
+  - {symbol: TCS, spot_id: "NSE:11536"}  # 273344 lots
+  - {symbol: HDFCBANK, spot_id: "NSE:1333"}  # 267727 lots
+  - {symbol: INFY, spot_id: "NSE:1594"}  # 266035 lots
+  - {symbol: RELIANCE, spot_id: "NSE:2885"}  # 215702 lots
+  - {symbol: WAAREEENER, spot_id: "NSE:25907"}  # 201346 lots
+  - {symbol: COFORGE, spot_id: "NSE:11543"}  # 171344 lots
+  - {symbol: LT, spot_id: "NSE:11483"}  # 170611 lots
+  - {symbol: SBIN, spot_id: "NSE:3045"}  # 155000 lots
+  - {symbol: DIXON, spot_id: "NSE:21690"}  # 153449 lots
+  - {symbol: M&M, spot_id: "NSE:2031"}  # 136110 lots
+  - {symbol: MARUTI, spot_id: "NSE:10999"}  # 118293 lots
+  - {symbol: TMPV, spot_id: "NSE:3456"}  # 113834 lots
+  - {symbol: PFC, spot_id: "NSE:14299"}  # 113322 lots
+  - {symbol: BAJFINANCE, spot_id: "NSE:317"}  # 109516 lots
+  - {symbol: ETERNAL, spot_id: "NSE:5097"}  # 108591 lots
+  - {symbol: ICICIBANK, spot_id: "NSE:4963"}  # 108318 lots
+  - {symbol: INDIGO, spot_id: "NSE:11195"}  # 104958 lots
+  - {symbol: BHARTIARTL, spot_id: "NSE:10604"}  # 89591 lots
+  - {symbol: MCX, spot_id: "NSE:31181"}  # 89528 lots
+  - {symbol: COALINDIA, spot_id: "NSE:20374"}  # 88552 lots

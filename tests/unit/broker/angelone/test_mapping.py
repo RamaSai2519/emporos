@@ -313,6 +313,13 @@ class TestQuoteDepth:
             body["depth"] = {"buy": buy, "sell": sell}
         return QuoteEntry.model_validate(body)
 
+    def test_open_interest_is_carried_when_sent_and_none_when_not(self) -> None:
+        with_oi = self._entry([], None)
+        assert AccountMapper.quote(with_oi).open_interest is None
+        body = with_oi.model_dump(by_alias=True)
+        body["opnInterest"] = 5400
+        assert AccountMapper.quote(QuoteEntry.model_validate(body)).open_interest == 5400
+
     def test_the_best_bid_and_ask_are_the_first_non_empty_levels(self) -> None:
         empty = {"price": "0", "quantity": 0}
         quote = AccountMapper.quote(

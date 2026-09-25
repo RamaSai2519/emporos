@@ -20,7 +20,12 @@ from emporos.cli.live_paper_worker import DEFAULT_PAPER_CASH, LivePaperWorker, P
 from emporos.cli.live_venue import AngelOneLiveVenueOpener
 from emporos.cli.live_worker import LiveWorker, LiveWorkerOptions
 from emporos.cli.quote_daemon import QuoteDaemon
-from emporos.cli.quote_recording import DEFAULT_QUOTES_DIR, d1_plan
+from emporos.cli.quote_recording import (
+    DEFAULT_OPTIONS_DIR,
+    DEFAULT_QUOTES_DIR,
+    OptionRecordingPlan,
+    d1_plan,
+)
 from emporos.cli.strategy_composition import build_registry
 from emporos.cli.worker_composition import WorkerTuning
 from emporos.core.clock import AsyncioSleeper, SystemClock
@@ -69,6 +74,12 @@ _RECORD_QUOTES = typer.Option(
     help="Also record L1 quotes (bid, ask, sizes, last) for the D1 names to Parquet, read-only.",
 )
 _QUOTES_DIR = typer.Option(DEFAULT_QUOTES_DIR, help="Where recorded quotes go (Parquet).")
+_OPTIONS_DIR = typer.Option(DEFAULT_OPTIONS_DIR, help="Where recorded option quotes go.")
+_RECORD_OPTIONS = typer.Option(
+    True,
+    "--record-options/--no-record-options",
+    help="Also record near-the-money NIFTY, BANKNIFTY and top stock option quotes (own files).",
+)
 _QUOTE_INTERVAL = typer.Option(60, min=30, help="Seconds between quote polls (at least 30).")
 _LIVE_START = typer.Option(
     None, "--start", "-s", help="Strategy to take live (repeatable); every one must clear the gate."
@@ -215,13 +226,17 @@ def worker_live(
 def worker_record_quotes(
     quotes_dir: Path = _QUOTES_DIR,
     quote_interval: int = _QUOTE_INTERVAL,
+    record_options: bool = _RECORD_OPTIONS,
+    options_dir: Path = _OPTIONS_DIR,
 ) -> None:
-    """Record L1 quotes for the D1 names for one day, and do nothing else. No strategy, no risk
+    """Record L1 quotes for the D1 names (and near-the-money option quotes) for one day, and do
+    nothing else. No strategy, no risk
     engine, no execution, no orders, no Mongo, never live: it logs in to Angel One for the quote
     endpoint only. It waits for 09:15, writes Parquet until 15:30, then uploads the day's files to
     S3_BUCKET (when set). A weekend or an exchange holiday writes nothing and exits 0.
     """
-    plan = d1_plan(quotes_dir, quote_interval)
+    options = OptionRecordingPlan(options_dir) if record_options else None
+    plan = d1_plan(quotes_dir, quote_interval, options=options)
     daemon = QuoteDaemon(Settings.default(), plan, SystemClock(), AsyncioSleeper(), RandomJitter())
     try:
         result = asyncio.run(daemon.run())

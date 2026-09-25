@@ -149,6 +149,37 @@ sudo systemctl disable --now emporos-quotes && sudo rm /etc/systemd/system/empor
 Cost: the instance now runs about 7 hours on each weekday (about $0.02 an hour, roughly $3 a month)
 instead of being stopped, including exchange holidays.
 
+## Option quotes (EM-246, plan 7a)
+
+`worker record-quotes` also records L1 quotes of near-the-money options, by default (`--no-record-options`
+turns it off), into their OWN files: `data/quotes-options/date=YYYY-MM-DD/part-*.parquet`, uploaded to
+`s3://<bucket>/quotes-options/date=YYYY-MM-DD/`. The stock-quote files and their readers are unchanged.
+
+| what | rule |
+|---|---|
+| NIFTY and BANKNIFTY | the nearest 2 expiries, the at-the-money strike and 5 listed strikes either side, calls and puts (44 contracts each) |
+| 20 stock options | the nearest expiry, ATM and 2 strikes either side, calls and puts (10 contracts each); the names are the 20 most traded in `fo_stock_v1` and are FIXED in `config/universe/quotes/option-underlyings.yaml` |
+
+Columns: `instrument_id` (`NFO:<token>`), `underlying`, `expiry`, `strike`, `right` (CE/PE), `lot_size`,
+`spot` (the underlying price the strike set was built from), `received_at`, `exchange_ts`, `ltp`, `bid`,
+`ask`, `bid_qty`, `ask_qty`, `volume`, `open_interest`. About 290 contracts a minute, roughly 6 extra
+quote requests a minute beside the 5 for the stock names (limit: 10/s, 500/min, 5,000/h).
+
+How it behaves: tokens come from the public scrip master (downloaded once a day, only NFO option rows of
+these underlyings kept); the strike set is rebuilt from a fresh spot every 15 minutes; the options are
+polled only AFTER the stock quotes in the same minute and only while the stock recorder is not backed
+off, so the D1 quotes always come first. On a rate-limit reply the options poll less often (the interval
+doubles up to 5 minutes and halves again after 30 clean polls), independent of the stock recorder's
+own back-off. A scrip master that will not load, or a spot that fails, keeps the previous set and is
+retried; none of them raises. Quotes only: the process still reaches Angel One at login, quotes and
+logout (a test pins it). BANKNIFTY weekly options no longer exist (monthly only), so its "nearest 2
+expiries" are two monthlies.
+
+Refresh the stock list monthly on the dev machine, then commit it:
+`python -m emporos.cli research option-universe` (options `--count`, `--sessions`).
+
+**IAM: no change needed** (the role has `s3:PutObject`/`GetObject`/`ListBucket` on the whole bucket).
+
 ## Turn it on (with a paper worker)
 
 The flag exists on both worker commands: `emporos worker run --record-quotes` (paper) and

@@ -20,7 +20,7 @@ import pyarrow.parquet as pq
 from emporos.core.clock import IST, Clock
 from emporos.quotes.row import QuoteRow
 
-__all__ = ["ParquetQuoteSink", "QuoteSink", "read_day"]
+__all__ = ["ParquetQuoteSink", "PartWriter", "QuoteSink", "read_day"]
 
 _PRICE = pa.decimal128(14, 2)
 SCHEMA = pa.schema(
@@ -68,12 +68,28 @@ def _table(rows: Sequence[QuoteRow]) -> pa.Table:
     )
 
 
+class PartWriter:
+    """Writes one table as a NEW part file under its IST day's directory (temporary name, then
+    renamed): shared by every quote sink, so a file is never rewritten."""
+
+    def __init__(self, root: Path, clock: Clock) -> None:
+        self._root, self._clock, self._files = root, clock, 0
+
+    def write(self, day: date, table: pa.Table) -> None:
+        directory = self._root / f"date={day.isoformat()}"
+        directory.mkdir(parents=True, exist_ok=True)
+        self._files += 1
+        stamp = self._clock.now().strftime("%H%M%S%f")
+        final = directory / f"part-{stamp}-{self._files:05d}.parquet"
+        temporary = final.with_suffix(".tmp")
+        pq.write_table(table, temporary, compression="zstd")
+        os.replace(temporary, final)
+
+
 class ParquetQuoteSink:
     def __init__(self, root: Path, clock: Clock) -> None:
-        self._root = root
-        self._clock = clock
+        self._writer = PartWriter(root, clock)
         self._buffer: list[QuoteRow] = []
-        self._files = 0
 
     def append(self, rows: Sequence[QuoteRow]) -> None:
         self._buffer.extend(rows)
@@ -92,14 +108,7 @@ class ParquetQuoteSink:
         return written
 
     def _write(self, day: date, rows: list[QuoteRow]) -> None:
-        directory = self._root / f"date={day.isoformat()}"
-        directory.mkdir(parents=True, exist_ok=True)
-        self._files += 1
-        stamp = self._clock.now().strftime("%H%M%S%f")
-        final = directory / f"part-{stamp}-{self._files:05d}.parquet"
-        temporary = final.with_suffix(".tmp")
-        pq.write_table(_table(rows), temporary, compression="zstd")
-        os.replace(temporary, final)
+        self._writer.write(day, _table(rows))
 
 
 def read_day(root: Path, day: date) -> pa.Table:

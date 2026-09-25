@@ -94,6 +94,7 @@ class QuoteEntry(_Response):
     upper_circuit: Decimal = Field(alias="upperCircuit")
     exch_trade_time: ExchangeTime = Field(alias="exchTradeTime")
     depth: QuoteDepth | None = None
+    open_interest: int | None = Field(default=None, alias="opnInterest")
 
 
 class QuoteResponse(_Response):

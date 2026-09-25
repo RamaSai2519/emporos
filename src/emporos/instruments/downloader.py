@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 import httpx
 
@@ -19,6 +19,10 @@ from emporos.instruments.errors import MasterDownloadError, MasterFormatError
 MASTER_URL = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json"
 
 RawRow = Mapping[str, Any]
+
+
+class SegmentFilter(Protocol):
+    def accepts(self, row: RawRow) -> bool: ...
 
 
 class CashSegmentFilter:
@@ -42,7 +46,7 @@ class InstrumentMasterDownloader:
         self,
         client: httpx.AsyncClient,
         url: str = MASTER_URL,
-        segment_filter: CashSegmentFilter | None = None,
+        segment_filter: SegmentFilter | None = None,
     ) -> None:
         self._client = client
         self._url = url

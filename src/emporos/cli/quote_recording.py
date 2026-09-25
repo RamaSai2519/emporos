@@ -13,15 +13,31 @@ from pathlib import Path
 
 from emporos.broker.paper.market import MarketDataOnly, MarketDataSource
 from emporos.core.clock import Clock
+from emporos.quotes.option_recorder import OptionSettings
 from emporos.quotes.priority import OrderPriority
 from emporos.quotes.recorder import QuoteRecorder, RecorderSettings
 from emporos.quotes.sink import ParquetQuoteSink
+from emporos.quotes.underlyings import DEFAULT_UNDERLYINGS
 from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Manifest
 from emporos.session.jobs import Job
 
-__all__ = ["DEFAULT_QUOTES_DIR", "QuoteRecordingPlan", "d1_plan"]
+__all__ = [
+    "DEFAULT_OPTIONS_DIR", "DEFAULT_QUOTES_DIR", "OPTIONS_PREFIX", "OptionRecordingPlan",
+    "QuoteRecordingPlan", "d1_plan",
+]  # fmt: skip
 
 DEFAULT_QUOTES_DIR = Path("data/quotes")
+DEFAULT_OPTIONS_DIR = Path("data/quotes-options")
+OPTIONS_PREFIX = "quotes-options"  # the S3 prefix of the option quotes
+
+
+@dataclass(frozen=True)
+class OptionRecordingPlan:
+    """NIFTY and BANKNIFTY options and the fixed list of stock-option underlyings."""
+
+    directory: Path = DEFAULT_OPTIONS_DIR
+    underlyings: Path = DEFAULT_UNDERLYINGS
+    settings: OptionSettings = field(default_factory=OptionSettings)
 
 
 @dataclass(frozen=True)
@@ -31,6 +47,7 @@ class QuoteRecordingPlan:
     instrument_ids: tuple[str, ...]
     directory: Path
     settings: RecorderSettings = field(default_factory=RecorderSettings)
+    options: OptionRecordingPlan | None = None  # the option quotes beside them (EM-246)
 
     def job(self, source: MarketDataSource, priority: OrderPriority, clock: Clock) -> Job:
         """The scheduler job. `source` is narrowed to the market-data calls before the recorder
@@ -50,6 +67,7 @@ def d1_plan(
     directory: Path = DEFAULT_QUOTES_DIR,
     interval_seconds: int = 60,
     manifest: Path = DEFAULT_MANIFEST,
+    options: OptionRecordingPlan | None = None,
 ) -> QuoteRecordingPlan:
     """The D1 universe: the included names AND the held-out ones. Recording is not reading: a
     forward quote file for a held-out name is new data no research has seen, and what research may
@@ -57,5 +75,5 @@ def d1_plan(
     loaded = D1Manifest.load(manifest)
     ids = tuple(dict.fromkeys((*loaded.included, *loaded.holdout)))
     return QuoteRecordingPlan(
-        ids, directory, RecorderSettings(interval=timedelta(seconds=interval_seconds))
+        ids, directory, RecorderSettings(interval=timedelta(seconds=interval_seconds)), options
     )

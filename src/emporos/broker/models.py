@@ -103,6 +103,8 @@ class Quote:
     # The quantities resting at the best bid and ask (EM-217): None when that side is empty.
     bid_qty: int | None = None
     ask_qty: int | None = None
+    # Open interest of a derivative contract (EM-246): None for cash, or when not sent.
+    open_interest: int | None = None
 
     def __post_init__(self) -> None:
         _require_utc("exchange_ts", self.exchange_ts)

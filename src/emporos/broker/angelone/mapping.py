@@ -301,6 +301,7 @@ class AccountMapper:
             ask=_best(entry.depth.sell if entry.depth else ()),
             bid_qty=_best_quantity(entry.depth.buy if entry.depth else ()),
             ask_qty=_best_quantity(entry.depth.sell if entry.depth else ()),
+            open_interest=entry.open_interest,
         )
 
 

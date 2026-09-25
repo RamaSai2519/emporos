@@ -186,3 +186,52 @@ class TestUpload:
         report = await DayUploader(Store(), tmp_path).upload(FRIDAY.date())
 
         assert (report.uploaded, report.skipped, report.failed) == (0, 0, 0)
+
+
+class Companion:
+    def __init__(self) -> None:
+        self.polls, self.closed = 0, 0
+
+    async def poll(self) -> None:
+        self.polls += 1
+
+    def close(self) -> int:
+        self.closed += 1
+        return 0
+
+
+class RateLimited(Source):
+    async def get_quote(self, instrument_ids: Sequence[str]) -> list[Quote]:
+        from emporos.broker.errors import BrokerRateLimitedError
+
+        self.calls += 1
+        raise BrokerRateLimitedError("slow down")
+
+
+class TestACompanionRecorder:
+    async def test_it_polls_after_the_stock_quotes_each_minute_and_is_closed_with_the_day(
+        self,
+    ) -> None:
+        clock = FixedClock(FRIDAY.replace(hour=8, minute=41))
+        window, companion = RecordingWindow(), Companion()
+        recorder = QuoteRecorder(Source(clock), Sink(), IDS, RecorderSettings(), clock, window)
+        day = QuoteRecordingDay(
+            recorder, clock, AdvancingSleeper(clock), window, companion=companion
+        )
+
+        assert await day.run() is DayOutcome.RECORDED
+        assert companion.polls == 375 and companion.closed == 1
+
+    async def test_a_rate_limited_stock_recorder_silences_it_the_stock_quotes_come_first(
+        self,
+    ) -> None:
+        clock = FixedClock(FRIDAY.replace(hour=10))
+        window, companion = RecordingWindow(), Companion()
+        recorder = QuoteRecorder(RateLimited(clock), Sink(), IDS, RecorderSettings(), clock, window)
+        day = QuoteRecordingDay(
+            recorder, clock, AdvancingSleeper(clock), window, companion=companion
+        )
+
+        await day.run()
+
+        assert companion.polls == 0 and companion.closed == 1
