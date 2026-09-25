@@ -19,7 +19,7 @@ from emporos.eventtrader.stages.prompts import (
     BEAR_V1,
     BULL_V1,
     JUDGE_V1,
-    POSTURE_V1,
+    POSTURE_V2,
     TAPE_V1,
     TRIAGE_V1,
 )
@@ -168,10 +168,10 @@ class TestRequestsCarryNoCalendarDate:
         assert a.requests[0].request_hash == b.requests[0].request_hash
 
     def test_every_prompt_is_versioned_and_hashed_and_none_names_a_calendar_date(self) -> None:
-        prompts = [TRIAGE_V1, BULL_V1, BEAR_V1, TAPE_V1, JUDGE_V1, ARBITER_V1, POSTURE_V1]
+        prompts = [TRIAGE_V1, BULL_V1, BEAR_V1, TAPE_V1, JUDGE_V1, ARBITER_V1, POSTURE_V2]
 
         assert len({p.content_hash for p in prompts}) == len(prompts)
-        assert all(p.version.endswith("-v1") and len(p.content_hash) == 64 for p in prompts)
+        assert all(p.version.rsplit("-v", 1)[1].isdigit() and len(p.content_hash) == 64 for p in prompts)
         assert not [p.version for p in prompts if "20" in p.system_text.replace("0-20", "")]
 
 

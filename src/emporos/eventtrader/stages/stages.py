@@ -30,7 +30,7 @@ from emporos.eventtrader.stages.prompts import (
     BEAR_V1,
     BULL_V1,
     JUDGE_V1,
-    POSTURE_V1,
+    POSTURE_V2,
     TAPE_V1,
     TRIAGE_V1,
 )
@@ -227,7 +227,7 @@ class PostureInput:
 
 
 class PostureStage(JsonStage[PostureInput, PostureResult]):
-    def __init__(self, client: LlmClient, model: str, prompt: JevPrompt = POSTURE_V1) -> None:
+    def __init__(self, client: LlmClient, model: str, prompt: JevPrompt = POSTURE_V2) -> None:
         super().__init__("posture", client, model, prompt, 150)
 
     def render(self, item: PostureInput) -> Mapping[str, Any]:

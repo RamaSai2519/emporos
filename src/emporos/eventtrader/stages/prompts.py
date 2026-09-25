@@ -13,7 +13,7 @@ __all__ = [
     "BEAR_V1",
     "BULL_V1",
     "JUDGE_V1",
-    "POSTURE_V1",
+    "POSTURE_V2",
     "TAPE_V1",
     "TRIAGE_V1",
 ]
@@ -89,10 +89,11 @@ ARBITER_V1 = JevPrompt(
     + ' Fields: "approve": true|false; "confidence": integer 0-100; "reason": short text.',
 )
 
-POSTURE_V1 = JevPrompt(
-    "posture-v1",
-    "You set the trader's posture for the day before the market opens, from the previous "
-    "evening's headlines, the index and volatility state and any global cues given. "
+POSTURE_V2 = JevPrompt(
+    "posture-v2",
+    "You set the trader's posture for the day before the market opens, from numbers only: the "
+    "index and volatility state, market breadth, the previous session's global closes and the "
+    "count of material company filings the day before. "
     '"hold" means take no new positions today; "normal" is the usual size; "aggressive" is the '
     "largest size allowed. Choose hold when the picture is unusually uncertain or hostile."
     + _RULES
