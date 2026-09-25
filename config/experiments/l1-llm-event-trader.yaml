@@ -59,18 +59,27 @@
 #     stop and target counts as the stop; a bar that opens beyond the stop exits at its open.
 #     Intraday prices are the scan's own reference prices and the costs are the program's intraday
 #     schedule: BENCHMARK and ADVERSE (config/robustness/benchmark.yaml), unchanged.
-#   Swing cash: daily bars. Entry at the close of the session of the decision if the decision is
-#     before 15:00 IST, else at the next session's close; exits on the first daily bar whose low
-#     (high, for a short) reaches the stop (at the stop, or at the open if it opened beyond it), whose
-#     high reaches the target (at the target), or at the close of the session `hold_days` after entry.
-#     Delivery costs: SwingCostModel BENCHMARK (10 bps a side) and ADVERSE (25 bps, fees x 1.5).
-#   Options (swing horizon only, bhavcopy settle/close): a call or put on the name, monthly expiry with
-#     at least 15 calendar days left, the listed strike nearest the underlying's close, entry at the
-#     day's close price of the contract as for swing cash, exit at the close of the first session on
-#     which the UNDERLYING reaches the judge's stop or target, or after `hold_days`, or the session
-#     before expiry. Costs: the Track B F&O schedule, BENCHMARK and ADVERSE slippage. A contract with
-#     no traded price on the entry or exit day, or a premium above the budget, is REFUSED and counted
-#     ("no contract"); options on the intraday horizon are not tested here (paper only).
+#   Swing cash (amended by the head, 2026-09-25): the ENTRY goes through the same intraday fill path
+#     as an intraday trade: the first 5-minute bar starting at or after the decision, a marketable
+#     limit 5 bps through the last completed bar's close, strictly through, 10% of the bar's volume,
+#     that bar only. An event after 15:25 IST or outside market hours enters on the next session's
+#     first bar starting at or after 09:20, so the opening print is avoided (the news prices in over
+#     the open and the first hour, which is what this measures). The entry day's stop and target are
+#     checked on its remaining 5-minute bars; from the next session on, on DAILY bars: the first bar
+#     that touches the stop (a bar that touches both counts as the stop; one that opens beyond the
+#     stop exits at its open) or the target, else the close of the session `hold_days` after entry.
+#     Delivery costs (unchanged): SwingCostModel BENCHMARK (10 bps a side) and ADVERSE (25 bps, fees
+#     x 1.5).
+#   Options (swing horizon only, bhavcopy settle/close; amended by the head): a call or put on the name,
+#     monthly expiry with at least 15 calendar days left. Strike: walk from the at-the-money strike
+#     (the listed strike nearest the underlying's close) outward in the trade's direction, at most 2
+#     strikes out of the money, and take the FIRST contract with a traded close whose lot premium is at
+#     most Rs 5,000 x the posture scale. If none qualifies the proposal is refused and counted BY
+#     REASON (no chain, no traded contract, premium over budget, no expiry with 15 days left).
+#     Entry at the day's close price of the contract, as options have no intraday prices here; exit at
+#     the close of the first session on which the UNDERLYING reaches the judge's stop or target, or
+#     after `hold_days`, or the session before expiry. Costs: the Track B F&O schedule, BENCHMARK and
+#     ADVERSE slippage. Options on the intraday horizon are not tested here (paper only).
 #   TOKEN COST is charged to the P&L: tokens in and out of every call, at the declared prices below,
 #     converted at the declared rate, also for calls answered from the journal (a replay must carry
 #     what the calls cost when they were made).
@@ -92,6 +101,13 @@
 #   THE BEST OF v1..v5 is fixed now: the highest Dev net expectancy per trade at ADVERSE costs after
 #   token cost among the variants with at least 30 trades. If none has net expectancy > 0 at adverse
 #   costs after token cost, Track L is closed at Dev: no arbiter run, no Test run.
+#
+# DIAGNOSTIC, never a gate (added by the head): the plain baseline "every triage-material event, traded
+# in the triage direction (up = long, down = short; a swing short becomes the put), sized by the same
+# risk engine, with the same fills and costs". It tells us whether the panel and the judge add anything
+# over triage alone. No model chooses its stop or target: for each horizon the baseline uses the
+# MEDIAN stop % and target % of that variant's own judge-approved trades, one number per horizon, taken
+# after the variant's run and reported with it.
 #
 # THE COIN-FLIP CONTROL (all variants that trade, reported for the frozen one): the same events'
 # approved trades, the same instruments, sizes from the same stops, the same risk engine and costs, with
