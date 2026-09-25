@@ -1,0 +1,60 @@
+# Declared BEFORE any data run (PROFIT_PLAN.md §2.1). EM-229, Track A cell A2. Designed by the head
+# session from the literature and from UNSIGNED facts only: no multi-day return after a results
+# reaction has been seen on our data. (The intraday results-day cells EM-213 looked only inside the
+# reaction session; this cell starts after it.)
+#
+# Rules (daily bars, decisions at a session's close, fills at the next session's raw open, A-F5):
+# * Events: the D5 results ledger (docs/research/edge-search/events), first-public filing per season,
+#   reaction session decided from the exchange timestamp exactly as scans/event_days.reaction_days
+#   (before 09:15: that session; after 15:30 or a non-session day: the next; in-session: skipped and
+#   counted). Nothing about a result is used except its public time.
+# * Signal at the reaction session's close: reaction return = close(reaction) / close(previous
+#   session) - 1 on adjusted closes, and reaction-day volume >= 2x the name's mean volume over the 20
+#   sessions before it. Qualifies if the reaction return >= R. Long only (delivery cannot short).
+# * Entry at the next open if a slot is free and the regime filter holds (NIFTY 50 close > its
+#   200-session simple average at the decision close). If more names qualify on one close than there
+#   are free slots, the largest reaction returns are taken (a rank from signals, before fills); the
+#   rest are skipped, not queued.
+# * Exit at the close of the H-th session after entry (fill at the next open), or earlier on the
+#   PROFIT_PLAN §3.5 stop (a loss of 2% of capital on the position, checked at every close). Holdings
+#   are NOT sold when the regime filter turns off; it only blocks new entries.
+# * Equal rupee slots, slot = equity / N at the fill, whole shares. Aggressive posture =
+#   concentration, never leverage: N = 3 instead of 5.
+# 2 (R 5%, 8%) x 2 (H 20, 40 sessions) x 2 (max_positions 5, 3) = 8 arms.
+#
+# Data: Discovery only. Universe and survivorship caveat as A1 (AllMembers until A-F3; judged
+# against the same-universe equal-weight buy-and-hold). Known limits, declared: the results ledger
+# misses about a third of 2022 and has no events for two names (events/README.md), so a missing
+# event is a missed trade; reaction sessions used per year must be reported. Capital Rs 1,00,000,
+# delivery fee schedule angelone-delivery-2026-09-25 (verified: false), PROFIT_PLAN §3.1 slippage.
+# No screen runs before the adjustment ledger (EM-221) is filled (PROFIT_PLAN §2.6).
+family: strategy
+slug: a2-post-earnings-drift
+hypothesis: >-
+  After a strong positive price reaction to a quarterly results filing, on high volume, liquid
+  Indian large and mid caps keep drifting up over the following 20-40 sessions, and holding the
+  strongest 3-5 such names earns a higher net Sharpe than the same-universe equal-weight
+  buy-and-hold, after delivery costs.
+economic_rationale: >-
+  Post-earnings announcement drift is one of the oldest documented anomalies (Ball and Brown; Bernard
+  and Thomas), and has been reported for Indian stocks. Analysts revise estimates slowly after a
+  surprise, mutual funds add to positions over weeks as mandates and committees allow, and many
+  investors anchor on the pre-result price. A large reaction on heavy volume marks a surprise the
+  market has only begun to price. Who is on the other side: holders who sell into the jump to lock
+  in gains, and short-term traders fading the move.
+falsification: >-
+  PROFIT_PLAN §3.2, all conditions on Discovery: net CAGR >= 18% at benchmark costs and > 0 at
+  adverse; net Sharpe above the same-universe equal-weight buy-and-hold (same costs, same days);
+  >= 60% of months positive; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; >= 100
+  round trips; positive in >= 60% of calendar years; no name > 25% of net; >= 50% of adjacent arms
+  net positive at benchmark. The 3-name arms must also pass §3.4. If no arm passes, A2 is
+  SCREEN_REJECT; a child may only come from Discovery output and the head's call.
+parameter_grid:
+  reaction_min_pct: ["5", "8"]
+  hold_sessions: ["20", "40"]
+  max_positions: ["5", "3"]
+feature_versions:
+  daily_bars_d1: 1
+  adjustment_ledger: 1
+  results_reaction_session: 1
+declared_at: 2026-09-25T06:35:00+05:30
