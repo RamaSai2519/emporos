@@ -16,6 +16,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from emporos.core.errors import ConfigurationError
+from emporos.research.option_screen.breakdown import CostBreakdown
 from emporos.research.option_screen.run import ArmResult
 from emporos.research.swing.ledger import DEFAULT_PNL_DIR, DEFAULT_PROFIT_SCREENS
 
@@ -78,6 +79,7 @@ class OptionRecord:
             "net_pnl": s.net_pnl,
             "neighbour_share": self.result.neighbours,
             "skipped": dict(o.run.skipped),
+            "breakdown": self._breakdown(),
             "p_drawdown_30": r.p_drawdown_30,
             "p_year_negative": r.p_year_negative,
             "bootstrap_seed": r.seed,
@@ -86,6 +88,26 @@ class OptionRecord:
             "pnl_file": self.pnl_file,
             "recorded_at": self.recorded_at.isoformat(),
         }
+
+    def _breakdown(self) -> dict[str, dict[str, object]]:
+        """Per spread, in rupees, at zero slippage, benchmark and adverse costs."""
+        o = self.result.outcome
+        out: dict[str, dict[str, object]] = {}
+        for name, run in (
+            ("zero_slippage", o.frictionless_run),
+            ("benchmark", o.run),
+            ("adverse", o.adverse_run),
+        ):
+            if run is None:
+                continue
+            b = CostBreakdown.of(run)
+            out[name] = {
+                "trips": b.trips, "credit": b.credit, "gross": b.gross, "charges": b.charges,
+                "net": b.net, "win_rate": b.win_rate, "average_win": b.average_win,
+                "average_loss": b.average_loss, "worst_spread": b.worst_spread,
+                "max_loss": b.max_loss, "exits": b.exits,
+            }  # fmt: skip
+        return out
 
 
 def write_daily_pnl(directory: Path, screen_id: str, result: ArmResult) -> str:

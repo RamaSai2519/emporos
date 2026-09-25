@@ -32,7 +32,7 @@ from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_chain_source import BhavcopyChainSource
 from emporos.research.fo_contract_specs import read_specs
 from emporos.research.index_daily import daily_closes
-from emporos.research.option_screen.b1 import B1Arms, B1Inputs
+from emporos.research.option_screen.b1 import DESIGNS, B1Arms, B1Inputs
 from emporos.research.option_screen.events import load_blackout_days
 from emporos.research.option_screen.ledger import (
     JsonlOptionLedger,
@@ -40,7 +40,12 @@ from emporos.research.option_screen.ledger import (
     OptionRecord,
     write_daily_pnl,
 )
-from emporos.research.option_screen.report import arm_lines, table
+from emporos.research.option_screen.report import (
+    arm_lines,
+    breakdown_lines,
+    closure_lines,
+    table,
+)
 from emporos.research.option_screen.run import ArmResult, B1Screen
 from emporos.research.partition import DISCOVERY
 from emporos.research.swing.ledger import DEFAULT_PNL_DIR, DEFAULT_PROFIT_SCREENS
@@ -131,8 +136,9 @@ class OptionScreenRun:
         self._clock = clock
 
     def run(self, slug: str) -> list[str]:
-        if slug != B1_SLUG:
-            raise ValueError(f"no Track B recipe for {slug!r} (known: {B1_SLUG})")
+        if slug not in {d.slug for d in DESIGNS}:
+            known = ", ".join(d.slug for d in DESIGNS)
+            raise ValueError(f"no Track B recipe for {slug!r} (known: {known})")
         declaration = self._declarations.load(slug)
         if declaration.position_value is None:
             raise ValueError("the declaration must state the capital as position_value")
@@ -148,7 +154,8 @@ class OptionScreenRun:
             f"the whole history)",
         ]
         details = [line for r in results for line in arm_lines(r)]
-        return [*header, *table(results), "", *details]
+        costs = [line for r in results for line in breakdown_lines(r)]
+        return [*header, *table(results), "", *details, "", *costs, "", *closure_lines(results)]
 
     def _record(self, slug: str, result: ArmResult, capital: Decimal) -> None:
         identity = OptionIdentity(

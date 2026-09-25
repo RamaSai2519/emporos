@@ -106,7 +106,9 @@ class ExitPolicy:
 
 
 def standard_policy(
-    target: Decimal = Decimal("0.5"), stop: Decimal = Decimal(2), dte: int = 7
+    target: Decimal = Decimal("0.5"), stop: Decimal | None = Decimal(2), dte: int = 7
 ) -> ExitPolicy:
-    """PROFIT_PLAN §5: exit at 50% of the credit, at 2x the credit lost, or at 7 DTE."""
-    return ExitPolicy([StopLoss(stop), ProfitTarget(target), MinDaysToExpiry(dte)])
+    """PROFIT_PLAN §5: exit at 50% of the credit, at 2x the credit lost, or at 7 DTE. `stop=None`
+    leaves the stop out: on a defined-risk spread the long wing already caps the loss (B1b)."""
+    rules: list[ExitRule] = [] if stop is None else [StopLoss(stop)]
+    return ExitPolicy([*rules, ProfitTarget(target), MinDaysToExpiry(dte)])

@@ -12,7 +12,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 from emporos.domain.orders import OrderSide
 
-__all__ = ["ADVERSE", "BENCHMARK", "SlippageScenario"]
+__all__ = ["ADVERSE", "BENCHMARK", "FRICTIONLESS", "SlippageScenario"]
 
 
 @dataclass(frozen=True)
@@ -39,3 +39,6 @@ class SlippageScenario:
 
 BENCHMARK = SlippageScenario("benchmark", 1, Decimal("0.005"), Decimal(1))
 ADVERSE = SlippageScenario("adverse", 2, Decimal("0.015"), Decimal("1.5"))
+# Fills at the day's close with statutory charges and brokerage still paid: the bound B1b's
+# falsification is written against (a bound, not a fill: no real fill is at the close).
+FRICTIONLESS = SlippageScenario("frictionless", 0, Decimal(0), Decimal(1))

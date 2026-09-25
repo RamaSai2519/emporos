@@ -46,6 +46,9 @@ class ArmOutcome:
     ruin: RuinReport
     first_day: date
     capital: Decimal
+    # the same arm at zero slippage and at ADVERSE costs, for the per-spread breakdown (EM-234)
+    frictionless_run: BacktestResult | None = None
+    adverse_run: BacktestResult | None = None
 
 
 @dataclass(frozen=True)

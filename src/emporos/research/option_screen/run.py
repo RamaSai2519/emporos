@@ -12,7 +12,7 @@ from datetime import date
 from decimal import Decimal
 
 from emporos.options.backtest import BacktestResult
-from emporos.options.slippage import ADVERSE, BENCHMARK
+from emporos.options.slippage import ADVERSE, BENCHMARK, FRICTIONLESS
 from emporos.research.option_screen.b1 import (
     B1Arms,
     B1Backtests,
@@ -77,6 +77,7 @@ class B1Screen:
         capital = self._in.capital
         bench = self._backtests.build(arm, BENCHMARK).run(self._first, self._last)
         adverse = self._backtests.build(arm, ADVERSE).run(self._first, self._last)
+        frictionless = self._backtests.build(arm, FRICTIONLESS).run(self._first, self._last)
         return ArmOutcome(
             bench,
             OptionStats.of(bench, capital),
@@ -84,4 +85,6 @@ class B1Screen:
             self._bootstrap.report(daily_returns(bench, capital)),
             self._first,
             capital,
+            frictionless,
+            adverse,
         )
