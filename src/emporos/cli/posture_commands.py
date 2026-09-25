@@ -167,7 +167,7 @@ def research_posture_inputs(
         sessions = _sessions(loader, first.date(), last.date())
         present: Counter[str] = Counter()
         for morning in sessions:
-            present.update(inputs.for_day(morning).state)
+            present.update(inputs.for_day(morning).state.keys())
     except (EmporosError, ValueError, OSError, KeyError) as error:
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"posture-inputs failed: {message}", fg=typer.colors.RED)
