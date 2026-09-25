@@ -1,0 +1,57 @@
+b1b-nifty-put-spread-no-stop: 2017-10-11..2024-12-31, capital Rs 100,000, NIFTY monthly options, benchmark and adverse costs (today's fee schedule, unverified, applied to the whole history)
+arm                          verdict       trips  cagr%   adv%  mo+% exp+%  mo-%  worst%     t  yr+%   dd%  nbr  pdd30
+filter=on wing_cap=5000      SCREEN_REJECT    89   -0.5   -2.7  40.2  59.3  27.6    -3.8 -0.43  37.5  10.0  0.0  0.000
+filter=on wing_cap=10000     SCREEN_REJECT   108   -1.9   -6.6  44.8  62.3  26.4   -11.9 -0.62  50.0  19.6  0.0  0.003
+filter=off wing_cap=5000     SCREEN_REJECT   189   -1.3   -3.7  67.8  68.6  31.0    -5.4 -0.69  37.5  12.7  0.0  0.000
+filter=off wing_cap=10000    SCREEN_REJECT   222   -1.6   -8.6  72.4  72.4  27.6   -12.7 -0.25  50.0  32.2  0.0  0.028
+
+filter=on wing_cap=5000: 87 months from 2017-10-11, 601/1777 days with a spread on, net Rs -3,526
+  skipped: exit_deferred_untraded_leg 6, ladder_full 13, no_credit 3, no_plan 1494, not_tradable 37
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.516, median year -0.1%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months with exposure net positive >= 60%; monthly t >= 2.5; round trips >= 100; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+filter=on wing_cap=10000: 87 months from 2017-10-11, 739/1777 days with a spread on, net Rs -13,110
+  skipped: exit_deferred_untraded_leg 3, ladder_full 10, no_credit 1, no_plan 1479, not_tradable 23
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.003, P(year < 0) 0.500, median year 0.0%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; worst month >= -10%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+filter=off wing_cap=5000: 87 months from 2017-10-11, 1170/1777 days with a spread on, net Rs -9,073
+  skipped: exit_deferred_untraded_leg 12, ladder_full 44, no_credit 5, no_plan 1134, not_tradable 87
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.579, median year -0.9%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+filter=off wing_cap=10000: 87 months from 2017-10-11, 1390/1777 days with a spread on, net Rs -11,267
+  skipped: exit_deferred_untraded_leg 7, ladder_full 50, no_credit 2, no_plan 1073, not_tradable 51
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.028, P(year < 0) 0.493, median year 0.2%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+
+filter=on wing_cap=5000: per spread, rupees
+  zero slippage trips   92  credit    454  gross    156  charges   107 (24% of credit)  net     49  win  89%  avg win   219  avg loss -1,348  worst spread  -3,352  max loss  4,782
+  benchmark    trips   89  credit    418  gross     80  charges   107 (26% of credit)  net    -28  win  82%  avg win   186  avg loss -1,002  worst spread  -3,455  max loss  4,818
+  adverse      trips   84  credit    351  gross    -37  charges   160 (46% of credit)  net   -197  win  46%  avg win   134  avg loss   -483  worst spread  -3,760  max loss  4,875
+filter=on wing_cap=10000: per spread, rupees
+  zero slippage trips  109  credit    797  gross    111  charges   117 (15% of credit)  net     -5  win  90%  avg win   383  avg loss -3,465  worst spread  -8,324  max loss  9,538
+  benchmark    trips  108  credit    754  gross     12  charges   116 (15% of credit)  net   -104  win  90%  avg win   337  avg loss -3,999  worst spread -10,723  max loss  9,560
+  adverse      trips  108  credit    686  gross   -168  charges   174 (25% of credit)  net   -342  win  88%  avg win   216  avg loss -4,422  worst spread -15,815  max loss  9,590
+filter=off wing_cap=5000: per spread, rupees
+  zero slippage trips  192  credit    481  gross    129  charges   108 (22% of credit)  net     21  win  88%  avg win   223  avg loss -1,456  worst spread  -3,352  max loss  4,782
+  benchmark    trips  189  credit    440  gross     66  charges   108 (24% of credit)  net    -42  win  84%  avg win   182  avg loss -1,227  worst spread  -3,455  max loss  4,818
+  adverse      trips  178  credit    370  gross     37  charges   163 (44% of credit)  net   -127  win  52%  avg win   234  avg loss   -521  worst spread  -3,760  max loss  4,875
+filter=off wing_cap=10000: per spread, rupees
+  zero slippage trips  224  credit    843  gross    148  charges   112 (13% of credit)  net     36  win  90%  avg win   412  avg loss -3,254  worst spread  -8,324  max loss  9,538
+  benchmark    trips  222  credit    803  gross     70  charges   112 (14% of credit)  net    -42  win  90%  avg win   368  avg loss -3,585  worst spread -10,723  max loss  9,560
+  adverse      trips  219  credit    731  gross    -42  charges   166 (23% of credit)  net   -208  win  88%  avg win   245  avg loss -3,570  worst spread -11,148  max loss  9,590
+
+closure test (2x charges):
+  filter=on wing_cap=5000: zero-slippage gross = 1.46x of its charges
+  filter=on wing_cap=10000: zero-slippage gross = 0.95x of its charges
+  filter=off wing_cap=5000: zero-slippage gross = 1.20x of its charges
+  filter=off wing_cap=10000: zero-slippage gross = 1.32x of its charges
+CLOSED: no arm's zero-slippage gross per spread reaches 2x its charges, so index put-spread selling is closed at this capital
+finished 15:36
+
+Reading it (both months measures are in the table: mo+% is over ALL months, exp+% over months with a spread open, mo-% is the share of ALL months net negative; the amended §3.2 bar is exp+% >= 60 and mo-% <= 40):
+ * The declared closure test is met: no arm's zero-slippage gross per spread reaches 2x its charges (1.46x, 0.95x, 1.20x, 1.32x). INDEX PUT-SPREAD SELLING IS CLOSED AT THIS CAPITAL; no further put-spread cell is declared from Discovery output.
+ * Removing the stop did what the diagnosis said for the fee line and nothing for the edge: at zero slippage the best arm (filter on, Rs 5,000 wing) earns gross Rs 156 per spread against charges Rs 107 (B1's best: 111 vs 109) and wins 89% (avg win 219, avg loss -1,348). At benchmark costs it is gross +80, charges 107, net -28 per spread; at adverse costs gross -37, net -197.
+ * The wider wing did lower the fee share of the credit (charges 26% -> 15% of credit at benchmark, Rs 5,000 -> Rs 10,000) and roughly doubled the credit (Rs 418 -> 754), but the average loss grew faster (avg loss -1,002 -> -3,999, worst single spread -10,723 at benchmark): the Rs 10,000 arms have the worst months (-11.9%, -12.7%: both below the -10% bar) and drawdown 19.6% and 32.2%, and lose more (net Rs -13,110 and -11,267 against -3,526 for the best Rs 5,000 arm).
+ * Three arms are inside the amended months bar (exposed months positive 62.3, 68.6, 72.4%; all months negative 26.4, 31.0, 27.6%) and still lose money: 90% win rates with a 9x loss-to-win ratio do not pay for fees.
+ * The two Rs 10,000 arms breach PROFIT_PLAN §3.5's Rs 5,000 per-spread cap: research arms, requiring an operator change to §3.5 before any live use. Their §3.4 numbers: P(drawdown >= 30%) 0.003 (filter on) and 0.028 (filter off); both under the 5% limit, and irrelevant to the verdict.
+ * Largest loss of any single spread at benchmark costs (net of charges): Rs 3,455 (Rs 5,000 wing, both filters) and Rs 10,723 (Rs 10,000 wing, both filters). The largest worst-case loss any spread was opened with: Rs 4,818 and Rs 9,560.
+LIMITS as B1: today's fee schedule on the whole history (conservative early), `verified: false`, slippage assumed (zero slippage is a bound, not a fill), the 5-minute index level stands in for the official close before 2024-07.
