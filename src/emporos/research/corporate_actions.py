@@ -14,6 +14,10 @@ things and never guesses:
 A bonus `A:B` is A new shares for every B held, so the price multiplier is B/(A+B): 1:1 is 0.5 and
 1:2 is 2/3. A face-value change from `old` to `new` multiplies the price by new/old.
 
+`ActionReader` turns the recorded actions into the ratios their text states, per instrument. It does
+NOT decide where a ratio applies: the broker's daily history turns out to be already adjusted for
+most actions (see `gap_matching`), so applying an exchange ex-date to it would double-adjust.
+
 `CorporateActionLedger` keeps every record with its source URL and fetch date, append-only, once
 each, plus a mark per collected symbol, so an interrupted run resumes and nothing is asked twice.
 """
@@ -29,11 +33,11 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-from emporos.research.adjustments import ActionKind, AdjustmentFactor, AdjustmentLedger
+from emporos.research.adjustments import ActionKind
 
 __all__ = [
-    "CorporateAction", "CorporateActionLedger", "FactorBuild", "FactorBuilder",
-    "Interpretation", "SubjectInterpreter", "parse_actions",
+    "ActionReader", "CorporateAction", "CorporateActionLedger", "Interpretation", "ReadAction",
+    "ReadActions", "SubjectInterpreter", "parse_actions",
 ]  # fmt: skip
 
 _EX_DATE = "%d-%b-%Y"
@@ -197,22 +201,32 @@ class CorporateActionLedger:
 
 
 @dataclass(frozen=True)
-class FactorBuild:
-    ledger: AdjustmentLedger
-    review: tuple[CorporateAction, ...]  # price-affecting, not adjusted
+class ReadAction:
+    """A split, bonus or consolidation whose ratio the exchange's text states."""
+
+    ex_date: date
+    kind: ActionKind
+    ratio: Decimal
+    subject: str
+
+
+@dataclass(frozen=True)
+class ReadActions:
+    by_instrument: Mapping[str, tuple[ReadAction, ...]]  # oldest ex-date first
+    review: tuple[CorporateAction, ...]  # price-affecting, no ratio read: not adjusted
     ignored: int  # cash actions
 
 
-class FactorBuilder:
-    """Recorded actions and a symbol-to-instrument map to a factor ledger and a review list."""
+class ActionReader:
+    """Recorded actions and a symbol-to-instrument map to the ratios the text states."""
 
     def __init__(self, interpreter: SubjectInterpreter | None = None) -> None:
         self._interpreter = interpreter or SubjectInterpreter()
 
-    def build(
-        self, actions: Iterable[CorporateAction], instruments: Mapping[str, str], source: str
-    ) -> FactorBuild:
-        factors: dict[tuple[str, date, Decimal, ActionKind], AdjustmentFactor] = {}
+    def read(
+        self, actions: Iterable[CorporateAction], instruments: Mapping[str, str]
+    ) -> ReadActions:
+        found: dict[str, dict[tuple[date, Decimal, ActionKind], ReadAction]] = {}
         review: list[CorporateAction] = []
         ignored = 0
         for action in actions:
@@ -221,13 +235,17 @@ class FactorBuilder:
                 continue
             reading = self._interpreter.interpret(action.subject)
             for kind, ratio in reading.factors:
-                if ratio == 1:
-                    continue
-                factors[(instrument_id, action.ex_date, ratio, kind)] = AdjustmentFactor(
-                    instrument_id, action.ex_date, ratio, kind, source, action.subject
-                )
+                if ratio != 1:
+                    key = (action.ex_date, ratio, kind)
+                    found.setdefault(instrument_id, {})[key] = ReadAction(
+                        action.ex_date, kind, ratio, action.subject
+                    )
             if reading.needs_review:
                 review.append(action)
             elif not reading.factors:
                 ignored += 1
-        return FactorBuild(AdjustmentLedger(factors.values()), tuple(review), ignored)
+        ordered = {
+            i: tuple(sorted(v.values(), key=lambda a: (a.ex_date, a.ratio)))
+            for i, v in found.items()
+        }
+        return ReadActions(ordered, tuple(review), ignored)

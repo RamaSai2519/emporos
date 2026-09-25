@@ -18,15 +18,30 @@ spans a feed gap (23% of daily bars, so it is reported, not filtered).
 
 ## Corporate actions (A-F2, EM-221)
 
-* `config/universe/d1/adjustments.yaml`: the factor ledger (ex-date, price ratio, kind, source).
-  Every factor names its source. Empty until a source is confirmed and collected.
-* `emporos research audit-discontinuities`: every open >= 15% from the previous close is EXPLAINED
-  (a factor on record fits), MISMATCHED, SPLIT_SHAPED or UNEXPLAINED; all but the first are
-  quarantined. Result: `discontinuities.yaml` here.
-* `emporos research collect-actions` / `build-adjustments`: the resumable, polite collector for
-  NSE's public corporate-actions feed and the builder that turns splits and bonuses into factors.
-  Dividends, rights issues and demergers are NOT adjusted (rights and demergers are listed in
-  `corporate-actions-unadjusted.yaml`).
+**Finding (2026-09-25): the broker's daily history is already adjusted for splits and bonuses.** At 87
+of the 89 splits and bonuses NSE lists for the 148 D1 names, the derived daily series is CONTINUOUS
+across the ex-date. The local archive was fetched in chunks at different times: a chunk fetched before
+an action holds raw prices, one fetched after it holds adjusted prices, so the break sits at a chunk
+boundary (CANBK: the 1:5 split was 2024-05-15, the series steps by 0.1998 on 2022-05-10). Applying an
+exchange ex-date to this series would double-adjust it and put 87 false jumps in it. So the exchange's
+records are used as EVIDENCE for a gap and the factor is dated at the gap (`gap_matching`).
+
+* Source: NSE's public corporate-actions feed, collected on 2026-09-25 on the operator's approval
+  (PROFIT_PLAN §8): one request per name, 3 s apart, honest user agent, 148 names, 2,184 records, none
+  refused. `corporate-actions.jsonl` (each record with its source URL and fetch date) and
+  `corporate-actions-collected.jsonl` here.
+* `config/universe/d1/adjustments.yaml`: 19 factors, each dated at the day the broker's history changes
+  basis, with the exchange's exact ratio and the action it matches (`emporos research build-adjustments`).
+* `emporos research audit-discontinuities` (result: `discontinuities.yaml`): 60 open gaps >= 15% in 148
+  names: 19 EXPLAINED by an exchange action, 10 SPLIT_SHAPED with no action to match (flip-flop days in a
+  few names), 31 UNEXPLAINED (10 of them 2020-03-23, the circuit-breaker crash; 3 on 2024-11-21, Adani
+  lower circuits: real moves). All 41 are quarantined: the analysis series flattens each gap, which also
+  removes a genuine move, never adds one.
+* Dividends, rights issues and demergers are NOT adjusted (26 rights/demerger/other actions are listed
+  in `corporate-actions-unadjusted.yaml`).
+* Known limits: a split or bonus after the newest archive chunk shows up as a raw gap at its ex-date and
+  is matched the same way; a genuine >= 15% earnings gap that no action explains is flattened too, which
+  costs event strategies (A2) their largest reactions.
 
 ## Delivery fees (A-F4, EM-222)
 

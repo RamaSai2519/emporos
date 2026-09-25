@@ -1,15 +1,115 @@
-# The corporate-action adjustment ledger for the D1 research names (PROFIT_PLAN §4 A-F2, EM-221).
-#
-# EMPTY ON PURPOSE. A factor is a claim about a company (a split, a bonus, a demerger) and every one
-# needs a named source. The source has not been confirmed: NSE's Terms of Use forbid systematic
-# collection and simulation use, so nothing has been fetched from them. Until the operator confirms a
-# source, `emporos research audit-discontinuities` lists every >=15% open gap in the daily bars as
-# quarantined, and a swing screen takes no trade across one.
-#
-# Format (ratio is the price multiplier for bars BEFORE the ex-date, a quoted string):
-#   - instrument_id: "NSE:1333"
-#     ex_date: 2019-09-19
-#     ratio: "0.2"          # a 1:5 split
-#     kind: split           # split | bonus | other
-#     source: "<who said so>"
-factors: []
+factors:
+- instrument_id: NSE:10794
+  ex_date: '2022-05-10'
+  ratio: '0.2'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2022-05-10
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share (ex 2024-05-15)
+- instrument_id: NSE:14418
+  ex_date: '2021-03-08'
+  ratio: '0.75'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2021-03-08
+  note: Bonus 1:3 (ex 2021-03-18)
+- instrument_id: NSE:14977
+  ex_date: '2021-09-07'
+  ratio: '0.75'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2021-09-07
+  note: Bonus 1:3 (ex 2023-09-12)
+- instrument_id: NSE:15355
+  ex_date: '2020-08-13'
+  ratio: '0.75'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2020-08-13
+  note: Bonus 1:3 (ex 2022-08-17)
+- instrument_id: NSE:1624
+  ex_date: '2018-04-05'
+  ratio: '0.6666666666666666666666666667'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-04-05
+  note: Bonus 1:2 (ex 2022-06-30)
+- instrument_id: NSE:1633
+  ex_date: '2020-01-01'
+  ratio: '0.5'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2020-01-01
+  note: Face Value Split (Sub-Division) - From Rs 2/- Per Share To Re 1/- Per Share (ex 2022-01-10)
+- instrument_id: NSE:16675
+  ex_date: '2020-09-08'
+  ratio: '0.10'
+  kind: other
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2020-09-08
+  note: Face Value Split (Sub-Division) - From Rs 5/- Per Share To Re 1/- Per Share (ex 2022-09-13); Bonus 1:1 (ex 2022-09-13)
+- instrument_id: NSE:17963
+  ex_date: '2021-12-31'
+  ratio: '0.1'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2021-12-31
+  note: Face Value Split (Sub-Division) - From Rs10/- Per Share To Re 1/- Per Share (ex 2024-01-05)
+- instrument_id: NSE:18365
+  ex_date: '2022-03-24'
+  ratio: '0.5'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2022-03-24
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 5/- Per Share (ex 2024-03-28)
+- instrument_id: NSE:18921
+  ex_date: '2018-03-09'
+  ratio: '0.4444444444444444444444444445'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-03-09
+  note: Bonus 1:2 (ex 2019-07-25); Bonus 1:2 (ex 2021-06-10)
+- instrument_id: NSE:21238
+  ex_date: '2018-04-18'
+  ratio: '0.5'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-04-18
+  note: Bonus 1:1 (ex 2022-06-09)
+- instrument_id: NSE:21508
+  ex_date: '2022-01-04'
+  ratio: '0.5'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2022-01-04
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 5/- Per Share (ex 2024-01-10)
+- instrument_id: NSE:21690
+  ex_date: '2018-10-01'
+  ratio: '0.2'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-10-01
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share (ex 2021-03-18)
+- instrument_id: NSE:2303
+  ex_date: '2021-09-24'
+  ratio: '0.5'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2021-09-24
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 5/- Per Share (ex 2023-09-28)
+- instrument_id: NSE:25780
+  ex_date: '2018-10-01'
+  ratio: '0.2'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-10-01
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Rs 2/- Per Share (ex 2020-12-15)
+- instrument_id: NSE:3220
+  ex_date: '2021-05-26'
+  ratio: '0.5'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2021-05-26
+  note: Bonus 1:1 (ex 2023-05-31)
+- instrument_id: NSE:3273
+  ex_date: '2018-01-12'
+  ratio: '0.2'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-01-12
+  note: Bonus 4:1 (ex 2021-10-13)
+- instrument_id: NSE:3499
+  ex_date: '2020-07-28'
+  ratio: '0.1'
+  kind: split
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2020-07-28
+  note: Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share (ex 2022-07-28)
+- instrument_id: NSE:3518
+  ex_date: '2018-04-13'
+  ratio: '0.5'
+  kind: bonus
+  source: NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions); broker history changes basis on 2018-04-13
+  note: Bonus 1:1 (ex 2022-07-08)

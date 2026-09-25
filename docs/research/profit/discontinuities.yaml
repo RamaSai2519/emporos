@@ -1,11 +1,11 @@
-ledger_hash: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+ledger_hash: 3548418711017246d93689df01a5e3fe129948b3db427dfb56f0d24d08581b67
 sessions_checked: 323684
 limit: '0.15'
 by_status:
-  explained: 0
+  explained: 19
   mismatched: 0
-  split_shaped: 28
-  unexplained: 32
+  split_shaped: 10
+  unexplained: 31
 findings:
 - instrument_id: NSE:10217
   day: '2024-11-21'
@@ -18,7 +18,7 @@ findings:
 - instrument_id: NSE:10794
   day: '2022-05-10'
   raw_ratio: '0.1998'
-  status: split_shaped
+  status: explained
   shape: 1/5
 - instrument_id: NSE:11703
   day: '2020-03-23'
@@ -40,12 +40,12 @@ findings:
 - instrument_id: NSE:14418
   day: '2021-03-08'
   raw_ratio: '0.7553'
-  status: split_shaped
+  status: explained
   shape: 3/4
 - instrument_id: NSE:14977
   day: '2021-09-07'
   raw_ratio: '0.7490'
-  status: split_shaped
+  status: explained
   shape: 3/4
 - instrument_id: NSE:15332
   day: '2018-10-12'
@@ -55,17 +55,17 @@ findings:
 - instrument_id: NSE:15355
   day: '2020-08-13'
   raw_ratio: '0.7548'
-  status: split_shaped
+  status: explained
   shape: 3/4
 - instrument_id: NSE:1624
   day: '2018-04-05'
   raw_ratio: '0.6735'
-  status: split_shaped
+  status: explained
   shape: 2/3
 - instrument_id: NSE:1633
   day: '2020-01-01'
   raw_ratio: '0.5003'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:1633
   day: '2020-03-23'
@@ -82,7 +82,7 @@ findings:
 - instrument_id: NSE:16675
   day: '2020-09-08'
   raw_ratio: '0.1006'
-  status: split_shaped
+  status: explained
   shape: 1/10
 - instrument_id: NSE:17818
   day: '2020-03-23'
@@ -99,17 +99,17 @@ findings:
 - instrument_id: NSE:17963
   day: '2021-12-31'
   raw_ratio: '0.0998'
-  status: split_shaped
+  status: explained
   shape: 1/10
 - instrument_id: NSE:18365
   day: '2022-03-24'
   raw_ratio: '0.4992'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:18921
   day: '2018-03-09'
   raw_ratio: '0.4474'
-  status: unexplained
+  status: explained
 - instrument_id: NSE:18921
   day: '2020-03-23'
   raw_ratio: '0.7999'
@@ -129,17 +129,17 @@ findings:
 - instrument_id: NSE:21238
   day: '2018-04-18'
   raw_ratio: '0.5035'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:21508
   day: '2022-01-04'
   raw_ratio: '0.5000'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:21690
   day: '2018-10-01'
   raw_ratio: '0.2002'
-  status: split_shaped
+  status: explained
   shape: 1/5
 - instrument_id: NSE:2303
   day: '2020-03-23'
@@ -148,7 +148,7 @@ findings:
 - instrument_id: NSE:2303
   day: '2021-09-24'
   raw_ratio: '0.5026'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:2475
   day: '2020-03-23'
@@ -177,7 +177,7 @@ findings:
 - instrument_id: NSE:25780
   day: '2018-10-01'
   raw_ratio: '0.1983'
-  status: split_shaped
+  status: explained
   shape: 1/5
 - instrument_id: NSE:25780
   day: '2018-12-03'
@@ -191,12 +191,12 @@ findings:
 - instrument_id: NSE:3220
   day: '2021-05-26'
   raw_ratio: '0.4900'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:3273
   day: '2018-01-12'
   raw_ratio: '0.2002'
-  status: split_shaped
+  status: explained
   shape: 1/5
 - instrument_id: NSE:3456
   day: '2019-10-29'
@@ -205,7 +205,7 @@ findings:
 - instrument_id: NSE:3499
   day: '2020-07-28'
   raw_ratio: '0.1008'
-  status: split_shaped
+  status: explained
   shape: 1/10
 - instrument_id: NSE:3499
   day: '2022-07-26'
@@ -220,7 +220,7 @@ findings:
 - instrument_id: NSE:3518
   day: '2018-04-13'
   raw_ratio: '0.5035'
-  status: split_shaped
+  status: explained
   shape: 1/2
 - instrument_id: NSE:3563
   day: '2024-11-21'

@@ -1,0 +1,81 @@
+note: 'Price-affecting actions the text gave no ratio for: NOT used.'
+actions:
+- symbol: ABB
+  ex_date: '2019-12-20'
+  subject: Demerger
+- symbol: ADANIENT
+  ex_date: '2018-04-05'
+  subject: Scheme Of Arrangement
+- symbol: ADANIENT
+  ex_date: '2018-09-06'
+  subject: Scheme Of Arrangement
+- symbol: ADANIENT
+  ex_date: '2025-11-17'
+  subject: Rights 3:25 @ Premium Rs 1799/-
+- symbol: BHARTIARTL
+  ex_date: '2019-04-23'
+  subject: Rights 19:67 @ Premium Rs 215 Per Share
+- symbol: BHARTIARTL
+  ex_date: '2021-09-27'
+  subject: Rights 1:14 @ Premium Rs 530/-
+- symbol: BRITANNIA
+  ex_date: '2019-08-22'
+  subject: Scheme Of Arangement- Bonus - 1 Debenture For 1 Equity Share Held
+- symbol: BRITANNIA
+  ex_date: '2021-05-25'
+  subject: Scheme Of Arangement- Bonus - 1 Debenture For 1 Equity Share Held
+- symbol: CANBK
+  ex_date: '2017-02-17'
+  subject: Rights 1:10 @ Prem Rs 197/- Per Share
+- symbol: GMRAIRPORT
+  ex_date: '2022-01-11'
+  subject: Demerger
+- symbol: GRASIM
+  ex_date: '2016-10-06'
+  subject: Face Value Split From Rs 10 To Re 2
+- symbol: GRASIM
+  ex_date: '2017-07-19'
+  subject: Scheme Of Arrangement
+- symbol: GRASIM
+  ex_date: '2024-01-10'
+  subject: Rights 6:179 @ Premium Rs 1810/-
+- symbol: HINDUNILVR
+  ex_date: '2025-12-05'
+  subject: Demerger
+- symbol: IDEA
+  ex_date: '2019-03-29'
+  subject: Rights 87:38 @ Premium Of Rs 2.50 Per Share
+- symbol: INDHOTEL
+  ex_date: '2017-10-04'
+  subject: Rights 1:5 @ Premium Rs 74/-
+- symbol: INDHOTEL
+  ex_date: '2021-11-11'
+  subject: Rights 1:9 @ Premium Rs 149/-
+- symbol: ITC
+  ex_date: '2025-01-06'
+  subject: Demerger
+- symbol: LTF
+  ex_date: '2021-01-21'
+  subject: Rights 17:74@ Premium Rs 55 Per Share
+- symbol: MOTHERSON
+  ex_date: '2022-01-14'
+  subject: Demerger
+- symbol: NMDC
+  ex_date: '2022-10-27'
+  subject: Demerger
+- symbol: SHRIRAMFIN
+  ex_date: '2020-07-09'
+  subject: Rights 3:26 @ Premium Rs 560/-
+- symbol: SIEMENS
+  ex_date: '2025-04-07'
+  subject: Demerger
+- symbol: TATASTEEL
+  ex_date: '2018-01-31'
+  subject: Rights - 4:25 Fully Paid Up Shares @ Premium Rs 500/- Per Share / 2:25 Partly Paid Up Shares @ Premium Rs 605/-
+    Per Share
+- symbol: TMPV
+  ex_date: '2025-10-14'
+  subject: Demerger
+- symbol: TVSMOTOR
+  ex_date: '2025-08-25'
+  subject: Scheme Of Arrangement - Bonus Ncrps 4:1

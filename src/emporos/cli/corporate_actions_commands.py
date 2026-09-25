@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+from collections.abc import Sequence
 from datetime import date, datetime
 from pathlib import Path
 
@@ -18,17 +19,27 @@ import httpx
 import typer
 import yaml
 
+from emporos.backtest.vault import VaultedCandleReader
+from emporos.cli.daily_bars_commands import derived_candle_root
+from emporos.cli.swing_bars import VaultedDailyBars
+from emporos.cli.vault_files import VaultFiles
 from emporos.core.clock import AsyncioSleeper, Clock, Sleeper, SystemClock
+from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
-from emporos.research.adjustments import DEFAULT_LEDGER
-from emporos.research.corporate_actions import CorporateActionLedger, FactorBuilder
+from emporos.persistence.candle_cache import CandleCacheFiles, FileCandleReader
+from emporos.research.adjustments import DEFAULT_LEDGER, AdjustmentLedger
+from emporos.research.corporate_actions import ActionReader, CorporateActionLedger
 from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Manifest
+from emporos.research.discontinuities import DiscontinuityAudit
+from emporos.research.gap_matching import GapMatcher, RawGap
 from emporos.research.nse_corporate_actions import (
     ActionsRefused,
     CorporateActionSource,
     NseCorporateActionSource,
 )
+from emporos.research.partition import CONFIRMATION, DISCOVERY
 
+SOURCE = "NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions)"
 PROFIT_DIR = Path("docs/research/profit")
 DEFAULT_TOKENS = Path("config/universe/d1/tokens.csv")
 DEFAULT_REVIEW = PROFIT_DIR / "corporate-actions-unadjusted.yaml"
@@ -40,7 +51,8 @@ _FROM = typer.Option(datetime(2016, 10, 3), formats=["%Y-%m-%d"], help="First ex
 _TO = typer.Option(datetime(2026, 3, 18), "--to", formats=["%Y-%m-%d"], help="Last ex-date (in).")
 _GAP = typer.Option(3.0, help="Seconds between requests (at least 1).")
 _LEDGER_OUT = typer.Option(DEFAULT_LEDGER, help="The factor ledger to write.")
-_REVIEW_OUT = typer.Option(DEFAULT_REVIEW, help="Price-affecting actions NOT adjusted.")
+_REVIEW_OUT = typer.Option(DEFAULT_REVIEW, help="Price-affecting actions NOT used.")
+_ROOT = typer.Option(None, help="Derived-candle root (default: beside the candle cache).")
 
 
 def research_symbols(manifest: Path, tokens: Path) -> dict[str, str]:
@@ -128,23 +140,35 @@ def research_build_adjustments(
     actions: Path = _OUT,
     out: Path = _LEDGER_OUT,
     review: Path = _REVIEW_OUT,
+    root: Path | None = _ROOT,
 ) -> None:
-    """Turn the recorded splits and bonuses into adjustment factors; list what is left over."""
+    """Explain the >=15% gaps in the D1 daily bars by the recorded splits and bonuses."""
     try:
-        ledger = CorporateActionLedger(
+        recorded = CorporateActionLedger(
             actions / "corporate-actions.jsonl", actions / "corporate-actions-collected.jsonl"
         )
-        source = "NSE corporate-actions feed (nseindia.com/api/corporates-corporateActions)"
-        built = FactorBuilder().build(ledger.actions(), research_symbols(manifest, tokens), source)
-        built.ledger.save(out)
+        universe = D1Manifest.load(manifest)
+        read = ActionReader().read(recorded.actions(), research_symbols(manifest, tokens))
+        bars = VaultedDailyBars(
+            VaultedCandleReader(
+                FileCandleReader(
+                    [CandleCacheFiles(root or derived_candle_root(Settings.default()))],
+                    memoize=False,
+                ),
+                VaultFiles().load(),
+            )
+        )
+        gaps = raw_gaps(bars, universe.included)
+        matched = GapMatcher().match(gaps, read.by_instrument, SOURCE)
+        AdjustmentLedger(matched.factors).save(out)
         review.parent.mkdir(parents=True, exist_ok=True)
         review.write_text(
             yaml.safe_dump(
                 {
-                    "note": "Price-affecting actions left UNADJUSTED: the text gave no ratio.",
+                    "note": "Price-affecting actions the text gave no ratio for: NOT used.",
                     "actions": [
                         {"symbol": a.symbol, "ex_date": a.ex_date.isoformat(), "subject": a.subject}
-                        for a in built.review
+                        for a in read.review
                     ],
                 },
                 sort_keys=False,
@@ -156,8 +180,23 @@ def research_build_adjustments(
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"build-adjustments failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
+    ledger = AdjustmentLedger(matched.factors)
+    exchange_actions = sum(len(v) for v in read.by_instrument.values())
     typer.echo(
-        f"{len(built.ledger)} factor(s) for {len(built.ledger.instrument_ids)} name(s); "
-        f"{len(built.review)} price-affecting action(s) not adjusted; "
-        f"{built.ignored} cash action(s) ignored; ledger {built.ledger.content_hash[:12]}"
+        f"{len(gaps)} gaps >= 15% over {len(universe.included)} names; "
+        f"{len(matched.factors)} explained by {exchange_actions} exchange split/bonus actions "
+        f"on record; {len(matched.unmatched)} unexplained (quarantined); "
+        f"{len(read.review)} rights/demerger/other actions not used; "
+        f"ledger {ledger.content_hash[:12]}"
     )
+
+
+def raw_gaps(bars: VaultedDailyBars, instrument_ids: Sequence[str]) -> list[RawGap]:
+    """Every open >= 15% from the previous close, on raw prices, over Discovery + Confirmation."""
+    found: list[RawGap] = []
+    audit = DiscontinuityAudit(AdjustmentLedger())
+    for instrument_id in instrument_ids:
+        series = bars.bars(instrument_id, DISCOVERY.first, CONFIRMATION.last)
+        for f in audit.audit(instrument_id, series).findings:
+            found.append(RawGap(f.instrument_id, f.day, f.previous_day, f.raw_ratio))
+    return found

@@ -6,9 +6,11 @@ returns both series, bar for bar, and the raw bars are the caller's own objects,
 
 `AdjustmentFactor.ratio` is the price multiplier for every bar BEFORE `ex_date`: the price after the
 action over the price before it. A 1:5 split is 0.2; a 1:1 bonus is 0.5; a 2:3 bonus is 0.6. A bar
-on or after `ex_date` is on the new basis already. Several factors on one instrument multiply. The
-ex-date is the first session at the new price, and a factor dated on a holiday works: it scales the
-bars before that date.
+on or after `ex_date` is on the new basis already. Several factors on one instrument multiply.
+`ex_date` is the first session ON THE NEW PRICE BASIS: the exchange's ex-date where the series is
+raw at the action, or, for a series the broker has already adjusted retroactively, the day its
+history switches from the raw basis to the adjusted one (`gap_matching`). A factor dated on a
+holiday works: it scales the bars before that date.
 
 Volume is scaled the other way (a 1:5 split turns 100 old shares into 500 new ones), rounded half
 to even, so a traded value (price x volume) survives the adjustment to within a share.

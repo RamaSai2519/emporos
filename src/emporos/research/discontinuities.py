@@ -61,6 +61,7 @@ class DiscontinuityStatus(StrEnum):
 class Finding:
     instrument_id: str
     day: date
+    previous_day: date  # the session before `day` in the series
     raw_ratio: Decimal  # open / previous close on raw prices
     adjusted_ratio: Decimal  # the same on adjusted prices
     status: DiscontinuityStatus
@@ -151,7 +152,13 @@ class DiscontinuityAudit:
             else:
                 status = DiscontinuityStatus.UNEXPLAINED
             yield Finding(
-                instrument_id, day, raw_ratio, adjusted_ratio, status, split_shape(raw_ratio)
+                instrument_id,
+                day,
+                before,
+                raw_ratio,
+                adjusted_ratio,
+                status,
+                split_shape(raw_ratio),
             )
 
     @staticmethod

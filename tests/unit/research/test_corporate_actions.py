@@ -10,9 +10,9 @@ import pytest
 
 from emporos.research.adjustments import ActionKind
 from emporos.research.corporate_actions import (
+    ActionReader,
     CorporateAction,
     CorporateActionLedger,
-    FactorBuilder,
     SubjectInterpreter,
     parse_actions,
 )
@@ -173,8 +173,8 @@ class TestLedger:
         assert ledger.collected_symbols() == frozenset()
 
 
-class TestFactorBuilder:
-    def test_splits_and_bonuses_become_factors_for_the_research_names_only(self) -> None:
+class TestActionReader:
+    def test_splits_and_bonuses_are_read_for_the_research_names_only(self) -> None:
         actions = [
             CorporateAction("X", D, "Bonus 1:1"),
             CorporateAction("X", date(2026, 2, 1), "Rights 1:15 @ Premium Rs 1247"),
@@ -182,18 +182,28 @@ class TestFactorBuilder:
             CorporateAction("HELD", D, "Bonus 1:1"),
         ]
 
-        built = FactorBuilder().build(actions, {"X": "NSE:1"}, "a source")
+        read = ActionReader().read(actions, {"X": "NSE:1"})
 
-        (factor,) = built.ledger.factors_for("NSE:1")
-        assert (factor.ex_date, factor.ratio, factor.kind) == (D, Decimal("0.5"), ActionKind.BONUS)
-        assert factor.source == "a source"
-        assert factor.note == "Bonus 1:1"
-        assert [a.subject for a in built.review] == ["Rights 1:15 @ Premium Rs 1247"]
-        assert built.ignored == 1
-        assert built.ledger.factors_for("HELD") == ()
+        (action,) = read.by_instrument["NSE:1"]
+        assert (action.ex_date, action.ratio, action.kind) == (D, Decimal("0.5"), ActionKind.BONUS)
+        assert action.subject == "Bonus 1:1"
+        assert [a.subject for a in read.review] == ["Rights 1:15 @ Premium Rs 1247"]
+        assert read.ignored == 1
+        assert "HELD" not in read.by_instrument
 
-    def test_the_same_action_listed_twice_is_one_factor(self) -> None:
+    def test_the_same_action_listed_twice_is_one(self) -> None:
         actions = [CorporateAction("X", D, "Bonus 1:1", series="EQ"),
                    CorporateAction("X", D, "Bonus 1:1", series="BE")]  # fmt: skip
 
-        assert len(FactorBuilder().build(actions, {"X": "NSE:1"}, "s").ledger) == 1
+        assert len(ActionReader().read(actions, {"X": "NSE:1"}).by_instrument["NSE:1"]) == 1
+
+    def test_actions_come_oldest_first(self) -> None:
+        actions = [CorporateAction("X", date(2026, 6, 1), "Bonus 1:1"),
+                   CorporateAction("X", date(2026, 1, 1), "Bonus 1:2")]  # fmt: skip
+
+        read = ActionReader().read(actions, {"X": "NSE:1"})
+
+        assert [a.ex_date for a in read.by_instrument["NSE:1"]] == [
+            date(2026, 1, 1),
+            date(2026, 6, 1),
+        ]
