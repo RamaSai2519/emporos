@@ -70,6 +70,13 @@ cells:
     requires: [F2, F2B, F3, F3B, F4, VAULT, D5, D1]
     experiments: [EXP-20260925-l2-earnings-gap-fade-after-first-hour-44ac1c08]
     lesson: "4 arms on the D1 universe (148 names, 1,072-1,804 trades, Discovery, Rs 50,000), feasible (median |move| 1.17-1.36%) but gross is about zero (-0.02..+0.02%) and net -0.21..-0.25%, t -2.7..-3.7: the parent's +0.14..0.19% gross on 29 names was a small-sample effect, not a fade. The results-day gap fade is closed on Discovery on the wide universe too, and the continuation has no mirror to run (advisory scan)"
+  - id: L2-in-session-results-drift
+    lane: L2
+    hypothesis: l2-in-session-results-drift
+    status: SCREEN_REJECT
+    requires: [F2, F2B, F3, F3B, F4, VAULT, D5, D1]
+    experiments: [SCR-10b7931d7d23f1de, SCR-b952edcd8250ca67, SCR-aa1980732cd388ee, SCR-922fc1b140385bae]
+    lesson: "4 arms on D1 (Discovery, Rs 50,000): the 1,041 results filings published DURING the session (anchor = last 5m bar closed before the release, reaction bar = first bar starting 5 minutes after it, entry at its close, hold to 15:15). All feasible on the median move (1.40-1.99%) and all rejected: continuation gross +0.002% (|m| >= 1.5%, 345 trades) and -0.032% (>= 3.0%, 114 trades); the fade control -0.017% and +0.001%; net -0.23..-0.26%, t -0.8..-1.7. Mid-session results are absorbed within the first five minutes: nothing is left to drift, in either direction. The falsification fixed in the declaration (continuation gross under 0.25% means no child) is met, so the lane gets no child. 3,156 filings outside 09:15-14:30 were the earlier cells' (advisory scan)"
   - {id: L2-index-rebalance-flow,       lane: L2, hypothesis: index-rebalance-flow,       status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-ex-date,                    lane: L2, hypothesis: ex-date-behaviour,          status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
   - {id: L2-bulk-deal-follow-through,   lane: L2, hypothesis: bulk-deal-follow-through,   status: TODO, requires: [F2, F2B, F3, F3B, F4, VAULT, D5b]}
