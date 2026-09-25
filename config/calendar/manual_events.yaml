@@ -1,0 +1,19 @@
+# Calendar rows kept by hand (EM-244). `zone`: IST, an IANA zone, or `ahead` (a fact known in
+# advance: available from the start of its own day). Every row names the page it was read from.
+events:
+  - kind: fomc
+    name: FOMC statement (emergency, rate cut)
+    date: 2020-03-03
+    at: "10:00"
+    zone: America/New_York
+    source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200303a.htm
+    checked_on: 2026-09-26
+    note: unscheduled; "For release at 10:00 a.m. EST"
+  - kind: fomc
+    name: FOMC statement (emergency, rate cut to zero)
+    date: 2020-03-15
+    at: "17:00"
+    zone: America/New_York
+    source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200315a.htm
+    checked_on: 2026-09-26
+    note: unscheduled, a Sunday; "For release at 5:00 p.m. EDT", so Monday 02:30 IST

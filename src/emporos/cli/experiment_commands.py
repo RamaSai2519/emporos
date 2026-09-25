@@ -17,6 +17,7 @@ from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
 from emporos.cli.autorun_commands import research_dev_autorun
 from emporos.cli.book_commands import research_screen_book
+from emporos.cli.calendar_commands import research_build_calendar, research_collect_calendar
 from emporos.cli.core_commands import research_screen_core
 from emporos.cli.corporate_actions_commands import (
     research_build_adjustments,
@@ -114,6 +115,8 @@ research_app.command("screen-core")(research_screen_core)
 research_app.command("collect-filings")(research_collect_filings)
 research_app.command("freeze-events")(research_freeze_events)
 research_app.command("extraction-progress")(research_extraction_progress)
+research_app.command("collect-calendar")(research_collect_calendar)
+research_app.command("build-calendar")(research_build_calendar)
 research_app.command("collect-global-cues")(research_collect_global_cues)
 research_app.command("posture-inputs")(research_posture_inputs)
 research_app.command("extract-filing-text")(research_extract_filing_text)
