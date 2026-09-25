@@ -14,6 +14,7 @@ orders the steps and applies the rules that are not a component's to bend:
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import date, datetime
@@ -43,7 +44,7 @@ from emporos.eventtrader.replay.metrics import (
 from emporos.eventtrader.replay.records import Scenario
 from emporos.eventtrader.replay.report import VariantIdentity, VariantReport
 
-__all__ = ["CachedContext", "EngineFactory", "VariantRunner"]
+__all__ = ["CachedContext", "EngineFactory", "VariantRunner", "events_digest"]
 
 EngineFactory = Callable[[Decider, PostureSource | None, TokenMeter | None], ReplayEngine]
 
@@ -144,3 +145,12 @@ class VariantRunner:
         chosen = [e for e in events if baseline.would_trade(e.event_id)]
         result = await self._engines(baseline, self._posture, None).run(chosen)
         return metrics_for(result, Scenario.BENCHMARK, self._sessions), rule
+
+
+def events_digest(events: Sequence[MarketEvent]) -> str:
+    """A short identity of an events snapshot: the events, in order, with a hash of each text."""
+    digest = hashlib.sha256()
+    for e in events:
+        text = hashlib.sha256(e.text.encode("utf-8")).hexdigest()
+        digest.update(f"{e.event_id}\x1f{e.usable_from.isoformat()}\x1f{text}\n".encode())
+    return f"{len(events)}-{digest.hexdigest()[:16]}"

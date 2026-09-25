@@ -21,6 +21,7 @@ from emporos.domain.candles import Candle
 from emporos.eventtrader.replay.market import DailyBar
 
 __all__ = [
+    "AdjustedBarLoader",
     "BarAdjuster",
     "BarLoader",
     "NoAdjustment",
@@ -55,6 +56,19 @@ class ThreadedBarLoader:
 
     def load(self, instrument_id: str, first: date, last: date) -> Sequence[Candle]:
         return self._pool.submit(self._inner.load, instrument_id, first, last).result()
+
+
+class AdjustedBarLoader:
+    """A loader whose bars are already adjusted: what the context builder and the replay's market
+    share, so a signal and a fill are on one price basis."""
+
+    def __init__(self, inner: BarLoader, adjuster: BarAdjuster) -> None:
+        self._inner, self._adjuster = inner, adjuster
+
+    def load(self, instrument_id: str, first: date, last: date) -> Sequence[Candle]:
+        return self._adjuster.adjust_bars(
+            instrument_id, self._inner.load(instrument_id, first, last)
+        )
 
 
 def session_calendar(

@@ -139,3 +139,13 @@ def test_the_cached_context_builds_each_events_numbers_once() -> None:
     cached.context(e, at(MON, 12))
 
     assert Counting.n == 1
+
+
+def test_the_snapshot_digest_changes_with_an_events_text_or_the_set_of_events() -> None:
+    from emporos.eventtrader.runner import events_digest
+
+    a, b = event(event_id="A", text="one"), event(event_id="B", text="two")
+
+    assert events_digest([a, b]) == events_digest([a, b])
+    assert events_digest([a, b]) != events_digest([a, event(event_id="B", text="three")])
+    assert events_digest([a, b]).startswith("2-") and events_digest([a]) != events_digest([a, b])

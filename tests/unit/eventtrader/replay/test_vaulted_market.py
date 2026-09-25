@@ -128,3 +128,12 @@ def test_a_threaded_loader_returns_what_the_inner_loader_does() -> None:
     ld = loader()
 
     assert ThreadedBarLoader(ld).load(X, MON, MON) == ld.load(X, MON, MON)
+
+
+def test_an_adjusted_loader_hands_out_bars_on_the_adjusted_basis() -> None:
+    from emporos.eventtrader.replay.vaulted_market import AdjustedBarLoader
+
+    adjusted = AdjustedBarLoader(loader(), Halver(WED))
+
+    assert adjusted.load(X, MON, MON)[0].close.amount == D(50)
+    assert adjusted.load(X, WED, WED)[0].close.amount == D(104)

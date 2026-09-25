@@ -171,7 +171,9 @@ class TestRequestsCarryNoCalendarDate:
         prompts = [TRIAGE_V1, BULL_V1, BEAR_V1, TAPE_V1, JUDGE_V1, ARBITER_V1, POSTURE_V2]
 
         assert len({p.content_hash for p in prompts}) == len(prompts)
-        assert all(p.version.rsplit("-v", 1)[1].isdigit() and len(p.content_hash) == 64 for p in prompts)
+        assert all(
+            p.version.rsplit("-v", 1)[1].isdigit() and len(p.content_hash) == 64 for p in prompts
+        )
         assert not [p.version for p in prompts if "20" in p.system_text.replace("0-20", "")]
 
 

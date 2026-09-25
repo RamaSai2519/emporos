@@ -72,12 +72,13 @@ class VariantIdentity:
     last_day: date
     prompt_hash: str
     models: tuple[str, ...]
+    snapshot: str = ""  # the frozen events snapshot every variant reads
 
     @property
     def screen_id(self) -> str:
         canonical = json.dumps(
             [self.hypothesis, self.variant, self.first_day.isoformat(), self.last_day.isoformat(),
-             self.prompt_hash, sorted(self.models)],
+             self.prompt_hash, sorted(self.models), self.snapshot],
             separators=(",", ":"),
         )  # fmt: skip
         return f"LLM-{hashlib.sha256(canonical.encode()).hexdigest()[:16]}"
@@ -119,7 +120,8 @@ class LlmLedger:
             "screen_id": i.screen_id, "track": "llm", "hypothesis": i.hypothesis,
             "variant": i.variant, "first_day": i.first_day.isoformat(),
             "last_day": i.last_day.isoformat(), "prompt_hash": i.prompt_hash,
-            "models": list(i.models), "trades": b.trades, "net_benchmark": str(b.net_total),
+            "models": list(i.models), "snapshot": i.snapshot, "trades": b.trades,
+            "net_benchmark": str(b.net_total),
             "net_adverse": str(a.net_total), "token_cost": str(b.token_cost),
             "max_drawdown": str(b.max_drawdown), "daily_t": b.daily_t, "p_loss": report.p_loss,
             "control_p": report.control.p_value if report.control else None,
@@ -151,6 +153,7 @@ def render_report(report: VariantReport) -> str:
     lines = [
         f"{i.hypothesis} / {i.variant}: {i.first_day} .. {i.last_day} (Dev, descriptive)",
         f"  prompts {i.prompt_hash}; models {', '.join(i.models)}",
+        f"  events snapshot {i.snapshot or 'n/a'}",
         "",
         f"events {r.stats.events}; verdicts {dict(sorted(r.stats.verdicts.items()))}",
         f"skipped {dict(sorted(r.stats.skipped.items()))}",
