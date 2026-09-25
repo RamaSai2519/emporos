@@ -202,6 +202,15 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "the event trader decides and replays; it never reaches a broker, an order path or a database"
+type = "forbidden"
+source_modules = ["emporos.eventtrader"]
+forbidden_modules = [
+    "emporos.broker", "emporos.execution", "emporos.persistence", "emporos.session",
+    "emporos.api", "emporos.cli", "pymongo",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]
