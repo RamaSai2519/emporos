@@ -20,7 +20,12 @@ import httpx
 
 from emporos.core.clock import Clock, Sleeper
 from emporos.research.fo_archive_layout import ArchiveCandidate, ArchiveLayout
-from emporos.research.fo_archive_rows import ArchiveParseError, read_archive
+from emporos.research.fo_archive_rows import (
+    ArchiveFormat,
+    ArchiveParseError,
+    IndexContractRow,
+    read_archive,
+)
 from emporos.research.fo_archive_store import FetchOutcome, FoDayStore, FoLedger, LedgerEntry
 
 __all__ = [
@@ -35,6 +40,9 @@ __all__ = [
 USER_AGENT = "emporos-research/1.0 (personal research, one request every few seconds)"
 _REFUSALS = (401, 403, 429)
 _MAX_CONSECUTIVE_FAILURES = 3
+
+
+ArchiveReader = Callable[[date, bytes, ArchiveFormat], list[IndexContractRow]]
 
 
 class ArchiveRefused(RuntimeError):
@@ -75,6 +83,8 @@ class ArchiveFetcher:
         sleeper: Sleeper,
         seconds_between_requests: float = 3.0,
         progress: Callable[[str], None] = lambda line: None,
+        reader: ArchiveReader = read_archive,
+        what: str = "index contract",
     ) -> None:
         if seconds_between_requests < 1.0:
             raise ValueError("requests must be at least a second apart")
@@ -87,6 +97,8 @@ class ArchiveFetcher:
         self._gap = seconds_between_requests
         self._progress = progress
         self._requests = 0
+        self._reader = reader
+        self._what = what
 
     async def run(self, first: date, last: date) -> FetchReport:
         report = FetchReport()
@@ -116,7 +128,7 @@ class ArchiveFetcher:
             payload = await self._get(candidate)
             if payload is None:
                 continue  # 404 on this layout: try the next
-            rows = read_archive(day, payload, candidate.format)
+            rows = self._reader(day, payload, candidate.format)
             stored = self._store.write(day, rows)
             self._ledger.record(
                 LedgerEntry(
@@ -132,7 +144,7 @@ class ArchiveFetcher:
             )
             report.fetched += 1
             report.rows += stored
-            self._progress(f"{day}: {stored} index contract row(s) from {candidate.format.value}")
+            self._progress(f"{day}: {stored} {self._what} row(s) from {candidate.format.value}")
             return
         self._ledger.record(
             LedgerEntry(day, FetchOutcome.ABSENT, last_url, self._clock.now(), 0, "", 0, None)

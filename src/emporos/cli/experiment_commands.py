@@ -46,6 +46,10 @@ from emporos.cli.filings_commands import (
     research_track_l_coverage,
 )
 from emporos.cli.fo_archive_commands import research_build_fo_specs, research_collect_fo_archive
+from emporos.cli.fo_stock_commands import (
+    research_collect_fo_stock_archive,
+    research_report_fo_stock_archive,
+)
 from emporos.cli.index_change_commands import research_build_index_changes
 from emporos.cli.index_notice_commands import research_collect_index_notices
 from emporos.cli.option_screen_commands import research_screen_options
@@ -87,6 +91,8 @@ research_app.command("screen")(research_screen)
 research_app.command("screen-ranked")(research_screen_ranked)
 research_app.command("collect-results")(research_collect_results)
 research_app.command("collect-fo-archive")(research_collect_fo_archive)
+research_app.command("collect-fo-stock-archive")(research_collect_fo_stock_archive)
+research_app.command("report-fo-stock-archive")(research_report_fo_stock_archive)
 research_app.command("build-fo-specs")(research_build_fo_specs)
 research_app.command("screen-options")(research_screen_options)
 research_app.command("d1-universe")(research_d1_universe)

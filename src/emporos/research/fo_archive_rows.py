@@ -33,6 +33,7 @@ __all__ = [
     "InstrumentKind",
     "LegacyParser",
     "UdiffParser",
+    "csv_text_from_zip",
     "parser_for",
     "read_archive",
 ]
@@ -233,14 +234,18 @@ def parser_for(fmt: ArchiveFormat) -> ArchiveParser:
     return _PARSERS[fmt]()
 
 
-def read_archive(day: date, payload: bytes, fmt: ArchiveFormat) -> list[IndexContractRow]:
-    """The index contracts in one downloaded zip. The zip must hold exactly one CSV."""
+def csv_text_from_zip(payload: bytes) -> str:
+    """The text of the one CSV inside a downloaded zip (any other shape is refused)."""
     try:
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
             names = [n for n in archive.namelist() if n.lower().endswith(".csv")]
             if len(names) != 1:
                 raise ArchiveParseError(f"expected one CSV in the zip, found {names}")
-            text = archive.read(names[0]).decode("utf-8-sig")
+            return archive.read(names[0]).decode("utf-8-sig")
     except zipfile.BadZipFile as error:
         raise ArchiveParseError("the download is not a zip file") from error
-    return parser_for(fmt).parse(day, text)
+
+
+def read_archive(day: date, payload: bytes, fmt: ArchiveFormat) -> list[IndexContractRow]:
+    """The index contracts in one downloaded zip. The zip must hold exactly one CSV."""
+    return parser_for(fmt).parse(day, csv_text_from_zip(payload))
