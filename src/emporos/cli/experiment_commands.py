@@ -43,6 +43,7 @@ from emporos.cli.filings_commands import (
     research_collect_filings,
     research_extract_filing_text,
     research_filings_report,
+    research_track_l_coverage,
 )
 from emporos.cli.fo_archive_commands import research_build_fo_specs, research_collect_fo_archive
 from emporos.cli.index_change_commands import research_build_index_changes
@@ -99,6 +100,7 @@ research_app.command("collect-filings")(research_collect_filings)
 research_app.command("extract-filing-text")(research_extract_filing_text)
 research_app.command("build-events")(research_build_events)
 research_app.command("filings-report")(research_filings_report)
+research_app.command("track-l-coverage")(research_track_l_coverage)
 research_app.command("stress-book")(research_stress_book)
 research_app.command("collect-index-notices")(research_collect_index_notices)
 research_app.command("build-index-changes")(research_build_index_changes)

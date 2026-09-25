@@ -18,7 +18,9 @@ import httpx
 import typer
 
 from emporos.cli.corporate_actions_commands import DEFAULT_TOKENS, research_symbols
+from emporos.cli.intraday_bars import VaultedIntradayBars
 from emporos.core.clock import IST, AsyncioSleeper, Sleeper, SystemClock
+from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.research.d1_universe import DEFAULT_MANIFEST, D1Manifest
 from emporos.research.filings.attachments import (
@@ -47,6 +49,7 @@ from emporos.research.filings.raw_store import (
 )
 from emporos.research.filings.report import filing_report_lines
 from emporos.research.filings.universe import FilingUniverse
+from emporos.research.market_context.coverage import BarCoverage, FoCoverage, coverage_lines
 
 DEFAULT_FO_FILE = Path("config/universe/track-l/fo_mktlots.csv")
 FIRST_DAY = datetime(2024, 1, 1)
@@ -215,4 +218,32 @@ def research_filings_report(
     rows = store.rows_between(datetime.combine(first.date(), datetime.min.time(), tzinfo=IST), end)
     texts = {a.url: a for a in AttachmentTextStore(text).all()}
     for line in filing_report_lines(rows, texts):
+        typer.echo(line)
+
+
+_D1_FIRST = typer.Option(datetime(2024, 1, 1), formats=["%Y-%m-%d"], help="First day.")
+_FO_LEDGER = typer.Option(Path("docs/research/profit/fo-archive-ledger.jsonl"), help="F&O ledger.")
+NIFTY_ID = "NSE:99926000"
+
+
+def research_track_l_coverage(
+    manifest: Path = _MANIFEST,
+    tokens: Path = _TOKENS,
+    fo_ledger: Path = _FO_LEDGER,
+    first: datetime = _D1_FIRST,
+    last: datetime = _TO,
+) -> None:
+    """Report the 5-minute bar coverage of the D1 names and the F&O bhavcopy coverage."""
+    try:
+        symbols = research_symbols(manifest, tokens)
+        loader = VaultedIntradayBars.from_settings(Settings.default())
+        coverage = BarCoverage(loader, NIFTY_ID)
+        names = coverage.of({i: s for s, i in symbols.items()}, first.date(), last.date())
+        expected = coverage.expected_sessions(first.date(), last.date())
+        fo = FoCoverage.of(fo_ledger, expected, first.date(), last.date())
+    except (EmporosError, ValueError, OSError, KeyError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"track-l-coverage failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    for line in coverage_lines(names, len(expected), fo, first.date(), last.date()):
         typer.echo(line)

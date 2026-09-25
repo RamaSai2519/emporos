@@ -1,0 +1,8 @@
+
+5-minute bars over 2024-01-01..2026-03-18: 545 NIFTY sessions expected, 148 names
+  full (>= 99% of sessions): 148; partial: 0; none: 0
+  most short days (< 70 bars): IDEA 4, HINDUNILVR 2, ITC 2, SIEMENS 2, TMPV 2, ABB 1, ABBOTINDIA 1, ABCAPITAL 1
+
+F&O bhavcopy over the same window: 546 days on disk, 32 recorded absent (holidays), 0 expected sessions with no record
+  what it holds: index futures and options only (NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY, NIFTYNXT50): the parser drops stock-derivative rows, so no stock option premium or open interest
+
