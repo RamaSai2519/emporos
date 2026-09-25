@@ -177,3 +177,20 @@ def test_a_day_nothing_expires_has_no_settlements(tmp_path: Path) -> None:
     snap = source.snapshot(DAY)
 
     assert snap is not None and snap.settlements == {}
+
+
+def test_each_expiry_carries_its_own_lot_size(tmp_path: Path) -> None:
+    source, _ = make(
+        tmp_path,
+        {
+            DAY: [
+                option("24950", expiry=EXPIRY, lot=40),
+                option("25000", expiry=NEXT, lot=25),
+            ]
+        },
+    )
+
+    snap = source.snapshot(DAY)
+
+    assert snap is not None
+    assert (snap.lot_for(EXPIRY), snap.lot_for(NEXT)) == (40, 25) and snap.lot_size == 40

@@ -51,7 +51,9 @@ def test_the_lot_size_is_inferred_from_futures_turnover_and_marked_inferred() ->
 
     (spec,) = ContractSpecBuilder().build(rows)
 
-    assert (spec.lot_size, spec.lot_source, spec.evidence) == (25, LotSource.INFERRED, 2)
+    # the nearest expiry (which the headline lot size is read from) rests on its one future
+    assert (spec.lot_size, spec.lot_source, spec.evidence) == (25, LotSource.INFERRED, 1)
+    assert spec.expiry_lots == ((date(2015, 3, 26), 25), (date(2015, 4, 30), 25))
 
 
 def test_a_future_with_too_few_lots_is_not_evidence() -> None:
@@ -102,14 +104,29 @@ def test_each_day_and_symbol_gets_its_own_spec_oldest_first() -> None:
     ]
 
 
-def test_two_exchange_lot_sizes_in_one_file_are_refused() -> None:
+def test_two_lot_sizes_for_one_expiry_in_one_file_are_refused() -> None:
     rows = [
         future(date(2015, 3, 26), lots=100, close="8800", lot=25, exchange=True),
-        future(date(2015, 4, 30), lots=100, close="8800", lot=50, exchange=True),
+        future(date(2015, 3, 26), lots=90, close="8800", lot=50, exchange=True),
     ]
 
     with pytest.raises(ValueError, match="two lot sizes"):
         ContractSpecBuilder().build(rows)
+
+
+def test_different_expiries_may_carry_different_lot_sizes() -> None:
+    """FINNIFTY on 2024-07-08: the exchange changes a lot size for NEW expiries only."""
+    rows = [
+        future(date(2015, 3, 26), lots=100, close="8800", lot=40, exchange=True),
+        future(date(2015, 4, 30), lots=100, close="8800", lot=25, exchange=True),
+        option(date(2015, 3, 26)),
+    ]
+
+    (spec,) = ContractSpecBuilder().build(rows)
+
+    assert spec.expiry_lots == ((date(2015, 3, 26), 40), (date(2015, 4, 30), 25))
+    assert (spec.lot_size, spec.lot_for(date(2015, 4, 30))) == (40, 25)  # headline is the nearest
+    assert spec.lot_for(date(2016, 1, 1)) == 40  # an expiry with none listed falls back
 
 
 def test_the_check_compares_inference_with_the_exchange_value_where_both_exist() -> None:
@@ -142,3 +159,17 @@ def test_specs_round_trip_through_parquet(tmp_path: object) -> None:
     write_specs(path, specs)
 
     assert read_specs(path) == specs
+
+
+@pytest.mark.parametrize(("close", "lot"), [("8800", 75), ("8800", 120), ("8800", 50)])
+def test_a_turnover_a_little_off_snaps_to_the_nearest_multiple_of_five(
+    close: str, lot: int
+) -> None:
+    exact = future(date(2015, 3, 26), lots=1000, close=close, lot=lot)
+    off = IndexContractRow(
+        **{**exact.__dict__, "turnover": exact.turnover * D("1.015")}
+    )  # 1.5% high
+
+    (spec,) = ContractSpecBuilder().build([off])
+
+    assert spec.lot_size == lot

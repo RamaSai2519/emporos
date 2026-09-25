@@ -164,18 +164,24 @@ class LegacyParser:
     """`fo<DD><MON><YYYY>bhav.csv`: `FUTIDX` and `OPTIDX` rows (option type `XX` marks a future)."""
 
     format = ArchiveFormat.LEGACY
+    _type_column = "OPTION_TYP"
     _KINDS: ClassVar[Mapping[str, InstrumentKind]] = {
         "FUTIDX": InstrumentKind.FUTURE,
         "OPTIDX": InstrumentKind.OPTION,
     }
     _COLUMNS: ClassVar[frozenset[str]] = frozenset({
-        "INSTRUMENT", "SYMBOL", "EXPIRY_DT", "STRIKE_PR", "OPTION_TYP", "OPEN", "HIGH", "LOW",
+        "INSTRUMENT", "SYMBOL", "EXPIRY_DT", "STRIKE_PR", "OPEN", "HIGH", "LOW",
         "CLOSE", "SETTLE_PR", "CONTRACTS", "VAL_INLAKH", "OPEN_INT", "CHG_IN_OI", "TIMESTAMP",
     })  # fmt: skip
 
     def parse(self, day: date, text: str) -> list[IndexContractRow]:
         reader = csv.DictReader(io.StringIO(text))
         _require(reader.fieldnames, self._COLUMNS, "legacy bhavcopy")
+        # the option-type column was called OPTIONTYPE in the oldest files
+        self._type_column = (
+            "OPTION_TYP" if "OPTION_TYP" in (reader.fieldnames or ()) else "OPTIONTYPE"
+        )
+        _require(reader.fieldnames, frozenset({self._type_column}), "legacy bhavcopy")
         rows: list[IndexContractRow] = []
         for raw in reader:
             kind = self._KINDS.get(raw["INSTRUMENT"])
@@ -201,7 +207,7 @@ class LegacyParser:
             kind=kind,
             expiry=self._date(raw["EXPIRY_DT"]),
             strike=_decimal(raw, "STRIKE_PR") if option else None,
-            right=OptionRight(raw["OPTION_TYP"]) if option else None,
+            right=OptionRight(raw[self._type_column]) if option else None,
             open=_decimal(raw, "OPEN"),
             high=_decimal(raw, "HIGH"),
             low=_decimal(raw, "LOW"),

@@ -45,7 +45,7 @@ class RiskCappedPutSpread:
         if not shorts:
             return None
         short = shorts[-1]
-        widest = self.max_loss_rupees / snapshot.lot_size
+        widest = self.max_loss_rupees / snapshot.lot_for(expiry)
         longs = [s for s in puts if s < short and short - s <= widest]
         if not longs:
             return None

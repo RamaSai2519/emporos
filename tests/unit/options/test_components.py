@@ -466,3 +466,14 @@ class TestMonthlyExpiries:
 
         with pytest.raises(ValueError):
             MonthlyExpiries({}, 30, 20)
+
+
+class TestLotPerExpiry:
+    def test_an_expiry_may_override_the_snapshots_lot_size(self) -> None:
+        near, far = days_after(30), days_after(60)
+        snap = ChainSnapshot(
+            DAY0, "T", D(100), 40, D(10), TICK,
+            {near: ExpiryChain(near, {}), far: ExpiryChain(far, {}, 25)},
+        )  # fmt: skip
+
+        assert (snap.lot_for(near), snap.lot_for(far), snap.lot_for(days_after(9))) == (40, 25, 40)

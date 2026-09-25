@@ -77,7 +77,7 @@ class BhavcopyChainSource:
             spec.lot_size,
             self._step,
             self._tick,
-            self._expiries(rows),
+            self._expiries(rows, spec),
             self._settlements(day, own),
         )
 
@@ -99,14 +99,16 @@ class BhavcopyChainSource:
         return self._closes.get(day)
 
     @staticmethod
-    def _expiries(rows: Sequence[IndexContractRow]) -> dict[date, ExpiryChain]:
+    def _expiries(rows: Sequence[IndexContractRow], spec: ContractSpec) -> dict[date, ExpiryChain]:
         by_expiry: dict[date, dict[tuple[Decimal, OptionRight], OptionQuote]] = defaultdict(dict)
         for row in rows:
             assert row.strike is not None and row.right is not None
             by_expiry[row.expiry][(row.strike, row.right)] = OptionQuote(
                 row.strike, row.right, row.close, row.settle, row.open_interest, row.contracts
             )
-        return {e: ExpiryChain(e, quotes) for e, quotes in sorted(by_expiry.items())}
+        return {
+            e: ExpiryChain(e, quotes, spec.lot_for(e)) for e, quotes in sorted(by_expiry.items())
+        }
 
     def underlying_agreement(self, tolerance: Decimal) -> list[tuple[date, Decimal, Decimal]]:
         """Days where the archive's own index level and the index series differ by more than

@@ -113,6 +113,13 @@ class TestReaders:
         assert future.turnover == Decimal("934308.79") * 100_000  # lakhs to rupees
         assert rows[1].right is OptionRight.CALL and rows[1].strike == Decimal(16700)
 
+    def test_the_oldest_legacy_files_name_the_option_type_column_differently(self) -> None:
+        old = LEGACY_CSV.replace("OPTION_TYP", "OPTIONTYPE").replace("02-MAR-2015", "2-MAR-2015")
+
+        rows = read_archive(LEGACY_DAY, zipped("f.csv", old), ArchiveFormat.LEGACY)
+
+        assert rows[1].right is OptionRight.CALL and rows[0].day == LEGACY_DAY
+
     def test_a_file_for_another_day_is_refused(self) -> None:
         with pytest.raises(ArchiveParseError, match="in the file of"):
             read_archive(date(2024, 9, 27), zipped("x.csv", UDIFF_CSV), ArchiveFormat.UDIFF)

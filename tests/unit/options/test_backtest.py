@@ -285,6 +285,18 @@ class TestSizeAndCosts:
 
         assert result.trades[0].units == 75 and result.trades[0].gross_pnl == D("75")
 
+    def test_the_units_use_the_lot_size_of_the_expiry_traded(self) -> None:
+        def with_expiry_lot(snap: object) -> object:
+            chain = snap.expiries[EXPIRY]  # type: ignore[attr-defined]
+            return replace(snap, expiries={EXPIRY: replace(chain, lot_size=40)})  # type: ignore[type-var]
+
+        result = run(
+            with_expiry_lot(put_chain(DAY0, "3.00", "1.00", lot_size=75)),
+            put_chain(days_after(1), "1.50", "0.50"),
+        )
+
+        assert result.trades[0].units == 40  # the expiry's lot, not the snapshot's 75
+
     def test_benchmark_slippage_pays_up_on_every_leg_both_ways(self) -> None:
         # entry: sell 3.00 -> 2.90, buy 1.00 -> 1.10 (credit 1.80); the target needs 0.90 kept:
         # marks 2.00 / 0.70 give a mark debit of 1.30, so 0.50 kept: nothing yet.

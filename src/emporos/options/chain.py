@@ -53,6 +53,9 @@ class OptionQuote:
 class ExpiryChain:
     expiry: date
     quotes: Mapping[tuple[Decimal, OptionRight], OptionQuote]
+    # the lot size of THIS expiry's contracts, when it differs from the snapshot's: an exchange
+    # changes a lot size for new expiries only, so two expiries listed on one day can differ
+    lot_size: int | None = None
 
     def quote(self, strike: Decimal, right: OptionRight) -> OptionQuote | None:
         return self.quotes.get((strike, right))
@@ -87,6 +90,11 @@ class ChainSnapshot:
     @property
     def expiry_dates(self) -> tuple[date, ...]:
         return tuple(sorted(self.expiries))
+
+    def lot_for(self, expiry: date) -> int:
+        """The lot size of that expiry's contracts (the snapshot's own when it has no override)."""
+        chain = self.expiries.get(expiry)
+        return self.lot_size if chain is None or chain.lot_size is None else chain.lot_size
 
     def days_to(self, expiry: date) -> int:
         return (expiry - self.day).days

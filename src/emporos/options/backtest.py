@@ -281,7 +281,7 @@ class SpreadBacktester:
         ):
             skipped["not_tradable"] += 1
             return None, cash
-        units = self._settings.lots * snapshot.lot_size
+        units = self._settings.lots * snapshot.lot_for(plan.expiry)
         fills = [
             self._fill(leg, leg.side, quotes[leg], snapshot.tick_size, units) for leg in plan.legs
         ]
