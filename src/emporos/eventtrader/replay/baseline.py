@@ -1,11 +1,11 @@
 """The triage-only baseline (EM-240, a DIAGNOSTIC, never a gate).
 
 Every event triage would have sent on (material, a horizon, confidence at the variant's threshold)
-is traded in triage's direction: up is long, down is short, and a swing short becomes the put. No model
-picks a stop or target: for each horizon the baseline uses the MEDIAN stop %, target % (and hold
-days) of the variant's own judge-approved trades, one number per horizon. It reads the variant's
-recorded triage answers, so it makes no call and carries no token cost; the risk engine, the fills
-and the costs are the run's own."""
+is traded in triage's direction: up is long, down is short, and a swing short becomes the put. No
+model picks a stop or target: for each horizon the baseline uses the MEDIAN stop %, target % (and
+hold days) of the variant's own judge-approved trades, one number per horizon. It reads the
+variant's recorded triage answers, so it makes no call and carries no token cost; the risk engine,
+the fills and the costs are the run's own."""
 
 from __future__ import annotations
 
