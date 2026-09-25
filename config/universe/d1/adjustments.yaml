@@ -1,0 +1,15 @@
+# The corporate-action adjustment ledger for the D1 research names (PROFIT_PLAN §4 A-F2, EM-221).
+#
+# EMPTY ON PURPOSE. A factor is a claim about a company (a split, a bonus, a demerger) and every one
+# needs a named source. The source has not been confirmed: NSE's Terms of Use forbid systematic
+# collection and simulation use, so nothing has been fetched from them. Until the operator confirms a
+# source, `emporos research audit-discontinuities` lists every >=15% open gap in the daily bars as
+# quarantined, and a swing screen takes no trade across one.
+#
+# Format (ratio is the price multiplier for bars BEFORE the ex-date, a quoted string):
+#   - instrument_id: "NSE:1333"
+#     ex_date: 2019-09-19
+#     ratio: "0.2"          # a 1:5 split
+#     kind: split           # split | bonus | other
+#     source: "<who said so>"
+factors: []
