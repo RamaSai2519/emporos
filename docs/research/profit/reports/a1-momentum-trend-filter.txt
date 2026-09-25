@@ -1,0 +1,70 @@
+a1-momentum-trend-filter: 148 names, 279284 sessions, gaps >= 15%: 19 explained, 12 artifacts flattened, 27 real (traded through), adjustment ledger 19 factors, capital 100000, delivery schedule angelone-equity-delivery (verified: False)
+a1-momentum-trend-filter: Discovery 2016-10-03..2024-12-31, 8 arms
+benchmark (same-universe equal-weight buy-and-hold, same costs): net CAGR 25.1%, net Sharpe 1.30, max drawdown 37.8%, positive months 69%
+
+arm                                                            result starts     1st buy       CAGR     adv Sharpe    m+   worst  maxDD     t trips    y+  conc   nbr cash days
+lookback_sessions=126 rebalance=weekly max_positions=5         reject 2017-07-24 2017-07-25   30.9%   26.3%   1.28   48%  -17.0%  44.6%  3.09   286   78%   12%  100%   558/2031
+lookback_sessions=126 rebalance=weekly max_positions=3         reject 2017-07-24 2017-07-25   41.6%   36.0%   1.40   47%  -16.9%  45.5%  3.16   200   78%   16%  100%   560/2031
+lookback_sessions=126 rebalance=monthly max_positions=5        reject 2017-08-01 2017-08-02   29.4%   26.4%   1.28   43%  -11.0%  33.5%  2.99   173   67%   20%  100%   676/2031
+lookback_sessions=126 rebalance=monthly max_positions=3        reject 2017-08-01 2017-08-02   20.4%   15.4%   0.85   40%  -14.5%  41.0%  2.14   125   67%   59%  100%   707/2031
+lookback_sessions=252 rebalance=weekly max_positions=5         reject 2017-11-13 2017-11-14   36.7%   34.2%   1.48   48%  -16.9%  34.0%  3.60   199   78%   29%  100%   633/2031
+lookback_sessions=252 rebalance=weekly max_positions=3         reject 2017-11-13 2017-11-14   40.5%   38.2%   1.46   47%  -13.8%  40.3%  3.50   136   89%   44%  100%   633/2031
+lookback_sessions=252 rebalance=monthly max_positions=5        reject 2017-12-01 2017-12-04   32.2%   30.4%   1.43   43%  -11.5%  38.3%  3.35   119   56%   34%  100%   759/2031
+lookback_sessions=252 rebalance=monthly max_positions=3        reject 2017-12-01 2017-12-04   23.4%   20.0%   1.03   40%  -14.5%  49.6%  2.51    97   56%   38%  100%   776/2031
+
+net return per calendar year (benchmark costs):
+arm                                                               2016    2017    2018    2019    2020    2021    2022    2023    2024
+lookback_sessions=126 rebalance=weekly max_positions=5            0.0%   10.3%  -31.4%    8.1%   82.5%  116.3%   38.6%   70.2%   21.1%
+lookback_sessions=126 rebalance=weekly max_positions=3            0.0%    8.9%  -18.8%    8.8%   94.7%  139.3%   42.3%  112.5%   29.4%
+lookback_sessions=126 rebalance=monthly max_positions=5           0.0%   12.8%  -20.8%   -0.2%   99.5%  116.3%   27.6%   31.4%   30.0%
+lookback_sessions=126 rebalance=monthly max_positions=3           0.0%    4.6%  -28.5%   15.8%  109.4%   50.5%   39.3%   29.0%   -6.0%
+lookback_sessions=252 rebalance=weekly max_positions=5            0.0%    8.4%  -11.8%   16.3%   89.0%  115.0%    9.6%   75.0%   51.7%
+lookback_sessions=252 rebalance=weekly max_positions=3            0.0%    5.9%    6.3%   16.2%  125.4%   77.2%   23.7%  119.1%   16.6%
+lookback_sessions=252 rebalance=monthly max_positions=5           0.0%   14.2%  -12.5%   -7.1%   72.9%  103.5%   -1.5%   97.2%   57.1%
+lookback_sessions=252 rebalance=monthly max_positions=3           0.0%   17.4%  -25.2%  -11.0%  120.2%   78.6%   -8.7%   89.9%    6.5%
+
+risk of ruin, 20-day block bootstrap, 12-month paths (§3.4):
+lookback_sessions=126 rebalance=weekly max_positions=5         P(drawdown>=30%) 10.3%  P(12-month net<0) 16.7%  paths 10000 seed 20260925
+lookback_sessions=126 rebalance=weekly max_positions=3         P(drawdown>=30%) 18.0%  P(12-month net<0) 15.8%  paths 10000 seed 20260925 (concentrated: the gate applies)
+lookback_sessions=126 rebalance=monthly max_positions=5        P(drawdown>=30%) 5.9%  P(12-month net<0) 16.0%  paths 10000 seed 20260925
+lookback_sessions=126 rebalance=monthly max_positions=3        P(drawdown>=30%) 14.4%  P(12-month net<0) 26.3%  paths 10000 seed 20260925 (concentrated: the gate applies)
+lookback_sessions=252 rebalance=weekly max_positions=5         P(drawdown>=30%) 5.9%  P(12-month net<0) 11.5%  paths 10000 seed 20260925
+lookback_sessions=252 rebalance=weekly max_positions=3         P(drawdown>=30%) 8.9%  P(12-month net<0) 13.3%  paths 10000 seed 20260925 (concentrated: the gate applies)
+lookback_sessions=252 rebalance=monthly max_positions=5        P(drawdown>=30%) 2.6%  P(12-month net<0) 12.8%  paths 10000 seed 20260925
+lookback_sessions=252 rebalance=monthly max_positions=3        P(drawdown>=30%) 8.1%  P(12-month net<0) 21.9%  paths 10000 seed 20260925 (concentrated: the gate applies)
+
+why arms did not pass:
+lookback_sessions=126 rebalance=weekly max_positions=5: net Sharpe beats the same-universe equal-weight buy-and-hold; months net positive >= 60%; worst month >= -10%; max drawdown <= 25%
+  321 rebalances ranked, 58 stops
+lookback_sessions=126 rebalance=weekly max_positions=3: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; aggressive arm: P(drawdown >= 30%) <= 5%
+  321 rebalances ranked, 68 stops
+lookback_sessions=126 rebalance=monthly max_positions=5: net Sharpe beats the same-universe equal-weight buy-and-hold; months net positive >= 60%; worst month >= -10%; max drawdown <= 25%
+  74 rebalances ranked, 36 stops
+lookback_sessions=126 rebalance=monthly max_positions=3: net Sharpe beats the same-universe equal-weight buy-and-hold; months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; no instrument > 25% of net profit; aggressive arm: P(drawdown >= 30%) <= 5%
+  74 rebalances ranked, 51 stops
+lookback_sessions=252 rebalance=weekly max_positions=5: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; no instrument > 25% of net profit
+  305 rebalances ranked, 37 stops
+lookback_sessions=252 rebalance=weekly max_positions=3: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; no instrument > 25% of net profit; aggressive arm: P(drawdown >= 30%) <= 5%
+  305 rebalances ranked, 41 stops
+lookback_sessions=252 rebalance=monthly max_positions=5: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; calendar years positive >= 60%; no instrument > 25% of net profit
+  70 rebalances ranked, 26 stops
+lookback_sessions=252 rebalance=monthly max_positions=3: net Sharpe beats the same-universe equal-weight buy-and-hold; months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; round trips >= 100; calendar years positive >= 60%; no instrument > 25% of net profit; aggressive arm: P(drawdown >= 30%) <= 5%
+  70 rebalances ranked, 35 stops
+
+REAL gaps a held position went through (traded through, never zeroed):
+lookback_sessions=126 rebalance=weekly max_positions=5: 1 gap(s), Rs 42,764 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +42,764
+lookback_sessions=126 rebalance=weekly max_positions=3: 1 gap(s), Rs 116,317 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +116,317
+lookback_sessions=126 rebalance=monthly max_positions=5: 1 gap(s), Rs 33,533 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +33,533
+lookback_sessions=126 rebalance=monthly max_positions=3: 1 gap(s), Rs 47,031 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +47,031
+lookback_sessions=252 rebalance=weekly max_positions=5: 1 gap(s), Rs 35,304 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +35,304
+lookback_sessions=252 rebalance=weekly max_positions=3: 0 gap(s), Rs 0 in all
+lookback_sessions=252 rebalance=monthly max_positions=5: 1 gap(s), Rs 27,370 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +27,370
+lookback_sessions=252 rebalance=monthly max_positions=3: 0 gap(s), Rs 0 in all
+
+regime defined from 2017-07-24 (NIFTY 50 > 200-session average)
