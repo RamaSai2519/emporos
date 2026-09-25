@@ -29,7 +29,7 @@ class JevConfig:
     max_concurrency: int = 4
     timeout_seconds: float = 5.0
     max_retries: int = 2
-    base_url: str = "https://gateway.ai.vercel.sh"
+    base_url: str = "https://ai-gateway.vercel.sh"
     model: str = "openai/gpt-4o-mini"
     # Experiment provenance (EM-187). Live config is not forced to carry these; a Jev EXPERIMENT
     # refuses to run without a declared cutoff (`emporos.jev.leakage`), and cost analysis refuses

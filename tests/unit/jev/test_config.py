@@ -75,3 +75,9 @@ def test_provenance_fields_default_to_undeclared() -> None:
 def test_a_negative_inr_rate_is_refused() -> None:
     with pytest.raises(ConfigurationError, match="inr_per_1k_tokens"):
         JevConfig(inr_per_1k_tokens=Decimal("-0.1"))
+
+
+def test_jev_and_the_event_trader_aim_at_the_same_gateway_host() -> None:
+    from emporos.eventtrader.llm.http_clients import GATEWAY_URL
+
+    assert JevConfig().base_url == GATEWAY_URL == "https://ai-gateway.vercel.sh"
