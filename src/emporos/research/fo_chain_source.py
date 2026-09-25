@@ -5,6 +5,9 @@ One underlying at a time. Each day's snapshot is built from that day's stored in
   not offered, because a backtest must never guess a position's size.
 * underlying close: the level the file itself carries (UDiFF), else the index's own daily close from
   its 5-minute series; a day with neither is not offered.
+* on a monthly expiry day the expiring future's settlement price is the exchange's final
+  settlement level of the index (`ChainSnapshot.settlements`); the 5-minute close is NOT used to
+  settle, being up to about 0.1% off the official close.
 * a leg's close counts as a price only if the contract TRADED that day (contracts > 0): the file
   carries a stale close for a contract that did not, and `OptionQuote.tradable` refuses it.
 Options only; futures rows are not part of a spread's chain."""
@@ -62,17 +65,32 @@ class BhavcopyChainSource:
         spec = self._specs.get(day)
         if spec is None or spec.lot_size is None or day not in self._offered:
             return None
-        rows = [
-            r
-            for r in self._store.read(day)
-            if r.symbol == self._symbol and r.kind is InstrumentKind.OPTION
-        ]
+        own = self._store.read(day, self._symbol)
+        rows = [r for r in own if r.kind is InstrumentKind.OPTION]
         level = self._level(day, rows)
         if not rows or level is None:
             return None
         return ChainSnapshot(
-            day, self._symbol, level, spec.lot_size, self._step, self._tick, self._expiries(rows)
+            day,
+            self._symbol,
+            level,
+            spec.lot_size,
+            self._step,
+            self._tick,
+            self._expiries(rows),
+            self._settlements(day, own),
         )
+
+    @staticmethod
+    def _settlements(day: date, rows: Sequence[IndexContractRow]) -> dict[date, Decimal]:
+        """On an expiry day, the expiring future's settlement price IS the index's final
+        settlement level (the exchange settles both on it), so it is the number an expiring index
+        option settles against. Only monthly expiries have a future, so only they appear."""
+        return {
+            r.expiry: r.settle
+            for r in rows
+            if r.kind is InstrumentKind.FUTURE and r.expiry == day and r.settle > 0
+        }
 
     def _level(self, day: date, rows: Sequence[IndexContractRow]) -> Decimal | None:
         carried = [r.underlying for r in rows if r.underlying is not None and r.underlying > 0]
@@ -99,8 +117,8 @@ class BhavcopyChainSource:
             close = self._closes.get(day)
             carried = [
                 r.underlying
-                for r in self._store.read(day)
-                if r.symbol == self._symbol and r.underlying is not None
+                for r in self._store.read(day, self._symbol)
+                if r.underlying is not None
             ]
             if close is None or not carried:
                 continue

@@ -412,7 +412,7 @@ class TestEntry:
         template = PutCreditSpreadTemplate(SigmaStrikes(FixedVolatility("0.10"), D(1), D(100)))
 
         class Closed:
-            def allows(self, snapshot: ChainSnapshot) -> bool:
+            def allows(self, snapshot: ChainSnapshot, expiry: date) -> bool:
                 return False
 
         assert (
@@ -423,3 +423,46 @@ class TestEntry:
             is None
         )
         assert SpreadEntry([AlwaysOpen()], TargetDte(20, 45, 30), template).plan(snap) is None
+
+
+class TestMonthlyExpiries:
+    def snap(self, *offsets: int) -> ChainSnapshot:
+        return ChainSnapshot(
+            DAY0, "T", D(100), 10, D(10), TICK,
+            {days_after(n): ExpiryChain(days_after(n), {}) for n in offsets},
+        )  # fmt: skip
+
+    def test_only_expiries_that_are_also_future_expiries_count(self) -> None:
+        from emporos.options.entry import MonthlyExpiries
+
+        chooser = MonthlyExpiries({DAY0: frozenset({days_after(34), days_after(62)})}, 21, 49)
+
+        # 27 is a weekly (no future); 34 is monthly and in the window; 62 is monthly but too far
+        assert chooser.choose(self.snap(6, 13, 27, 34, 62)) == days_after(34)
+
+    def test_the_nearer_of_two_qualifying_monthlies_is_chosen(self) -> None:
+        from emporos.options.entry import MonthlyExpiries
+
+        chooser = MonthlyExpiries({DAY0: frozenset({days_after(22), days_after(48)})}, 21, 49)
+
+        assert chooser.choose(self.snap(22, 48)) == days_after(22)
+
+    def test_the_window_edges_are_inclusive(self) -> None:
+        from emporos.options.entry import MonthlyExpiries
+
+        chooser = MonthlyExpiries({DAY0: frozenset({days_after(21), days_after(49)})}, 21, 49)
+
+        assert chooser.choose(self.snap(21)) == days_after(21)
+        assert chooser.choose(self.snap(49)) == days_after(49)
+        assert chooser.choose(self.snap(20, 50)) is None
+
+    def test_a_day_with_no_futures_listed_offers_no_expiry(self) -> None:
+        from emporos.options.entry import MonthlyExpiries
+
+        assert MonthlyExpiries({}, 21, 49).choose(self.snap(34)) is None
+
+    def test_the_window_must_be_ordered(self) -> None:
+        from emporos.options.entry import MonthlyExpiries
+
+        with pytest.raises(ValueError):
+            MonthlyExpiries({}, 30, 20)

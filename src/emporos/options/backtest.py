@@ -1,11 +1,12 @@
 """The end-of-day spread backtester (EM-226, PROFIT_PLAN.md §5 B-F2).
 
-Once a day, at the close: manage the open spread (settle it on its expiry day, otherwise let the
-exit policy decide), then, if nothing is open and nothing was closed today, plan an entry. One
-spread at a time. Fills are at the day's close plus the slippage scenario's assumption, never at a
-price the contract did not trade at: a leg that did not trade that day blocks an entry and defers
-an exit (on its expiry day a spread settles at intrinsic value regardless). Every trade and every
-day is returned, so a caller can draw the daily P&L and the equity curve of each arm.
+Once a day, at the close: manage every open spread (settle it on its expiry day, otherwise let the
+exit policy decide), then, if the depth policy allows another, plan at most one entry. The margin
+of every open spread counts against the capital. Fills are at the day's close plus the slippage
+scenario's assumption, never at a price the contract did not trade at: a leg that did not trade
+that day blocks an entry and defers an exit (on its expiry day a spread settles at intrinsic value
+regardless). Every trade and every day is returned, so a caller can draw the daily P&L and the
+equity curve of each arm.
 
 What this cannot know, and does not pretend to: intraday prices, the true bid-ask, implied
 volatility, the broker's real margin, or a fill's queue position. Slippage, margin and
@@ -23,6 +24,7 @@ from decimal import Decimal
 from emporos.domain.orders import OrderSide
 from emporos.options.chain import ChainSnapshot, ExpiryChain, OptionQuote, OptionRight
 from emporos.options.chain_source import ChainSource
+from emporos.options.depth import DepthPolicy, FixedDepth
 from emporos.options.entry import EntryPlanner
 from emporos.options.exits import ExitPolicy, ExitReason, OpenView
 from emporos.options.fo_costs import FoCharges, FoCostModel, FoFeeSchedule
@@ -35,11 +37,17 @@ __all__ = [
     "BacktestSettings",
     "DayPnl",
     "MissingExpirySnapshot",
+    "MissingSettlement",
     "SpreadBacktester",
     "SpreadTrade",
 ]
 
 _OPPOSITE = {OrderSide.BUY: OrderSide.SELL, OrderSide.SELL: OrderSide.BUY}
+
+
+class MissingSettlement(RuntimeError):
+    """A spread reached its expiry day and the chain carries no final settlement level for it. A
+    spread must settle on the exchange's own number, never on an approximation, so the run stops."""
 
 
 class MissingExpirySnapshot(RuntimeError):
@@ -90,6 +98,7 @@ class DayPnl:
     day: date
     equity: Decimal
     pnl: Decimal  # the day's change in equity, marked to the close
+    open_positions: int = 0  # spreads still open after the day's trading
 
 
 @dataclass(frozen=True)
@@ -144,7 +153,9 @@ class SpreadBacktester:
         margin: MarginEstimator,
         fees: FoFeeSchedule,
         settings: BacktestSettings,
+        depth: DepthPolicy | None = None,
     ) -> None:
+        self._depth = depth or FixedDepth(1)
         self._chains = chains
         self._entry = entry
         self._exits = exits
@@ -158,7 +169,7 @@ class SpreadBacktester:
         skipped: Counter[str] = Counter()
         cash = Decimal(0)  # realised P&L after costs, plus the entry costs of what is open
         equity = self._settings.capital
-        held: _Open | None = None
+        held: list[_Open] = []
         for day in self._chains.days():
             if not first <= day <= last:
                 continue
@@ -166,18 +177,27 @@ class SpreadBacktester:
             if snapshot is None:
                 skipped["no_chain"] += 1
                 continue
-            if held is not None and day > held.plan.expiry:
-                raise MissingExpirySnapshot(f"open past {held.plan.expiry}, first chain {day}")
-            closed_today = False
-            if held is not None:
-                trade, cash = self._manage(held, snapshot, cash, skipped)
-                if trade is not None:
+            for position in held:
+                if day > position.plan.expiry:
+                    raise MissingExpirySnapshot(
+                        f"open past {position.plan.expiry}, first chain {day}"
+                    )
+            still_open: list[_Open] = []
+            for position in held:
+                trade, cash = self._manage(position, snapshot, cash, skipped)
+                if trade is None:
+                    still_open.append(position)
+                else:
                     trades.append(trade)
-                    held, closed_today = None, True
-            if held is None and not closed_today:
-                held, cash = self._enter(snapshot, cash, skipped)
+            held = still_open
+            if len(held) < self._depth.limit(snapshot):
+                opened, cash = self._enter(snapshot, cash, held, skipped)
+                if opened is not None:
+                    held.append(opened)
+            elif self._entry.plan(snapshot) is not None:
+                skipped["ladder_full"] += 1
             marked = self._capital_now(held, snapshot, cash)
-            days.append(DayPnl(day, marked, marked - equity))
+            days.append(DayPnl(day, marked, marked - equity, len(held)))
             equity = marked
         return BacktestResult(tuple(trades), tuple(days), dict(skipped))
 
@@ -214,7 +234,9 @@ class SpreadBacktester:
     def _settle(
         self, held: _Open, snapshot: ChainSnapshot, cash: Decimal
     ) -> tuple[SpreadTrade | None, Decimal]:
-        spot = snapshot.underlying_close
+        spot = snapshot.settlements.get(held.plan.expiry)
+        if spot is None:
+            raise MissingSettlement(f"no settlement level for {held.plan.expiry} in {snapshot.day}")
         debit = held.plan.settlement_debit(spot)
         intrinsic = Decimal(0)
         for vertical in held.plan.verticals:
@@ -246,7 +268,7 @@ class SpreadBacktester:
 
     # --- a new position -------------------------------------------------------------------------
     def _enter(
-        self, snapshot: ChainSnapshot, cash: Decimal, skipped: Counter[str]
+        self, snapshot: ChainSnapshot, cash: Decimal, held: list[_Open], skipped: Counter[str]
     ) -> tuple[_Open | None, Decimal]:
         plan = self._entry.plan(snapshot)
         if plan is None:
@@ -270,7 +292,7 @@ class SpreadBacktester:
             skipped["no_credit" if credit <= 0 else "credit_beyond_width"] += 1
             return None, cash
         margin = self._margin.required(plan, credit, units)
-        if margin > self._settings.capital + cash:
+        if margin + sum((p.margin for p in held), Decimal(0)) > self._settings.capital + cash:
             skipped["margin"] += 1
             return None, cash
         charges = self._costs.orders(fills)
@@ -307,12 +329,11 @@ class SpreadBacktester:
             total += mark if leg.side is OrderSide.SELL else -mark
         return total
 
-    def _capital_now(self, held: _Open | None, snapshot: ChainSnapshot, cash: Decimal) -> Decimal:
+    def _capital_now(self, held: list[_Open], snapshot: ChainSnapshot, cash: Decimal) -> Decimal:
         equity = self._settings.capital + cash
-        if held is None:
-            return equity
-        chain = snapshot.expiries.get(held.plan.expiry)
-        quotes = self._quotes(held.plan, chain)
-        if quotes is not None:
-            held.last_mark_debit = self._close_debit(held.plan, quotes)
-        return equity + (held.credit_per_unit - held.last_mark_debit) * held.units
+        for position in held:
+            quotes = self._quotes(position.plan, snapshot.expiries.get(position.plan.expiry))
+            if quotes is not None:
+                position.last_mark_debit = self._close_debit(position.plan, quotes)
+            equity += (position.credit_per_unit - position.last_mark_debit) * position.units
+        return equity

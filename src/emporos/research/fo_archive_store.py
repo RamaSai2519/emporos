@@ -85,8 +85,11 @@ class FoDayStore:
         staging.replace(target)
         return len(materialised)
 
-    def read(self, day: date) -> list[IndexContractRow]:
-        table = pq.read_table(self.path(day), schema=_SCHEMA)
+    def read(self, day: date, symbol: str | None = None) -> list[IndexContractRow]:
+        """The day's rows, or only one index's (filtered before the rows are built, which is most
+        of the cost of reading a day)."""
+        filters = None if symbol is None else [("symbol", "=", symbol)]
+        table = pq.read_table(self.path(day), schema=_SCHEMA, filters=filters)
         return [self._row(record) for record in table.to_pylist()]
 
     def days(self) -> list[date]:

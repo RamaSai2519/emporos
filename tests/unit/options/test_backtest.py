@@ -5,6 +5,7 @@ DAY0, a lot of 10 units, zero fees and zero slippage, so every rupee below is ar
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
@@ -14,8 +15,11 @@ from emporos.options.backtest import (
     BacktestResult,
     BacktestSettings,
     MissingExpirySnapshot,
+    MissingSettlement,
     SpreadBacktester,
 )
+from emporos.options.chain import ChainSnapshot
+from emporos.options.depth import DepthPolicy, FixedDepth
 from emporos.options.exits import ExitReason, standard_policy
 from emporos.options.fo_costs import FoFeeSchedule
 from emporos.options.margin import SpanLikeMargin
@@ -121,6 +125,19 @@ class TestExpiry:
 
         (trade,) = result.trades
         assert trade.gross_pnl == -trade.max_loss
+
+    def test_the_settlement_level_is_the_exchanges_not_the_underlying_close(self) -> None:
+        settled = replace(put_chain(EXPIRY, "0", "0", spot="100"), settlements={EXPIRY: D(85)})
+
+        result = run(put_chain(DAY0, "3.00", "1.00"), settled)
+
+        assert result.trades[0].gross_pnl == D(-30)  # 5 in the money at 85, not out of it at 100
+
+    def test_an_expiry_day_without_a_settlement_level_stops_the_run(self) -> None:
+        no_level = replace(put_chain(EXPIRY, "0", "0", spot="85"), settlements={})
+
+        with pytest.raises(MissingSettlement):
+            run(put_chain(DAY0, "3.00", "1.00"), no_level)
 
     def test_a_missing_expiry_chain_stops_the_run_instead_of_guessing(self) -> None:
         with pytest.raises(MissingExpirySnapshot):
@@ -228,19 +245,19 @@ class TestEntryGuards:
 
 
 class TestSequencing:
-    def test_a_spread_closed_today_is_not_replaced_today(self) -> None:
+    def test_a_spread_closed_today_frees_its_slot_for_todays_entry(self) -> None:
         result = run(
             put_chain(DAY0, "3.00", "1.00"),
             put_chain(days_after(1), "1.50", "0.50"),
             put_chain(days_after(2), "3.00", "1.00"),
-            entry_days=frozenset({DAY0, days_after(1), days_after(2)}),
+            entry_days=frozenset({DAY0, days_after(1)}),
             last=days_after(2),
         )
 
         assert len(result.trades) == 1
-        # day 1 closed the first trade and opened nothing; day 2 opened the second (marked flat)
-        assert result.days[1].equity == D(1010)
-        assert result.days[2].equity == D(1010)
+        # day 1 banks +10 and opens a new spread at the day's marks (credit 1.00), marked flat;
+        # on day 2 that spread's debit is 2.00 against a credit of 1.00: -10 unrealised
+        assert [d.equity for d in result.days] == [D(1000), D(1010), D(1000)]
 
     def test_only_one_spread_is_open_at_a_time(self) -> None:
         result = run(
@@ -359,3 +376,74 @@ class TestSeries:
         ):
             with pytest.raises(ValueError):
                 bad()
+
+
+class TestLadder:
+    def ladder(
+        self, *snapshots: object, depth: DepthPolicy, capital: str = "1000",
+        days: frozenset[date] | None = None, last: date | None = None,
+    ) -> BacktestResult:  # fmt: skip
+        backtester = SpreadBacktester(
+            source(*snapshots),  # type: ignore[arg-type]
+            ScriptedPlanner(PCS, days or frozenset({DAY0, days_after(1), days_after(2)})),
+            standard_policy(),
+            SpanLikeMargin(D("0.10")),
+            ZERO_FEES,
+            BacktestSettings(D(capital), 1, ZERO),
+            depth,
+        )
+        return backtester.run(DAY0, last or days_after(60))
+
+    def flat(self, n: int) -> object:
+        return put_chain(days_after(n), "3.00", "1.00")
+
+    def test_two_spreads_can_be_open_together_and_a_third_is_refused_and_counted(self) -> None:
+        result = self.ladder(self.flat(0), self.flat(1), self.flat(2), depth=FixedDepth(2))
+
+        assert result.skipped["ladder_full"] == 1
+        assert result.trades == ()  # all still open
+
+    def test_every_open_spread_is_marked_and_summed(self) -> None:
+        result = self.ladder(
+            self.flat(0),
+            put_chain(days_after(1), "2.50", "1.00"),  # the first spread: (2 - 1.5) x 10 = +5
+            depth=FixedDepth(2),
+            days=frozenset({DAY0, days_after(1)}),
+            last=days_after(1),
+        )
+
+        # day 1: the first is +5; the second opens at credit 1.50 and is marked flat
+        assert [d.equity for d in result.days] == [D(1000), D(1005)]
+
+    def test_margin_of_every_open_spread_counts_against_the_capital(self) -> None:
+        # one spread's margin is 88: two need 176, so Rs 150 holds the first only
+        result = self.ladder(self.flat(0), self.flat(1), depth=FixedDepth(2), capital="150")
+
+        assert result.skipped["margin"] >= 1
+
+    def test_a_policy_may_change_the_limit_by_day(self) -> None:
+        class ThirdSlotLater:
+            def limit(self, snapshot: ChainSnapshot) -> int:
+                return 1 if snapshot.day < days_after(2) else 2
+
+        result = self.ladder(
+            self.flat(0), self.flat(1), self.flat(2), depth=ThirdSlotLater(), last=days_after(2)
+        )
+
+        assert result.skipped["ladder_full"] == 1  # day 1 is full; day 2 has the second slot
+
+    def test_closing_one_of_two_leaves_the_other_running(self) -> None:
+        result = self.ladder(
+            self.flat(0),
+            put_chain(days_after(1), "3.00", "1.00"),
+            put_chain(days_after(2), "1.50", "0.50"),  # both meet the target
+            depth=FixedDepth(2),
+            days=frozenset({DAY0, days_after(1)}),
+            last=days_after(2),
+        )
+
+        assert [t.entry_day for t in result.trades] == [DAY0, days_after(1)]
+
+    def test_a_depth_needs_at_least_one_slot(self) -> None:
+        with pytest.raises(ValueError):
+            FixedDepth(0)

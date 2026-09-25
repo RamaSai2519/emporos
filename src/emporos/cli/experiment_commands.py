@@ -36,6 +36,7 @@ from emporos.cli.experiment_registry import (
     FileExperimentRegistry,
 )
 from emporos.cli.fo_archive_commands import research_build_fo_specs, research_collect_fo_archive
+from emporos.cli.option_screen_commands import research_screen_options
 from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
 from emporos.cli.screen_commands import research_screen
@@ -72,6 +73,7 @@ research_app.command("screen-ranked")(research_screen_ranked)
 research_app.command("collect-results")(research_collect_results)
 research_app.command("collect-fo-archive")(research_collect_fo_archive)
 research_app.command("build-fo-specs")(research_build_fo_specs)
+research_app.command("screen-options")(research_screen_options)
 research_app.command("d1-universe")(research_d1_universe)
 research_app.command("build-daily-bars")(research_build_daily_bars)
 research_app.command("collect-actions")(research_collect_actions)

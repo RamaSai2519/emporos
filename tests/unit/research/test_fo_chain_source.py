@@ -151,3 +151,29 @@ class TestDailyCloses:
 
     def test_a_session_that_stops_early_has_no_close(self) -> None:
         assert daily_closes(bars_for(DAY, 74)) == {}
+
+
+def test_an_expiry_day_settles_on_the_expiring_futures_settlement_price(tmp_path: Path) -> None:
+    expiry_day = date(2024, 9, 26)
+    expiring = IndexContractRow(
+        expiry_day, "NIFTY", InstrumentKind.FUTURE, expiry_day, None, None, D(1), D(1), D(1),
+        D("26226.50"), D("26216.05"), 500, D(0), 0, 0, D("26216.05"), 25, ArchiveFormat.UDIFF,
+    )  # fmt: skip
+    later = IndexContractRow(**{**expiring.__dict__, "expiry": NEXT, "settle": D("26308.85")})
+    source, _ = make(
+        tmp_path,
+        {expiry_day: [option("26000", day=expiry_day, expiry=expiry_day), expiring, later]},
+        {expiry_day: D("26184.65")},  # the 5m series is 0.12% off: not used to settle
+    )
+
+    snap = source.snapshot(expiry_day)
+
+    assert snap is not None and snap.settlements == {expiry_day: D("26216.05")}
+
+
+def test_a_day_nothing_expires_has_no_settlements(tmp_path: Path) -> None:
+    source, _ = make(tmp_path, {DAY: [option("24950"), future()]})
+
+    snap = source.snapshot(DAY)
+
+    assert snap is not None and snap.settlements == {}

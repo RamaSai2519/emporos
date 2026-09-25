@@ -7,7 +7,7 @@ nothing here can say what a fill cost beyond the slippage scenario's assumption.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
@@ -74,6 +74,9 @@ class ChainSnapshot:
     strike_step: Decimal
     tick_size: Decimal
     expiries: Mapping[date, ExpiryChain]
+    # the exchange's final settlement level for each expiry that falls ON this day (an index
+    # option settles on it); empty on days nothing expires or when the source cannot say
+    settlements: Mapping[date, Decimal] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.underlying_close <= 0 or self.strike_step <= 0 or self.tick_size <= 0:

@@ -1,14 +1,14 @@
 """How an entry is planned from a day's chain (EM-226).
 
-Three small collaborators, each replaceable: an `EntryFilter` says whether today may open a trade
-(trend, volatility band, event weeks all plug in here), an `ExpiryChooser` picks the expiry, and a
-`SpreadTemplate` builds the spread from the chain. `SpreadEntry` composes them into the one
-`EntryPlanner` the backtester asks. Selecting strikes needs a volatility number; that comes from an
-injected `VolatilitySource`, never a global."""
+Three small collaborators, each replaceable: an `ExpiryChooser` picks the expiry, `EntryFilter`s
+say whether a trade on that expiry may open today (trend, volatility band, event weeks all plug in
+here), and a `SpreadTemplate` builds the spread from the chain. `SpreadEntry` composes them into
+the one `EntryPlanner` the backtester asks. Selecting strikes needs a volatility number; that comes
+from an injected `VolatilitySource`, never a global."""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_FLOOR, Decimal
@@ -23,6 +23,7 @@ __all__ = [
     "EntryPlanner",
     "ExpiryChooser",
     "IronCondorTemplate",
+    "MonthlyExpiries",
     "PutCreditSpreadTemplate",
     "SigmaStrikes",
     "SpreadEntry",
@@ -35,11 +36,13 @@ _YEAR = Decimal(365)
 
 
 class EntryFilter(Protocol):
-    def allows(self, snapshot: ChainSnapshot) -> bool: ...
+    def allows(self, snapshot: ChainSnapshot, expiry: date) -> bool:
+        """Whether a spread on `expiry` may be opened at this day's close."""
+        ...
 
 
 class AlwaysOpen:
-    def allows(self, snapshot: ChainSnapshot) -> bool:
+    def allows(self, snapshot: ChainSnapshot, expiry: date) -> bool:
         return True
 
 
@@ -73,6 +76,30 @@ class TargetDte:
         if not inside:
             return None
         return min(inside, key=lambda e: (abs(snapshot.days_to(e) - self.target), e))
+
+
+@dataclass(frozen=True)
+class MonthlyExpiries:
+    """The nearest MONTHLY expiry with between `minimum` and `maximum` days left. An option expiry
+    is monthly when a future expires the same day, so the weekly expiries (which have no future)
+    are left out. `futures` maps each day to the future expiries listed that day."""
+
+    futures: Mapping[date, frozenset[date]]
+    minimum: int
+    maximum: int
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.minimum <= self.maximum:
+            raise ValueError("need 1 <= minimum <= maximum")
+
+    def choose(self, snapshot: ChainSnapshot) -> date | None:
+        monthly = self.futures.get(snapshot.day, frozenset())
+        inside = [
+            e
+            for e in snapshot.expiry_dates
+            if e in monthly and self.minimum <= snapshot.days_to(e) <= self.maximum
+        ]
+        return min(inside) if inside else None
 
 
 class SpreadTemplate(Protocol):
@@ -151,7 +178,7 @@ class SpreadEntry:
         self._template = template
 
     def plan(self, snapshot: ChainSnapshot) -> SpreadPlan | None:
-        if not all(f.allows(snapshot) for f in self._filters):
-            return None
         expiry = self._chooser.choose(snapshot)
-        return None if expiry is None else self._template.build(snapshot, expiry)
+        if expiry is None or not all(f.allows(snapshot, expiry) for f in self._filters):
+            return None
+        return self._template.build(snapshot, expiry)
