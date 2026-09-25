@@ -1,0 +1,91 @@
+# Declared BEFORE any B1b run (PROFIT_PLAN.md §2.1, §7.4 child of B1, EM-234 under EM-219). Design by the
+# head session on 2026-09-25 from the DISCOVERY OUTPUT of B1 (EM-230, all 8 arms SCREEN_REJECT, report
+# docs/research/profit/reports/b1-nifty-put-spread-ladder.txt). Not yet run: no result of B1b has been
+# seen. B1 is closed; this is its only child.
+#
+# What B1 showed (Discovery, k = 1.0, filter on, ladder depth 2, the best of its 8 arms, per spread in
+# rupees at benchmark costs): 93 round trips, gross +32, statutory charges and brokerage 109, net -77. The
+# 17 trades that hit the 2x-credit stop lost Rs 19,657 in total; the 73 profit targets earned Rs 12,982 and
+# 3 time exits lost Rs 473. At ZERO slippage the same arm had gross +111 and charges 109, so the premium
+# in that structure is about zero before any assumed slippage.
+#
+# The failure mode (EDGE_SEARCH_PLAN §7.4). On a defined-risk spread the wing IS the stop: the long put
+# caps the loss at (width - credit) per unit. An extra stop at 2x the credit closes the spread at a
+# marked loss on a day when the marked price is at its worst (the bid-ask is widest and the marks are
+# stale closes), pays two more leg orders of fees and slippage, and turns a fluctuation that would have
+# reversed by expiry into a realised loss. B1b removes that stop and changes nothing else.
+#
+# Rules: B1's (config/experiments/b1-nifty-put-spread-ladder.yaml) EXCEPT the three below.
+# * k = 1.0 and ladder_depth = 2 are fixed (the conviction third slot is not tested again). Lots are 1.
+# * Exits, tried in this order each day: 50% of the credit kept (target), 7 calendar days to expiry
+#   (time); otherwise the spread settles on expiry day at intrinsic value against the exchange's final
+#   settlement level, as in B1. There is NO stop.
+# * The wing cap is an arm: the long put is the widest listed strike below the short whose
+#   (short - long) x lot size is at most Rs 5,000 (B1's cap, PROFIT_PLAN §3.5) or at most Rs 10,000.
+# * Margin is the worst-case loss plus 10%, as in B1: a Rs 10,000 wing blocks about Rs 11,000 per spread
+#   and two open spreads block about 22% of the capital.
+# 2 (filter on, off) x 2 (wing cap Rs 5,000, Rs 10,000) = 4 arms, each a counted look
+# (docs/research/profit/screens.jsonl).
+#
+# RESEARCH ARMS: the two Rs 10,000 arms breach PROFIT_PLAN §3.5's per-spread cap of Rs 5,000 (5% of
+# capital): they REQUIRE AN OPERATOR CHANGE TO PROFIT_PLAN §3.5 BEFORE ANY LIVE USE. They are run only to
+# see whether a wider wing changes the fee arithmetic; they must pass §3.4 (P(drawdown >= 30%) <= 5% from
+# the 20-day block bootstrap) as the aggressive arms of B1 did, and a pass on them is not a licence to
+# trade them.
+#
+# Data, costs and limits: as B1 (Discovery only, the same start day, benchmark and adverse scenarios,
+# today's fee schedule applied to the whole history, `verified: false`, the 5-minute index level before
+# 2024-07 for strike selection and filters only, official futures settlement to settle). Confirmation
+# and the vault are not touched.
+#
+# Bars: PROFIT_PLAN §3.2 Track B as amended 2026-09-25 (months: >= 60% of months with any exposure net
+# positive and <= 40% of all months net negative) and §3.4 for the Rs 10,000 arms. The neighbour check
+# uses the declared adjacent arms (one dimension apart).
+#
+# FALSIFICATION, fixed now, in addition to the bars: if NO arm's gross profit per spread at ZERO slippage
+# (statutory charges and brokerage excluded, fills at the day's close) is at least 2x that arm's charges
+# per spread, index put-spread selling is CLOSED at this capital: no further put-spread cell is declared
+# from Discovery output, and the report says so in one explicit line. Reported for every arm at zero
+# slippage, benchmark and adverse costs: round trips, credit, gross, charges (and as a share of the
+# credit), net, win rate, average win, average loss and the largest loss of any single spread, plus both
+# months measures.
+#
+# PRIOR, stated before the run: about 3%. B1's zero-slippage gross was 1.0x its charges; a wider wing
+# raises the credit while a spread's fees stay the same, and dropping the stop removes the realised
+# losses, but the fee-to-credit arithmetic needs the gross to double, and the unrealised losses that the
+# stop cut off are now taken in full at the wing.
+#
+# KNOWN LIMITS, declared now: (a) end-of-day closes only, so slippage is an assumption and zero slippage
+# is a bound, not a fill; (b) the margin is an estimate; (c) one instrument, monthly expiries only;
+# (d) B1's numbers chose this design, so B1b is a child of Discovery output and any pass needs
+# Confirmation before it means anything.
+family: strategy
+slug: b1b-nifty-put-spread-no-stop
+hypothesis: >-
+  B1's weekly NIFTY put credit spread at k = 1.0 and depth 2, with the 2x-credit stop removed (exits: 50%
+  of the credit kept, else 7 days left, else settlement) and the wing cap Rs 5,000 or Rs 10,000, earns a
+  gross per spread at zero slippage of at least twice its per-spread charges and a net return above cash
+  at 6.5% after fees, slippage and margin.
+economic_rationale: >-
+  Index put sellers are paid the volatility risk premium: hedgers overpay for crash protection. On a
+  defined-risk spread the long put already caps the loss, so a separate stop only converts unrealised
+  swings into realised losses and pays extra fees and slippage; without it the seller keeps the premium
+  the market decays away when the index does not fall through the short strike. The counterparties are
+  the hedgers and speculators who pay for protection. A wider wing lowers the fee share of the credit.
+falsification: >-
+  Rejected at the first PROFIT_PLAN §3.2 bar an arm fails (net CAGR >= 18% at benchmark and > 0 at
+  adverse; beats cash at 6.5%; >= 60% of months with exposure net positive and <= 40% of all months net
+  negative; worst month >= -10%; max drawdown <= 25%; monthly t >= 2.5; >= 100 round trips; >= 60% of
+  calendar years positive; >= 50% of adjacent arms net positive), and a Rs 10,000 arm additionally needs
+  P(drawdown >= 30%) <= 5%. In addition: if no arm's gross per spread at zero slippage is at least 2x its
+  charges per spread, index put-spread selling is closed at this capital and no further put-spread cell
+  is declared.
+parameter_grid:
+  filter: ["on", "off"]
+  wing_cap: ["5000", "10000"]
+feature_versions:
+  nifty_first_session_of_week: 1
+  india_vix_percentile_band: 1
+  put_spread_listed_strikes_wing_cap: 1
+position_value: "100000"
+declared_at: 2026-09-25T15:10:00+05:30
