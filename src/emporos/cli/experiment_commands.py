@@ -36,6 +36,7 @@ from emporos.cli.experiment_registry import (
     FileExperimentRegistry,
 )
 from emporos.cli.fo_archive_commands import research_build_fo_specs, research_collect_fo_archive
+from emporos.cli.index_change_commands import research_build_index_changes
 from emporos.cli.index_notice_commands import research_collect_index_notices
 from emporos.cli.option_screen_commands import research_screen_options
 from emporos.cli.ranked_screen_commands import research_screen_ranked
@@ -81,6 +82,7 @@ research_app.command("collect-actions")(research_collect_actions)
 research_app.command("build-adjustments")(research_build_adjustments)
 research_app.command("screen-swing")(research_screen_swing)
 research_app.command("collect-index-notices")(research_collect_index_notices)
+research_app.command("build-index-changes")(research_build_index_changes)
 research_app.command("audit-discontinuities")(research_audit_discontinuities)
 
 _ROOT = typer.Option(DEFAULT_EXPERIMENTS_DIR, help="Where published experiment reports live.")

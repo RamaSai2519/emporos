@@ -1,0 +1,133 @@
+current_lists_as_of: '2026-09-24'
+changes_announced_but_not_yet_effective: 2
+notices_fetched: 292
+notices_with_relevant_sections: 34
+changes: 51
+unreadable_pdfs:
+- 'ind_prs05062018: pdftotext failed on ind_prs05062018.pdf: Syntax Warning: May not be a PDF file (continuing anyway)
+
+  Syntax Error (3): Illegal character <21> in hex string
+
+  Syntax Error (5): Illegal character <4f> in hex string
+
+  Syntax Error (7): Illegal charac'
+- 'ind_prs16072019_1: pdftotext failed on ind_prs16072019_1.pdf: Syntax Warning: May not be a PDF file (continuing anyway)
+
+  Syntax Error (3): Illegal character <21> in hex string
+
+  Syntax Error (5): Illegal character <4f> in hex string
+
+  Syntax Error (7): Illegal charac'
+unread_sections:
+  ind_prs23022026:
+  - 'Nifty 50: a section with no rows'
+builder_problems: []
+consistency:
+  NIFTY 100:
+    current_members: 100
+    changes: 20
+    coverage_start: '2016-11-15'
+    inconsistencies:
+    - 'NIFTY 100 2023-03-31: PAGEIND was added but is not a member after it'
+    - 'NIFTY 100 2022-09-30: ATGL was added but is not a member after it'
+    - 'NIFTY 100 2022-09-30: IRCTC was added but is not a member after it'
+    - 'NIFTY 100 2022-09-30: PNB was removed but is a member after it'
+    - 'NIFTY 100 2022-09-30: ZYDUSLIFE was removed but is a member after it'
+    - 'NIFTY 100 2021-03-31: MRF was added but is not a member after it'
+    - 'NIFTY 100 2021-03-31: YESBANK was added but is not a member after it'
+    - 'NIFTY 100 2021-03-31: BANKBARODA was removed but is a member after it'
+    - 'NIFTY 100 2020-07-31: SBICARD was added but is not a member after it'
+    - 'NIFTY 100 2020-06-26: ABBOTINDIA was added but is not a member after it'
+    - 'NIFTY 100 2020-06-26: IGL was added but is not a member after it'
+    - 'NIFTY 100 2020-03-19: ADANITRANS was added but is not a member after it'
+    - 'NIFTY 100 2019-09-27: BERGEPAINT was added but is not a member after it'
+    - 'NIFTY 100 2019-09-27: SAIL was removed but is a member after it'
+    - 'NIFTY 100 2019-03-29: HDFCAMC was added but is not a member after it'
+    - 'NIFTY 100 2019-03-29: PAGEIND was added but is not a member after it'
+    - 'NIFTY 100 2019-03-29: UBL was added but is not a member after it'
+    - 'NIFTY 100 2017-03-31: PETRONET was added but is not a member after it'
+  NIFTY MIDCAP 150:
+    current_members: 150
+    changes: 31
+    coverage_start: '2016-11-15'
+    inconsistencies:
+    - 'NIFTY MIDCAP 150 2024-03-28: IDBI was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2024-03-28: PGHH was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: FINEORG was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: METROBRAND was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: PEL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: TIMKEN was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: NATIONALUM was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2023-03-31: PAGEIND was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: DEVYANI was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: MANYAVAR was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: PNB was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: POONAWALLA was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: ZYDUSLIFE was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: ATGL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: EXIDEIND was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: GLENMARK was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2022-09-30: IRCTC was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2022-08-08: DELHIVERY was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2022-05-04: GMRINFRA was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: BANKBARODA was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: LAURUSLABS was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: PGHL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: SUVENPHAR was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: HUDCO was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: MRF was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: MRPL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: NATIONALUM was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: NLCINDIA was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2021-03-31: YESBANK was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: AKZOINDIA was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: CREDITACC was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: IBULHSGFIN was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: IIFLWAM was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: L&TFH was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: MINDAIND was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: NIITTECH was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: SUMICHEM was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: ABBOTINDIA was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: IGL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2020-06-26: INDIANB was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2020-03-19: PVR was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2020-03-19: YESBANK was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2020-03-19: ADANIGREEN was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: AAVAS was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: ADANIGAS was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: ALBK was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: BAYERCROP was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: CESC was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: CORPBANK was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: IOB was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: ORIENTBANK was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: SAIL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: UCOBANK was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-09-27: BERGEPAINT was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2019-03-29: ATUL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2019-03-29: AARTIIND was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2019-03-29: PAGEIND was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2019-03-29: UBL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2018-12-28: BBTC was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2018-09-28: ISEC was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2018-09-28: RNAM was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2018-09-28: IRB was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2018-09-28: SCHAEFFLER was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2018-04-02: GODREJAGRO was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2018-04-02: IBVENTURES was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2018-04-02: ADANIENT was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2018-02-05: TIFIN was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-09-29: SUNDRMFAST was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-09-29: VGUARD was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-09-05: MFSL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-09-05: RELCAPITAL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2017-06-23: KRBL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-06-23: IIFL was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2017-05-26: MGL was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-05-26: PNBHOUSING was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-03-31: CASTROLIND was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-03-31: LTI was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-03-31: QUESS was added but is not a member after it'
+    - 'NIFTY MIDCAP 150 2017-03-31: PETRONET was removed but is a member after it'
+    - 'NIFTY MIDCAP 150 2017-01-23: RBLBANK was added but is not a member after it'

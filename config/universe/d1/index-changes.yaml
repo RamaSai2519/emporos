@@ -1,14 +1,794 @@
-# NIFTY 100 and NIFTY Midcap 150 constituent changes (PROFIT_PLAN §4 A-F3, EM-224).
-#
-# EMPTY ON PURPOSE: no source has been collected. With no changes on record nothing is known about
-# past membership, so a Track A result that needs as-of membership cannot be produced yet (the
-# swing screener's default `AllMembers` carries the survivorship bias of today's constituents).
-#
-# One entry per announced change, from an index provider's published notice. Every entry names its
-# source URL and the date it was fetched:
-#   - index: "NIFTY 100"           # or "NIFTY MIDCAP 150"
-#     effective: 2021-03-31        # the first session the change applies to
-#     added: [SYMBOL, ...]
-#     removed: [SYMBOL, ...]
-#     source: "<url> fetched 2026-09-25"
-changes: []
+# NIFTY 100 and NIFTY Midcap 150 constituent changes (PROFIT_PLAN §4 A-F3, EM-224), read
+# from NSE Indices press releases (niftyindices.com/press-release) by
+# `research build-index-changes`. NIFTY 100 is the union of NIFTY 50 and NIFTY Next 50.
+# Every entry names its source notice and the date it was fetched. What does not fit
+# today's lists is in docs/research/profit/index-changes-report.yaml.
+changes:
+- index: NIFTY 100
+  effective: '2016-11-15'
+  added:
+  - HAVELLS
+  removed:
+  - CAIRN
+  source: https://www.niftyindices.com/Press_Release/ind_prs17102016.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2016-11-15'
+  added:
+  - CROMPTON
+  removed:
+  - HAVELLS
+  source: https://www.niftyindices.com/Press_Release/ind_prs17102016.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-01-23'
+  added:
+  - RBLBANK
+  removed:
+  - MFSL
+  source: https://www.niftyindices.com/Press_Release/ind_prs16012017.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2017-03-31'
+  added:
+  - ICICIPRULI
+  - PETRONET
+  - RECLTD
+  removed:
+  - APOLLOHOSP
+  - BHARATFORG
+  - CASTROLIND
+  source: https://www.niftyindices.com/Press_Release/ind_prs16022017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-03-31'
+  added:
+  - APOLLOHOSP
+  - BHARATFORG
+  - CASTROLIND
+  - ENDURANCE
+  - LTI
+  - LTTS
+  - MANAPPURAM
+  - MOTILALOFS
+  - QUESS
+  removed:
+  - INOXWIND
+  - JETAIRWAYS
+  - JUSTDIAL
+  - NETWORK18
+  - PERSISTENT
+  - PETRONET
+  - RECLTD
+  - SADBHAV
+  - TATAELXSI
+  source: https://www.niftyindices.com/Press_Release/ind_prs16022017.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2017-05-26'
+  added:
+  - SUNTV
+  removed:
+  - GRASIM
+  source: https://www.niftyindices.com/Press_Release/ind_prs27042017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-05-26'
+  added:
+  - FRETAIL
+  - MGL
+  - PNBHOUSING
+  removed:
+  - ABIRLANUVO
+  - SUNTV
+  - TUBEINVEST
+  source: https://www.niftyindices.com/Press_Release/ind_prs27042017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-06-23'
+  added:
+  - KRBL
+  removed:
+  - IIFL
+  source: https://www.niftyindices.com/Press_Release/ind_prs15062017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-06-23'
+  added:
+  - KRBL
+  removed:
+  - IIFL
+  source: https://www.niftyindices.com/Press_Release/ind_prs15062017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-09-05'
+  added:
+  - MFSL
+  removed:
+  - RELCAPITAL
+  source: https://www.niftyindices.com/Press_Release/ind_prs29082017.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2017-09-29'
+  added:
+  - DMART
+  - MRF
+  removed:
+  - DIVISLAB
+  - TATAMTRDVR
+  - UBL
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-09-29'
+  added:
+  - ADANITRANS
+  - DIVISLAB
+  - FINCABLES
+  - JMFINANCIL
+  - MFSL
+  - SUNDRMFAST
+  - UBL
+  - VBL
+  - VGUARD
+  - VIJAYABANK
+  removed:
+  - BAJAJCORP
+  - CYIENT
+  - ECLERX
+  - GESHIP
+  - HINDCOPPER
+  - HONAUT
+  - JAGRAN
+  - MRF
+  - RELAXO
+  - RELCAPITAL
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-10-30'
+  added:
+  - HUDCO
+  removed:
+  - FRETAIL
+  source: https://www.niftyindices.com/Press_Release/ind_prs16102017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2017-11-13'
+  added:
+  - AUBANK
+  removed:
+  - SUNDARMFIN
+  source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2018-02-05'
+  added:
+  - HATSUN
+  - RELCAPITAL
+  - TIFIN
+  removed:
+  - CESC
+  - FORTIS
+  - STAR
+  source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2018-04-02'
+  added:
+  - ABCAPITAL
+  - GICRE
+  - GRASIM
+  - L&TFH
+  - SBILIFE
+  removed:
+  - GLAXO
+  - GLENMARK
+  - GSKCONS
+  - TATAPOWER
+  - TORNTPHARM
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022018.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2018-04-02'
+  added:
+  - AVANTIFEED
+  - DBL
+  - FCONSUMER
+  - GLAXO
+  - GLENMARK
+  - GODREJAGRO
+  - GSKCONS
+  - HONAUT
+  - IBREALEST
+  - IBVENTURES
+  - ICICIGI
+  - IIFL
+  - STRTECH
+  - TATAPOWER
+  - TORNTPHARM
+  removed:
+  - ADANIENT
+  - DALMIABHA
+  - DBCORP
+  - GPPL
+  - IOB
+  - IPCALAB
+  - JYOTHYLAB
+  - L&TFH
+  - LALPATHLAB
+  - NH
+  - RCOM
+  - SYNDIBANK
+  - VIJAYABANK
+  - VTL
+  - WELSPUNIND
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022018.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2018-06-29'
+  added:
+  - FRETAIL
+  - KIOCL
+  removed:
+  - ARVIND
+  - TATACOMM
+  source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2018-09-28'
+  added:
+  - BANDHANBNK
+  - BIOCON
+  - HDFCLIFE
+  - ICICIGI
+  - NIACL
+  removed:
+  - CUMMINSIND
+  - EMAMILTD
+  - PFC
+  - PNB
+  - RECLTD
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082018.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2018-09-28'
+  added:
+  - ASTRAL
+  - CUMMINSIND
+  - EMAMILTD
+  - ESCORTS
+  - GRAPHITE
+  - HAL
+  - HEG
+  - ISEC
+  - PFC
+  - PNB
+  - RECLTD
+  - RNAM
+  - SUNDARMFIN
+  removed:
+  - AKZOINDIA
+  - BIOCON
+  - GUJFLUORO
+  - IBREALEST
+  - ICICIGI
+  - IDFC
+  - IRB
+  - KAJARIACER
+  - KARURVYSYA
+  - SCHAEFFLER
+  - SUZLON
+  - TTKPRESTIG
+  - WOCKPHARMA
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082018.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2018-12-28'
+  added:
+  - AARTIIND
+  - BBTC
+  - VARROC
+  removed:
+  - BHARATFIN
+  - CENTURYTEX
+  - IIFL
+  source: https://www.niftyindices.com/Press_Release/ind_prs14122018.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2019-03-29'
+  added:
+  - BAJAJHLDNG
+  - DIVISLAB
+  - HDFCAMC
+  - PAGEIND
+  - UBL
+  removed:
+  - ABCAPITAL
+  - BEL
+  - LICHSGFIN
+  - OIL
+  - SUNTV
+  source: https://www.niftyindices.com/Press_Release/ind_prs25022019.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2019-03-29'
+  added:
+  - ABCAPITAL
+  - ATUL
+  - BEL
+  - ERIS
+  - GUJFLUORO
+  - IPCALAB
+  - LICHSGFIN
+  - OIL
+  - RELAXO
+  - SUNTV
+  removed:
+  - AARTIIND
+  - AVANTIFEED
+  - BAJAJHLDNG
+  - DIVISLAB
+  - GET&D
+  - PAGEIND
+  - PCJEWELLER
+  - TV18BRDCST
+  - UBL
+  - VAKRANGEE
+  source: https://www.niftyindices.com/Press_Release/ind_prs25022019.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2019-06-28'
+  added:
+  - DALBHARAT
+  removed:
+  - GUJFLUORO
+  source: https://www.niftyindices.com/Press_Release/ind_prs13062019.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2019-09-27'
+  added:
+  - BERGEPAINT
+  - NESTLEIND
+  - PFC
+  - PNB
+  removed:
+  - ABB
+  - BHEL
+  - MRF
+  - SAIL
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082019.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2019-09-27'
+  added:
+  - AAVAS
+  - ABBOTINDIA
+  - ADANIGAS
+  - ALBK
+  - BAYERCROP
+  - BHEL
+  - CESC
+  - CORPBANK
+  - FORTIS
+  - IOB
+  - MRF
+  - ORIENTBANK
+  - SAIL
+  - UCOBANK
+  - VINATIORGA
+  removed:
+  - BERGEPAINT
+  - DBL
+  - DHFL
+  - DISHTV
+  - FINCABLES
+  - GRUH
+  - GSKCONS
+  - JMFINANCIL
+  - KIOCL
+  - PFC
+  - PNB
+  - RELCAPITAL
+  - RELINFRA
+  - RPOWER
+  - SPARC
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082019.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2020-03-19'
+  added:
+  - ADANITRANS
+  removed:
+  - YESBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2020-03-19'
+  added:
+  - ADANIGREEN
+  removed:
+  - ADANITRANS
+  source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2020-03-19'
+  added:
+  - PVR
+  removed:
+  - YESBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs19032020.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2020-06-26'
+  added:
+  - ABBOTINDIA
+  - IGL
+  - MUTHOOTFIN
+  - NAUKRI
+  - TORNTPHARM
+  removed:
+  - ASHOKLEY
+  - IBULHSGFIN
+  - IDEA
+  - L&TFH
+  - NIACL
+  source: https://www.niftyindices.com/Press_Release/ind_prs10062020.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2020-06-26'
+  added:
+  - ABB
+  - AKZOINDIA
+  - ASHOKLEY
+  - CREDITACC
+  - IBULHSGFIN
+  - IDEA
+  - IIFLWAM
+  - IRCTC
+  - JKCEMENT
+  - L&TFH
+  - MINDAIND
+  - NIACL
+  - NIITTECH
+  - SUMICHEM
+  - TATACOMM
+  removed:
+  - ABBOTINDIA
+  - ENGINERSIN
+  - FCONSUMER
+  - GRAPHITE
+  - HEG
+  - IGL
+  - INDIANB
+  - KRBL
+  - MAHINDCIE
+  - MUTHOOTFIN
+  - NAUKRI
+  - NBCC
+  - STRTECH
+  - TORNTPHARM
+  - VARROC
+  source: https://www.niftyindices.com/Press_Release/ind_prs10062020.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2020-07-31'
+  added:
+  - SBICARD
+  removed:
+  - VEDL
+  source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2021-03-31'
+  added:
+  - ADANIENT
+  - APOLLOHOSP
+  - JUBLFOOD
+  - MRF
+  - VEDL
+  - YESBANK
+  removed:
+  - BANKBARODA
+  - CONCOR
+  - GICRE
+  - HINDZINC
+  - OFSS
+  - PFC
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022021.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2021-03-31'
+  added:
+  - BANKBARODA
+  - CONCOR
+  - DEEPAKNTR
+  - DIXON
+  - GICRE
+  - HINDZINC
+  - IDBI
+  - INDIAMART
+  - LAURUSLABS
+  - MAXHEALTH
+  - OFSS
+  - PERSISTENT
+  - PFC
+  - PGHL
+  - SUVENPHAR
+  - TATAELXSI
+  removed:
+  - ADANIENT
+  - APOLLOHOSP
+  - EDELWEISS
+  - ERIS
+  - FRETAIL
+  - HUDCO
+  - JUBLFOOD
+  - MRF
+  - MRPL
+  - NATIONALUM
+  - NLCINDIA
+  - SFL
+  - SHRIRAMCIT
+  - SYMPHONY
+  - WABCOINDIA
+  - YESBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022021.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2021-06-30'
+  added:
+  - GLAND
+  removed:
+  - MOTHERSUMI
+  source: https://www.niftyindices.com/Press_Release/ind_prs15062021.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2021-10-29'
+  added:
+  - SONACOMS
+  removed:
+  - GMRINFRA
+  source: https://www.niftyindices.com/Press_Release/ind_prs22102021.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2022-05-04'
+  added:
+  - GMRINFRA
+  removed:
+  - AARTIIND
+  source: https://www.niftyindices.com/Press_Release/ind_prs05042022.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2022-08-08'
+  added:
+  - LICI
+  - TATAPOWER
+  removed:
+  - NMDC
+  - PEL
+  source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2022-08-08'
+  added:
+  - DELHIVERY
+  removed:
+  - TATAPOWER
+  source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2022-09-30'
+  added:
+  - ATGL
+  - BEL
+  - HAL
+  - IRCTC
+  - MOTHERSON
+  - MPHASIS
+  removed:
+  - JUBLFOOD
+  - LUPIN
+  - MINDTREE
+  - PNB
+  - SAIL
+  - ZYDUSLIFE
+  source: https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2022-09-30'
+  added:
+  - AWL
+  - DEVYANI
+  - JUBLFOOD
+  - KPRMILL
+  - LUPIN
+  - MANYAVAR
+  - MSUMI
+  - PATANJALI
+  - PNB
+  - POONAWALLA
+  - SAIL
+  - ZYDUSLIFE
+  removed:
+  - APOLLOTYRE
+  - ATGL
+  - BEL
+  - EXIDEIND
+  - GLENMARK
+  - HAL
+  - IDBI
+  - IRCTC
+  - MANAPPURAM
+  - METROPOLIS
+  - MPHASIS
+  - NUVOCO
+  source: https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2023-03-31'
+  added:
+  - ABB
+  - AWL
+  - CANBK
+  - PAGEIND
+  - VBL
+  removed:
+  - BANDHANBNK
+  - BIOCON
+  - GLAND
+  - MPHASIS
+  - PAYTM
+  source: https://www.niftyindices.com/Press_Release/ind_prs17022023_1.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2023-03-31'
+  added:
+  - AARTIIND
+  - ADANIPOWER
+  - APOLLOTYRE
+  - BANDHANBNK
+  - BIOCON
+  - FINEORG
+  - GLAND
+  - METROBRAND
+  - MPHASIS
+  - NMDC
+  - PAYTM
+  - PEL
+  - TIMKEN
+  removed:
+  - ABB
+  - APLLTD
+  - AWL
+  - CANBK
+  - GSPL
+  - HATSUN
+  - IEX
+  - INDIAMART
+  - NATCOPHARM
+  - NATIONALUM
+  - PAGEIND
+  - SANOFI
+  - VBL
+  source: https://www.niftyindices.com/Press_Release/ind_prs17022023_1.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2023-07-13'
+  added:
+  - JINDALSTEL
+  removed:
+  - HDFC
+  source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2023-07-13'
+  added:
+  - MANKIND
+  removed:
+  - JINDALSTEL
+  source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2024-03-28'
+  added:
+  - ADANIPOWER
+  - IRFC
+  - JIOFIN
+  - PFC
+  - RECLTD
+  removed:
+  - AWL
+  - MUTHOOTFIN
+  - PGHH
+  - PIIND
+  - UPL
+  source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2024-03-28'
+  added:
+  - AWL
+  - IDBI
+  - IREDA
+  - JSWINFRA
+  - KALYANKJIL
+  - KEI
+  - LLOYDSME
+  - MUTHOOTFIN
+  - PGHH
+  - PIIND
+  - SJVN
+  - SUZLON
+  - TATATECH
+  - UPL
+  removed:
+  - AARTIIND
+  - ADANIPOWER
+  - BLUEDART
+  - CROMPTON
+  - IRFC
+  - NAVINFLUOR
+  - PFC
+  - PFIZER
+  - RAJESHEXPO
+  - RECLTD
+  - RELAXO
+  - TRIDENT
+  - VINATIORGA
+  - WHIRLPOOL
+  source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2025-09-30'
+  added:
+  - ENRIN
+  - HINDZINC
+  - MAXHEALTH
+  - MAZDOCK
+  - SOLARINDS
+  removed:
+  - DABUR
+  - HEROMOTOCO
+  - ICICIPRULI
+  - INDUSINDBK
+  - SWIGGY
+  source: https://www.niftyindices.com/Press_Release/ind_prs22082025.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2025-09-30'
+  added:
+  - DABUR
+  - FACT
+  - GODFRYPHLP
+  - HEROMOTOCO
+  - HEXT
+  - ICICIPRULI
+  - IDBI
+  - INDUSINDBK
+  - IOB
+  - ITCHOTELS
+  - PGHH
+  - SWIGGY
+  - UCOBANK
+  removed:
+  - ABFRL
+  - BANDHANBNK
+  - EMAMILTD
+  - GLAND
+  - HINDZINC
+  - MAXHEALTH
+  - MAZDOCK
+  - MRPL
+  - MSUMI
+  - OLAELEC
+  - SOLARINDS
+  - STARHEALTH
+  - SUNTV
+  source: https://www.niftyindices.com/Press_Release/ind_prs22082025.pdf fetched 2026-09-25
+- index: NIFTY 100
+  effective: '2026-03-30'
+  added:
+  - CUMMINSIND
+  - HDFCAMC
+  - MUTHOOTFIN
+  - TATACAP
+  - TMCV
+  - UNIONBANK
+  removed:
+  - BAJAJHFL
+  - HAVELLS
+  - ICICIGI
+  - JSWENERGY
+  - LICI
+  - NAUKRI
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022026.pdf fetched 2026-09-25
+- index: NIFTY MIDCAP 150
+  effective: '2026-03-30'
+  added:
+  - AIIL
+  - ANTHEM
+  - BAJAJHFL
+  - GROWW
+  - HAVELLS
+  - HDBFS
+  - ICICIAMC
+  - ICICIGI
+  - JSWENERGY
+  - LAURUSLABS
+  - LENSKART
+  - LGEINDIA
+  - LICI
+  - MCX
+  - NAUKRI
+  - RADICO
+  removed:
+  - CUMMINSIND
+  - DEEPAKNTR
+  - FACT
+  - GUJGASLTD
+  - HDFCAMC
+  - IDBI
+  - IGL
+  - IOB
+  - IRB
+  - MUTHOOTFIN
+  - PGHH
+  - SONACOMS
+  - SYNGENE
+  - TATATECH
+  - UCOBANK
+  - UNIONBANK
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022026.pdf fetched 2026-09-25

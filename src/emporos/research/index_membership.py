@@ -35,6 +35,7 @@ from emporos.core.errors import ConfigurationError
 
 __all__ = [
     "DEFAULT_CHANGES", "AsOfMembership", "IndexChange", "MembershipTimeline", "load_changes",
+    "save_changes",
 ]  # fmt: skip
 
 DEFAULT_CHANGES = Path("config/universe/d1/index-changes.yaml")
@@ -153,3 +154,22 @@ def _change(entry: Mapping[str, Any]) -> IndexChange:
         frozenset(str(s) for s in entry.get("removed") or []),
         str(entry["source"]),
     )
+
+
+def save_changes(changes: Iterable[IndexChange], path: Path, header: str = "") -> None:
+    """Write `changes` (oldest first) in the file format `load_changes` reads."""
+    ordered = sorted(changes, key=lambda c: (c.effective, c.index))
+    document = {
+        "changes": [
+            {
+                "index": c.index,
+                "effective": c.effective.isoformat(),
+                "added": sorted(c.added),
+                "removed": sorted(c.removed),
+                "source": c.source,
+            }
+            for c in ordered
+        ]
+    }
+    body = yaml.safe_dump(document, sort_keys=False, width=140)
+    path.write_text((header.rstrip() + "\n" if header else "") + body, encoding="utf-8")
