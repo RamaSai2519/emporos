@@ -97,6 +97,18 @@
 #    worst-case spend shown to the head first. Judged as Jev-confirm-required versus the rule alone, net
 #    of Jev's token cost, under config/experiments/jev_incremental_v1.yaml. Every call is journalled.
 #
+# 8. AMENDMENTS (head review, 2026-09-25, before any label exists).
+#    A1 LEAKAGE CONTROL, a gate and not an arm, not a counted trial. Run the whole pipeline once more
+#    with the labels permuted within each session day (seed 20260925), both models, threshold 0.80. It
+#    must give calibrated P >= 0.80 on fewer than 10 rows, and its pooled out-of-sample net expectancy
+#    must not pass S2. If the control passes, the build has a leak and every arm is void until it is
+#    fixed. One note line for the control goes in the ledger.
+#    A2 REPORT, diagnostic only: per-fold AUC and Brier score of both models against a base-rate
+#    predictor; the rows and the trades taken per trigger type per arm; the share of taken trades that
+#    fall on days with 5 or more taken trades. The per-trigger table never feeds back into the trigger
+#    set: no trigger is added, dropped, tuned or re-weighted from it.
+#    Ledger: one line per arm (four), plus the control's note line.
+#
 # PRIOR, stated before the run: about 3%. Fifteen prior gap, reversal, breakout and results cells in this
 # program had gross at or below zero; the model can only re-weight what those triggers already carry.
 # What could still work: a conditional edge in the tails of the features (index and VIX state, breadth)
@@ -110,7 +122,11 @@
 # the smaller t is the one judged; (c) the trigger set was chosen from 15 earlier cells' names, a
 # hindsight choice that is counted in N through the ledger; (d) the D5 results ledger has holes (about a
 # third of 2022), so the results features are missing then; (e) the sector index covers only some
-# industries; (f) the scans are advisory (no engine strategy for the new loose settings), so a pass needs
+# industries; (h) Rs 25,000 a trade costs more, in percent, than the program's Rs 50,000 reference
+# (flat brokerage): that is the conservative direction and is intended; (i) the monthly expiry day is
+# taken as the last Thursday for all of 2018-2024, the whole Discovery span; the days-to-expiry feature
+# must be re-derived for any use after 2024 (the exchange moved the expiry day in 2025); (f) the scans
+# are advisory (no engine strategy for the new loose settings), so a pass needs
 # parity cases before any live use; (g) Discovery only: Confirmation and the vault are not touched.
 family: feature
 slug: t1-trigger-probability
