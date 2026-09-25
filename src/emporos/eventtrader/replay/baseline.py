@@ -62,6 +62,19 @@ class TriageOnlyBaseline:
     def rules(self) -> dict[Horizon, HorizonRule]:
         return dict(self._rules)
 
+    def would_trade(self, event_id: str) -> bool:
+        """Whether triage's own answer (recorded) sends this event on to a trade."""
+        recorded = self._decisions.get(event_id)
+        triage = recorded.triage if recorded else None
+        return (
+            triage is not None
+            and triage.material
+            and triage.horizon is not Horizon.NONE
+            and triage.direction is not TriageDirection.NONE
+            and triage.confidence >= self._threshold
+            and triage.horizon in self._rules
+        )
+
     async def decide(self, item: EventInput) -> PipelineDecision:
         event_id = item.event.event_id
         recorded = self._decisions.get(event_id)

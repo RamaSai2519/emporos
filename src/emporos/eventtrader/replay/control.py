@@ -89,15 +89,16 @@ class CoinFlipControl:
         self._engine_for, self._decisions = engine_for, decisions
         self._runs, self._seed = runs, seed
 
+    def _is_trade(self, event_id: str) -> bool:
+        decision = self._decisions.get(event_id)  # a market-wide item was never decided
+        return decision is not None and decision.verdict is Verdict.TRADE
+
     async def run(
         self, events: Sequence[MarketEvent], real_net: Decimal, scenario: Scenario
     ) -> ControlResult:
         """Only the events whose decision was a trade matter to a coin run (the rest never touch
         the book), so only they are replayed, in their own order."""
-        trades = [
-            e for e in events
-            if self._decisions[e.event_id].verdict is Verdict.TRADE
-        ]  # fmt: skip
+        trades = [e for e in events if self._is_trade(e.event_id)]
         rng = Random(self._seed)
         nets: list[Decimal] = []
         for _ in range(self._runs):
