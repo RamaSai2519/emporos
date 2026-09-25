@@ -73,7 +73,7 @@ class EventInput:
                 "minutes_since_it_appeared": minutes,
             },
             "time_of_day_ist": self.decision_at.astimezone(IST).strftime("%H:%M"),
-            "market": {k: _value(v) for k, v in sorted(self.context.lines.items())},
+            "market_numbers": {k: _value(v) for k, v in sorted(self.context.lines.items())},
         }
 
 

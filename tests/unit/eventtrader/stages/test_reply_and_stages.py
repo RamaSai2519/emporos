@@ -152,7 +152,8 @@ class TestRequestsCarryNoCalendarDate:
             and body["item"]["minutes_since_it_appeared"] == 12
         )
         assert (
-            body["time_of_day_ist"] == "12:00" and body["market"]["move_since_close_pct"] == 1.2346
+            body["time_of_day_ist"] == "12:00"
+            and body["market_numbers"]["move_since_close_pct"] == 1.2346
         )
         assert len(body["item"]["text"]) == 3000
         assert "2024" not in sent.user and "03-04" not in sent.user and "as_of" not in sent.user
