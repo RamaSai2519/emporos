@@ -1,0 +1,80 @@
+b1-nifty-put-spread-ladder: 2017-10-11..2024-12-31, capital Rs 100,000, NIFTY monthly options, benchmark and adverse costs (today's fee schedule, unverified, applied to the whole history)
+arm                          verdict       trips  cagr%   adv%  mo+%  worst%     t  yr+%   dd%  nbr  pdd30
+k=1.0 filter=on depth=2      SCREEN_REJECT    93   -1.0   -4.2  35.6    -2.4 -1.09  37.5   8.6  0.0  0.000
+k=1.0 filter=on depth=3      SCREEN_REJECT    95   -1.2   -4.4  34.5    -2.5 -1.24  37.5   9.6  0.0  0.000
+k=1.0 filter=off depth=2     SCREEN_REJECT   200   -2.8  -11.8  60.9    -3.4 -1.87  12.5  18.6  0.0  0.000
+k=1.0 filter=off depth=3     SCREEN_REJECT   202   -2.9  -12.0  59.8    -3.4 -1.95  12.5  19.3  0.0  0.000
+k=1.5 filter=on depth=2      SCREEN_REJECT    75   -1.2   -2.8  25.3    -1.6 -2.58   0.0   8.1  0.0  0.000
+k=1.5 filter=on depth=3      SCREEN_REJECT    76   -1.1   -2.8  25.3    -1.6 -2.56   0.0   8.0  0.0  0.000
+k=1.5 filter=off depth=2     SCREEN_REJECT   164   -2.2   -6.4  44.8    -2.1 -2.94  25.0  17.2  0.0  0.000
+k=1.5 filter=off depth=3     SCREEN_REJECT   165   -2.2   -6.4  43.7    -2.1 -2.94  25.0  17.2  0.0  0.000
+
+k=1.0 filter=on depth=2: 87 months from 2017-10-11, 522/1777 days with a spread on, net Rs -7,149
+  skipped: exit_deferred_untraded_leg 6, ladder_full 10, no_credit 3, no_plan 1536, not_tradable 37
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.639, median year -0.8%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; round trips >= 100; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.0 filter=on depth=3: 87 months from 2017-10-11, 522/1777 days with a spread on, net Rs -8,134
+  skipped: exit_deferred_untraded_leg 6, ladder_full 6, no_credit 3, no_plan 1561, not_tradable 39
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.664, median year -0.9%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; round trips >= 100; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.0 filter=off depth=2: 87 months from 2017-10-11, 1075/1777 days with a spread on, net Rs -18,517
+  skipped: exit_deferred_untraded_leg 13, ladder_full 27, no_credit 5, no_plan 1233, not_tradable 93
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.749, median year -2.5%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.0 filter=off depth=3: 87 months from 2017-10-11, 1074/1777 days with a spread on, net Rs -19,218
+  skipped: exit_deferred_untraded_leg 13, ladder_full 23, no_credit 5, no_plan 1276, not_tradable 95
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.757, median year -2.7%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.5 filter=on depth=2: 87 months from 2017-10-11, 326/1777 days with a spread on, net Rs -8,061
+  skipped: exit_deferred_untraded_leg 5, ladder_full 4, no_credit 1, no_plan 1600, not_tradable 58
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.835, median year -1.0%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; round trips >= 100; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.5 filter=on depth=3: 87 months from 2017-10-11, 337/1777 days with a spread on, net Rs -8,013
+  skipped: exit_deferred_untraded_leg 5, ladder_full 2, no_credit 1, no_plan 1610, not_tradable 59
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.831, median year -1.0%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; round trips >= 100; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.5 filter=off depth=2: 87 months from 2017-10-11, 705/1777 days with a spread on, net Rs -14,795
+  skipped: exit_deferred_untraded_leg 10, ladder_full 10, no_credit 6, no_plan 1371, not_tradable 129
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.861, median year -2.1%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+k=1.5 filter=off depth=3: 87 months from 2017-10-11, 708/1777 days with a spread on, net Rs -14,747
+  skipped: exit_deferred_untraded_leg 10, ladder_full 8, no_credit 6, no_plan 1377, not_tradable 130
+  ruin (block bootstrap, seed 20260925): P(drawdown >= 30%) 0.000, P(year < 0) 0.860, median year -2.1%
+  failed: net CAGR >= 18% at benchmark costs; net CAGR > 0 at adverse costs; net CAGR beats cash at 6.5%; months net positive >= 60%; monthly t >= 2.5; calendar years positive >= 60%; adjacent arms net positive >= 50% (cell-level; not yet computed counts as a fail)
+finished 12:27
+
+The table above was produced under the §3.2 months bar as recorded on 2026-09-25 (mo+% is over ALL months). PROFIT_PLAN §3.2 was amended the same day (e4f5b24: >= 60% of months WITH ANY EXPOSURE net positive AND <= 40% of ALL months net negative); no verdict is re-judged, every arm also fails other checks. Both measures, benchmark costs, 87 months from 2017-10-11 (months with exposure = a spread was open at some session close that month):
+
+arm                          mo+% all   months exposed   exposed mo+%   all mo-%
+k=1.0 filter=on  depth=2       35.6        59              52.5           32.2
+k=1.0 filter=on  depth=3       34.5        59              50.8           33.3
+k=1.0 filter=off depth=2       60.9        86              61.6           37.9
+k=1.0 filter=off depth=3       59.8        86              60.5           39.1
+k=1.5 filter=on  depth=2       25.3        52              42.3           36.8
+k=1.5 filter=on  depth=3       25.3        53              41.5           36.8
+k=1.5 filter=off depth=2       44.8        82              47.6           49.4
+k=1.5 filter=off depth=3       43.7        82              46.3           50.6
+(the two k=1.0 filter=off arms are the only ones inside the amended months bar; they fail net CAGR, adverse CAGR, monthly t and years positive.)
+
+WHY IT LOST: where the credit went, per spread (Rs, one lot = 75 units before Nov 2024; benchmark run unless named; figures from a re-run of every arm at no slippage, benchmark and adverse costs, scratch script b1_diag.py; charges = brokerage + statutory only, slippage is inside the gross)
+arm                       scenario    trips  credit  gross  charges  net    win%  avg win  avg loss
+k=1.0 on  d2              no slip       96    462     111    109      +2    82.3    231    -1,065
+                          benchmark     93    426      32    109     -77    76.3    184      -917
+                          adverse       90    361    -132    162    -294    40.0    144      -587
+k=1.5 on  d2              no slip       75    220      33    102     -69    68.0     87      -401
+                          benchmark     75    195      -5    102    -107    50.7     69      -289
+                          adverse       73    168    -102    153    -255     8.2    132      -289
+k=1.0 off d2              no slip      203    486     96    109     -13    82.8    230    -1,181
+                          benchmark    200    445     17    109     -92    79.5    182    -1,154
+                          adverse      196    376    -139    163    -302    47.4    118      -681
+k=1.5 off d2              no slip      168    253     53    102     -50    69.6    116      -430
+                          benchmark    164    231     13    102     -89    53.0    108      -312
+                          adverse      157    201     -87    153    -241     8.9    288      -292
+(depth-3 arms are within a few rupees of their depth-2 twins on every line: the third slot is used on 1-2 more spreads over 87 months.)
+Reading it:
+ * The structure is a small credit against a much larger capped loss: the average credit is Rs 426 (k=1.0) or Rs 195 (k=1.5) on a wing that can lose about Rs 3,950-4,350. The 2x-credit stop and the 50% target make the average loss about 5x the average win, so the strategy needs about an 83% win rate before any cost. It has 82%: the volatility risk premium in this structure is about zero even with free fills (gross Rs 111 per spread against Rs 109 of charges; filter off is negative before charges: -13).
+ * Fees: Rs 109 per spread (four leg-orders at Rs 20 brokerage plus statutory charges) is 26% of the k=1.0 credit and 56% of the k=1.5 credit.
+ * Slippage: the benchmark's one tick plus 0.5% of the premium takes about Rs 79 per spread (gross 111 -> 32), 18% of the credit; the adverse scenario takes about Rs 164 more, and with 1.5x charges every arm is deeply negative. The result is therefore decided by an ASSUMPTION (no bid-ask history exists; D7 would measure it), but even at zero slippage no arm clears the bars: net CAGR would still be about zero.
+ * The stop: 17 of 93 spreads (k=1.0 filter on) hit the 2x stop and lost Rs -19,657 in total; 73 profit targets earned Rs +12,982; 3 time exits lost Rs -473.
+ * The regime filter reduced trips (200 -> 93) and the loss (Rs -18,331 -> -7,149 for k=1.0), but it removed exposure, it did not create an edge.
+LIMITS: today's fee schedule applied to the whole history (statutory rates were lower before 2024-10: costs are conservative for the early years, by an amount not measured), `verified: false`; slippage is an assumption; the 5-minute index level stands in for the official close before 2024-07 (strike selection and filters only); no arm's per-spread figures above are a measured spread.

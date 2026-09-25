@@ -67,6 +67,19 @@ class TestStats:
         assert stats.net_pnl == pytest.approx(89.0)
         assert stats.days == 3 and stats.days_with_a_spread == 2
 
+    def test_the_amended_months_measures_count_only_months_with_a_spread_open(self) -> None:
+        # the first month closes with nothing open (open_days is 0 on the first session)
+        stats = OptionStats.of(result_of(["1100", "990", "1089"]), D(1000))
+
+        assert stats.months_with_exposure == 2
+        assert stats.positive_month_share_exposed == pytest.approx(0.5)  # one of two exposed
+        assert stats.negative_month_share == pytest.approx(1 / 3)  # one of ALL three
+
+    def test_a_run_never_exposed_has_no_exposed_share(self) -> None:
+        stats = OptionStats.of(result_of(["1000", "1000"], open_days=0), D(1000))
+
+        assert (stats.months_with_exposure, stats.positive_month_share_exposed) == (0, None)
+
     def test_a_calendar_year_is_positive_or_not(self) -> None:
         stats = OptionStats.of(result_of(["1100", "1200"]), D(1000))
 
@@ -87,7 +100,8 @@ def stats(**kw: float | int | None) -> OptionStats:
     base = dict(
         net_cagr=0.25, total_return=0.5, months=36, positive_month_share=0.7, worst_month=-0.05,
         monthly_t=3.0, years=3, positive_year_share=1.0, max_drawdown=0.10, round_trips=150,
-        days=750, days_with_a_spread=600, net_pnl=50_000.0,
+        days=750, days_with_a_spread=600, net_pnl=50_000.0, months_with_exposure=30,
+        positive_month_share_exposed=0.8, negative_month_share=0.2,
     )  # fmt: skip
     return OptionStats(**{**base, **kw})  # type: ignore[arg-type]
 
@@ -117,6 +131,7 @@ class TestBar:
             0.065,
             0.60,
         )
+        assert bar.max_negative_month_share == 0.40  # the amended months bar (2026-09-25)
         assert (bar.min_worst_month, bar.max_drawdown, bar.min_monthly_t) == (-0.10, 0.25, 2.5)
         assert (bar.min_round_trips, bar.min_positive_year_share) == (100, 0.60)
         assert (bar.min_neighbour_share, bar.aggressive_max_p_drawdown) == (0.50, 0.05)
@@ -128,7 +143,9 @@ class TestBar:
         ("change", "fragment"),
         [
             (dict(net_cagr=0.10), "net CAGR >= 18%"),
-            (dict(positive_month_share=0.5), "months net positive"),
+            (dict(positive_month_share_exposed=0.5), "months with exposure net positive"),
+            (dict(positive_month_share_exposed=None), "months with exposure net positive"),
+            (dict(negative_month_share=0.41), "all months net negative"),
             (dict(worst_month=-0.11), "worst month"),
             (dict(max_drawdown=0.26), "max drawdown"),
             (dict(monthly_t=2.0), "monthly t"),

@@ -25,7 +25,8 @@ class OptionBar:
 
     min_net_cagr: float = 0.18
     cash_rate: float = 0.065
-    min_positive_month_share: float = 0.60
+    min_positive_month_share: float = 0.60  # of the months WITH ANY EXPOSURE (amended 2026-09-25)
+    max_negative_month_share: float = 0.40  # of ALL months (amended 2026-09-25)
     min_worst_month: float = -0.10
     max_drawdown: float = 0.25
     min_monthly_t: float = 2.5
@@ -69,7 +70,12 @@ def judge(
     check(s.net_cagr >= bar.min_net_cagr, f"net CAGR >= {bar.min_net_cagr:.0%} at benchmark costs")
     check(outcome.adverse_stats.net_cagr > 0, "net CAGR > 0 at adverse costs")
     check(s.net_cagr > bar.cash_rate, f"net CAGR beats cash at {bar.cash_rate:.1%}")
-    check(s.positive_month_share >= bar.min_positive_month_share, "months net positive >= 60%")
+    exposed = s.positive_month_share_exposed
+    check(
+        exposed is not None and exposed >= bar.min_positive_month_share,
+        "months with exposure net positive >= 60%",
+    )
+    check(s.negative_month_share <= bar.max_negative_month_share, "all months net negative <= 40%")
     check(s.worst_month >= bar.min_worst_month, "worst month >= -10%")
     check(s.max_drawdown <= bar.max_drawdown, "max drawdown <= 25%")
     check(s.monthly_t is not None and s.monthly_t >= bar.min_monthly_t, "monthly t >= 2.5")

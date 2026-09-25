@@ -17,7 +17,8 @@ def _pct(value: float | None) -> str:
 def table(results: Sequence[ArmResult]) -> list[str]:
     lines = [
         f"{'arm':<28} {'verdict':<13} {'trips':>5} {'cagr%':>6} {'adv%':>6} {'mo+%':>5} "
-        f"{'worst%':>7} {'t':>5} {'yr+%':>5} {'dd%':>5} {'nbr':>4} {'pdd30':>6}"
+        f"{'exp+%':>5} {'mo-%':>5} {'worst%':>7} {'t':>5} {'yr+%':>5} {'dd%':>5} {'nbr':>4} "
+        f"{'pdd30':>6}"
     ]
     for r in results:
         s, a = r.outcome.stats, r.outcome.adverse_stats
@@ -25,7 +26,9 @@ def table(results: Sequence[ArmResult]) -> list[str]:
         verdict = "PASS" if r.verdict.passed else "SCREEN_REJECT"
         lines.append(
             f"{r.arm.label:<28} {verdict:<13} {s.round_trips:>5} {_pct(s.net_cagr):>6} "
-            f"{_pct(a.net_cagr):>6} {_pct(s.positive_month_share):>5} {_pct(s.worst_month):>7} "
+            f"{_pct(a.net_cagr):>6} {_pct(s.positive_month_share):>5} "
+            f"{_pct(s.positive_month_share_exposed):>5} {_pct(s.negative_month_share):>5} "
+            f"{_pct(s.worst_month):>7} "
             f"{t:>5} {_pct(s.positive_year_share):>5} {_pct(s.max_drawdown):>5} "
             f"{_pct(r.neighbours):>4} {r.outcome.ruin.p_drawdown_30:>6.3f}"
         )

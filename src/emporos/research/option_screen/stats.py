@@ -34,6 +34,11 @@ class OptionStats:
     days: int
     days_with_a_spread: int
     net_pnl: float
+    # PROFIT_PLAN §3.2 months bar (amended 2026-09-25): the share of months with a spread open at
+    # some session close that were net positive, and the share of ALL months that were net negative
+    months_with_exposure: int = 0
+    positive_month_share_exposed: float | None = None
+    negative_month_share: float = 0.0
 
     @classmethod
     def of(cls, result: BacktestResult, capital: Decimal) -> OptionStats:
@@ -43,6 +48,9 @@ class OptionStats:
         equity = [d.equity for d in result.days]
         months = period_returns(days, equity, capital, by="month")
         years = period_returns(days, equity, capital, by="year")
+        keys = sorted({(d.year, d.month) for d in days})
+        exposed = {(d.day.year, d.day.month) for d in result.days if d.open_positions > 0}
+        exposed_returns = [m for k, m in zip(keys, months, strict=True) if k in exposed]
         total = float(equity[-1] / capital - 1)
         span_years = max((days[-1] - days[0]).days, 1) / 365.25
         cagr = (1 + total) ** (1 / span_years) - 1 if total > -1 else -1.0
@@ -60,6 +68,13 @@ class OptionStats:
             days=len(days),
             days_with_a_spread=sum(1 for d in result.days if d.open_positions > 0),
             net_pnl=float(equity[-1] - capital),
+            months_with_exposure=len(exposed_returns),
+            positive_month_share_exposed=(
+                sum(m > 0 for m in exposed_returns) / len(exposed_returns)
+                if exposed_returns
+                else None
+            ),
+            negative_month_share=sum(m < 0 for m in months) / len(months),
         )
 
 
