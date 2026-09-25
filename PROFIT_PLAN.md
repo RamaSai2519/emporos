@@ -356,3 +356,18 @@ low, because listed-company filings reach thousands of faster readers at the sam
 most one earlier cell (the results jump, L2) touched the same events: it found the news priced
 within 5 minutes. The most likely place for an LLM edge is the SWING horizon: judging whether news
 changes the business, which the market digests over days, not minutes.
+
+## 13. Track R — the Driver Atlas (operator, 2026-09-26)
+
+The operator directed the program to stop fitting price patterns and work backwards from real moves
+to their causes (global markets, the Fed, company actions, group and sector contagion), with LLMs,
+validated in full. Plan: `docs/research/profit/driver-atlas-plan.md`. In short: a Move Ledger of every
+significant stock, sector and market move (residual to market, sector and group); a point-in-time
+Cause Ledger with each cause's PUBLIC availability time; LLM attribution (validated against placebo
+quiet days, stability and a head audit) plus a separate blind direction read that never sees the
+move; then an Edge Table that measures, over ALL occurrences of each cause, the move left AFTER it
+became public, in the blind direction, against 2 × adverse costs. The atlas year is 2024 only; no
+hypothesis is judged on it. Numeric causes are tested on 2017-11..2023, LLM-read causes on Test
+(2025-01..2026-03-18), one run each, at most 8 hypotheses, all counted. The Track L Dev run
+continues. Track T1 is parked. The operator also authorised agents to apply the D7 quote-recording
+stack on AWS and to push master.
