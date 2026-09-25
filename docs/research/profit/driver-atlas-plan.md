@@ -17,6 +17,30 @@ at the moment they appear, and (3) whose price move is not finished by then.** T
 exactly that for every class of cause, and only the classes that pass become trading hypotheses.
 Those are then tested on data the atlas never saw.
 
+## 0a. Operator ruling (2026-09-26): trade WITH a move already under way
+
+The program does not try to know something before the market does. **The trade is always in the
+direction the price is already moving;** the edge is knowing WHY it is moving, and so whether it will
+keep going. This changes the question the atlas answers, and it closes a hindsight trap:
+- **The trigger is a move seen in real time, not a move known at the close.** A move that ends the
+  day at 2.5σ is known only at 15:30; a trader sees a move when it CROSSES a level. So the tradeable
+  unit is the **crossing**: the first 5-minute bar on which a name's intraday residual (to the market,
+  sector and group) crosses k × its 15-minute-scaled σ, k ∈ {1.5, 2.0} (fixed now), or on which a
+  sector or NIFTY crosses its own level. For the swing horizon, the crossing is a close at ≥ 2σ, with
+  entry at the next open (a gap-and-go day and an after-hours filing are both covered).
+- **The question per crossing:** given the cause visible at that moment (everything public up to the
+  crossing, never later), how much more does the move go, in the SAME direction, from the crossing +
+  2 minutes to 15:15, and over +1, +3 and +5 sessions? Continuation classes are hypotheses; reversal
+  classes are recorded as findings (and as "do not chase" filters) but not traded.
+- **Every crossing counts, not only the ones that became big moves.** Many crossings fizzle. The
+  edge table is computed over ALL crossings of a class, which is exactly what a trader faces.
+- **Why this is different from the earlier failures, said plainly:** gap continuation, ORB and the
+  index-trend leader traded moves already under way and lost after costs. They were blind to the
+  cause. The whole bet here is that the cause separates the moves that continue from those that
+  fizzle, so the atlas must show continuation CONDITIONAL on cause, measured against all crossings
+  with no cause filter (the old, losing baseline). A cause class earns a hypothesis only if it beats
+  that baseline, not only zero.
+
 ## 1. Splits (why this is not hindsight)
 
 | Window | Use |
@@ -45,6 +69,10 @@ For every D1 name (148) and every session:
   the day's cumulative residual passes 25% of its final value; overnight if the open gap alone is
   ≥ 50% of the move), the peak time, and the forward drift: the residual and raw return from the
   close over +1, +3, +5 and +10 sessions, plus the intraday path after onset (+15m, +60m, to 15:15).
+- **Crossing ledger (the tradeable unit, §0a):** every intraday crossing at k = 1.5 and 2.0 (the first per
+  name-session per direction), every sector and NIFTY crossing, and every swing crossing (a close at
+  ≥ 2σ residual). Per crossing: the time, direction, move so far, and the forward path from crossing
+  + 2 min (to +15m, +60m, 15:15; +1/+3/+5 sessions), all residual and raw.
 - **Placebo sample:** an equal number of randomly drawn quiet name-sessions (|residual| < 0.5σ),
   seed 20260926, carried through every later phase.
 
@@ -106,6 +134,14 @@ optionally a secondary one, a confidence of 0-100, and a one-line reason citing 
 id. "Unexplained" is a valid and expected answer. Code, not the LLM, checks that the cited item exists
 and records its availability relative to the onset.
 
+**Call C — the cause at the crossing (the trading call, §0a):** for every crossing, the LLM sees only what
+was public up to the crossing: the candidate causes available by then, the move so far (the
+path to the crossing, never after), the market, sector and group numbers at that moment. It returns
+the driver class, "continue / fizzle / unclear" with a confidence, and the expected horizon.
+Code checks that no item after the crossing is in the prompt (a test pins it). Call A (hindsight
+attribution) stays for the descriptive atlas and for validating that Call C's cause labels agree with
+the hindsight cause (agreement reported per class).
+
 **Call B — direction read (blind to the move):** a SEPARATE call that sees only the cause item
 (the text or the calendar fact, with the numbers available at its availability time) and NOT the
 price move. It says up / down / unclear, the expected horizon and a confidence. This is what a trader
@@ -154,6 +190,14 @@ by beat or miss in the blind read), over the 2024 events:
   **This is the critical anti-hindsight step:** the ledger starts from moves, but a trader sees every
   cause and does not know which will turn into a move. Only the all-occurrences figure is tradeable.
 - A t-statistic on day-clustered errors, and the cost hurdle: 2 × adverse round trip for the horizon.
+
+**With-the-move edge table (primary, §0a):** for every Call C driver class, and for Call C's "continue"
+calls at confidence ≥ 70, over ALL crossings in 2024: n, the mean continuation from the crossing + 2 min
+in the move's direction (to 15:15; +1/+3/+5), the hit rate, a day-clustered t, and the difference from
+the SAME statistic for all crossings with no cause filter (the baseline). A class becomes a
+hypothesis only if its continuation ≥ 2 × the adverse round-trip cost, it beats the baseline with
+clustered t ≥ 3, n ≥ 40, and ≥ 60% of months are positive. The earlier cause-availability table below
+is kept as a secondary, descriptive view.
 
 **A driver class becomes a hypothesis only if**, on ALL occurrences in 2024: n ≥ 40; mean tradeable
 remainder in the blind direction ≥ 2 × the adverse round-trip cost; clustered t ≥ 3; ≥ 60% of
