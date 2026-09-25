@@ -44,7 +44,7 @@ from emporos.jev.prompts import JevPrompt
 from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, ParquetEventStore
 from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_stock_archive import DATASET
-from emporos.research.market_context.global_cues import DEFAULT_CUES_RAW_DIR
+from emporos.research.market_context.global_cues import DEFAULT_CUES_RAW_DIR, FEEDS
 
 DEFAULT_JOURNAL = Path.home() / ".cache" / "emporos" / "llm" / "l1-journal.jsonl"
 DEFAULT_STOCK_FO = Path.home() / ".cache" / "emporos" / DATASET
@@ -194,7 +194,13 @@ async def _run(
     if spec.posture:
         typer.echo("building the posture inputs (numbers as known at 09:00 each morning)")
         inputs = build_posture_inputs(
-            data.bars, ParquetEventStore(events_dir), cues, data.symbols, first, last
+            data.bars,
+            ParquetEventStore(events_dir),
+            cues,
+            FEEDS["yahoo"],
+            data.symbols,
+            first,
+            last,
         )
         planner = PosturePlanner(
             stack.posture_stage(), inputs, stack.scopes, declared_prices(), concurrency
