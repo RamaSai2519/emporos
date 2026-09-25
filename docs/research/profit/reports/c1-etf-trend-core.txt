@@ -1,0 +1,58 @@
+c1-etf-trend-core: 3 ETFs, judged from 2008-04-22 (273 prior sessions each), capital 100000, cash accrues 5.0% a year, fills at the next close, delivery schedule angelone-equity-delivery (verified: False)
+c1-etf-trend-core: Discovery 2008-04-22..2024-12-31, 3 arms
+benchmark (60/40 NIFTYBEES/GOLDBEES buy-and-hold rebalanced yearly, next close, same costs): net CAGR 11.3%, net Sharpe 0.97, max drawdown 34.0%, positive months 63%
+
+arm                                                            result starts     1st buy       CAGR     adv Sharpe m+exp m-all   worst  maxDD     t trips    y+  conc   nbr cash days
+rule=top2                                                      reject 2008-05-02 2008-05-02   11.0%   10.1%   0.90   60%   39%   -9.5%  20.6%  3.90     0   82%   n/a   n/a    69/4136
+rule=all_equal                                                 reject 2008-05-02 2008-05-02   10.4%    9.8%   1.11   61%   39%   -7.8%  13.0%  4.35     0   76%   n/a   n/a    69/4136
+rule=fixed_40_30_30                                            reject 2008-05-02 2008-05-02   10.2%    9.6%   1.08   62%   38%   -8.0%  13.2%  4.23     0   71%   n/a   n/a    69/4136
+
+net return per calendar year (benchmark costs):
+arm                                                               2008    2009    2010    2011    2012    2013    2014    2015    2016    2017    2018    2019    2020    2021    2022    2023    2024
+rule=top2                                                         0.3%   45.2%    3.5%    6.6%   15.0%   -6.5%   37.3%    0.7%    0.8%   33.2%  -10.3%    5.5%   24.1%   28.1%  -13.8%   15.9%   17.9%
+rule=all_equal                                                    1.3%   49.0%   17.7%    1.6%    8.1%   -5.4%   24.2%   -0.6%    3.0%   20.9%   -4.9%    8.2%   21.1%   15.3%   -5.2%   14.0%   19.1%
+rule=fixed_40_30_30                                               0.5%   48.2%   17.2%   -0.0%    7.6%   -5.1%   24.8%   -1.1%    2.8%   21.0%   -4.3%    8.5%   21.0%   16.3%   -5.8%   14.3%   18.2%
+
+risk of ruin, 20-day block bootstrap, 12-month paths (§3.4):
+rule=top2                                                      P(drawdown>=30%) 0.1%  P(12-month net<0) 19.4%  paths 10000 seed 20260925
+rule=all_equal                                                 P(drawdown>=30%) 0.0%  P(12-month net<0) 14.9%  paths 10000 seed 20260925
+rule=fixed_40_30_30                                            P(drawdown>=30%) 0.0%  P(12-month net<0) 15.6%  paths 10000 seed 20260925
+
+why arms did not pass:
+rule=top2: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's; max drawdown <= 0.6 x the benchmark's
+  200 months decided, 3 all-cash, months held per asset {'NSE:10576': 130, 'NSE:10939': 124, 'NSE:14428': 87}
+rule=all_equal: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's
+  200 months decided, 3 all-cash, months held per asset {'NSE:10576': 149, 'NSE:10939': 144, 'NSE:14428': 145}
+rule=fixed_40_30_30: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's
+  200 months decided, 3 all-cash, months held per asset {'NSE:10576': 149, 'NSE:10939': 144, 'NSE:14428': 145}
+
+months (§3.2 as amended: >= 60% of months with exposure positive AND <= 40% of ALL months negative); the old all-months positive share for comparison:
+rule=top2                                                      200 months with exposure: 60% positive; all 201 months: 39% negative, 61% positive (old bar); 1 all-cash months
+rule=all_equal                                                 200 months with exposure: 61% positive; all 201 months: 39% negative, 61% positive (old bar); 1 all-cash months
+rule=fixed_40_30_30                                            200 months with exposure: 62% positive; all 201 months: 38% negative, 62% positive (old bar); 1 all-cash months
+
+REAL gaps a held position went through (traded through, never zeroed):
+rule=top2: 0 gap(s), Rs 0 in all
+rule=all_equal: 0 gap(s), Rs 0 in all
+rule=fixed_40_30_30: 0 gap(s), Rs 0 in all
+
+assets: NSE:10576, NSE:10939, NSE:14428; data 2002-01-08..2024-12-31
+
+PROFIT_PLAN §10 core bar (benchmark costs; halves split at 2016-12-31):
+                            CAGR  <=2016   2017+   maxDD   worst  m+exp  m-all     t Sharpe
+BENCH 60/40 NIFTYBEES/G    11.3%    8.5%   14.4%   34.0%  -18.9%    63%    37%  3.81   0.97
+rule=top2                  11.0%   10.6%   11.3%   20.6%   -9.5%    60%    39%  3.90   0.90
+rule=all_equal             10.4%   10.3%   10.6%   13.0%   -7.8%    61%    39%  4.35   1.11
+rule=fixed_40_30_30        10.2%    9.8%   10.7%   13.2%   -8.0%    62%    38%  4.23   1.08
+
+the rest of the bar (adverse-cost CAGR, §3.4, drawdown against 0.6 x benchmark):
+rule=top2                adverse CAGR 10.1%  P(drawdown>=30%) 0.1%  maxDD 20.6% vs limit 20.4%  ->  reject: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's; max drawdown <= 0.6 x the benchmark's
+rule=all_equal           adverse CAGR 9.8%  P(drawdown>=30%) 0.0%  maxDD 13.0% vs limit 20.4%  ->  reject: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's
+rule=fixed_40_30_30      adverse CAGR 9.6%  P(drawdown>=30%) 0.0%  maxDD 13.2% vs limit 20.4%  ->  reject: net CAGR >= the 60/40 benchmark's; second-half net CAGR not more than 2 points below the benchmark's
+
+sub-period from 2017-11-13 (report only, benchmark costs; the runs' own, sliced):
+                                            CAGR Sharpe  m+ exp  m- all   worst  maxDD trips
+rule=top2                                   8.8%   0.82     57%     43%   -9.5%  20.6%     0
+rule=all_equal                              9.2%   1.11     60%     40%   -6.3%  12.2%     0
+rule=fixed_40_30_30                         9.3%   1.11     60%     40%   -6.3%  12.8%     0
+BENCHMARK 60/40                            13.6%   1.31     67%     33%  -11.8%  22.9%     0
