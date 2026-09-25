@@ -24,6 +24,8 @@ class Returns:
     gap: Floats  # (S,)
     bars: Floats  # (S, SLOTS)
     level: Floats  # (S,)
+    close: Floats  # (S, SLOTS) bar closes (NaN for a group index, which has no prices)
+    open0: Floats  # (S,) the session's first open
 
 
 def returns_of(panel: InstrumentPanel) -> Returns:
@@ -36,4 +38,4 @@ def returns_of(panel: InstrumentPanel) -> Returns:
         bars = panel.close / before - 1
     for array in (daily, gap, bars):
         array[~np.isfinite(array)] = np.nan
-    return Returns(daily, gap, bars, panel.day_close.copy())
+    return Returns(daily, gap, bars, panel.day_close.copy(), panel.close, panel.open0)

@@ -43,8 +43,8 @@ class Decomposition:
 
 
 class Decomposer:
-    def __init__(self, rules: MoveRules = MoveRules()) -> None:
-        self._rules = rules
+    def __init__(self, rules: MoveRules | None = None) -> None:
+        self._rules = rules or MoveRules()
 
     def decompose(self, own: Returns, regressors: list[Returns]) -> Decomposition:
         size = len(own.daily)

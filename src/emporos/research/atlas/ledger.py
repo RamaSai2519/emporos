@@ -22,12 +22,12 @@ import numpy as np
 from emporos.core.clock import IST
 from emporos.research.atlas.decompose import Decomposer, Decomposition
 from emporos.research.atlas.events import FORWARD_SESSIONS, EventClass, MoveEvent, OnsetKind
-from emporos.research.atlas.groups import GroupMap
 from emporos.research.atlas.onset import NOTHING, Onset, OnsetAnalyzer
 from emporos.research.atlas.panel import FIRST_SLOT_MINUTE, SLOT_MINUTES, InstrumentPanel
 from emporos.research.atlas.returns import Returns, returns_of
+from emporos.research.cause_ledger.groups import GroupMap
 
-__all__ = ["LedgerRules", "MoveLedgerBuilder", "SeriesId"]
+__all__ = ["Fits", "Fitted", "LedgerRules", "MoveLedgerBuilder", "SeriesId"]
 
 PCT = 100.0
 
@@ -53,11 +53,20 @@ class SeriesId:
 
 
 @dataclass(frozen=True)
-class _Fitted:
+class Fitted:
     who: SeriesId
     own: Returns
     regressors: list[Returns]
     deco: Decomposition
+
+
+@dataclass(frozen=True)
+class Fits:
+    """Every series decomposed once: NIFTY, each sector index, each stock."""
+
+    market: Fitted
+    sectors: list[Fitted]
+    stocks: list[Fitted]
 
 
 class MoveLedgerBuilder:
@@ -75,27 +84,44 @@ class MoveLedgerBuilder:
         self._analyzer = analyzer or OnsetAnalyzer()
         self._rules = rules or LedgerRules()
 
-    def build(
+    def fit(
         self,
         panels: Mapping[str, InstrumentPanel],
         market_id: str,
         sector_of: Mapping[str, tuple[str, str]],  # symbol -> (sector index id, its name)
         symbols: Mapping[str, str],  # trading symbol -> instrument id
-    ) -> list[MoveEvent]:
+    ) -> Fits:
         returns = {i: returns_of(p) for i, p in panels.items()}
         market = returns[market_id]
-        events: list[MoveEvent] = []
-        events += self._market(market_id, market)
-        events += self._sectors(returns, market, sector_of)
-        stock = self._stocks(returns, market, sector_of, symbols)
+        market_fit = Fitted(
+            SeriesId("NIFTY", market_id), market, [], self._decomposer.decompose(market, [])
+        )
+        sectors = [
+            Fitted(
+                SeriesId(name, index_id),
+                returns[index_id],
+                [market],
+                self._decomposer.decompose(returns[index_id], [market]),
+            )  # fmt: skip
+            for index_id, name in sorted(set(sector_of.values()))
+            if index_id in returns
+        ]
+        return Fits(market_fit, sectors, self._stock_fits(returns, market, sector_of, symbols))
+
+    def build(self, fits: Fits) -> list[MoveEvent]:
+        events = self._market(fits.market)
+        for sector in fits.sectors:
+            events += self._scan(sector, EventClass.SECTOR, self._rules.sector_sigma, jumps=False)
+        stock: list[MoveEvent] = []
+        for fitted in fits.stocks:
+            stock += self._scan(fitted, EventClass.STOCK_DAILY, self._rules.stock_sigma, True)
         events += stock
-        events += self._placebo(returns, market, sector_of, symbols, len(stock))
+        events += self._placebo(fits.stocks, len(stock))
         return sorted(events, key=lambda e: (e.day, e.event_class.value, e.name))
 
     # --- the three kinds of series -----------------------------------------------------------
-    def _market(self, market_id: str, market: Returns) -> list[MoveEvent]:
-        who = SeriesId("NIFTY", market_id)
-        fitted = _Fitted(who, market, [], self._decomposer.decompose(market, []))
+    def _market(self, fitted: Fitted) -> list[MoveEvent]:
+        market = fitted.own
         rows = np.flatnonzero(
             (np.abs(market.daily) >= self._rules.market_return)
             | (np.abs(market.gap) >= self._rules.market_gap)
@@ -108,46 +134,17 @@ class MoveLedgerBuilder:
             if self._in_span(int(d)) and not np.isnan(market.daily[d])
         ]
 
-    def _sectors(
-        self,
-        returns: Mapping[str, Returns],
-        market: Returns,
-        sector_of: Mapping[str, tuple[str, str]],
-    ) -> list[MoveEvent]:
-        events: list[MoveEvent] = []
-        for index_id, name in sorted(set(sector_of.values())):
-            if index_id not in returns:
-                continue
-            fitted = _Fitted(
-                SeriesId(name, index_id), returns[index_id], [market],
-                self._decomposer.decompose(returns[index_id], [market]),
-            )  # fmt: skip
-            events += self._scan(fitted, EventClass.SECTOR, self._rules.sector_sigma, jumps=False)
-        return events
-
-    def _stocks(
-        self,
-        returns: Mapping[str, Returns],
-        market: Returns,
-        sector_of: Mapping[str, tuple[str, str]],
-        symbols: Mapping[str, str],
-    ) -> list[MoveEvent]:
-        events: list[MoveEvent] = []
-        for fitted in self._stock_fits(returns, market, sector_of, symbols):
-            events += self._scan(fitted, EventClass.STOCK_DAILY, self._rules.stock_sigma, True)
-        return events
-
     def _stock_fits(
         self,
         returns: Mapping[str, Returns],
         market: Returns,
         sector_of: Mapping[str, tuple[str, str]],
         symbols: Mapping[str, str],
-    ) -> list[_Fitted]:
+    ) -> list[Fitted]:
         from emporos.research.atlas.group_index import GroupIndexer
 
         indexer = GroupIndexer(self._groups, self._sessions, symbols, returns)
-        fits: list[_Fitted] = []
+        fits: list[Fitted] = []
         for symbol, instrument_id in sorted(symbols.items()):
             if instrument_id not in returns:
                 continue
@@ -162,15 +159,15 @@ class MoveLedgerBuilder:
                 symbol,
                 instrument_id,
                 sector[1] if sector else "",
-                self._groups.group_of(symbol) or "",
+                indexer.label(symbol),
             )
             own = returns[instrument_id]
-            fits.append(_Fitted(who, own, regressors, self._decomposer.decompose(own, regressors)))
+            fits.append(Fitted(who, own, regressors, self._decomposer.decompose(own, regressors)))
         return fits
 
     # --- events ------------------------------------------------------------------------------
     def _scan(
-        self, fitted: _Fitted, event_class: EventClass, threshold: float, jumps: bool
+        self, fitted: Fitted, event_class: EventClass, threshold: float, jumps: bool
     ) -> list[MoveEvent]:
         deco = fitted.deco
         events: list[MoveEvent] = []
@@ -185,7 +182,7 @@ class MoveLedgerBuilder:
             events += self._jumps(fitted)
         return events
 
-    def _jumps(self, fitted: _Fitted) -> list[MoveEvent]:
+    def _jumps(self, fitted: Fitted) -> list[MoveEvent]:
         deco = fitted.deco
         events: list[MoveEvent] = []
         for d in range(len(deco.sigma15)):
@@ -197,15 +194,7 @@ class MoveLedgerBuilder:
                 events.append(self._jump_event(fitted, d, k))
         return events
 
-    def _placebo(
-        self,
-        returns: Mapping[str, Returns],
-        market: Returns,
-        sector_of: Mapping[str, tuple[str, str]],
-        symbols: Mapping[str, str],
-        count: int,
-    ) -> list[MoveEvent]:
-        fits = self._stock_fits(returns, market, sector_of, symbols)
+    def _placebo(self, fits: list[Fitted], count: int) -> list[MoveEvent]:
         pool = [
             (day, i, d)
             for i, f in enumerate(fits)
@@ -230,7 +219,7 @@ class MoveLedgerBuilder:
 
     # --- one event ---------------------------------------------------------------------------
     def _daily_event(
-        self, fitted: _Fitted, event_class: EventClass, d: int, direction: float
+        self, fitted: Fitted, event_class: EventClass, d: int, direction: float
     ) -> MoveEvent:
         deco = fitted.deco
         onset = self._analyzer.daily(deco.path[d], float(deco.gap_resid[d]), int(direction))
@@ -241,7 +230,7 @@ class MoveLedgerBuilder:
             raw_z=market_like,
         )  # fmt: skip
 
-    def _jump_event(self, fitted: _Fitted, d: int, k: int) -> MoveEvent:
+    def _jump_event(self, fitted: Fitted, d: int, k: int) -> MoveEvent:
         deco = fitted.deco
         direction = int(np.sign(deco.window[d, k]) or 1)
         onset = self._analyzer.jump(deco.path[d], float(deco.gap_resid[d]), k, direction)
@@ -251,7 +240,7 @@ class MoveLedgerBuilder:
         )  # fmt: skip
 
     def _event(
-        self, fitted: _Fitted, event_class: EventClass, d: int, direction: int, size: float,
+        self, fitted: Fitted, event_class: EventClass, d: int, direction: int, size: float,
         sigma: float, onset: Onset, raw_z: bool,
     ) -> MoveEvent:  # fmt: skip
         who, deco, day = fitted.who, fitted.deco, self._sessions[d]
@@ -267,7 +256,7 @@ class MoveLedgerBuilder:
         )  # fmt: skip
 
     @staticmethod
-    def _named_betas(fitted: _Fitted, betas: np.ndarray) -> tuple[float, float, float]:
+    def _named_betas(fitted: Fitted, betas: np.ndarray) -> tuple[float, float, float]:
         """(market, sector, group), NaN where the name has no such term."""
         have = [betas[j] if j < len(betas) else np.nan for j in range(3)]
         has_sector = bool(fitted.who.sector)
@@ -278,7 +267,7 @@ class MoveLedgerBuilder:
         group = float(have[group_index]) if has_group and group_index < len(betas) else np.nan
         return market, sector, group
 
-    def _forward(self, fitted: _Fitted, d: int) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    def _forward(self, fitted: Fitted, d: int) -> tuple[tuple[float, ...], tuple[float, ...]]:
         own, betas = fitted.own.level, fitted.deco.betas[d]
         raw: list[float] = []
         resid: list[float] = []

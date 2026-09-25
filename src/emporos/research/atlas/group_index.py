@@ -11,8 +11,8 @@ from datetime import date
 import numpy as np
 
 from emporos.research.atlas.arrays import Bools, Floats
-from emporos.research.atlas.groups import GroupMap
 from emporos.research.atlas.returns import Returns
+from emporos.research.cause_ledger.groups import GroupMap
 
 __all__ = ["GroupIndexer"]
 
@@ -25,41 +25,29 @@ class GroupIndexer:
         symbols: Mapping[str, str],
         returns: Mapping[str, Returns],
     ) -> None:
-        self._groups, self._sessions, self._symbols, self._returns = (
-            groups,
-            sessions,
-            symbols,
-            returns,
-        )
+        self._groups, self._sessions = groups, sessions
+        self._symbols, self._returns = symbols, returns
+
+    def label(self, symbol: str) -> str:
+        """The group(s) the name is in on the last session, joined; "" when in none."""
+        return "+".join(self._groups.groups_of(symbol, self._sessions[-1]))
 
     def for_symbol(self, symbol: str) -> Returns | None:
-        group = self._groups.group_of(symbol)
-        if group is None:
-            return None
-        previous = [None, *self._sessions[:-1]]
-        others: list[str] = sorted(
-            {
-                s
-                for day in self._sessions
-                for s in self._groups.members(group, day)
-                if s != symbol and self._symbols.get(s) in self._returns
-            }
-        )
+        """The equal-weight return of the name's peers (the other members of every group it is in),
+        each session's peers as of the day before, the name itself never among them."""
+        peers = [self._groups.peers_for_session(symbol, day) for day in self._sessions]
+        others = sorted({p for row in peers for p in row if self._symbols.get(p) in self._returns})
         if not others:
             return None
-        mask = np.array(
-            [
-                [(d is not None and s in self._groups.members(group, d)) for d in previous]
-                for s in others
-            ]
-        )  # (members, sessions)
+        member = [set(row) for row in peers]
+        mask = np.array([[s in day_peers for day_peers in member] for s in others])  # (peers, S)
         stacks = [self._returns[self._symbols[s]] for s in others]
         daily = self._mean(np.stack([r.daily for r in stacks]), mask)
         gap = self._mean(np.stack([r.gap for r in stacks]), mask)
         bars = self._mean(np.stack([r.bars for r in stacks]), mask)
         level = np.cumprod(1 + np.nan_to_num(daily))
-        level[np.isnan(daily) & (np.arange(len(daily)) == 0)] = 1.0
-        return Returns(daily, gap, bars, level)
+        none = np.full(bars.shape, np.nan)
+        return Returns(daily, gap, bars, level, none, np.full(len(daily), np.nan))
 
     @staticmethod
     def _mean(values: Floats, mask: Bools) -> Floats:

@@ -15,6 +15,7 @@ from emporos.backtest.experiment_backfill import ReportBackfill
 from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
+from emporos.cli.atlas_commands import research_build_move_ledger
 from emporos.cli.autorun_commands import research_dev_autorun
 from emporos.cli.backup_commands import research_backup_datasets
 from emporos.cli.book_commands import research_screen_book
@@ -100,6 +101,7 @@ experiments_app = typer.Typer(
 )
 research_app.add_typer(experiments_app, name="experiments")
 research_app.add_typer(vault_app, name="vault")
+research_app.command("build-move-ledger")(research_build_move_ledger)
 research_app.command("screen")(research_screen)
 research_app.command("screen-ranked")(research_screen_ranked)
 research_app.command("collect-results")(research_collect_results)
