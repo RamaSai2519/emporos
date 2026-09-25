@@ -136,3 +136,40 @@ class TestStats:
         r = run([date(2026, 1, 2), date(2026, 1, 5)], ["1100", "990"])
 
         assert SwingMetrics.daily_returns(r) == pytest.approx([0.10, -0.10])
+
+
+class TestExposureMonths:
+    DAYS = (date(2026, 1, 15), date(2026, 1, 30), date(2026, 2, 13), date(2026, 2, 27),
+            date(2026, 3, 13), date(2026, 3, 31))  # fmt: skip
+
+    def stats(self, equity: list[str], flags: tuple[bool, ...]):  # type: ignore[no-untyped-def]
+        r = SwingRun(
+            tuple(self.DAYS), tuple(D(e) for e in equity), sum(flags), (), D(1000), D(0), 0, flags
+        )
+        return SwingMetrics.of(r)
+
+    def test_months_with_exposure_and_the_positive_share_among_them(self) -> None:
+        # January exposed and up, February all cash (flat), March exposed and down
+        s = self.stats(["1000", "1100", "1100", "1100", "1050", "990"],
+                       (True, True, False, False, True, True))  # fmt: skip
+
+        assert s.months == 3
+        assert s.months_with_exposure == 2
+        assert s.all_cash_months == 1
+        assert s.positive_month_share_exposed == 0.5  # January up, March down
+        assert s.positive_month_share == pytest.approx(1 / 3)  # over ALL months: only January is up
+
+    def test_a_month_is_exposed_if_any_session_in_it_closed_invested(self) -> None:
+        s = self.stats(["1000", "1010", "1010", "1010", "1010", "1010"],
+                       (False, True, False, False, False, False))  # fmt: skip
+
+        assert (s.months_with_exposure, s.all_cash_months) == (1, 2)
+
+    def test_a_book_that_was_never_invested_has_no_exposed_share(self) -> None:
+        s = self.stats(["1000"] * 6, (False,) * 6)
+
+        assert (s.months_with_exposure, s.positive_month_share_exposed, s.all_cash_months) == (
+            0,
+            None,
+            3,
+        )

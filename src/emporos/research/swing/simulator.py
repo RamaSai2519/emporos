@@ -84,6 +84,7 @@ class SwingRun:
     capital: Decimal
     fees: Decimal
     skipped_entries: int  # buys that did not fit, or whose name had no bar
+    invested_flags: tuple[bool, ...] = ()  # per session: closed with at least one holding
 
     @property
     def days_in_cash(self) -> int:
@@ -138,6 +139,7 @@ class SwingSimulator:
         state = _State(self._config.capital)
         equity: list[Decimal] = []
         invested = 0
+        flags: list[bool] = []
         pending_exits: set[str] = set()
         pending_entries: list[Intent] = []
         last = len(calendar) - 1
@@ -150,11 +152,12 @@ class SwingSimulator:
             value = state.cash + sum(self._value(p, day) for p in state.positions.values())
             equity.append(value)
             invested += bool(state.positions)
+            flags.append(bool(state.positions))
             if i < last:
                 pending_exits, pending_entries = self._decide(state, i, day, value)
         return SwingRun(
             calendar, tuple(equity), invested, tuple(state.trades), self._config.capital,
-            state.fees, state.skipped,
+            state.fees, state.skipped, tuple(flags),
         )  # fmt: skip
 
     # -- fills --------------------------------------------------------------------------------

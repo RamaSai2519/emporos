@@ -139,3 +139,19 @@ def test_a2_maps_results_events_to_reaction_sessions_and_reports_them_per_year(
     assert result.exit_code == 0, result.output
     assert "reaction sessions used per year: {2019: 1}" in result.output
     assert len((tmp_path / "screens.jsonl").read_text(encoding="utf-8").splitlines()) == 8
+
+
+def test_a1b_runs_its_four_arms_and_reports_exposure_months_halts_and_kills(tmp_path: Path) -> None:
+    args = world(tmp_path)
+
+    result = RUNNER.invoke(research_app, [args[0], "a1b-momentum-book-risk", *args[1:]])
+
+    assert result.exit_code == 0, result.output
+    lines = (tmp_path / "screens.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 4
+    assert {json.loads(line)["max_positions"] for line in lines} == {5}
+    assert "months net positive: over ALL months" in result.output
+    assert "all-cash months" in result.output
+    assert "halts [" in result.output
+    assert "kills [" in result.output
+    assert "vol_target=15" in result.output

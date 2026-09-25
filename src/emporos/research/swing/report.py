@@ -80,6 +80,17 @@ def format_report(report: CellReport) -> list[str]:
         lines.append(
             f"  {a.note}" + ("" if a.counted else "  [already in the ledger: not recounted]")
         )
+    lines += [
+        "",
+        "months net positive: over ALL months (the §3.2 bar) and over months with exposure:",
+    ]
+    for a in arms:
+        s = a.outcome.stats
+        lines.append(
+            f"{a.label:<62} all {s.months} months: {_pct(s.positive_month_share, 0)} positive; "
+            f"{s.months_with_exposure} with exposure: {_pct(s.positive_month_share_exposed, 0)} "
+            f"positive; {s.all_cash_months} all-cash months"
+        )
     lines += ["", "REAL gaps a held position went through (traded through, never zeroed):"]
     for a in arms:
         held = a.real_gaps_held

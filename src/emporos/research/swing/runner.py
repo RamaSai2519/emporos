@@ -18,7 +18,6 @@ from decimal import Decimal
 
 from emporos.research.gap_classes import GapVerdict
 from emporos.research.swing.cells import (
-    AGGRESSIVE_MAX_POSITIONS,
     CellEnvironment,
     SwingCell,
     adjacent_arms,
@@ -101,11 +100,11 @@ class SwingCellRunner:
         for point, outcome in zip(points, outcomes, strict=True):
             label = arm_label(point)
             share = neighbour_share(label, positive, adjacent)
-            aggressive = int(point["max_positions"]) <= AGGRESSIVE_MAX_POSITIONS
+            aggressive = cell.aggressive(point)
             verdict = judge(outcome, share, aggressive=aggressive)
             identity = SwingIdentity(
                 cell.slug, point, self._universe, calendar[0], calendar[-1], self._capital,
-                int(point["max_positions"]),
+                cell.max_positions(point),
             )  # fmt: skip
             path = self._pnl.write(identity.screen_id, outcome)
             held = real_gap_exposure(outcome.arm, self._env.dataset, self._real_gaps)
@@ -143,5 +142,5 @@ class SwingCellRunner:
         )
 
     def _run_arm(self, cell: SwingCell, point: Mapping[str, str]) -> ArmOutcome:
-        config = SwingConfig(self._capital, int(point["max_positions"]))
+        config = SwingConfig(self._capital, cell.max_positions(point))
         return self._screen.run(lambda: cell.strategy(point, self._env), config)

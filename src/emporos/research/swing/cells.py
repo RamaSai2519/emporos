@@ -15,10 +15,12 @@ from decimal import Decimal
 from itertools import product
 from typing import Protocol
 
+from emporos.research.swing.book_risk import BookRiskRules, VolTargeted
 from emporos.research.swing.data import SwingDataset
 from emporos.research.swing.earnings_drift import PostEarningsDrift, ReactionSessions
 from emporos.research.swing.momentum import MomentumTrend
 from emporos.research.swing.regime import (
+    IndexSeries,
     IndexTrendRegime,
     MonthlyCalendar,
     RebalanceCalendar,
@@ -28,7 +30,7 @@ from emporos.research.swing.rules import LossStop, SwingStrategy
 
 __all__ = [
     "AGGRESSIVE_MAX_POSITIONS", "CELLS", "CellEnvironment", "EarningsDriftCell", "MomentumCell",
-    "SwingCell", "adjacent_arms", "arm_points", "arm_label",
+    "BookRiskMomentumCell", "SwingCell", "adjacent_arms", "arm_points", "arm_label",
 ]  # fmt: skip
 
 AGGRESSIVE_MAX_POSITIONS = 3
@@ -44,12 +46,21 @@ class CellEnvironment:
     regime: IndexTrendRegime
     stop: LossStop
     reactions: ReactionSessions | None = None
+    index: IndexSeries | None = None  # NIFTY 50: A1b's volatility target reads it
 
 
 class SwingCell(Protocol):
     slug: str
 
     def strategy(self, point: Point, env: CellEnvironment) -> SwingStrategy: ...
+
+    def max_positions(self, point: Point) -> int:
+        """The book size of the arm (the arm dimension of A1 and A2, fixed for A1b)."""
+        ...
+
+    def aggressive(self, point: Point) -> bool:
+        """Whether the arm is the concentrated posture (the §3.4 ruin gate applies)."""
+        ...
 
     def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
         """The first session the arm could act on (warm-up over, regime defined)."""
@@ -108,6 +119,12 @@ class MomentumCell:
             env.stop,
         )
 
+    def max_positions(self, point: Point) -> int:
+        return int(point["max_positions"])
+
+    def aggressive(self, point: Point) -> bool:
+        return self.max_positions(point) <= AGGRESSIVE_MAX_POSITIONS
+
     def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
         return strategy.record.first_ranked_day if isinstance(strategy, MomentumTrend) else None
 
@@ -141,6 +158,12 @@ class EarningsDriftCell:
             env.stop,
         )
 
+    def max_positions(self, point: Point) -> int:
+        return int(point["max_positions"])
+
+    def aggressive(self, point: Point) -> bool:
+        return self.max_positions(point) <= AGGRESSIVE_MAX_POSITIONS
+
     def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
         return env.regime.first_defined_day(env.dataset.calendar)
 
@@ -164,4 +187,66 @@ class EarningsDriftCell:
         ]
 
 
-CELLS: Mapping[str, SwingCell] = {c.slug: c for c in (MomentumCell(), EarningsDriftCell())}
+class BookRiskMomentumCell:
+    """A1b (config/experiments/a1b-momentum-book-risk.yaml): A1 at lookback 252 and 5 names, under
+    the §3.5 book rules, with the volatility target as the second arm dimension."""
+
+    slug = "a1b-momentum-book-risk"
+    LOOKBACK = 252
+    MAX_POSITIONS = 5
+    _CALENDARS: Mapping[str, Callable[[], RebalanceCalendar]] = {
+        "weekly": WeeklyCalendar,
+        "monthly": MonthlyCalendar,
+    }
+
+    def strategy(self, point: Point, env: CellEnvironment) -> BookRiskRules:
+        calendar = self._CALENDARS[point["rebalance"]]()
+        momentum = MomentumTrend(self.LOOKBACK, self.MAX_POSITIONS, calendar, env.regime, env.stop)
+        inner: SwingStrategy = momentum
+        if point["vol_target"] != "off":
+            if env.index is None:
+                raise ValueError("the volatility target needs the index series")
+            inner = VolTargeted(momentum, env.index, Decimal(point["vol_target"]) / 100)
+        return BookRiskRules(inner, calendar, env.regime)
+
+    def max_positions(self, point: Point) -> int:
+        return self.MAX_POSITIONS
+
+    def aggressive(self, point: Point) -> bool:
+        return False
+
+    @staticmethod
+    def _momentum(strategy: SwingStrategy) -> MomentumTrend | None:
+        current: object = strategy
+        while current is not None and not isinstance(current, MomentumTrend):
+            current = getattr(current, "inner", None)
+        return current if isinstance(current, MomentumTrend) else None
+
+    def effective_start(self, strategy: SwingStrategy, env: CellEnvironment) -> date | None:
+        momentum = self._momentum(strategy)
+        return momentum.record.first_ranked_day if momentum else None
+
+    def arm_notes(self, strategy: SwingStrategy) -> str:
+        momentum = self._momentum(strategy)
+        parts = (
+            [f"{momentum.record.rebalances} rebalances ranked, {momentum.record.stops} stops"]
+            if momentum
+            else []
+        )
+        if isinstance(strategy, BookRiskRules):
+            r = strategy.record
+            parts.append(f"halts {[d.isoformat() for d in r.halts]}")
+            parts.append(f"kills {[d.isoformat() for d in r.kills]}")
+            parts.append(f"re-entries {[d.isoformat() for d in r.reentries]}")
+        return "; ".join(parts)
+
+    def cell_notes(self, env: CellEnvironment) -> list[str]:
+        return [
+            "regime defined from "
+            f"{env.regime.first_defined_day(env.dataset.calendar)} (NIFTY 50 > 200-session average)"
+        ]
+
+
+CELLS: Mapping[str, SwingCell] = {
+    c.slug: c for c in (MomentumCell(), EarningsDriftCell(), BookRiskMomentumCell())
+}

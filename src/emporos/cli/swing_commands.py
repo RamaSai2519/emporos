@@ -132,7 +132,11 @@ def research_screen_swing(
         for name in built.dataset.instrument_ids:
             sessions[name] = list(built.dataset.series(name).days)
         env = CellEnvironment(
-            built.dataset, regime, LossStop(), ReactionSessions.build(by_instrument, sessions)
+            built.dataset,
+            regime,
+            LossStop(),
+            ReactionSessions.build(by_instrument, sessions),
+            index,
         )
         schedule = FeeScheduleLibrary.from_directory(product=TradeProduct.DELIVERY).earliest
         screen = SwingScreenRun(

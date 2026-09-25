@@ -50,6 +50,9 @@ class SwingStats:
     days_in_cash: int
     max_instrument_share: float | None
     net_profit: float
+    months_with_exposure: int = 0  # months in which some session closed with a holding
+    positive_month_share_exposed: float | None = None  # ...and the share of those net positive
+    all_cash_months: int = 0
 
 
 def sharpe(returns: Sequence[float]) -> float | None:
@@ -95,10 +98,12 @@ class SwingMetrics:
             raise ValueError("a run with no sessions has no metrics")
         daily = SwingMetrics.daily_returns(run)
         months = period_returns(run.days, run.equity, run.capital, by="month")
+        monthly = dict(zip(SwingMetrics._month_keys(run), months, strict=True))
         years = period_returns(run.days, run.equity, run.capital, by="year")
         total = float(run.equity[-1] / run.capital - 1)
         span_years = max((run.days[-1] - run.days[0]).days, 1) / 365.25
         cagr = (1 + total) ** (1 / span_years) - 1 if total > -1 else -1.0
+        exposed = SwingMetrics._exposed_months(run)
         return SwingStats(
             net_cagr=cagr,
             net_sharpe=sharpe(daily),
@@ -115,7 +120,28 @@ class SwingMetrics:
             days_in_cash=run.days_in_cash,
             max_instrument_share=SwingMetrics._concentration(run),
             net_profit=float(run.equity[-1] - run.capital),
+            months_with_exposure=sum(exposed.values()),
+            positive_month_share_exposed=(
+                sum(1 for k, m in exposed.items() if m and monthly[k] > 0) / sum(exposed.values())
+                if any(exposed.values())
+                else None
+            ),
+            all_cash_months=sum(1 for e in exposed.values() if not e),
         )
+
+    @staticmethod
+    def _month_keys(run: SwingRun) -> list[tuple[int, int]]:
+        return sorted({(d.year, d.month) for d in run.days})
+
+    @staticmethod
+    def _exposed_months(run: SwingRun) -> dict[tuple[int, int], bool]:
+        """Month -> whether some session in it closed with a holding."""
+        flags = run.invested_flags or (False,) * len(run.days)
+        exposed = {key: False for key in SwingMetrics._month_keys(run)}
+        for day, flag in zip(run.days, flags, strict=True):
+            if flag:
+                exposed[(day.year, day.month)] = True
+        return exposed
 
     @staticmethod
     def yearly(run: SwingRun) -> dict[int, float]:

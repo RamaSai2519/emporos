@@ -13,6 +13,7 @@ from tests.unit.research.swing.support import ZERO_SCHEDULE, bar, dataset, serie
 from emporos.research.swing.bootstrap import BlockBootstrap
 from emporos.research.swing.cells import (
     CELLS,
+    BookRiskMomentumCell,
     CellEnvironment,
     EarningsDriftCell,
     MomentumCell,
@@ -95,7 +96,9 @@ class TestGrid:
 
 class TestRecipes:
     def test_the_registry_holds_both_declared_cells(self) -> None:
-        assert set(CELLS) == {"a1-momentum-trend-filter", "a2-post-earnings-drift"}
+        assert set(CELLS) == {
+            "a1-momentum-trend-filter", "a2-post-earnings-drift", "a1b-momentum-book-risk"
+        }  # fmt: skip
 
     def test_a1_reads_every_parameter_from_the_point(self) -> None:
         point = {"lookback_sessions": "126", "rebalance": "monthly", "max_positions": "3"}
@@ -202,3 +205,64 @@ class TestRunner:
         assert arm.first_entry_day is not None
         assert arm.first_entry_day > arm.effective_start
         assert "rebalances ranked" in arm.note
+
+
+class TestBookRiskCell:
+    def point(self, vol: str = "off", rebalance: str = "weekly") -> dict[str, str]:
+        return {"rebalance": rebalance, "vol_target": vol}
+
+    def test_it_wraps_a1_at_252_and_5_names_in_the_book_rules(self) -> None:
+        from emporos.research.swing.book_risk import BookRiskRules
+
+        strategy = BookRiskMomentumCell().strategy(self.point(), env())
+
+        assert isinstance(strategy, BookRiskRules)
+        momentum = strategy.inner
+        assert isinstance(momentum, MomentumTrend)
+        assert (momentum._lookback, momentum._n) == (252, 5)
+        assert isinstance(momentum._calendar, WeeklyCalendar)  # type: ignore[attr-defined]
+
+    def test_the_volatility_target_arm_wraps_the_momentum_book_in_the_target(self) -> None:
+        from emporos.research.swing.book_risk import VolTargeted
+
+        base = env()
+        with_index = CellEnvironment(base.dataset, base.regime, base.stop, None, base.regime._index)
+
+        strategy = BookRiskMomentumCell().strategy(self.point("15", "monthly"), with_index)
+
+        targeted = strategy.inner
+        assert isinstance(targeted, VolTargeted)
+        assert targeted._target == Decimal("0.15")
+        assert isinstance(targeted.inner, MomentumTrend)
+
+    def test_the_target_needs_the_index_series(self) -> None:
+        with pytest.raises(ValueError, match="index series"):
+            BookRiskMomentumCell().strategy(self.point("15"), env())
+
+    def test_the_book_is_five_names_and_never_the_concentrated_posture(self) -> None:
+        cell = BookRiskMomentumCell()
+
+        assert cell.max_positions(self.point()) == 5
+        assert cell.aggressive(self.point()) is False
+
+    def test_the_report_note_lists_halts_kills_and_re_entries(self) -> None:
+        strategy = BookRiskMomentumCell().strategy(self.point(), env())
+
+        note = BookRiskMomentumCell().arm_notes(strategy)
+
+        assert "halts []" in note
+        assert "kills []" in note
+        assert "re-entries []" in note
+        assert "rebalances ranked" in note
+
+    def test_the_effective_start_is_the_inner_momentum_books(self) -> None:
+        cell = BookRiskMomentumCell()
+
+        assert (
+            cell.effective_start(cell.strategy(self.point(), env()), env()) is None
+        )  # nothing ran
+
+    def test_the_two_by_two_grid_gives_each_arm_two_neighbours(self) -> None:
+        grid = {"rebalance": ["weekly", "monthly"], "vol_target": ["off", "15"]}
+
+        assert all(len(v) == 2 for v in adjacent_arms(grid).values())
