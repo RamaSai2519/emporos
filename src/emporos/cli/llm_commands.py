@@ -15,10 +15,12 @@ from pathlib import Path
 import typer
 
 from emporos.cli.llm_composition import DevData, LlmStack, declared_prices
+from emporos.cli.posture_commands import build_posture_inputs
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
 from emporos.eventtrader.events import MarketEvent
+from emporos.eventtrader.posture import PosturePlanner
 from emporos.eventtrader.replay.report import (
     LlmLedger,
     VariantIdentity,
@@ -42,6 +44,7 @@ from emporos.jev.prompts import JevPrompt
 from emporos.research.filings.event_store import DEFAULT_EVENT_DIR, ParquetEventStore
 from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_stock_archive import DATASET
+from emporos.research.market_context.global_cues import DEFAULT_CUES_RAW_DIR
 
 DEFAULT_JOURNAL = Path.home() / ".cache" / "emporos" / "llm" / "l1-journal.jsonl"
 DEFAULT_STOCK_FO = Path.home() / ".cache" / "emporos" / DATASET
@@ -109,6 +112,7 @@ _RUNS = typer.Option(1000, min=1, help="Coin-flip control runs.")
 _REPLAY = typer.Option(False, help="Answer only from the journal; never call.")
 _ESTIMATE = typer.Option(False, help="Print the size of the run and stop.")
 _NO_OPTIONS = typer.Option(False, help="Run without the stock option chains.")
+_CUES = typer.Option(DEFAULT_CUES_RAW_DIR, help="The collected global cues (may be empty).")
 
 
 def research_run_llm_variant(
@@ -127,6 +131,7 @@ def research_run_llm_variant(
     replay_only: bool = _REPLAY,
     estimate_only: bool = _ESTIMATE,
     no_options: bool = _NO_OPTIONS,
+    cues: Path = _CUES,
 ) -> None:
     """Run one Dev variant: decide, replay, report; one counted look."""
     try:
@@ -148,6 +153,7 @@ def research_run_llm_variant(
                 replay_only,
                 estimate_only,
                 no_options,
+                cues,
             )  # fmt: skip
         )
     except (EmporosError, ValueError, OSError, KeyError, RunIncomplete) as error:
@@ -159,10 +165,8 @@ def research_run_llm_variant(
 async def _run(
     spec: VariantSpec, first: date, last: date, events_dir: Path, snapshot: str, stock_fo: Path,
     journal: Path, reports: Path, ledger: Path, concurrency: int, ceiling: Decimal,
-    control_runs: int, replay_only: bool, estimate_only: bool, no_options: bool,
+    control_runs: int, replay_only: bool, estimate_only: bool, no_options: bool, cues: Path,
 ) -> None:  # fmt: skip
-    if spec.posture:
-        raise ValueError("posture variants wait for the numeric posture inputs (not built yet)")
     if last > LAST_DAY or first < FIRST_DAY:
         raise ValueError("Dev is 2024-01-01..2024-12-31: the vault seals what is after")
     store = FoDayStore(stock_fo)
@@ -186,9 +190,21 @@ async def _run(
         HYPOTHESIS, spec.name, first, last, prompts_hash(), ("openai/gpt-4o-mini",),
         f"{snapshot}:{events_digest(events)}",
     )  # fmt: skip
+    schedule = None
+    if spec.posture:
+        typer.echo("building the posture inputs (numbers as known at 09:00 each morning)")
+        inputs = build_posture_inputs(
+            data.bars, ParquetEventStore(events_dir), cues, data.symbols, first, last
+        )
+        planner = PosturePlanner(
+            stack.posture_stage(), inputs, stack.scopes, declared_prices(), concurrency
+        )
+        schedule = await planner.plan(data.sessions)
+        typer.echo(f"posture: {dict(schedule.counts())}, {len(schedule.failures)} failed (HOLD)")
     runner = VariantRunner(
         identity, stack.pipeline(spec), data.engines(), data.context, stack.scopes,
-        declared_prices(), data.sessions, spec.triage_threshold, None, concurrency, control_runs,
+        declared_prices(), data.sessions, spec.triage_threshold, schedule, concurrency,
+        control_runs,
         calls=stack,
     )  # fmt: skip
     outcome = await runner.run(named)

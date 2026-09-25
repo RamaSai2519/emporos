@@ -52,7 +52,7 @@ from emporos.eventtrader.replay.vaulted_market import (
 )
 from emporos.eventtrader.risk.engine import RiskEngine
 from emporos.eventtrader.runner import EngineFactory
-from emporos.eventtrader.stages.stages import JudgeStage, PanelistStage, TriageStage
+from emporos.eventtrader.stages.stages import JudgeStage, PanelistStage, PostureStage, TriageStage
 from emporos.eventtrader.variants import VariantSpec
 from emporos.jev.config import JevConfig
 from emporos.jev.leakage import KnowledgeCutoffGuard
@@ -154,6 +154,9 @@ class LlmStack:
             JudgeStage(client, GATEWAY_MODEL),
         )
 
+    def posture_stage(self) -> PostureStage:
+        return PostureStage(self.mini(), GATEWAY_MODEL)
+
     def triage_stage(self) -> TriageStage:
         return TriageStage(self.mini(), GATEWAY_MODEL)
 
@@ -183,6 +186,7 @@ class DevData:
         vaulted = ThreadedBarLoader(VaultedIntradayBars.from_settings(settings))
         adjusted: BarLoader = AdjustedBarLoader(vaulted, PriceAdjuster(AdjustmentLedger.load()))
         self.first, self.last = first, last
+        self.bars: BarLoader = adjusted
         self.symbols = research_symbols(paths.manifest, paths.tokens)
         self.instrument_ids = frozenset(self.symbols.values())
         self.sessions = session_calendar(adjusted, NIFTY_ID, first, last)
