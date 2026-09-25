@@ -1,0 +1,202 @@
+# Business groups with at least two D1 names (PROFIT_PLAN 13 / driver-atlas-plan 3.2, EM-244).
+# One row per member with its source. `from`/`to`: membership starts on `from` (inclusive) and ends on
+# `to` (exclusive); missing means throughout the data span. `checked_on`: the day the source page was
+# read for this row (2026-09-26); a relationship is a public fact, not a trading signal.
+# Not groups here: Reliance, Bharti, Kotak, Shriram, Wipro, Motherson... (fewer than 2 D1 names).
+# Not members, on purpose: Jindal Steel (O.P. Jindal, a different family from the JSW group);
+# Vodafone Idea (a 13% Aditya Birla associate, not a group company).
+# State-owned names are not a business group and are not in this file.
+groups:
+  - id: adani
+    name: "Adani Group"
+    members:
+      - symbol: "ADANIENT"
+        source: "https://www.adani.com/about-us"
+        checked_on: 2026-09-26
+        note: "flagship"
+      - symbol: "ADANIPORTS"
+        source: "https://www.adani.com/about-us"
+        checked_on: 2026-09-26
+      - symbol: "ADANIGREEN"
+        source: "https://www.adani.com/about-us"
+        checked_on: 2026-09-26
+      - symbol: "ADANIENSOL"
+        source: "https://www.adani.com/about-us"
+        checked_on: 2026-09-26
+        note: "Adani Transmission until the 2023 rename; same listing"
+      - symbol: "ATGL"
+        source: "https://www.adani.com/about-us"
+        checked_on: 2026-09-26
+        note: "Adani Gas until renamed Adani Total Gas"
+      - symbol: "AWL"
+        to: 2025-07-18
+        source: "https://www.business-standard.com/amp/companies/news/adani-exits-awl-agri-business-sells-10-42-stake-to-wilmar-for-3-732-cr-125071801223_1.html"
+        checked_on: 2026-09-26
+        note: "Adani Wilmar; control ended when the group sold 13% to Wilmar (announced 2025-07-18); the last 7% went by block deal on 2025-11-21 (https://www.business-standard.com/amp/companies/news/adani-group-exits-awl-with-sale-of-remaining-7-stake-in-block-deal-125112100162_1.html)"
+      - symbol: "AMBUJACEM"
+        from: 2022-09-16
+        source: "https://www.adani.com/newsroom/media-releases/adani-becomes-indias-second-largest-cement-player"
+        checked_on: 2026-09-26
+        note: "acquisition from Holcim completed 2022-09-16 (63.15%)"
+  - id: tata
+    name: "Tata Group"
+    members:
+      - symbol: "TATASTEEL"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+      - symbol: "TATAPOWER"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+      - symbol: "TMPV"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+        note: "Tata Motors before the Oct 2025 demerger; same group throughout"
+      - symbol: "TITAN"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+      - symbol: "TRENT"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+      - symbol: "TATAELXSI"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+      - symbol: "INDHOTEL"
+        source: "https://en.wikipedia.org/wiki/Tata_Group"
+        checked_on: 2026-09-26
+  - id: aditya-birla
+    name: "Aditya Birla Group"
+    members:
+      - symbol: "ABCAPITAL"
+        source: "https://en.wikipedia.org/wiki/Aditya_Birla_Group"
+        checked_on: 2026-09-26
+      - symbol: "GRASIM"
+        source: "https://en.wikipedia.org/wiki/Aditya_Birla_Group"
+        checked_on: 2026-09-26
+      - symbol: "HINDALCO"
+        source: "https://en.wikipedia.org/wiki/Aditya_Birla_Group"
+        checked_on: 2026-09-26
+      - symbol: "ULTRACEMCO"
+        source: "https://en.wikipedia.org/wiki/Aditya_Birla_Group"
+        checked_on: 2026-09-26
+  - id: bajaj
+    name: "Bajaj Group"
+    members:
+      - symbol: "BAJFINANCE"
+        source: "https://en.wikipedia.org/wiki/Bajaj_Group"
+        checked_on: 2026-09-26
+      - symbol: "BAJAJFINSV"
+        source: "https://en.wikipedia.org/wiki/Bajaj_Group"
+        checked_on: 2026-09-26
+      - symbol: "BAJAJHLDNG"
+        source: "https://en.wikipedia.org/wiki/Bajaj_Group"
+        checked_on: 2026-09-26
+  - id: mahindra
+    name: "Mahindra Group"
+    members:
+      - symbol: "M&M"
+        source: "https://en.wikipedia.org/wiki/Mahindra_Group"
+        checked_on: 2026-09-26
+      - symbol: "TECHM"
+        source: "https://en.wikipedia.org/wiki/Mahindra_Group"
+        checked_on: 2026-09-26
+  - id: murugappa
+    name: "Murugappa Group"
+    members:
+      - symbol: "CHOLAFIN"
+        source: "https://en.wikipedia.org/wiki/Murugappa_Group"
+        checked_on: 2026-09-26
+      - symbol: "COROMANDEL"
+        source: "https://en.wikipedia.org/wiki/Murugappa_Group"
+        checked_on: 2026-09-26
+  - id: jsw
+    name: "JSW Group (Sajjan Jindal)"
+    members:
+      - symbol: "JSWSTEEL"
+        source: "https://en.wikipedia.org/wiki/JSW_Group"
+        checked_on: 2026-09-26
+      - symbol: "JSWENERGY"
+        source: "https://en.wikipedia.org/wiki/JSW_Group"
+        checked_on: 2026-09-26
+  - id: vedanta
+    name: "Vedanta Group"
+    members:
+      - symbol: "VEDL"
+        source: "https://en.wikipedia.org/wiki/Vedanta_Limited"
+        checked_on: 2026-09-26
+        note: "parent"
+      - symbol: "HINDZINC"
+        source: "https://en.wikipedia.org/wiki/Vedanta_Resources"
+        checked_on: 2026-09-26
+        note: "Vedanta owns 64.9% of Hindustan Zinc"
+  - id: hdfc
+    name: "HDFC Group"
+    members:
+      - symbol: "HDFCBANK"
+        source: "https://en.wikipedia.org/wiki/HDFC_Bank"
+        checked_on: 2026-09-26
+        note: "HDFC Ltd merged into the bank on 2023-07-01"
+      - symbol: "HDFCAMC"
+        source: "https://en.wikipedia.org/wiki/HDFC_Bank"
+        checked_on: 2026-09-26
+        note: "subsidiary of HDFC Ltd, then of HDFC Bank (52.55%)"
+  - id: icici
+    name: "ICICI Group"
+    members:
+      - symbol: "ICICIBANK"
+        source: "https://en.wikipedia.org/wiki/ICICI_Bank"
+        checked_on: 2026-09-26
+      - symbol: "ICICIGI"
+        source: "https://en.wikipedia.org/wiki/ICICI_Bank"
+        checked_on: 2026-09-26
+      - symbol: "ICICIPRULI"
+        source: "https://en.wikipedia.org/wiki/ICICI_Bank"
+        checked_on: 2026-09-26
+  - id: larsen-toubro
+    name: "Larsen & Toubro Group"
+    members:
+      - symbol: "LT"
+        source: "https://en.wikipedia.org/wiki/Larsen_%26_Toubro"
+        checked_on: 2026-09-26
+      - symbol: "LTF"
+        source: "https://en.wikipedia.org/wiki/Larsen_%26_Toubro"
+        checked_on: 2026-09-26
+        note: "L&T Finance Holdings"
+      - symbol: "LTTS"
+        source: "https://en.wikipedia.org/wiki/Larsen_%26_Toubro"
+        checked_on: 2026-09-26
+      - symbol: "LTM"
+        source: "https://en.wikipedia.org/wiki/Larsen_%26_Toubro"
+        checked_on: 2026-09-26
+        note: "LTIMindtree; L&T Infotech before the 2022-11 merger with Mindtree"
+  - id: godrej
+    name: "Godrej Industries Group"
+    members:
+      - symbol: "GODREJCP"
+        source: "https://en.wikipedia.org/wiki/Godrej_Group"
+        checked_on: 2026-09-26
+        note: "after the 2024 family restructure both sit in the Godrej Industries Group"
+      - symbol: "GODREJIND"
+        source: "https://en.wikipedia.org/wiki/Godrej_Group"
+        checked_on: 2026-09-26
+        note: "after the 2024 family restructure both sit in the Godrej Industries Group"
+  - id: torrent
+    name: "Torrent Group"
+    members:
+      - symbol: "TORNTPHARM"
+        source: "https://en.wikipedia.org/wiki/Torrent_Group"
+        checked_on: 2026-09-26
+      - symbol: "TORNTPOWER"
+        source: "https://en.wikipedia.org/wiki/Torrent_Group"
+        checked_on: 2026-09-26
+  - id: lic
+    name: "LIC (Life Insurance Corporation of India)"
+    members:
+      - symbol: "LICI"
+        from: 2022-05-17
+        source: "https://en.wikipedia.org/wiki/LIC_Housing_Finance"
+        checked_on: 2026-09-26
+        note: "listing date; the promoter itself"
+      - symbol: "LICHSGFIN"
+        source: "https://en.wikipedia.org/wiki/LIC_Housing_Finance"
+        checked_on: 2026-09-26
+        note: "promoted by LIC"
