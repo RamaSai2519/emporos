@@ -241,3 +241,118 @@ when the probability is high; use Jev, live, in the backtest. Design:
 5. **Bars:** EDGE_SEARCH_PLAN §6 S2 on the pooled out-of-sample predictions, then S3 and onward.
    Hyperparameters are fixed in the declaration (no inner search); each model/threshold arm is one
    counted trial.
+
+## 12. Track L — LLM-led trading, the higher-risk path (operator, 2026-09-25)
+
+After Tracks A, B, C and the C1 core were rejected on their bars, the operator chose a riskier path:
+let language models read the news and filings and make the trading decisions, behind a strong
+code-enforced risk engine. Operator answers, recorded verbatim in substance:
+
+| Question | Operator's answer |
+|---|---|
+| Money that may be lost before the experiment stops | **Rs 25,000** (of Rs 1,00,000) |
+| LLM role | Decision maker (with a strong risk engine), event trader and a panel of LLMs, all three. Filtering our old triggers is not expected to help. |
+| Models | Jev (`openai/gpt-4o-mini` via the gateway, free this week, no limit) and `gpt-4o` on the operator's OpenAI key (**USD 4 in credit: use sparingly**) |
+| Validation | Post-cutoff backtest first, then paper, then live |
+| Products | Intraday cash, swing (days to weeks), options buying |
+| Loss limits | Rs 2,000 per cash trade; **Rs 5,000 per options trade** (premium is the whole risk); Rs 5,000 per day; Rs 25,000 in total |
+| Approval | Fully automatic, options included; ask the operator only before staking more than 25% of capital at risk |
+| Sources | NSE/BSE filings, news headlines, market context (numbers). Not social media. |
+
+### 12.1 Why a post-cutoff backtest is honest here, and only here
+Both models declare a knowledge cutoff of 2023-10-01 (gpt-4o-mini, and gpt-4o pinned to the
+snapshot `gpt-4o-2024-08-06`). Neither can know prices or news after it. The guard's rule is kept:
+nothing before **2024-01-01** (cutoff + 90 days). Before that date an LLM backtest measures the model's
+memory, not its judgement, and no such run is allowed or reported.
+
+Windows (the program's splits, unchanged):
+- **Dev:** 2024-01-01..2024-12-31. Prompts, panel design and rules are developed here. Every
+  variant run on Dev is one counted trial (`docs/research/profit/screens.jsonl`, track L), and at
+  most **6 variants** are run before one is frozen.
+- **Test:** 2025-01-01..2026-03-18 (Confirmation). **One run** of the frozen variant. Its result is
+  the verdict. No prompt or rule changes after seeing it; a changed variant needs a new
+  declaration and has no untouched window left except paper.
+- **Vault** 2026-03-19..09-18 stays sealed. After Test, the next check is **forward paper trading**
+  on live data (the D7 quote recorder and the live filings feed), then live under §12.5.
+
+Company names MAY be shown to the models in this track (not anonymised): what a model knew of a
+company before its cutoff was public at the decision time, and it cannot know outcomes after it.
+The date guard, not anonymity, is what keeps this track honest.
+
+### 12.2 Data (point-in-time, public, §8 rules)
+- **Filings:** NSE and BSE corporate announcements for the D1 names (and the F&O stock list),
+  2024-01-01..2026-03-18, with the exchange's broadcast timestamp, subject, category and the text of
+  the attached PDF (extracted locally). Deduplicated across NSE/BSE.
+- **Headlines:** public, dated news headlines naming a D1 company or the market. Each headline
+  keeps its source's publication timestamp. A headline with only a date, no time, may inform a
+  decision only from the NEXT session's open.
+- **Market context:** from our own bars: the name's move since the previous close and since the
+  event, VWAP distance, volume against its time-of-day norm, 5/20-day returns and volatility,
+  NIFTY, the sector index, INDIA VIX, and F&O open interest where we have it.
+- **Decision time** = max(event timestamp, the close of the last completed 5-minute bar) + **2
+  minutes** of processing latency. Entry is the first bar that starts after the decision time. Nothing
+  published after the decision time may reach the prompt (a test feeds later items and requires an
+  identical prompt).
+
+### 12.3 The decision pipeline (every call journalled; temperature 0; prompts versioned and hashed)
+1. **Triage** (Jev, one call per event): is this material for the price, which direction, expected
+   size and horizon (intraday / swing / none), whether the move is already in the price given the
+   reaction so far, and a confidence of 0-100. Most events (board-meeting notices, trading-window
+   closures, routine compliance) end here.
+2. **Panel** (Jev, only for material events at or above the triage threshold): three independent
+   personas: a **bull** analyst, a **bear** analyst, and a **tape reader** who asks what the price
+   and volume already show. Each returns a direction, conviction and the instrument it would use.
+3. **Judge** (Jev): reads the event, the context and the three views, and returns trade / no trade,
+   the instrument (intraday cash, swing cash, call or put), the stop, the target and the holding
+   period. A trade needs the judge's yes AND at least 2 of 3 panellists agreeing on direction.
+4. **Arbiter** (`gpt-4o`, optional, scarce): on Dev it is tested ONCE, as a paired A/B on at most
+   150 judge-approved candidates, spending at most USD 2.50, with the worst-case spend shown to the
+   head first. It enters the frozen variant only if it improves Dev net P&L per trade after its
+   cost.
+5. **Daily posture** (Jev, once before the open, from the previous evening's headlines, global
+   cues and the index/VIX state): hold / normal / aggressive. It scales size within the §12.4 caps
+   and never overrides them.
+
+The LLMs choose WHAT to trade and in which direction. Code decides HOW MUCH, enforces every limit,
+and can always refuse. No LLM output reaches an order except through the risk engine.
+
+### 12.4 The risk engine (code, not an LLM; the same rules in the backtest, paper and live)
+- **Sizing:** cash quantity = floor(Rs 2,000 / |entry - stop|), and position value ≤ Rs 50,000
+  intraday or Rs 25,000 per swing name. An option is sized so the premium paid ≤ Rs 5,000. A stop
+  wider than 5% for intraday, or 12% for swing, is refused.
+- **Daily loss** Rs 5,000 (realised plus open marked at stop): no new entries that day.
+- **Total loss** Rs 25,000 from the start of the experiment: everything is closed and the track
+  stops. Only the operator can restart it.
+- **Open risk** (sum of stop losses plus premiums) never above Rs 25,000 (25% of capital). Above
+  that, the system must ask the operator; with these caps that is not normally reachable.
+- Max 3 intraday and 4 swing positions at once; no intraday entry after 14:45 and all intraday
+  squared off at 15:15; limit orders only; no averaging down; one position per name; no naked
+  option selling; stops are never widened.
+- **Costs:** the program's cost schedules at benchmark AND adverse (§3.1; the intraday
+  EDGE_SEARCH_PLAN costs), never loosened. Options: the Track B schedule, and premium fills use the
+  day's settle/close price from the F&O bhavcopy, so **options are backtested on the swing horizon
+  only** (a daily close entry and exit). Options on the intraday horizon can be tested only in paper.
+
+### 12.5 Bars (fixed now, before any Dev run)
+**Test window** (one run of the frozen variant), all must hold, net of costs AND of the LLM's
+token cost:
+- Net P&L > 0 at **adverse** costs; net expectancy per trade > 0 at benchmark costs.
+- ≥ 60 trades; t of the daily net P&L ≥ 2.0.
+- Max drawdown < **Rs 15,000** (60% of the loss budget), and the §3.4 bootstrap P(losing Rs 25,000
+  within 12 months) ≤ 10%.
+- ≥ 55% of months with trades net positive; no single name > 30% of net profit.
+- The same pipeline with the LLM decisions replaced by a **coin flip** of the same trade count,
+  instruments and risk engine (seeded, 1,000 runs) must be beaten with p < 0.05. This checks that
+  the models, not the risk engine or the sizing, make the money.
+
+**Paper** (after Test passes): ≥ 4 weeks and ≥ 30 closed trades, realised within the Test
+backtest's 90% interval. **Live:** only under the §12.4 limits, starting at half size for the
+first 2 weeks. The operator decides.
+
+### 12.6 What to expect, said plainly
+Prior that a frozen variant passes Test: about 10%. That is higher than the rule-based cells' prior
+because reading text is what language models are good at and no earlier cell used text. It is still
+low, because listed-company filings reach thousands of faster readers at the same second, and at
+most one earlier cell (the results jump, L2) touched the same events: it found the news priced
+within 5 minutes. The most likely place for an LLM edge is the SWING horizon: judging whether news
+changes the business, which the market digests over days, not minutes.
