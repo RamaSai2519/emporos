@@ -1,0 +1,6 @@
+# Track L filings universe (PROFIT_PLAN §12.2, EM-239).
+fo_mktlots.csv:
+  url: https://nsearchives.nseindia.com/content/fo/fo_mktlots.csv
+  fetched: 2026-09-25
+  what: NSE's published F&O market-lot file; the rows under "Derivatives on Individual Securities" are the F&O stock list
+  limit: today's list; a stock that joined or left the F&O segment during 2024-2026 is not reflected
