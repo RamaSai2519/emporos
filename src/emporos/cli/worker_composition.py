@@ -36,6 +36,7 @@ from emporos.broker.paper.market import MarketDataSource
 from emporos.broker.ratelimit import GroupRateLimiter
 from emporos.cli.graduation_composition import live_graduation, stage_view
 from emporos.cli.paper_composition import PaperComposer
+from emporos.cli.quote_recording import QuoteRecordingPlan
 from emporos.control.commands import CommandType
 from emporos.control.handlers import (
     BackfillHandler,
@@ -71,6 +72,7 @@ from emporos.execution.pricing import MarketableLimitPricer
 from emporos.execution.reprice_scheduler import RepriceScheduler
 from emporos.execution.repricing import RepriceCoordinator, RepricePolicy
 from emporos.execution.state import OrderStateMachine
+from emporos.execution.tracking import InFlightOrders, TrackedOrderGateway
 from emporos.history.calendar import CalendarStore, StoredTradingCalendar
 from emporos.marketdata.session import SessionWindow
 from emporos.observability.alerts import (
@@ -207,6 +209,8 @@ class WorkerTuning:
     mark_max_age: timedelta = timedelta(seconds=120)
     snapshot: SnapshotSchedule = field(default_factory=SnapshotSchedule)
     schedule: SessionSchedule = field(default_factory=SessionSchedule)
+    # EM-217: record L1 quotes for the D1 names as one more read-only job. None leaves it off.
+    quote_recording: QuoteRecordingPlan | None = None
 
 
 @dataclass(frozen=True)
@@ -571,8 +575,9 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
     default_buffer = MarketableLimit(
         max((c.execution.limit_buffer_bps for c in common.configs), default=Decimal(5))
     )
+    in_flight = InFlightOrders()
     engine = ExecutionEngine(
-        BrokerOrderGateway(broker), journal,
+        TrackedOrderGateway(BrokerOrderGateway(broker), in_flight), journal,
         GroupRateLimiter(
             {ORDER_BUDGET: ANGELONE_RATE_LIMITS[EndpointGroup.PLACE_ORDER.value]},
             common.clock,
@@ -693,6 +698,8 @@ async def _assemble(common: _CommonFields, seam: BrokerSeam, prelude: _Prelude) 
         common.clock, common.ids, alerts,
     )  # fmt: skip
     always.add(Job("commands", t.commands, _Commands(processor)))
+    if t.quote_recording is not None:
+        always.add(t.quote_recording.job(broker, in_flight, common.clock))
     telemetry = WorkerTelemetry(
         common.clock, lifecycle, journal, portfolio, marks, tick_rate, rejections, seam.health,
         prelude.monitor, tracker,

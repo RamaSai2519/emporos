@@ -178,6 +178,17 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "quote recording is read-only: no order, execution, risk, strategy, storage or concrete-broker code"
+type = "forbidden"
+source_modules = ["emporos.quotes"]
+forbidden_modules = [
+    "emporos.broker.base", "emporos.broker.angelone", "emporos.broker.paper",
+    "emporos.execution", "emporos.risk", "emporos.strategies", "emporos.persistence",
+    "emporos.session", "emporos.backtest", "emporos.research", "emporos.api", "emporos.cli",
+    "pymongo", "httpx",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]

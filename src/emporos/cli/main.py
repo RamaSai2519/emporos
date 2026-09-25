@@ -28,6 +28,7 @@ from emporos.cli.history_universe_commands import history_fetch_universe
 from emporos.cli.kill_switch_commands import halt, kill_switch_status, resume
 from emporos.cli.parity_commands import paper_app
 from emporos.cli.quality_commands import history_check, history_quarantine
+from emporos.cli.quote_commands import quotes_app
 from emporos.cli.worker_commands import worker_app, worker_run
 from emporos.core.alerts import LogAlertSink
 from emporos.core.clock import IST, SystemClock
@@ -75,6 +76,7 @@ app.add_typer(history_app, name="history")
 app.add_typer(backtest_app, name="backtest")
 app.add_typer(api_app, name="api")
 app.add_typer(worker_app, name="worker")
+app.add_typer(quotes_app, name="quotes")
 app.add_typer(paper_app, name="paper")
 app.add_typer(research_app, name="research")
 app.add_typer(graduation_app, name="graduation")

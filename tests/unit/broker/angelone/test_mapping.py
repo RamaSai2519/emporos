@@ -329,3 +329,19 @@ class TestQuoteDepth:
         assert one_sided.bid is None and one_sided.ask == Money.of("996.2")
         no_depth = AccountMapper.quote(self._entry([], None))
         assert (no_depth.bid, no_depth.ask) == (None, None)
+
+    def test_the_sizes_at_the_best_bid_and_ask_come_with_the_prices(self) -> None:
+        empty = {"price": "0", "quantity": 0}
+        quote = AccountMapper.quote(
+            self._entry(
+                [empty, {"price": "996.1", "quantity": 50}, {"price": "996.0", "quantity": 9}],
+                [{"price": "996.2", "quantity": 408}, empty],
+            )
+        )
+        assert (quote.bid_qty, quote.ask_qty) == (50, 408)
+
+    def test_an_empty_side_has_no_size(self) -> None:
+        empty = {"price": "0", "quantity": 0}
+        quote = AccountMapper.quote(self._entry([empty], [{"price": "996.2", "quantity": 7}]))
+        assert (quote.bid_qty, quote.ask_qty) == (None, 7)
+        assert AccountMapper.quote(self._entry([], None)).bid_qty is None

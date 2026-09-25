@@ -16,3 +16,6 @@ build/
 .import_linter_cache/
 .hypothesis/
 .coverage*
+
+# recorded L1 quotes (EM-217): local research data, never committed
+/data/quotes/

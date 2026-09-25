@@ -100,6 +100,14 @@ def _best(levels: tuple[DepthLevel, ...]) -> Money | None:
     return None
 
 
+def _best_quantity(levels: tuple[DepthLevel, ...]) -> int | None:
+    """The quantity resting at the level `_best` picks."""
+    for level in levels:
+        if level.price > 0 and level.quantity > 0:
+            return level.quantity
+    return None
+
+
 def _price_text(value: Money) -> str:
     return format(value.amount, "f")
 
@@ -291,6 +299,8 @@ class AccountMapper:
             upper_circuit=Money(entry.upper_circuit),
             bid=_best(entry.depth.buy if entry.depth else ()),
             ask=_best(entry.depth.sell if entry.depth else ()),
+            bid_qty=_best_quantity(entry.depth.buy if entry.depth else ()),
+            ask_qty=_best_quantity(entry.depth.sell if entry.depth else ()),
         )
 
 

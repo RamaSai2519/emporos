@@ -19,7 +19,9 @@ from emporos.cli.live_launch import (
 from emporos.cli.live_paper_worker import DEFAULT_PAPER_CASH, LivePaperWorker, PaperWorkerOptions
 from emporos.cli.live_venue import AngelOneLiveVenueOpener
 from emporos.cli.live_worker import LiveWorker, LiveWorkerOptions
+from emporos.cli.quote_recording import DEFAULT_QUOTES_DIR, d1_plan
 from emporos.cli.strategy_composition import build_registry
+from emporos.cli.worker_composition import WorkerTuning
 from emporos.core.clock import AsyncioSleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
@@ -60,6 +62,13 @@ _PARITY = typer.Option(
     "--parity/--no-parity",
     help="After close-out, compare the day with the backtest of the same config (read-only).",
 )
+_RECORD_QUOTES = typer.Option(
+    False,
+    "--record-quotes/--no-record-quotes",
+    help="Also record L1 quotes (bid, ask, sizes, last) for the D1 names to Parquet, read-only.",
+)
+_QUOTES_DIR = typer.Option(DEFAULT_QUOTES_DIR, help="Where recorded quotes go (Parquet).")
+_QUOTE_INTERVAL = typer.Option(60, min=30, help="Seconds between quote polls (at least 30).")
 _LIVE_START = typer.Option(
     None, "--start", "-s", help="Strategy to take live (repeatable); every one must clear the gate."
 )
@@ -125,6 +134,9 @@ def worker_run(
     account: str = _ACCOUNT,
     cash: str = _CASH,
     parity: bool = _PARITY,
+    record_quotes: bool = _RECORD_QUOTES,
+    quotes_dir: Path = _QUOTES_DIR,
+    quote_interval: int = _QUOTE_INTERVAL,
 ) -> None:
     """Run one paper trading day: live ticks, real risk rules, simulated fills. Start before 09:15.
 
@@ -137,9 +149,12 @@ def worker_run(
     if len(acknowledged) != len(acknowledge or []):
         typer.secho("--acknowledge takes NAME=STANDING", fg=typer.colors.RED)
         raise typer.Exit(code=1)
+    tuning = WorkerTuning(
+        quote_recording=d1_plan(quotes_dir, quote_interval) if record_quotes else None
+    )
     options = PaperWorkerOptions(
         files, start or (), account, Money.of(cash), acknowledged=acknowledged,
-        parity_report=parity,
+        parity_report=parity, tuning=tuning,
     )  # fmt: skip
     settings, clock, sleeper = Settings.default(), SystemClock(), AsyncioSleeper()
     feeds = AngelOneFeedOpener(settings, clock, sleeper, RandomJitter())
@@ -160,6 +175,9 @@ def worker_run(
 def worker_live(
     strategies: list[Path] | None = _FILES,
     start: list[str] | None = _LIVE_START,
+    record_quotes: bool = _RECORD_QUOTES,
+    quotes_dir: Path = _QUOTES_DIR,
+    quote_interval: int = _QUOTE_INTERVAL,
 ) -> None:
     """Run one live trading day, behind the full live gate (see `run-live`). Refused, this prints
     every reason and starts nothing — it logs in to Angel One only once every condition holds for
@@ -169,7 +187,12 @@ def worker_live(
     files = strategies or sorted(Path("config/strategies").glob("*.yaml"))
     settings, clock, sleeper = Settings.default(), SystemClock(), AsyncioSleeper()
     venues = AngelOneLiveVenueOpener(settings, clock, sleeper, RandomJitter())
-    options = LiveWorkerOptions(files, list(start or ()), settings.angelone_client_code or "live")
+    tuning = WorkerTuning(
+        quote_recording=d1_plan(quotes_dir, quote_interval) if record_quotes else None
+    )
+    options = LiveWorkerOptions(
+        files, list(start or ()), settings.angelone_client_code or "live", tuning
+    )
     try:
         outcome = asyncio.run(LiveWorker(settings, options, venues, clock, sleeper).run())
     except (EmporosError, ValueError) as error:

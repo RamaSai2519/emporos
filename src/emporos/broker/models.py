@@ -100,6 +100,9 @@ class Quote:
     # Best bid and ask: None when that side of the book is empty or the broker did not send depth.
     bid: Money | None = None
     ask: Money | None = None
+    # The quantities resting at the best bid and ask (EM-217): None when that side is empty.
+    bid_qty: int | None = None
+    ask_qty: int | None = None
 
     def __post_init__(self) -> None:
         _require_utc("exchange_ts", self.exchange_ts)
