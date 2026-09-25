@@ -199,7 +199,7 @@ class TestFilingCounts:
 def sections(data: dict[str, list[Candle]]) -> tuple[BarSeriesCache, list[PostureSection]]:
     series = cache(data)
     cues = GlobalCues(
-        {"SP500": CueSeries([(SESSIONS[63], 100.0), (PREVIOUS, 101.0), (TARGET, 1e9)])}
+        {"sp500": CueSeries([(SESSIONS[63], 100.0), (PREVIOUS, 101.0), (TARGET, 1e9)])}
     )
     return series, [
         IndexState(series, NIFTY, VIX),

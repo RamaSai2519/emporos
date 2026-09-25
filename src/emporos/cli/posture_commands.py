@@ -28,7 +28,9 @@ from emporos.research.market_context.global_cues import (
     CUES,
     DEFAULT_CUES_LEDGER,
     DEFAULT_CUES_RAW_DIR,
+    FEEDS,
     CueCollector,
+    CueFeed,
     GlobalCues,
 )
 from emporos.research.market_context.posture_state import (
@@ -51,18 +53,25 @@ _TO = typer.Option(LAST_DAY, "--to", formats=["%Y-%m-%d"], help="Last day (in)."
 _RAW = typer.Option(DEFAULT_CUES_RAW_DIR, help="Where each FRED reply is kept verbatim (local).")
 _LEDGER = typer.Option(DEFAULT_CUES_LEDGER, help="The append-only fetch ledger.")
 _GAP = typer.Option(3.0, help="Seconds between requests (at least 1).")
+_SOURCE = typer.Option("fred", help="Cue source: fred or yahoo.")
 _EVENTS = typer.Option(DEFAULT_EVENT_DIR, help="The versioned Parquet event store.")
 _MANIFEST = typer.Option(DEFAULT_MANIFEST, help="The committed D1 universe manifest.")
 _TOKENS = typer.Option(DEFAULT_TOKENS, help="The D1 symbol-to-token table.")
 _DAY = typer.Option(None, formats=["%Y-%m-%d"], help="Print this morning.")
 
 
+def _feed(name: str) -> CueFeed:
+    if name not in FEEDS:
+        raise ValueError(f"cue source {name!r}: choose one of {', '.join(FEEDS)}")
+    return FEEDS[name]
+
+
 async def _collect(
-    raw: Path, ledger: Path, first: date, last: date, gap: float, sleeper: Sleeper
+    raw: Path, ledger: Path, first: date, last: date, gap: float, sleeper: Sleeper, feed: CueFeed
 ) -> list[str]:
     async with httpx.AsyncClient(timeout=60.0) as client:
         collector = CueCollector(
-            PoliteGet(client, sleeper, gap), raw, FetchLedger(ledger), SystemClock()
+            PoliteGet(client, sleeper, gap), raw, FetchLedger(ledger), SystemClock(), feed
         )
         return await collector.run(CUES, first, last, typer.echo)
 
@@ -73,12 +82,13 @@ def research_collect_global_cues(
     first: datetime = _FROM,
     last: datetime = _TO,
     seconds_between_requests: float = _GAP,
+    source: str = _SOURCE,
 ) -> None:
-    """Collect the five global-cue series (S&P 500, Nasdaq, USD/INR, Brent, US 10y) from FRED."""
+    """Collect the five global-cue series (S&P 500, Nasdaq, USD/INR, Brent, US 10y)."""
     try:
         failed = asyncio.run(
             _collect(raw, ledger, first.date(), last.date(), seconds_between_requests,
-                     AsyncioSleeper())
+                     AsyncioSleeper(), _feed(source))
         )  # fmt: skip
     except SourceRefused as error:
         typer.secho(f"stopped: {error}", fg=typer.colors.RED)
@@ -96,8 +106,8 @@ def research_collect_global_cues(
 
 
 def build_posture_inputs(
-    loader: BarLoader, store: ParquetEventStore, cues_dir: Path, names: dict[str, str],
-    first: date, last: date, closes_file: Path = DEFAULT_CLOSES_FILE,
+    loader: BarLoader, store: ParquetEventStore, cues_dir: Path, feed: CueFeed,
+    names: dict[str, str], first: date, last: date, closes_file: Path = DEFAULT_CLOSES_FILE,
 ) -> NumericPostureInputs:  # fmt: skip
     """The posture inputs over real bars, real events and the collected cues."""
     series = BarSeriesCache(loader, first, last, capacity=4)
@@ -109,7 +119,7 @@ def build_posture_inputs(
     sections: list[PostureSection] = [
         IndexState(series, NIFTY_ID, VIX_ID),
         BreadthSection(Breadth(table)),
-        GlobalCuesSection(GlobalCues.load(cues_dir, first, last)),
+        GlobalCuesSection(GlobalCues.load(cues_dir, first, last, feed)),
         FilingCounts(store),
     ]
     return NumericPostureInputs(sections, series, NIFTY_ID)
@@ -120,6 +130,7 @@ def research_posture_inputs(
     tokens: Path = _TOKENS,
     events: Path = _EVENTS,
     cues: Path = _RAW,
+    source: str = _SOURCE,
     first: datetime = _FROM,
     last: datetime = _TO,
     day: datetime | None = _DAY,
@@ -129,7 +140,7 @@ def research_posture_inputs(
         loader = VaultedIntradayBars.from_settings(Settings.default())
         names = research_symbols(manifest, tokens)
         inputs = build_posture_inputs(
-            loader, ParquetEventStore(events), cues, names, first.date(), last.date()
+            loader, ParquetEventStore(events), cues, _feed(source), names, first.date(), last.date()
         )
         if day is not None:
             item = inputs.for_day(day.date())
