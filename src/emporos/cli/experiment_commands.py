@@ -16,6 +16,7 @@ from emporos.backtest.experiment_identity import ExperimentIdMinter
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.backtest.robustness.verdict import VerdictPolicy
 from emporos.cli.book_commands import research_screen_book
+from emporos.cli.core_commands import research_screen_core
 from emporos.cli.corporate_actions_commands import (
     research_build_adjustments,
     research_collect_actions,
@@ -87,6 +88,7 @@ research_app.command("build-adjustments")(research_build_adjustments)
 research_app.command("screen-swing")(research_screen_swing)
 research_app.command("screen-rotation")(research_screen_rotation)
 research_app.command("screen-book")(research_screen_book)
+research_app.command("screen-core")(research_screen_core)
 research_app.command("stress-book")(research_stress_book)
 research_app.command("collect-index-notices")(research_collect_index_notices)
 research_app.command("build-index-changes")(research_build_index_changes)

@@ -2,7 +2,8 @@
 
 One pass over the calendar. On each session:
 
-1. **Fill** the orders decided at the previous close, at THIS session's raw open: sells first (a
+1. **Fill** the orders decided at the previous close, at THIS session's raw open (or raw close, if
+   the config says `FillPrice.CLOSE`): sells first (a
    name with no bar today waits for the next session), then buys in the strategy's order. A buy
    takes `equity x size_multiple / max_positions` of cash (never more than the cash there is), in
    whole shares at the slipped price, fees included. A name whose whole-share price does not fit is
@@ -26,8 +27,10 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
+from enum import StrEnum
 from math import floor
 
+from emporos.domain.candles import Candle
 from emporos.domain.orders import OrderSide
 from emporos.research.swing.costs import SwingCostModel
 from emporos.research.swing.data import AsOfView, SwingDataset
@@ -40,7 +43,16 @@ from emporos.research.swing.rules import (
     SwingStrategy,
 )
 
-__all__ = ["SwingConfig", "SwingRun", "SwingSimulator", "Trade"]
+__all__ = ["FillPrice", "SwingConfig", "SwingRun", "SwingSimulator", "Trade"]
+
+
+class FillPrice(StrEnum):
+    """Which price of the fill session the orders trade at. A stock cell decides at a close and
+    trades the next OPEN (the default). A core ETF cell trades the next CLOSE (PROFIT_PLAN §10:
+    the early ETF opening prints are noisy); costs are the same either way."""
+
+    OPEN = "open"
+    CLOSE = "close"
 
 
 @dataclass(frozen=True)
@@ -50,6 +62,7 @@ class SwingConfig:
     max_size_multiple: Decimal = Decimal(1)
     cash_yield: Decimal = Decimal(0)  # annual, accrued per session on cash held overnight
     start_day: date | None = None  # first session simulated; earlier bars are history a signal sees
+    fill: FillPrice = FillPrice.OPEN
 
     @property
     def cash_growth_per_session(self) -> Decimal:
@@ -107,6 +120,21 @@ class SwingRun:
         trades = tuple(t for t in self.trades if t.entry_day >= first)
         return SwingRun(
             self.days[start:], self.equity[start:], sum(flags), trades, self.equity[start - 1],
+            sum((t.fees for t in trades), Decimal(0)), 0, flags,
+        )  # fmt: skip
+
+    def slice_until(self, last: date) -> SwingRun:
+        """The run up to and including `last`, marked to market there (nothing is liquidated): for
+        reporting the first half of a window. Trades are those closed on or before `last`."""
+        end = sum(1 for d in self.days if d <= last)
+        if end == 0:
+            raise ValueError(f"the run has no session on or before {last}")
+        if end == len(self.days):
+            return self
+        flags = self.invested_flags[:end] if self.invested_flags else ()
+        trades = tuple(t for t in self.trades if t.exit_day <= last)
+        return SwingRun(
+            self.days[:end], self.equity[:end], sum(flags), trades, self.capital,
             sum((t.fees for t in trades), Decimal(0)), 0, flags,
         )  # fmt: skip
 
@@ -210,7 +238,9 @@ class SwingSimulator:
             if bar is None:
                 continue  # no session for the name today: the order waits
             series = self._data.series(instrument_id)
-            self._close(state, position, day, series.raw[bar].open.amount, series.multipliers[bar])
+            self._close(
+                state, position, day, self._fill_price(series.raw[bar]), series.multipliers[bar]
+            )
             exits.discard(instrument_id)
 
     def _fill_entries(self, state: _State, i: int, day: date, intents: list[Intent]) -> None:
@@ -224,7 +254,12 @@ class SwingSimulator:
                 state.skipped += 1
                 continue
             series = self._data.series(intent.instrument_id)
-            self._buy(state, intent, i, day, series.raw[bar].open.amount, series.multipliers[bar])
+            self._buy(
+                state, intent, i, day, self._fill_price(series.raw[bar]), series.multipliers[bar]
+            )
+
+    def _fill_price(self, raw: Candle) -> Decimal:
+        return raw.open.amount if self._config.fill is FillPrice.OPEN else raw.close.amount
 
     def _buy(
         self,
@@ -232,15 +267,16 @@ class SwingSimulator:
         intent: Intent,
         i: int,
         day: date,
-        raw_open: Decimal,
+        raw_fill: Decimal,
         multiplier: Decimal,
     ) -> None:
         multiple = min(intent.size_multiple, self._config.max_size_multiple)
+        at_open = self._config.fill is FillPrice.OPEN
         equity_now = state.cash + sum(
-            self._value(p, day, at_open=True) for p in state.positions.values()
+            self._value(p, day, at_open=at_open) for p in state.positions.values()
         )
         allocation = min(equity_now * multiple / self._config.max_positions, state.cash)
-        price = self._costs.buy_price(raw_open)
+        price = self._costs.buy_price(raw_fill)
         quantity = floor(allocation / price) if price > 0 else 0
         fees = Decimal(0)
         while quantity > 0:

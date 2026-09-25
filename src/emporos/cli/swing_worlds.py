@@ -106,9 +106,13 @@ class EtfWorld:
 
 
 class EtfWorldLoader:
-    def __init__(self, etf_report: Path, root: Path | None) -> None:
+    def __init__(
+        self, etf_report: Path, root: Path | None, prior_sessions: int = HISTORY_SESSIONS - 1
+    ) -> None:
+        """`prior_sessions`: how many sessions every ETF must have behind a judged session."""
         self._report = etf_report
         self._root = root
+        self._prior = prior_sessions
 
     def load(self) -> EtfWorld:
         audit = yaml.safe_load(self._report.read_text(encoding="utf-8"))
@@ -123,6 +127,6 @@ class EtfWorldLoader:
         if built.names_without_bars:
             raise ValueError(f"no bars for {built.names_without_bars}: run fetch-etf-bars first")
         start_day = max(
-            built.dataset.series(i).days[HISTORY_SESSIONS - 1] for i in built.dataset.instrument_ids
+            built.dataset.series(i).days[self._prior] for i in built.dataset.instrument_ids
         )
         return EtfWorld(ids, built, index, start_day)

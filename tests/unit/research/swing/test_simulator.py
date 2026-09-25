@@ -24,7 +24,7 @@ from emporos.domain.orders import OrderSide
 from emporos.research.adjustments import ActionKind, AdjustmentFactor, AdjustmentLedger
 from emporos.research.swing.costs import BENCHMARK, CostScenario, SwingCostModel
 from emporos.research.swing.rules import Intent
-from emporos.research.swing.simulator import SwingConfig, SwingSimulator
+from emporos.research.swing.simulator import FillPrice, SwingConfig, SwingSimulator
 
 X, Y = "NSE:1", "NSE:2"
 DAYS = sessions(5)
@@ -416,3 +416,35 @@ class TestStartDay:
         with pytest.raises(ValueError, match="no session on or after"):
             late = SwingConfig(Decimal(1), 1, start_day=date(2030, 1, 1))
             SwingSimulator(data, Scripted(lambda c: []), late, free_costs()).run()
+
+
+class TestFillAtTheClose:
+    """PROFIT_PLAN §10: a core cell decides at a close and fills at the NEXT close."""
+
+    def test_the_buy_and_the_sell_trade_the_next_sessions_close_not_its_open(self) -> None:
+        data = dataset(
+            series(
+                X, DAYS, [("100", "100"), ("90", "110"), ("95", "121"), ("50", "60"), ("60", "60")]
+            )
+        )
+        cfg = SwingConfig(Decimal(10000), 1, fill=FillPrice.CLOSE)
+        run = SwingSimulator(data, hold(X, DAYS[0], DAYS[2]), cfg, free_costs()).run()
+
+        (trade,) = run.trades
+        assert (trade.entry_day, trade.exit_day) == (DAYS[1], DAYS[3])
+        assert (trade.entry_price, trade.exit_price) == (110, 60)  # the closes, not 90 and 50
+        assert trade.quantity == 90  # 9,900 of 10,000 at 110
+        assert run.equity[1] == 10000  # marked at the same close it was bought at
+
+    def test_costs_are_the_same_schedule_and_slippage_on_the_close_price(self) -> None:
+        data = dataset(series(X, DAYS, [("100", "100")] * 5))
+        costs = SwingCostModel(ZERO_SCHEDULE, CostScenario("slip", Decimal(1), Decimal(100)))
+        cfg = SwingConfig(Decimal(10000), 1, fill=FillPrice.CLOSE)
+        run = SwingSimulator(data, hold(X, DAYS[0], DAYS[2]), cfg, costs).run()
+
+        (trade,) = run.trades
+        assert trade.entry_price == Decimal("101")  # 100 bps against the buyer
+        assert trade.exit_price == Decimal("99")
+
+    def test_the_default_is_still_the_open(self) -> None:
+        assert SwingConfig(Decimal(1), 1).fill is FillPrice.OPEN
