@@ -173,7 +173,7 @@ async def _run(
     store = FoDayStore(stock_fo)
     if not no_options and not any(store.days()):
         raise ValueError(f"no stock F&O files under {stock_fo}; fetch first or pass --no-options")
-    data = DevData(Settings.default(), first, last, None if no_options else store)
+    data = DevData(Settings.default(), first, last, stock_fo, chains=not no_options)
     stack = LlmStack(
         Settings.default(), journal, declared_prices(), record=not (replay_only or estimate_only),
         mini_ceiling_usd=ceiling,

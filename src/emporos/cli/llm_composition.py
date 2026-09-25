@@ -18,6 +18,7 @@ from emporos.backtest.costs import EarliestBeforeFirst
 from emporos.backtest.robustness.benchmark import BenchmarkLoader
 from emporos.cli.corporate_actions_commands import DEFAULT_TOKENS, research_symbols
 from emporos.cli.intraday_bars import VaultedIntradayBars
+from emporos.cli.posture_commands import build_context_builder
 from emporos.cli.swing_worlds import delivery_schedule
 from emporos.core.config import Settings
 from emporos.core.errors import ConfigurationError
@@ -62,15 +63,11 @@ from emporos.research.adjustments import AdjustmentLedger, PriceAdjuster
 from emporos.research.d1_universe import DEFAULT_MANIFEST
 from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_stock_chains import StockChains, StockLotBook
-from emporos.research.market_context.bars import BarSeriesCache
-from emporos.research.market_context.builder import AsOfContextBuilder, SectorMap
-from emporos.research.market_context.open_interest import FoOpenInterest
 from emporos.research.scans.base import ScanExecution
 
 __all__ = ["DevData", "DevPaths", "LlmStack", "declared_prices"]
 
 NIFTY_ID = "NSE:99926000"
-VIX_ID = "NSE:99926017"
 MODEL_CUTOFF = date(2023, 10, 1)  # both declared models
 CONTEXT_CACHE = 200  # every D1 name and the indices: events walk across all names in time order
 CONTEXT_WARMUP_DAYS = 45  # calendar days of bars before the window, for the 20-session numbers
@@ -180,7 +177,8 @@ class DevData:
         settings: Settings,
         first: date,
         last: date,
-        stock_fo: FoDayStore | None,
+        stock_fo_dir: Path,
+        chains: bool = True,
         paths: DevPaths | None = None,
     ) -> None:
         paths = paths or DevPaths()
@@ -192,15 +190,14 @@ class DevData:
         self.instrument_ids = frozenset(self.symbols.values())
         self.sessions = session_calendar(adjusted, NIFTY_ID, first, last)
         warm = date.fromordinal(first.toordinal() - CONTEXT_WARMUP_DAYS)
-        cache = BarSeriesCache(adjusted, warm, last, capacity=CONTEXT_CACHE)
-        interest = FoOpenInterest(stock_fo) if stock_fo is not None else None
-        self.context: ContextBuilder = AsOfContextBuilder(
-            cache, NIFTY_ID, VIX_ID, SectorMap({}), interest
+        self.context: ContextBuilder = build_context_builder(
+            adjusted, warm, last, stock_fo_dir, capacity=CONTEXT_CACHE
         )
         self.market = VaultedMarket(adjusted, NoAdjustment(), self.sessions, warm, last)
         self.chains: OptionChains = NoChains()
-        if stock_fo is not None:
-            self.chains = StockChains(stock_fo, StockLotBook.from_store(stock_fo))
+        if chains:
+            store = FoDayStore(stock_fo_dir)
+            self.chains = StockChains(store, StockLotBook.from_store(store))
         self.previous_session = dict(zip(self.sessions[1:], self.sessions[:-1], strict=False))
 
     def engines(self) -> EngineFactory:

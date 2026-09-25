@@ -112,10 +112,11 @@ def research_collect_global_cues(
 
 def build_context_builder(
     loader: BarLoader, first: date, last: date, fo_dir: Path = DEFAULT_FO_STOCK_DIR,
-    sectors: SectorMap | None = None,
+    sectors: SectorMap | None = None, capacity: int = 64,
 ) -> AsOfContextBuilder:  # fmt: skip
-    """The per-event context over real bars, with F&O open interest from the stock bhavcopy."""
-    series = BarSeriesCache(loader, first, last)
+    """The per-event context over real bars, with F&O open interest from the stock bhavcopy.
+    `capacity` is how many names' bars are held: a replay walks every name in time order."""
+    series = BarSeriesCache(loader, first, last, capacity=capacity)
     return AsOfContextBuilder(
         series, NIFTY_ID, VIX_ID, sectors or SectorMap({}), FoOpenInterest(FoDayStore(fo_dir))
     )

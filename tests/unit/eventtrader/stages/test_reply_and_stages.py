@@ -6,6 +6,7 @@ import json
 
 import pytest
 
+from emporos.eventtrader.events import MarketContext
 from emporos.eventtrader.llm.reply import InvalidReply, Reply
 from emporos.eventtrader.stages.models import (
     Horizon,
@@ -26,6 +27,7 @@ from emporos.eventtrader.stages.prompts import (
 from emporos.eventtrader.stages.stages import (
     ArbiterInput,
     ArbiterStage,
+    EventInput,
     JudgeInput,
     JudgeStage,
     PanelistStage,
@@ -293,3 +295,17 @@ class TestPosture:
         )
 
         assert outcome.value is None
+
+
+class TestOpenInterestReachesThePromptOnce:
+    async def test_each_open_interest_key_appears_exactly_once_in_the_request(self) -> None:
+        keys = ("oi_asof", "fut_open_interest", "fut_oi_change_pct", "put_call_oi_ratio")
+        lines = {"last_price": 100.0, "oi_asof": "2024-03-01", "fut_open_interest": 1.5e6,
+                 "fut_oi_change_pct": -2.5, "put_call_oi_ratio": 0.8}  # fmt: skip
+        client = ScriptedLlm(triage=[TRIAGE_OK])
+        given = EventInput(item().event, MarketContext(lines), NOON)
+
+        await TriageStage(client, MODEL).run(given, NOON)
+
+        sent = client.requests[0].user
+        assert [sent.count(f'"{k}"') for k in keys] == [1, 1, 1, 1]
