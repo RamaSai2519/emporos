@@ -196,6 +196,20 @@ class PriceAdjuster:
         adjusted = tuple(self._scaled(bar, m) for bar, m in zip(raw, multipliers, strict=True))
         return AdjustedSeries(tuple(raw), adjusted, tuple(multipliers))
 
+    def adjust_bars(self, instrument_id: str, raw: Sequence[Candle]) -> tuple[Candle, ...]:
+        """Bars of any timeframe (several a session) on the adjusted basis, oldest first."""
+        if any(bar.instrument_id != instrument_id for bar in raw):
+            raise ValueError("one instrument's bars at a time")
+        factors = self._ledger.factors_for(instrument_id)
+        cache: dict[date, Decimal] = {}
+        out = []
+        for bar in raw:
+            day = bar.ts.astimezone(IST).date()
+            if day not in cache:
+                cache[day] = self._multiplier(day, factors)
+            out.append(self._scaled(bar, cache[day]))
+        return tuple(out)
+
     @staticmethod
     def _multiplier(day: date, factors: Sequence[AdjustmentFactor]) -> Decimal:
         product = Decimal(1)

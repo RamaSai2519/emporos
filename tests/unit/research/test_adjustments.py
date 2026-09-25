@@ -49,6 +49,21 @@ class TestFactor:
             AdjustmentFactor(X, D3, Decimal(ratio), ActionKind.SPLIT, "s")
 
 
+class TestAdjustBars:
+    def test_several_bars_a_session_are_scaled_by_their_own_days_multiplier(self) -> None:
+        raw = [daily(D2, "1000", "1010", 100), daily(D2, "1010", "1000", 100),
+               daily(D3, "200", "202", 1000)]  # fmt: skip
+        out = PriceAdjuster(AdjustmentLedger([factor(D3, "0.2")])).adjust_bars(X, raw)
+
+        assert [(b.open.amount, b.volume) for b in out] == [(200, 500), (202, 500), (200, 1000)]
+
+    def test_another_instruments_bars_are_refused(self) -> None:
+        with pytest.raises(ValueError, match="one instrument"):
+            PriceAdjuster(AdjustmentLedger([])).adjust_bars(
+                X, [daily(D1, "1", "1", instrument="B")]
+            )
+
+
 class TestAdjuster:
     def test_a_one_for_five_split_scales_earlier_bars_by_a_fifth_and_volume_by_five(self) -> None:
         raw = [daily(D1, "1000", "1010", 100), daily(D2, "1010", "1000", 200),
