@@ -1,0 +1,50 @@
+# Declared BEFORE any run (PROFIT_PLAN.md §2.1, §10). Track A-core cell C1, by the head session.
+# Judged on the PROFIT_PLAN §10 CORE bar, set at 113dc9e before this declaration.
+#
+# Disclosure: arm `top2` is A5's `blend / K=2` rule (EM-233, rejected on the satellite bar) with one
+# change: fills at the next session's CLOSE instead of its open, because the early ETF opening
+# prints are noisy (etf-bars-report.yaml). A5's numbers were known when this cell was designed. The
+# other two arms are the classic trend-following allocations (Faber 2007), not tuned on our data.
+#
+# Rules (daily bars; decision at the close of the first session of each calendar month; fill at the
+# NEXT session's close; whole units; delivery costs; cash accrues 5.0% a year, daily):
+# * Assets: NIFTYBEES (NSE:10576), JUNIORBEES (NSE:10939), GOLDBEES (NSE:14428).
+# * Trend test per asset: close > its 200-session simple average.
+# * Arms (`rule`):
+#   - `top2`: score = mean of the 3-, 6- and 12-month returns; hold the 2 best assets that pass the
+#     trend test AND have score > 0, equal weights; the rest is cash.
+#   - `all_equal`: hold every asset that passes the trend test, one third of the book each; the
+#     rest is cash.
+#   - `fixed_40_30_30`: NIFTYBEES 40%, JUNIORBEES 30%, GOLDBEES 30% of the book, each held only
+#     while it passes the trend test, else its share sits in cash.
+# * Weights are restored at every monthly decision (trading the difference).
+# 3 arms.
+#
+# Data: Discovery, from the first session on which all three ETFs have 273 prior sessions (about
+# 2008-03) to 2024-12-31. Halves for the core bar: to 2016-12-31, and from 2017-01-01. Also report
+# from 2017-11-13 (the book's window). Capital Rs 1,00,000; delivery fee schedule
+# angelone-delivery-2026-09-25 (verified: false); PROFIT_PLAN §3.1 slippage. Benchmark: 60/40
+# NIFTYBEES/GOLDBEES buy-and-hold, yearly rebalance, same costs, same fill rule, same days.
+family: strategy
+slug: c1-etf-trend-core
+hypothesis: >-
+  Holding Indian large-cap, next-50 and gold ETFs only while each is above its 200-day average, and
+  cash otherwise, matches or beats a 60/40 equity/gold buy-and-hold after costs with a much smaller
+  drawdown, which makes it a sound, survivorship-free core for a compounding book.
+economic_rationale: >-
+  Time-series momentum across asset classes is one of the most persistent effects on record: trends
+  last because investors under-react and then herd. A trend filter's main value is avoiding the deep
+  part of bear markets. Rupee gold often trends up when Indian equities fall on global stress. The
+  core is not meant to find skill in stock selection, only to hold exposure when it is paid and to
+  step aside when it is not.
+falsification: >-
+  PROFIT_PLAN §10 core bar on Discovery: net CAGR >= the 60/40 benchmark's and not more than 2
+  points below it in either half; max drawdown <= 0.6 x the benchmark's; worst month >= -10%; the
+  amended §3.2 months bar; monthly t >= 2.5; §3.4 P(drawdown >= 30%) <= 5%; adverse CAGR > 0. If no
+  arm passes, the ETF trend core is rejected and the book's core is plain 60/40 until a better core
+  is found.
+parameter_grid:
+  rule: ["top2", "all_equal", "fixed_40_30_30"]
+feature_versions:
+  etf_daily_bars: 1
+declared_at: 2026-09-25T13:30:00+05:30
