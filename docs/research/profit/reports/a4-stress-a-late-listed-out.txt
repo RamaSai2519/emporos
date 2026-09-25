@@ -1,0 +1,69 @@
+STRESS late-listed-out of frozen candidate a4-60-40 (screen SWG-bdbe1b0a990476d3, code 42cefec), robustness look, Discovery window, same book, same costs; the book and its benchmark are both on the stressed universe.
+equity universe: 148 names before, 126 after; 22 removed
+  out: NSE:13611 (first daily session 2019-10-14 is after 2017-11-13)
+  out: NSE:13750 (first daily session 2019-10-16 is after 2017-11-13)
+  out: NSE:18457 (first daily session 2020-03-30 is after 2017-11-13)
+  out: NSE:2029 (first daily session 2021-01-29 is after 2017-11-13)
+  out: NSE:2144 (first daily session 2022-05-19 is after 2017-11-13)
+  out: NSE:22377 (first daily session 2020-08-21 is after 2017-11-13)
+  out: NSE:2303 (first daily session 2018-03-28 is after 2017-11-13)
+  out: NSE:2955 (first daily session 2021-03-26 is after 2017-11-13)
+  out: NSE:3220 (first daily session 2021-04-19 is after 2017-11-13)
+  out: NSE:3563 (first daily session 2018-06-18 is after 2017-11-13)
+  out: NSE:4244 (first daily session 2018-08-06 is after 2017-11-13)
+  out: NSE:4306 (first daily session 2021-03-04 is after 2017-11-13)
+  out: NSE:509 (first daily session 2020-10-12 is after 2017-11-13)
+  out: NSE:6066 (first daily session 2018-11-05 is after 2017-11-13)
+  out: NSE:6656 (first daily session 2021-11-15 is after 2017-11-13)
+  out: NSE:6705 (first daily session 2021-11-18 is after 2017-11-13)
+  out: NSE:8075 (first daily session 2019-01-22 is after 2017-11-13)
+  out: NSE:8110 (first daily session 2022-02-08 is after 2017-11-13)
+  out: NSE:9480 (first daily session 2022-05-17 is after 2017-11-13)
+  out: NSE:9552 (first daily session 2019-04-11 is after 2017-11-13)
+  out: NSE:9590 (first daily session 2019-04-16 is after 2017-11-13)
+  out: NSE:9683 (first daily session 2019-04-22 is after 2017-11-13)
+late-listed in the full universe (first session after 2017-11-13): 22 names
+
+A4 is built at SLEEVE level and says so: each sleeve is simulated on its share of the book's capital and only its return series is carried into the book, so after a quarterly reset the sleeve's whole-share rounding and position sizes are those of the run, not of the new capital. A reset is made at the previous close and costs the round trip of a Rs 25,000 reference order (fees and slippage of the scenario) on the rupees moved, unrounded. The §3.5 month halt and kill act on the EQUITY SLEEVE's own P&L, never on the book's; the equity sleeve's cash earns nothing (as in A1b), the defensive sleeve's earns 5% a year (as in A5).
+
+Concentration (§3.2 as amended): the 25% limit applies to single stocks. The broad index ETFs are exempt from the check; each ETF's share of net profit is reported below.
+
+a4-momentum-rotation-book: Discovery 2017-11-13..2024-12-31, 1 arms
+benchmark (same-weight blend of the D1 equal-weight buy-and-hold and the 60/40 NIFTYBEES/GOLDBEES buy-and-hold, same costs, same split and reset (ETF leg: 60/40 NIFTYBEES/GOLDBEES buy-and-hold rebalanced yearly, same costs), on the stressed universe): net CAGR 19.0%, net Sharpe 1.34, max drawdown 30.2%, positive months 69%
+
+arm                                                            result starts     1st buy       CAGR     adv Sharpe m+exp m-all   worst  maxDD     t trips    y+  conc   nbr cash days
+split=60/40 stress=late-listed-out                             PASS   2017-11-13 2017-11-14   21.5%   20.4%   1.34   66%   34%   -9.1%  20.6%  3.45   220   75%   13%  100%     2/1757
+
+net return per calendar year (benchmark costs):
+arm                                                               2017    2018    2019    2020    2021    2022    2023    2024
+split=60/40 stress=late-listed-out                                6.4%  -10.4%    0.6%   34.9%   74.3%   -0.9%   27.5%   41.2%
+
+risk of ruin, 20-day block bootstrap, 12-month paths (§3.4):
+split=60/40 stress=late-listed-out                             P(drawdown>=30%) 0.1%  P(12-month net<0) 9.7%  paths 10000 seed 20260925
+
+why arms did not pass:
+split=60/40 stress=late-listed-out: passed every check
+  equity: 296 rebalances ranked, 28 stops; halts ['2018-03-07', '2018-05-22', '2018-06-05', '2018-09-21', '2019-05-09', '2019-07-18', '2022-12-23', '2023-10-23', '2024-06-04', '2024-08-05', '2024-11-18']; kills ['2018-04-04', '2018-12-06', '2023-01-27', '2024-09-18', '2024-12-20']; re-entries ['2018-05-07', '2019-01-21', '2023-02-06', '2024-10-07']; defensive: 85 months ranked, 0 all-cash, months held per asset {'NSE:10576': 62, 'NSE:10939': 49, 'NSE:14428': 41}; 28 quarterly resets moved Rs 118,536 and cost Rs 837
+
+months (§3.2 as amended: >= 60% of months with exposure positive AND <= 40% of ALL months negative); the old all-months positive share for comparison:
+split=60/40 stress=late-listed-out                             86 months with exposure: 66% positive; all 86 months: 34% negative, 66% positive (old bar); 0 all-cash months
+
+REAL gaps a held position went through (traded through, never zeroed):
+split=60/40 stress=late-listed-out: 0 gap(s), Rs 0 in all
+
+
+the sleeves alone (benchmark costs, on their share of the capital), and the reset:
+split 60/40 (equity/defensive):
+  equity     CAGR 28.8%, Sharpe 1.34, worst month -10.3%, max drawdown 26.9%, months with exposure positive 62%, all months negative 35%, 193 round trips
+  defensive  CAGR 10.1%, Sharpe 0.88, worst month -9.3%, max drawdown 14.3%, months with exposure positive 62%, all months negative 37%, 27 round trips
+  monthly correlation, equity vs defensive sleeve: overall +0.52 over 86 months; in the equity sleeve's worst 12 months +0.29 (n = 12: read it as a sign, not a number)
+  in those months the equity sleeve averaged -6.6% and the defensive sleeve -1.7%: 2018-03, 2018-09, 2018-12, 2019-07, 2022-02, 2022-12, 2023-01, 2023-02, 2023-10, 2024-08, 2024-09, 2024-11
+  28 quarterly resets moved Rs 118,536 and cost Rs 837 at benchmark costs; sessions a sleeve had that the other did not (left out of the book): 10
+
+each ETF's share of the book's net trade profit (exempt from the 25% check):
+split 60/40                              of net trade profit Rs 283,377: NIFTYBEES-EQ 5%, JUNIORBEES-EQ 14%, GOLDBEES-EQ 3%
+
+sub-period from 2018-01-01 (report only, benchmark costs; the runs' own, sliced):
+                                            CAGR Sharpe  m+ exp  m- all   worst  maxDD trips
+split 60/40                                20.9%   1.31     67%     33%   -9.1%  20.6%   211
+BENCHMARK blend 60/40                      18.8%   1.31     68%     32%  -18.8%  30.2%     0
