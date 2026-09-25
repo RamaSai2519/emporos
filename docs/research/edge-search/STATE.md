@@ -3,6 +3,13 @@
 Plan of record: [`EDGE_SEARCH_PLAN.md`](../../../EDGE_SEARCH_PLAN.md). Map:
 [`search-map.yaml`](search-map.yaml) (validated in CI by `emporos.research.search_map`).
 
+> **STATUS (2026-09-25, head decision after EM-230, EM-231 and EM-234): Track B is CLOSED at this capital and Track C
+> (intraday cash) is PAUSED.** Track B: index put-spread selling failed B1 (8 arms) and its only child B1b (4 arms); the
+> declared closure test is met (no arm's zero-slippage gross per spread reaches 2x its charges). Track C: 82 arms over
+> the lanes run so far and no mechanism clears costs; the loop resumes only for L13 passive entries and scalping,
+> designed against at least two months of D7 quotes. Lessons, closure lines and what reopens each:
+> [`../profit/track-b-c-status.md`](../profit/track-b-c-status.md). The Track A critical path is the priority.
+
 > **Steering (2026-09-25, head session): the program is now run under [`PROFIT_PLAN.md`](../../../PROFIT_PLAN.md) (EM-219).**
 > The intraday search (this file, Track C) continues as a loop in Agent 2's session, which reports every cell to the
 > head (emporos-bd) and declares children only on the head's go. Swing (Track A) and index options (Track B) are new
