@@ -1,0 +1,62 @@
+# FROZEN CANDIDATE (EM-235, 2026-09-25, by Agent 1 on the head's instruction). No parameter of this
+# candidate (the code at code_commit is its definition) changes after this file is committed. Any change is a different candidate and a new
+# declaration. The next steps (survivorship stress, then S3) run THIS file's book and nothing else.
+candidate: a4-60-40
+cell: a4-momentum-rotation-book
+arm: {split: "60/40"}          # equity / defensive share of book equity
+screen_id: SWG-bdbe1b0a990476d3
+code_commit: 42cefec571e637a0868c2470ddc8280732870d0e   # the screen that produced the arm (on master)
+declaration:
+  file: config/experiments/a4-momentum-rotation-book.yaml
+  sha256: 62fd922ab959d71d48401749a9d8a6cf8198ae2caf314a97f1d97dc494544073
+  declared_at: 2026-09-25T10:20:00+05:30
+book:
+  capital: "100000"
+  discovery_window: {first: 2017-11-13, last: 2024-12-31}
+  reset: first common session of each calendar quarter, at the previous close, split restored
+  transfer_cost: round trip of a Rs 25,000 reference order (fees and slippage of the scenario) on the rupees moved
+  level: sleeve (each sleeve simulated on its share of capital, return series combined; see the A4 report)
+equity_sleeve:                 # the A1b book exactly as built at e643405, arm weekly / vol 15
+  declaration: {file: config/experiments/a1b-momentum-book-risk.yaml, sha256: db1955daf7b74fe9f04b39d8004cd9a106a9f2150be42c4b6babf985b1dd844f}
+  arm: {rebalance: weekly, vol_target: "15"}
+  lookback_sessions: 252
+  skip_sessions: 21
+  max_positions: 5
+  keep_while_ranked_in_top: 10  # 2N: sold when it ranks below; empty slots fill from the top, up to N
+  momentum_signal: close[t-21] / close[t-252-21] - 1 on analysis closes, ranked only if above 0
+  regime: NIFTY 50 close above its 200-session average
+  stop: 2% of book equity (LossStop)
+  month_halt: 0.06             # of equity at the previous month's close
+  kill: 0.15                   # below the running peak; re-entry at the first rebalance of a later month
+  vol_target_annual: 0.15      # sizes new slots only
+  cash_yield: "0"
+defensive_sleeve:              # the A5 book, arm blend / K = 2
+  declaration: {file: config/experiments/a5-etf-dual-momentum.yaml, sha256: 34c03fb2b6850b7a7038683d39712d060135c0e88861d1dda0f9be89492eb34f}
+  arm: {score: blend, top_k: "2"}
+  assets: [NIFTYBEES-EQ, JUNIORBEES-EQ, GOLDBEES-EQ]
+  rebalance: monthly
+  score: mean of the 3-, 6- and 12-month returns (63, 126, 252 sessions ending at t)
+  filter: close above its 200-session average AND score above 0; the top 2 qualifying, one slot of equity / 2 each, the rest in cash
+  decisions: close of the first session of each month, filled at the next open; no stop, no book rules
+  cash_yield: "0.05"           # a year, accrued per session
+  etf_report: {file: docs/research/profit/etf-bars-report.yaml, sha256: 913c2a5645cc80144a5907eef1436c2c89fa7876b64991fd2b7854e1d373fc0c}
+costs:
+  fee_schedule: {file: config/fees/angelone-delivery-2026-09-25.yaml, name: angelone-equity-delivery, verified: false, sha256: 83517aac1484f10543bae4817a4e0b5bcbb6f731780b78949b59ebe79ac6beaf}
+  benchmark: {fee_multiple: 1.0, slippage_bps_per_side: 10}
+  adverse: {fee_multiple: 1.5, slippage_bps_per_side: 25}
+universe:
+  d1_manifest: {file: config/universe/d1/universe.yaml, sha256: 87b43427b7e6e97305056185e49fa97860e94b36dd7cb64b3d7d183d41ebff81, content_hash: 27d5496b82bb49e5108236f6a7a44ffa62e47287b4a2fbb4997e62948b5e310a, label: d1-148-27d5496b}
+  adjustment_ledger: {file: config/universe/d1/adjustments.yaml, sha256: 34019f4f75b1ca15b53d9ea869c22458c7c68c1818e3e217736ed563bd2c045d, content_hash: 3548418711017246d93689df01a5e3fe129948b3db427dfb56f0d24d08581b67}
+  membership: AllMembers (today's constituents; survivorship caveat open until A-F3)
+benchmark: same-weight blend (60/40) of the D1 equal-weight buy-and-hold and the 60/40 NIFTYBEES/GOLDBEES buy-and-hold rebalanced yearly, same costs, same reset
+bootstrap: {paths: 10000, block: 20, horizon: 252, seed: 20260925}
+discovery_result:              # for reference: what the arm did (reports/a4-momentum-rotation-book.txt)
+  net_cagr: 0.262
+  adverse_net_cagr: 0.245
+  net_sharpe: 1.49
+  benchmark_net_sharpe: 1.44
+  worst_month: -0.092
+  max_drawdown: 0.206
+  months_with_exposure_positive: 0.67
+  all_months_negative: 0.33
+  round_trips: 214
