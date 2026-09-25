@@ -1,0 +1,24 @@
+# Angel One INDEX/EQUITY OPTIONS charges on NSE (EM-226, PROFIT_PLAN.md §5). Rates are quoted STRINGS
+# on purpose: a YAML float would be an inexact number, and money never touches a float.
+#
+# [VOLATILE] Read from https://www.angelone.in/exchange-transaction-charges on 2026-09-25 (that page
+# states no effective date, so `effective_from` is the date it was read). `verified: false`: NOT
+# reconciled against a contract note, so this is fine for a backtest's costs and not for predicting a
+# bill. The page lists a promotional brokerage waiver on the first orders of a new account; it is NOT
+# modelled (the flat rate below is the steady state).
+#
+# `stt_exercise_percent` is an ASSUMPTION: the page does not state the STT on an in-the-money option
+# exercised or settled at expiry (it is charged on the intrinsic value, to the holder of the long
+# leg). It is set equal to the sell rate, the conservative reading, until a contract note says
+# otherwise. Not modelled: clearing charges other than those below, and the exchange's minimum charge.
+name: angelone-fo-options
+effective_from: "2026-09-25"
+verified: false
+brokerage_flat_per_order: "20"
+stt_sell_percent: "0.15"
+stt_exercise_percent: "0.15"
+exchange_transaction_percent: "0.0355299"
+sebi_per_crore: "10"
+stamp_duty_buy_percent: "0.003"
+ipft_percent: "0.002"
+gst_percent: "18"

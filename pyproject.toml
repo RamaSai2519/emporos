@@ -168,6 +168,16 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "options is a pure pricing layer: no broker, storage, network, engine or operator surface"
+type = "forbidden"
+source_modules = ["emporos.options"]
+forbidden_modules = [
+    "emporos.broker", "emporos.persistence", "emporos.marketdata", "emporos.history",
+    "emporos.execution", "emporos.risk", "emporos.strategies", "emporos.backtest",
+    "emporos.research", "emporos.api", "emporos.cli", "emporos.session", "httpx", "pymongo",
+]
+
+[[tool.importlinter.contracts]]
 name = "the SmartAPI SDK is a dev-only test oracle, never imported by production code"
 type = "forbidden"
 source_modules = ["emporos"]
