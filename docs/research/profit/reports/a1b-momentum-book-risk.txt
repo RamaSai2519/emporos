@@ -1,0 +1,50 @@
+a1b-momentum-book-risk: 148 names, 279284 sessions, gaps >= 15%: 19 explained, 12 artifacts flattened, 27 real (traded through), adjustment ledger 19 factors, capital 100000, delivery schedule angelone-equity-delivery (verified: False)
+a1b-momentum-book-risk: Discovery 2016-10-03..2024-12-31, 4 arms
+benchmark (same-universe equal-weight buy-and-hold, same costs): net CAGR 25.1%, net Sharpe 1.30, max drawdown 37.8%, positive months 69%
+
+arm                                                            result starts     1st buy       CAGR     adv Sharpe    m+   worst  maxDD     t trips    y+  conc   nbr cash days
+rebalance=weekly vol_target=off                                reject 2017-11-13 2017-11-14   33.1%   26.7%   1.40   48%  -17.0%  36.9%  3.31   196   78%   20%  100%   710/2031
+rebalance=weekly vol_target=15                                 reject 2017-11-13 2017-11-14   31.8%   29.4%   1.40   49%  -15.3%  30.6%  3.36   189   78%   22%  100%   706/2031
+rebalance=monthly vol_target=off                               reject 2017-12-01 2017-12-04   28.5%   27.3%   1.31   41%  -11.9%  38.4%  2.97   134   56%   29%  100%   814/2031
+rebalance=monthly vol_target=15                                reject 2017-12-01 2017-12-04   28.1%   27.8%   1.30   42%  -12.2%  37.6%  2.99   134   56%   30%  100%   814/2031
+
+net return per calendar year (benchmark costs):
+arm                                                               2016    2017    2018    2019    2020    2021    2022    2023    2024
+rebalance=weekly vol_target=off                                   0.0%    8.4%  -13.4%   13.6%   90.3%  126.4%    9.1%   77.2%   19.2%
+rebalance=weekly vol_target=15                                    0.0%    8.4%  -13.2%    9.6%   84.1%   96.0%    5.2%   80.9%   37.2%
+rebalance=monthly vol_target=off                                  0.0%   14.2%   -9.1%  -16.2%   65.8%  105.0%   -2.1%   95.7%   39.1%
+rebalance=monthly vol_target=15                                   0.0%   14.2%   -9.1%  -15.6%   59.9%  108.5%   -2.9%   95.5%   38.9%
+
+risk of ruin, 20-day block bootstrap, 12-month paths (§3.4):
+rebalance=weekly vol_target=off                                P(drawdown>=30%) 6.1%  P(12-month net<0) 13.6%  paths 10000 seed 20260925
+rebalance=weekly vol_target=15                                 P(drawdown>=30%) 4.0%  P(12-month net<0) 13.0%  paths 10000 seed 20260925
+rebalance=monthly vol_target=off                               P(drawdown>=30%) 3.5%  P(12-month net<0) 16.0%  paths 10000 seed 20260925
+rebalance=monthly vol_target=15                                P(drawdown>=30%) 3.4%  P(12-month net<0) 16.1%  paths 10000 seed 20260925
+
+why arms did not pass:
+rebalance=weekly vol_target=off: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%
+  293 rebalances ranked, 32 stops; halts ['2018-03-07', '2018-05-22', '2018-06-05', '2018-09-21', '2019-05-09', '2019-07-18', '2019-12-10', '2021-07-20', '2022-02-24', '2022-12-23', '2023-01-25', '2023-02-22', '2024-02-05', '2024-06-04', '2024-08-05', '2024-09-09', '2024-11-13']; kills ['2018-04-04', '2018-12-06', '2023-01-27', '2023-02-24', '2024-03-13', '2024-08-20', '2024-10-23']; re-entries ['2018-05-07', '2019-01-21', '2023-02-06', '2023-03-06', '2024-04-01', '2024-09-02', '2024-11-04']
+rebalance=weekly vol_target=15: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%
+  290 rebalances ranked, 27 stops; halts ['2018-03-07', '2018-05-22', '2018-06-05', '2018-09-21', '2019-05-09', '2019-07-18', '2021-07-20', '2022-02-22', '2022-12-23', '2023-02-22', '2024-02-05', '2024-06-04', '2024-08-05', '2024-10-25']; kills ['2018-04-04', '2018-12-06', '2023-01-27', '2023-02-24', '2024-03-13', '2024-09-06', '2024-11-12']; re-entries ['2018-05-07', '2019-01-21', '2023-02-06', '2023-03-06', '2024-04-01', '2024-10-07', '2024-12-02']
+rebalance=monthly vol_target=off: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; calendar years positive >= 60%; no instrument > 25% of net profit
+  70 rebalances ranked, 25 stops; halts ['2018-02-06', '2018-05-18', '2018-06-28', '2018-09-27', '2019-07-12', '2021-07-20', '2022-12-22', '2024-02-05', '2024-06-04', '2024-08-05', '2024-10-07']; kills ['2018-03-07', '2019-01-03', '2019-12-09', '2023-01-27', '2024-03-13', '2024-09-11', '2024-11-12']; re-entries ['2018-04-02', '2019-02-01', '2020-01-01', '2023-02-01', '2024-04-01', '2024-10-01', '2024-12-02']
+rebalance=monthly vol_target=15: months net positive >= 60%; worst month >= -10%; max drawdown <= 25%; calendar years positive >= 60%; no instrument > 25% of net profit
+  70 rebalances ranked, 24 stops; halts ['2018-02-06', '2018-05-18', '2018-06-28', '2018-09-27', '2019-07-12', '2021-07-20', '2022-12-22', '2024-02-05', '2024-06-04', '2024-08-05', '2024-10-07']; kills ['2018-03-07', '2019-01-04', '2019-12-09', '2023-01-27', '2024-03-13', '2024-09-11', '2024-11-12']; re-entries ['2018-04-02', '2019-02-01', '2020-01-01', '2023-02-01', '2024-04-01', '2024-10-01', '2024-12-02']
+
+months net positive: over ALL months (the §3.2 bar) and over months with exposure:
+rebalance=weekly vol_target=off                                all 99 months: 48% positive; 78 with exposure: 62% positive; 21 all-cash months
+rebalance=weekly vol_target=15                                 all 99 months: 49% positive; 78 with exposure: 63% positive; 21 all-cash months
+rebalance=monthly vol_target=off                               all 99 months: 41% positive; 70 with exposure: 59% positive; 29 all-cash months
+rebalance=monthly vol_target=15                                all 99 months: 42% positive; 70 with exposure: 60% positive; 29 all-cash months
+
+REAL gaps a held position went through (traded through, never zeroed):
+rebalance=weekly vol_target=off: 1 gap(s), Rs 36,028 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +36,028
+rebalance=weekly vol_target=15: 1 gap(s), Rs 28,169 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +28,169
+rebalance=monthly vol_target=off: 1 gap(s), Rs 24,800 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +24,800
+rebalance=monthly vol_target=15: 1 gap(s), Rs 24,027 in all
+    2024-01-23 NSE:2029 gap +15.5%: Rs +24,027
+
+regime defined from 2017-07-24 (NIFTY 50 > 200-session average)
