@@ -197,3 +197,47 @@ Every sleeve is designed and judged as a component of this book:
   clear that per trade. It is researched under Track C; it earns a place only by passing S2.
 - **Each sleeve reports its daily P&L series,** so the combination (Track A4, EDGE_SEARCH_PLAN L10)
   can be built from correlations and the §3.2 monthly bars applied to the whole book.
+
+## 10. Operator decision (2026-09-25, after review 3): core + satellites, and keep searching
+
+**Core (Track A-core).** A survivorship-free, low-turnover ETF core is the base of the book. Its bar
+is set here, before any core cell runs, and is not the §3.2 satellite bar. On Discovery, all must
+hold:
+- Net CAGR ≥ the 60/40 NIFTYBEES/GOLDBEES buy-and-hold (yearly rebalance, same costs, same days),
+  and not more than 2 points below it in either half of the window.
+- Max drawdown ≤ 0.6 × that benchmark's; worst month ≥ -10%; the amended §3.2 months bar; monthly
+  t ≥ 2.5; §3.4 P(drawdown ≥ 30%) ≤ 5%. Adverse-cost CAGR > 0.
+- Round trips are not required: a monthly allocation trades rarely, and monthly t carries the
+  statistical burden.
+Then S3, S4 and paper as §3.3. Core cells fill at the next session's CLOSE, not its open: early ETF
+opening prints are noisy (EM-233, etf-bars-report.yaml).
+
+**Satellites** must beat the core on net Sharpe over the same days to earn capital.
+
+## 11. Track T — intraday triggers with a calibrated probability filter and Jev (operator, 2026-09-25)
+
+The operator's direction: find triggers, take everything calculable into account, and trade only
+when the probability is high; use Jev, live, in the backtest. Design:
+1. **Triggers** (primary events): the program's intraday scans on D1 (gap + first-hour retrace,
+   the daily top shock, ORB with volume, VWAP and RSI reversion, NR7, the index-trend leader, the
+   in-session results jump). Each gives a candidate trade with a side, the next-bar entry and the
+   15:15 exit, through the shared order path.
+2. **Features at the trigger, as-of only:** the trigger's own measures, returns and volatility of
+   the name over several horizons, volume versus its time-of-day norm, distance to VWAP, the NIFTY,
+   sector and INDIA VIX state, breadth across D1, time of day, weekday, days to expiry and to or
+   from the name's results, and liquidity. No symbol and no date.
+3. **Label and probability:** P(net P&L at benchmark costs > 0). A model trained walk-forward by
+   year (train on earlier years, predict the next, one-day purge), then calibrated. **Trade only if
+   the calibrated P ≥ the declared threshold (operator: 0.80) AND the expected net per trade at
+   ADVERSE costs > 0** (a high win rate alone is not an edge: B1 won 82% of its trades and lost).
+   Calibration is reported and judged: if trades scored ≥ 0.80 win clearly less often
+   out-of-sample, the model is rejected, whatever its P&L.
+4. **Jev (live, `gpt-4o-mini`, declared cutoff 2023-10-01):** for each trade that passes step 3, Jev
+   receives the anonymised trigger and features and confirms or rejects. The knowledge-cutoff guard
+   allows Jev only from 2024-01 on (cutoff plus 90 days), so the Jev arm is backtested on 2024
+   Discovery and later splits only. Before that date the model may remember the market, and no run
+   is allowed. Jev's value is judged as an increment over step 3 alone (docs/research/jev-incremental.md),
+   net of its token cost, and every call is recorded to the journal so replays are free.
+5. **Bars:** EDGE_SEARCH_PLAN §6 S2 on the pooled out-of-sample predictions, then S3 and onward.
+   Hyperparameters are fixed in the declaration (no inner search); each model/threshold arm is one
+   counted trial.
