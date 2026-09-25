@@ -1,0 +1,14 @@
+# NIFTY 100 and NIFTY Midcap 150 constituent changes (PROFIT_PLAN §4 A-F3, EM-224).
+#
+# EMPTY ON PURPOSE: no source has been collected. With no changes on record nothing is known about
+# past membership, so a Track A result that needs as-of membership cannot be produced yet (the
+# swing screener's default `AllMembers` carries the survivorship bias of today's constituents).
+#
+# One entry per announced change, from an index provider's published notice. Every entry names its
+# source URL and the date it was fetched:
+#   - index: "NIFTY 100"           # or "NIFTY MIDCAP 150"
+#     effective: 2021-03-31        # the first session the change applies to
+#     added: [SYMBOL, ...]
+#     removed: [SYMBOL, ...]
+#     source: "<url> fetched 2026-09-25"
+changes: []
