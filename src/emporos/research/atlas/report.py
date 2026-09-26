@@ -33,6 +33,9 @@ def _by_class(events: Sequence[MoveEvent]) -> list[str]:
     counts = Counter(e.event_class for e in events)
     lines = ["Events by class:"]
     lines += [f"  {c.value:<12} {counts.get(c, 0):>8,}" for c in EventClass]
+    jumps = [e.z for e in events if e.event_class is EventClass.STOCK_JUMP]
+    for level in (4.0, 5.0):
+        lines.append(f"  (stock_jump with z >= {level:g}: {sum(1 for z in jumps if z >= level):,})")
     return lines
 
 
