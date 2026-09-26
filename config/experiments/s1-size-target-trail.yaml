@@ -17,6 +17,9 @@
 #   E2 `index_crossings`: every intraday crossing of NIFTY or BANKNIFTY (the index's own 5-minute
 #      return path passing 1.5 x its 15-minute-scaled sigma), traded by BUYING the ATM option of the
 #      nearest weekly expiry with >= 1 full session left (CE for an up move, PE for a down move).
+#      Amendment A (head, 2026-09-26, before any run): where the index has no weekly contract listed on
+#      that day (BANKNIFTY after its weeklies ended in November 2024), the nearest MONTHLY with >= 1
+#      full session left is used instead; the report counts trades by expiry type.
 # STAGE 2 (declared later with its own file, after this runs, with the SAME exit grid and no change
 # from what stage 1 shows): the driver-atlas with-the-move entries (Call C "continue") and the Track L
 # LLM signals.
