@@ -33,6 +33,9 @@ class PageSpec:
     source: str  # the site, e.g. "fed"
     name: str  # the file the reply is kept under
     url: str
+    # A 404 means "nothing that day" (a market holiday), not a failure: an empty file is kept and
+    # the request is ledgered, so the day is not asked for again.
+    absent_is_data: bool = False
 
 
 class PageCollector:
@@ -50,7 +53,16 @@ class PageCollector:
                 continue
             try:
                 body = await self._get.get(page.url)
-            except (NotFound, httpx.HTTPError) as error:
+            except NotFound:
+                if not page.absent_is_data:
+                    failed.append(f"{page.name}: not found")
+                    progress(f"{page.name}: FAILED not found")
+                    streak += 1
+                    if streak >= MAX_CONSECUTIVE_FAILURES:
+                        raise CollectionHalted(f"{streak} failures in a row: {failed}") from None
+                    continue
+                body = b""
+            except httpx.HTTPError as error:
                 failed.append(f"{page.name}: {error!r}")
                 progress(f"{page.name}: FAILED {error!r}")
                 streak += 1
@@ -68,7 +80,7 @@ class PageCollector:
                     now.date(),
                     page.url,
                     now,
-                    1,
+                    1 if body else 0,
                     len(body),
                     hashlib.sha256(body).hexdigest(),
                 )  # fmt: skip
