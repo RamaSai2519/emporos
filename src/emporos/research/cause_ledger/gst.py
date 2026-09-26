@@ -2,7 +2,7 @@
 
 `https://gstcouncil.gov.in/gst-council-meetings` lists each meeting with its date, e.g.
 `50th GST Council Meeting 11th July 2023` or `47th GST Council Meeting 28th & 29th June 2022`; a
-two-day meeting counts from its LAST day. The page's list ends at the 51st meeting (2023-08-02); later
+two-day meeting counts from its LAST day. The page ends at the 51st meeting (2023-08-02); later
 ones are hand-kept rows. The decisions are announced at a press conference after the meeting, whose
 time the page does not give, so the calendar counts them from 23:59 IST of that day."""
 

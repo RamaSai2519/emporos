@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 
+from emporos.core.paths import research_dir
+
 __all__ = [
     "DEFAULT_FILINGS_LEDGER",
     "DEFAULT_RAW_DIR",
@@ -23,7 +25,7 @@ __all__ = [
     "RawFilingStore",
 ]
 
-DEFAULT_RAW_DIR = Path.home() / ".cache" / "emporos" / "filings" / "raw"
+DEFAULT_RAW_DIR = research_dir() / "filings" / "raw"
 DEFAULT_FILINGS_LEDGER = Path("docs/research/profit/filings-ledger.jsonl")
 
 

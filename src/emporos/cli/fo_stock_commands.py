@@ -16,6 +16,7 @@ import typer
 
 from emporos.cli.fo_archive_commands import EARLIEST_FO_DAY
 from emporos.core.clock import AsyncioSleeper, SystemClock
+from emporos.core.paths import research_dir
 from emporos.research.fo_archive_fetch import (
     ArchiveFetcher,
     ArchiveHalted,
@@ -27,7 +28,7 @@ from emporos.research.fo_archive_store import FoDayStore, FoLedger
 from emporos.research.fo_stock_archive import DATASET, StockArchiveReader
 from emporos.research.fo_stock_report import StockArchiveReporter
 
-DEFAULT_STOCK_DIR = Path.home() / ".cache" / "emporos" / DATASET
+DEFAULT_STOCK_DIR = research_dir() / DATASET
 DEFAULT_STOCK_LEDGER = Path("docs/research/profit/fo-stock-ledger.jsonl")
 
 _FROM = typer.Option(EARLIEST_FO_DAY, formats=["%Y-%m-%d"], help="Oldest day to ask for.")

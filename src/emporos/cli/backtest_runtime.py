@@ -27,6 +27,7 @@ from emporos.cli.strategy_composition import build_registry
 from emporos.cli.vault_files import VaultFiles
 from emporos.core.clock import SystemClock
 from emporos.core.config import Settings
+from emporos.core.paths import research_dir
 from emporos.domain.instruments import Exchange, Instrument, InstrumentResolver
 from emporos.history.calendar import StoredTradingCalendar
 from emporos.history.quarantine import CorporateActionQuarantine
@@ -88,7 +89,7 @@ class InstrumentErasReader:
 def candle_cache_root(settings: Settings) -> Path:
     if settings.candle_cache_dir:
         return Path(settings.candle_cache_dir).expanduser()
-    return Path.home() / ".cache" / "emporos" / "candles"
+    return research_dir() / "candles"
 
 
 @asynccontextmanager

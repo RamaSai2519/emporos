@@ -18,11 +18,12 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 
+from emporos.core.paths import research_dir
 from emporos.research.filings.event_store import EventRow, ParquetEventStore
 
 __all__ = ["DEFAULT_SNAPSHOT_DIR", "EventSnapshot"]
 
-DEFAULT_SNAPSHOT_DIR = Path.home() / ".cache" / "emporos" / "event-snapshots"
+DEFAULT_SNAPSHOT_DIR = research_dir() / "event-snapshots"
 RECORD = "SNAPSHOT.json"
 
 

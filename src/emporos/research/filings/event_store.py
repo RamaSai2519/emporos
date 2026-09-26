@@ -31,6 +31,7 @@ import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 from emporos.core.clock import IST
+from emporos.core.paths import research_dir
 from emporos.eventtrader.events import FILING, MarketEvent
 from emporos.research.filings.attachments import AttachmentText
 from emporos.research.filings.filing import Filing
@@ -40,7 +41,7 @@ __all__ = [
     "dedupe_across_exchanges",
 ]  # fmt: skip
 
-DEFAULT_EVENT_DIR = Path.home() / ".cache" / "emporos" / "events"
+DEFAULT_EVENT_DIR = research_dir() / "events"
 SCHEMA_VERSION = 1
 WINDOW = timedelta(minutes=10)
 MAX_TEXT_CHARS = 200_000

@@ -17,6 +17,7 @@ from emporos.cli.intraday_bars import VaultedIntradayBars
 from emporos.core.clock import IST, AsyncioSleeper, Sleeper, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.core.paths import research_dir
 from emporos.eventtrader.events import EventStore
 from emporos.research.d1_universe import DEFAULT_MANIFEST
 from emporos.research.filings.collector import CollectionHalted
@@ -51,8 +52,8 @@ NIFTY_ID = "NSE:99926000"
 VIX_ID = "NSE:99926017"
 FIRST_DAY = datetime(2024, 1, 1)
 LAST_DAY = datetime(2026, 3, 18)
-DEFAULT_FO_STOCK_DIR = Path.home() / ".cache" / "emporos" / "fo_stock_v1"
-DEFAULT_CLOSES_FILE = Path.home() / ".cache" / "emporos" / "market-context" / "session-closes.json"
+DEFAULT_FO_STOCK_DIR = research_dir() / "fo_stock_v1"
+DEFAULT_CLOSES_FILE = research_dir() / "market-context" / "session-closes.json"
 
 _FROM = typer.Option(FIRST_DAY, formats=["%Y-%m-%d"], help="First day.")
 _TO = typer.Option(LAST_DAY, "--to", formats=["%Y-%m-%d"], help="Last day (in).")

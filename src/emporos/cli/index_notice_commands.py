@@ -16,6 +16,7 @@ import httpx
 import typer
 
 from emporos.core.clock import AsyncioSleeper, Sleeper, SystemClock
+from emporos.core.paths import research_dir
 from emporos.research.index_notices import (
     IndexNoticeCollector,
     NoticeRefused,
@@ -28,7 +29,7 @@ from emporos.research.index_notices import (
 PROFIT_DIR = Path("docs/research/profit")
 DEFAULT_LISTING = PROFIT_DIR / "index-notices-listing.csv"
 DEFAULT_PROVENANCE = PROFIT_DIR / "index-notices.jsonl"
-DEFAULT_CACHE = Path.home() / ".cache" / "emporos" / "index-notices"
+DEFAULT_CACHE = research_dir() / "index-notices"
 
 _LISTING = typer.Option(DEFAULT_LISTING, help="Where the notice listing is written.")
 _PROVENANCE = typer.Option(DEFAULT_PROVENANCE, help="The append-only fetch record.")

@@ -19,6 +19,7 @@ from emporos.cli.posture_commands import build_posture_inputs
 from emporos.core.clock import IST, SystemClock
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
+from emporos.core.paths import research_dir
 from emporos.eventtrader.estimate import estimate_run
 from emporos.eventtrader.events import MarketContext, MarketEvent
 from emporos.eventtrader.llm.http_clients import MINI_MODEL
@@ -52,8 +53,8 @@ from emporos.research.fo_archive_store import FoDayStore
 from emporos.research.fo_stock_archive import DATASET
 from emporos.research.market_context.global_cues import DEFAULT_CUES_RAW_DIR, FEEDS
 
-DEFAULT_JOURNAL = Path.home() / ".cache" / "emporos" / "llm" / "l1-journal.jsonl"
-DEFAULT_STOCK_FO = Path.home() / ".cache" / "emporos" / DATASET
+DEFAULT_JOURNAL = research_dir() / "llm" / "l1-journal.jsonl"
+DEFAULT_STOCK_FO = research_dir() / DATASET
 DEFAULT_REPORTS = Path("docs/research/profit/reports/l1")
 DEFAULT_LEDGER = Path("docs/research/profit/screens.jsonl")
 HYPOTHESIS = "l1-llm-event-trader"

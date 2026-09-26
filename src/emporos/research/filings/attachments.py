@@ -17,6 +17,7 @@ from pathlib import Path
 import httpx
 
 from emporos.core.clock import Clock
+from emporos.core.paths import research_dir
 from emporos.research.filings.pdf_text import PdfExtractionError, PdfTextExtractor
 from emporos.research.filings.polite import NotFound, PoliteGet
 
@@ -25,7 +26,7 @@ __all__ = [
     "AttachmentText", "AttachmentTextStore",
 ]  # fmt: skip
 
-DEFAULT_TEXT_DIR = Path.home() / ".cache" / "emporos" / "filings" / "text"
+DEFAULT_TEXT_DIR = research_dir() / "filings" / "text"
 MAX_CONSECUTIVE_FAILURES = 3
 STATUSES = ("ok", "image_only", "not_pdf", "not_found", "error")
 

@@ -16,13 +16,14 @@ from pathlib import Path
 import httpx
 
 from emporos.core.clock import Clock
+from emporos.core.paths import research_dir
 from emporos.research.filings.collector import CollectionHalted
 from emporos.research.filings.polite import NotFound, PoliteGet
 from emporos.research.filings.raw_store import FetchLedger, FetchRecord
 
 __all__ = ["DEFAULT_CALENDAR_LEDGER", "DEFAULT_CALENDAR_RAW", "PageCollector", "PageSpec"]
 
-DEFAULT_CALENDAR_RAW = Path.home() / ".cache" / "emporos" / "calendar" / "raw"
+DEFAULT_CALENDAR_RAW = research_dir() / "calendar" / "raw"
 DEFAULT_CALENDAR_LEDGER = Path("docs/research/profit/calendar-ledger.jsonl")
 MAX_CONSECUTIVE_FAILURES = 3
 

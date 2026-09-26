@@ -33,6 +33,7 @@ from typing import Protocol
 import httpx
 
 from emporos.core.clock import Clock
+from emporos.core.paths import research_dir
 from emporos.research.filings.collector import CollectionHalted
 from emporos.research.filings.polite import NotFound, PoliteGet, SourceRefused
 from emporos.research.filings.raw_store import FetchLedger, FetchRecord
@@ -43,7 +44,7 @@ __all__ = [
     "PercentChange", "parse_fred_csv", "parse_yahoo_chart",
 ]  # fmt: skip
 
-DEFAULT_CUES_RAW_DIR = Path.home() / ".cache" / "emporos" / "global-cues" / "raw"
+DEFAULT_CUES_RAW_DIR = research_dir() / "global-cues" / "raw"
 DEFAULT_CUES_LEDGER = Path("docs/research/profit/global-cues-ledger.jsonl")
 MAX_AGE_DAYS = 6  # a latest observation older than this (before the decision day) is stale
 MAX_CONSECUTIVE_FAILURES = 3

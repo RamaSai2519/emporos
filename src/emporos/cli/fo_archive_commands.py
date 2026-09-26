@@ -14,6 +14,7 @@ import httpx
 import typer
 
 from emporos.core.clock import AsyncioSleeper, SystemClock
+from emporos.core.paths import research_dir
 from emporos.research.fo_archive_fetch import (
     ArchiveFetcher,
     ArchiveHalted,
@@ -30,7 +31,7 @@ from emporos.research.fo_contract_specs import (
     write_specs,
 )
 
-DEFAULT_FO_DIR = Path.home() / ".cache" / "emporos" / "fo_bhavcopy"
+DEFAULT_FO_DIR = research_dir() / "fo_bhavcopy"
 DEFAULT_FO_LEDGER = Path("docs/research/profit/fo-archive-ledger.jsonl")
 EARLIEST_FO_DAY = datetime(2000, 6, 12)  # index futures began trading; nothing exists before
 

@@ -112,7 +112,7 @@ class Settings(BaseSettings):
     cold_archive_dir: str | None = Field(default=None, alias="COLD_ARCHIVE_DIR")
 
     # Where backtests keep their local copy of closed candle months (see persistence/candle_cache);
-    # unset uses ~/.cache/emporos/candles. It is derived data: deleting it only makes the next
+    # unset uses the research dir (EMPOROS_RESEARCH_DIR) /candles. Deleting it only makes the next
     # backtest slower.
     candle_cache_dir: str | None = Field(default=None, alias="CANDLE_CACHE_DIR")
 

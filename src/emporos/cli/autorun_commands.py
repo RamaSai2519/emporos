@@ -18,10 +18,11 @@ import typer
 
 from emporos.cli.llm_commands import DEFAULT_JOURNAL, DEFAULT_REPORTS, EXIT_INCOMPLETE
 from emporos.core.clock import SystemClock
+from emporos.core.paths import research_dir
 from emporos.eventtrader.autorun import Autorun, Outcome, Step, StepResult
 from emporos.research.filings.snapshot import DEFAULT_SNAPSHOT_DIR, RECORD
 
-DEFAULT_DIRECTORY = Path.home() / ".cache" / "emporos" / "track-l"
+DEFAULT_DIRECTORY = research_dir() / "track-l"
 SNAPSHOT_NAME = "dev-2024-v1"
 DEV_YEAR = 2024
 VARIANTS = ("v1_t60", "v2_t75", "v3_nopanel_t60", "v4_posture_t60", "v5_posture_t75")
