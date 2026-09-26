@@ -95,6 +95,11 @@ class FoDayStore:
     def days(self) -> list[date]:
         return sorted(date.fromisoformat(p.stem) for p in self._root.glob("*/*.parquet"))
 
+    def contracts(self, day: date) -> set[tuple[str, str, date]]:
+        """The distinct (symbol, kind, expiry) the day's file lists, read without building rows."""
+        table = pq.read_table(self.path(day), columns=["symbol", "kind", "expiry"])
+        return {(str(r["symbol"]), str(r["kind"]), r["expiry"]) for r in table.to_pylist()}
+
     @staticmethod
     def _row(record: dict[str, object]) -> IndexContractRow:
         right = record["right"]
