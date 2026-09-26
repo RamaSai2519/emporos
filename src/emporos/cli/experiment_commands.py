@@ -58,6 +58,7 @@ from emporos.cli.fo_stock_commands import (
 )
 from emporos.cli.index_change_commands import research_build_index_changes
 from emporos.cli.index_notice_commands import research_collect_index_notices
+from emporos.cli.iv_commands import research_build_iv
 from emporos.cli.llm_commands import (
     research_llm_smoke,
     research_llm_variant_table,
@@ -119,6 +120,7 @@ research_app.command("collect-filings")(research_collect_filings)
 research_app.command("freeze-events")(research_freeze_events)
 research_app.command("extraction-progress")(research_extraction_progress)
 research_app.command("collect-calendar")(research_collect_calendar)
+research_app.command("build-iv")(research_build_iv)
 research_app.command("backup-datasets")(research_backup_datasets)
 research_app.command("build-calendar")(research_build_calendar)
 research_app.command("collect-global-cues")(research_collect_global_cues)
