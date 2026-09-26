@@ -20,6 +20,7 @@ __all__ = ["crossing_lines", "move_lines", "names_csv"]
 
 TOP_NAMES = 15
 BUCKET_MINUTES = 30
+FIRST_MINUTE = 9 * 60 + 15
 
 
 def move_lines(events: Sequence[MoveEvent]) -> list[str]:
@@ -88,7 +89,7 @@ def _time_buckets(events: Sequence[MoveEvent]) -> list[str]:
     for e in placed:
         assert e.onset_at is not None
         minute = e.onset_at.hour * 60 + e.onset_at.minute
-        buckets[(minute - 9 * 60) // BUCKET_MINUTES * BUCKET_MINUTES + 9 * 60] += 1
+        buckets[(minute - FIRST_MINUTE) // BUCKET_MINUTES * BUCKET_MINUTES + FIRST_MINUTE] += 1
     total = len(placed)
     cells = "  ".join(
         f"{m // 60:02d}:{m % 60:02d} {buckets[m] / total:4.0%}" for m in sorted(buckets)

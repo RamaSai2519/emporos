@@ -3,8 +3,8 @@
 Nothing here looks at a price after the day it describes except the forward drift the ledger is
 FOR; nothing after `last` at all (the caller never loads it). Class rules (plan §2):
 
-* stock move: a session with |residual| >= 2.5 sigma, or a 15-minute residual window >= 3 sigma
-  (at most one jump a session: the largest);
+* stock move: a session with |residual| >= 2.5 sigma, or a 15-minute block (09:15-09:30, ...) with
+  |residual| >= 3 sigma of that block's own trailing scale (at most one jump a session: the largest);
 * sector move: a sector index session with |residual against NIFTY| >= 2 sigma;
 * market move: a NIFTY session with |return| >= 1.2%, or an open gap >= 0.8%;
 * placebo: as many quiet name-sessions (|residual| < 0.5 sigma) as there are stock moves, drawn
@@ -183,15 +183,20 @@ class MoveLedgerBuilder:
         return events
 
     def _jumps(self, fitted: Fitted) -> list[MoveEvent]:
+        """The largest 15-minute block of a session, if it is >= 3 sigma of that block's own scale
+        (the open's noise is measured against the open's, not against midday's)."""
         deco = fitted.deco
         events: list[MoveEvent] = []
         for d in range(len(deco.sigma15)):
-            row = deco.window[d]
-            if not self._in_span(d) or np.isnan(deco.sigma15[d]) or np.isnan(row).all():
+            if not self._in_span(d):
                 continue
-            k = int(np.nanargmax(np.abs(row)))
-            if abs(row[k]) >= self._rules.jump_sigma * deco.sigma15[d]:
-                events.append(self._jump_event(fitted, d, k))
+            with np.errstate(invalid="ignore"):
+                z = np.abs(deco.blocks[d]) / deco.block_sigma[d]
+            if np.isnan(z).all():
+                continue
+            j = int(np.nanargmax(z))
+            if z[j] >= self._rules.jump_sigma:
+                events.append(self._jump_event(fitted, d, j))
         return events
 
     def _placebo(self, fits: list[Fitted], count: int) -> list[MoveEvent]:
@@ -230,13 +235,13 @@ class MoveLedgerBuilder:
             raw_z=market_like,
         )  # fmt: skip
 
-    def _jump_event(self, fitted: Fitted, d: int, k: int) -> MoveEvent:
+    def _jump_event(self, fitted: Fitted, d: int, j: int) -> MoveEvent:
         deco = fitted.deco
-        direction = int(np.sign(deco.window[d, k]) or 1)
-        onset = self._analyzer.jump(deco.path[d], float(deco.gap_resid[d]), k, direction)
+        direction = int(np.sign(deco.blocks[d, j]) or 1)
+        onset = self._analyzer.jump(deco.path[d], float(deco.gap_resid[d]), 3 * j, direction)
         return self._event(
-            fitted, EventClass.STOCK_JUMP, d, direction, float(deco.window[d, k]),
-            float(deco.sigma15[d]), onset, raw_z=False,
+            fitted, EventClass.STOCK_JUMP, d, direction, float(deco.blocks[d, j]),
+            float(deco.block_sigma[d, j]), onset, raw_z=False,
         )  # fmt: skip
 
     def _event(

@@ -33,7 +33,6 @@ from emporos.research.market_context.sectors import SectorMapLoader
 
 NIFTY_ID = "NSE:99926000"
 WARM_UP_FROM = date(2017, 1, 2)  # 120 sessions of betas and 60 of sigma before the first event
-SPAN_FIRST = date(2017, 11, 1)
 SPAN_LAST = date(2024, 12, 31)  # the atlas year is the last day used: 2025 and after are never read
 ATLAS_YEAR = date(2024, 1, 1)
 DEFAULT_OUT = Path("docs/research/profit/atlas")
@@ -43,9 +42,11 @@ CONSTITUENTS = (
     Path("config/universe/d1/niftymidcap150.csv"),
 )
 
-_FIRST = typer.Option(SPAN_FIRST, "--first", formats=["%Y-%m-%d"], help="First event day.")
+_FIRST = typer.Option(
+    datetime(2017, 11, 1), "--first", formats=["%Y-%m-%d"], help="First event day."
+)
 _LAST = typer.Option(
-    SPAN_LAST, "--last", formats=["%Y-%m-%d"], help="Last day (at most 2024-12-31)."
+    datetime(2024, 12, 31), "--last", formats=["%Y-%m-%d"], help="Last day (at most 2024-12-31)."
 )
 _OUT = typer.Option(DEFAULT_OUT, help="Where the ledgers and reports go.")
 _CACHE = typer.Option(DEFAULT_CACHE, help="Per-name bar arrays (local, rebuilt on demand).")

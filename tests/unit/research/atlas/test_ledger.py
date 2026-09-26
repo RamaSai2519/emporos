@@ -102,7 +102,7 @@ class TestMoveEvents:
 
     def test_a_fifteen_minute_jump_is_recorded_even_on_a_quiet_day(self) -> None:
         market, gaps, idio, idio_gaps = world()
-        idio[220, 40:43] += 0.004
+        idio[220, 39:42] += 0.004
         events = build(stock_panel(market, gaps, idio, idio_gaps), panel_from(market, gaps))
 
         jumps = [e for e in events if e.event_class is EventClass.STOCK_JUMP and e.day == DAYS[220]]

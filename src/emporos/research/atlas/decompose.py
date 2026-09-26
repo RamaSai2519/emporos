@@ -9,6 +9,7 @@ each bar's), and the 15-minute residual scale is that of the previous 60 session
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
@@ -39,7 +40,9 @@ class Decomposition:
     gap_resid: Floats  # (S,)
     path: Floats  # (S, SLOTS) cumulative residual: the gap's, then each bar's
     window: Floats  # (S, SLOTS - 2) 15-minute residual windows, indexed by their first bar
-    sigma15: Floats  # (S,)
+    sigma15: Floats  # (S,) their scale over the previous sessions (all windows pooled)
+    blocks: Floats  # (S, SLOTS // 3) the session's consecutive 15-minute blocks, 09:15 on
+    block_sigma: Floats  # (S, SLOTS // 3) each block's own scale over the previous sessions
 
 
 class Decomposer:
@@ -54,8 +57,18 @@ class Decomposer:
         sigma = self._trailing_std(resid)
         gap_resid = own.gap - self._explained(own.gap, betas, [r.gap for r in regressors])
         eps = own.bars - self._explained(own.bars, betas, [r.bars for r in regressors])
+        window, sigma15 = self._windows(eps)
+        blocks = window[:, ::WINDOW_BARS]
         return Decomposition(
-            betas, resid, sigma, gap_resid, self._path(gap_resid, eps), *self._windows(eps)
+            betas,
+            resid,
+            sigma,
+            gap_resid,
+            self._path(gap_resid, eps),
+            window,
+            sigma15,
+            blocks,
+            self._column_std(blocks),
         )
 
     @staticmethod
@@ -90,6 +103,19 @@ class Decomposer:
             past = past[~np.isnan(past)]
             if len(past) >= rules.sigma_min:
                 out[d] = float(np.std(past, ddof=1))
+        return out
+
+    def _column_std(self, values: Floats) -> Floats:
+        """Each column's standard deviation over the previous sessions, per session."""
+        rules = self._rules
+        out = np.full(values.shape, np.nan)
+        for d in range(len(values)):
+            past = values[max(0, d - rules.sigma_window) : d]
+            count = (~np.isnan(past)).sum(axis=0)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)  # a column with under two values
+                spread = np.nanstd(past, axis=0, ddof=1) if len(past) > 1 else out[d]
+            out[d] = np.where(count >= rules.sigma_min, spread, np.nan)
         return out
 
     @staticmethod
