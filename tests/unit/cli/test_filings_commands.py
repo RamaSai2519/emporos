@@ -119,7 +119,10 @@ def test_freeze_events_writes_a_sealed_snapshot_and_refuses_to_rebuild_it(world:
     from emporos.research.filings.snapshot import EventSnapshot
 
     snapshots = world / "snapshots"
-    freeze = ["freeze-events", "dev-1", *args(world)[:-2], "--snapshots", str(snapshots)]
+    freeze = [
+        "freeze-events", "dev-1", *args(world)[:-2], "--snapshots", str(snapshots),
+        "--min-events", "1", "--min-tier1", "0",
+    ]  # fmt: skip
 
     first = RUNNER.invoke(research_app, freeze)
     again = RUNNER.invoke(research_app, freeze)
@@ -136,3 +139,38 @@ def test_freeze_events_writes_a_sealed_snapshot_and_refuses_to_rebuild_it(world:
         assert not (root / "v1" / "manifest.json").stat().st_mode & 0o200  # read-only
     finally:
         EventSnapshot(root).seal_removal()
+
+
+def test_freeze_refuses_an_empty_or_short_store_and_writes_nothing(
+    world: Path, tmp_path: Path
+) -> None:
+    empty_raw, empty_text = tmp_path / "wiped" / "raw", tmp_path / "wiped" / "text"
+    empty_raw.mkdir(parents=True)
+    empty_text.mkdir()
+    snapshots = tmp_path / "wiped" / "snapshots"
+    base = ["freeze-events", "dev-x", "--snapshots", str(snapshots)]
+    wiped = [*base, *args(world)[:-2]]
+    wiped[wiped.index("--raw") + 1] = str(empty_raw)  # the raw store is gone
+    wiped[wiped.index("--text") + 1] = str(empty_text)
+
+    empty = RUNNER.invoke(research_app, wiped)
+    short = RUNNER.invoke(research_app, [*base, *args(world)[:-2]])  # the real guard's defaults
+
+    assert empty.exit_code == 3 and "not ready" in empty.output and "incomplete" in empty.output
+    assert short.exit_code == 3 and "fewer than 50,000" in short.output
+    assert not snapshots.exists()  # nothing was created, so the name is still free
+
+    (tmp_path / "gone").mkdir()
+    for kind in ("raw", "text"):
+        (tmp_path / "gone" / kind).mkdir()
+    (tmp_path / "gone" / "tokens.csv").write_text("Symbol,Token\n")
+    (tmp_path / "gone" / "ledger.jsonl").write_text("")
+    gone = tmp_path / "gone"
+    nothing = RUNNER.invoke(
+        research_app,
+        [
+            *base, "--tokens", str(gone / "tokens.csv"), "--raw", str(gone / "raw"),
+            "--ledger", str(gone / "ledger.jsonl"), "--text", str(gone / "text"),
+        ],
+    )  # fmt: skip
+    assert nothing.exit_code == 3 and "0 events, fewer than 50,000" in nothing.output

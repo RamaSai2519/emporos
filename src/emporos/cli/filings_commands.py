@@ -42,6 +42,7 @@ from emporos.research.filings.event_store import (
     EventRow,
     ParquetEventStore,
 )
+from emporos.research.filings.freeze_guard import MIN_EVENTS, MIN_TIER1, FreezeGuard
 from emporos.research.filings.loading import CollectedFilings
 from emporos.research.filings.nse_source import NseFilingSource
 from emporos.research.filings.pdf_text import PdftotextExtractor
@@ -222,6 +223,9 @@ def research_build_events(
 
 _NAME = typer.Argument(help="The snapshot's name, e.g. dev-2024 (an existing name is refused).")
 _SNAPSHOTS = typer.Option(DEFAULT_SNAPSHOT_DIR, help="Where frozen snapshots live.")
+_MIN_EVENTS = typer.Option(MIN_EVENTS, help="Refuse to freeze a store with fewer events.")
+_MIN_TIER1 = typer.Option(MIN_TIER1, help="Refuse with fewer material 2024 attachments in scope.")
+EXIT_NOT_READY = 3  # the store is not fit to freeze yet (the autorun waits on this code)
 
 
 def research_freeze_events(
@@ -231,10 +235,29 @@ def research_freeze_events(
     ledger: Path = _LEDGER,
     text: Path = _TEXT,
     snapshots: Path = _SNAPSHOTS,
+    min_events: int = _MIN_EVENTS,
+    min_tier1: int = _MIN_TIER1,
 ) -> None:
-    """Freeze the events as they are now (with the PDF text extracted so far) for a Dev run."""
+    """Freeze the events as they are now (with the PDF text extracted so far) for a Dev run. Refuses
+    (exit 3, nothing written) unless the store is whole: enough events, enough material 2024
+    attachments in scope, none of them still unread."""
     try:
-        rows, texts = _event_rows(tokens, raw, ledger, text)
+        filings = CollectedFilings(RawFilingStore(raw), FetchLedger(ledger))
+        texts = {a.url: a for a in AttachmentTextStore(text).all()}
+        ids = _instrument_ids(tokens)
+        try:
+            rows = EventBuilder(ids).build(filings, texts)
+        except FileNotFoundError as gone:  # the ledger says a reply was kept and it is not there
+            typer.secho(
+                f"freeze-events: not ready: the raw filing store is incomplete ({gone})",
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(code=EXIT_NOT_READY) from gone
+        tier1 = ExtractionProgress.of(filings, texts, ids, date(2024, 1, 1), date(2024, 12, 31))
+        why = FreezeGuard(min_events, min_tier1).reason(len(rows), tier1)
+        if why is not None:
+            typer.secho(f"freeze-events: not ready: {why}", fg=typer.colors.RED)
+            raise typer.Exit(code=EXIT_NOT_READY)
         snapshot = EventSnapshot(snapshots / name)
         record = snapshot.freeze(
             rows, SystemClock().now(), {"ledger": str(ledger), "attachments_held": len(texts)}

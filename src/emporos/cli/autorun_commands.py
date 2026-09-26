@@ -27,6 +27,7 @@ SNAPSHOT_NAME = "dev-2024-v1"
 DEV_YEAR = 2024
 VARIANTS = ("v1_t60", "v2_t75", "v3_nopanel_t60", "v4_posture_t60", "v5_posture_t75")
 TAIL_LINES = 6
+EXIT_NOT_READY = 3  # `research freeze-events`: an empty, short or half-read store
 EXIT_PENDING = 3  # `research extraction-progress`: the tier is not fully read yet
 SLICE = 540  # attachments per firing at the extractor's 3 s gap: about 27 minutes
 
@@ -116,6 +117,8 @@ class FreezeStep:
         code, tail = self._runner.run(
             self.name, ["freeze-events", self._snapshot, "--snapshots", str(self._snapshots)]
         )
+        if code == EXIT_NOT_READY:
+            return StepResult(Outcome.WAIT, f"the store is not fit to freeze: {tail}")
         if code:
             return StepResult(Outcome.FAILED, f"freeze-events exit {code}: {tail}")
         return StepResult(Outcome.DONE, tail)

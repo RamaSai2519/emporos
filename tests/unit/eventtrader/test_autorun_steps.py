@@ -87,6 +87,13 @@ def test_freeze_runs_once_and_never_again_once_frozen(tmp_path: Path) -> None:
     assert again.calls == []
 
 
+def test_a_store_not_fit_to_freeze_is_waited_on_never_failed_and_never_done(tmp_path: Path) -> None:
+    result = FreezeStep(ScriptedRunner(3, "not ready: the store holds 0 events"), tmp_path).run()
+
+    assert result.outcome is Outcome.WAIT and "not fit to freeze" in result.detail
+    assert not (tmp_path / "dev-2024-v1").exists()
+
+
 def test_a_failed_freeze_or_smoke_is_a_failure_with_the_reason(tmp_path: Path) -> None:
     bad = ScriptedRunner(1, "boom")
 
