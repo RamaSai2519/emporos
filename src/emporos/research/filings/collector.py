@@ -58,13 +58,15 @@ class FilingCollector:
         self, symbols: Sequence[str], windows: Sequence[tuple[date, date]], progress: Progress
     ) -> CollectionReport:
         """A refusal (`SourceRefused`) propagates and stops the run; any other failure is listed
-        and the window is left unrecorded so a later run retries it."""
+        and the window is left unrecorded so a later run retries it. A window in the ledger whose
+        reply is no longer on disk (a wiped cache) is fetched again."""
         report = CollectionReport()
         done = self._ledger.done()
         streak = 0
         for symbol in symbols:
             for first, last in windows:
-                if (self._source.source, symbol, first, last) in done:
+                held = self._raw.path(self._source.source, symbol, first, last).exists()
+                if (self._source.source, symbol, first, last) in done and held:
                     report.skipped += 1
                     continue
                 url = self._source.url_for(symbol, first, last)

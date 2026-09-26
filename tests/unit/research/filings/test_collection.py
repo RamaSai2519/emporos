@@ -173,6 +173,23 @@ class TestCollector:
         (record, _) = FetchLedger(tmp_path / "l.jsonl").records()
         assert (record.symbol, record.count, record.url.startswith("https://x/X")) == ("X", 1, True)
 
+    async def test_a_window_whose_reply_was_wiped_is_fetched_again_and_read_once(
+        self, tmp_path: Path
+    ) -> None:
+        from emporos.research.filings.loading import CollectedFilings
+
+        windows = yearly_windows(date(2024, 1, 1), date(2024, 12, 31))
+        source = Scripted({("X", 2024): [ROW]})
+        raw, ledger = RawFilingStore(tmp_path / "raw"), FetchLedger(tmp_path / "l.jsonl")
+        await self.collector(tmp_path, source).run(["X"], windows, lambda _: None)
+        raw.path("NSE", "X", *windows[0]).unlink()  # the cache is emptied
+
+        again = await self.collector(tmp_path, source).run(["X"], windows, lambda _: None)
+
+        assert (again.fetched, again.skipped) == (1, 0)
+        assert len(ledger.records()) == 2  # the ledger keeps both fetches
+        assert len(list(CollectedFilings(raw, ledger))) == 1  # but the window is read once
+
     async def test_a_404_is_recorded_as_an_empty_window(self, tmp_path: Path) -> None:
         source = Scripted({("X", 2024): NotFound("x")})
 

@@ -16,7 +16,8 @@ class CollectedFilings:
         self._ledger = ledger
 
     def __iter__(self) -> Iterator[Filing]:
-        for record in self._ledger.records():
+        latest = {(r.source, r.symbol, r.first, r.last): r for r in self._ledger.records()}
+        for record in latest.values():  # a window fetched twice is read once, from its last fetch
             if record.source != "NSE":
                 raise ValueError(f"no parser for source {record.source!r}")
             body = self._raw.read(record.source, record.symbol, record.first, record.last)
