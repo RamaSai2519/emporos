@@ -317,6 +317,25 @@ class TestFetcher:
 
         assert calls == 1 and report.skipped == 1
 
+    async def test_a_ledgered_day_whose_file_was_wiped_is_fetched_again(
+        self, tmp_path: Path
+    ) -> None:
+        calls = 0
+
+        def handle(request: httpx.Request) -> httpx.Response:
+            nonlocal calls
+            calls += 1
+            return httpx.Response(200, content=udiff_payload(THURSDAY))
+
+        f, _, store, _ = fetcher(tmp_path, httpx.MockTransport(handle))
+        await f.run(THURSDAY, THURSDAY)
+        store.path(THURSDAY).unlink()  # the data directory is emptied, the ledger stays
+        again, _, _, _ = fetcher(tmp_path, httpx.MockTransport(handle))
+
+        report = await again.run(THURSDAY, THURSDAY)
+
+        assert calls == 2 and report.skipped == 0 and store.has(THURSDAY)
+
     async def test_three_failures_in_a_row_halt_the_run_and_leave_the_dates_unrecorded(
         self, tmp_path: Path
     ) -> None:

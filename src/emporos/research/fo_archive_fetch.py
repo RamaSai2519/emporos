@@ -102,7 +102,12 @@ class ArchiveFetcher:
 
     async def run(self, first: date, last: date) -> FetchReport:
         report = FetchReport()
-        done = self._ledger.done()
+        # A day is held when it is ledgered AND (it had no file, or its Parquet is still on disk):
+        # a wiped data directory is fetched again.
+        done = {
+            entry.day for entry in self._ledger.load()
+            if entry.outcome is FetchOutcome.ABSENT or self._store.has(entry.day)
+        }  # fmt: skip
         consecutive_failures = 0
         for day in weekdays_descending(first, last):
             if day in done:
