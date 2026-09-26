@@ -143,6 +143,9 @@ def test_the_committed_manual_rows_load() -> None:
     assert ManualSource(Path("config/calendar/manual_events.yaml")).events()
 
 
+NOTICE = "https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf"
+
+
 def test_index_notices_count_from_the_end_of_their_day_and_effective_days_are_known_ahead(
     tmp_path: Path,
 ) -> None:
@@ -152,9 +155,9 @@ def test_index_notices_count_from_the_end_of_their_day_and_effective_days_are_kn
     path.write_text(
         "changes:\n"
         "- {index: NIFTY 100, effective: '2022-09-30', added: [A], removed: [B],"
-        " source: 'https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25'}\n"
+        f" source: '{NOTICE} fetched 2026-09-25'}}\n"
         "- {index: NIFTY MIDCAP 150, effective: '2022-09-30', added: [B], removed: [C],"
-        " source: 'https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25'}\n"
+        f" source: '{NOTICE} fetched 2026-09-25'}}\n"
     )
 
     events = {e.kind: e for e in IndexChangeSource(path, CHECKED).events()}
