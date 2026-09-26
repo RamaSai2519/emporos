@@ -383,3 +383,26 @@ class TestIvPriorSession:
             is None
         )  # the row is not of the spot's session
         assert self.prior([self.row(friday, WEEKLY.expiry)], None).inputs(contract(), DAY) is None
+
+
+class TestIndexSignalFile:
+    def test_the_e2_entries_are_the_index_crossings_at_the_level_in_the_window(
+        self, tmp_path: Path
+    ) -> None:
+        from emporos.research.atlas.index_signals import IndexCrossing, write_index_signals
+        from emporos.research.s1.signals import load_index_signals
+
+        rows = [
+            IndexCrossing("BANKNIFTY", "NSE:99926009", date(2024, 3, 5), -1, 1.5, False, 600),
+            IndexCrossing("NIFTY", NIFTY, date(2024, 3, 4), 1, 1.5, True, 560),
+            IndexCrossing("NIFTY", NIFTY, date(2024, 3, 4), 1, 2.0, True, 560),
+            IndexCrossing("NIFTY", NIFTY, date(2025, 3, 4), 1, 1.5, True, 560),
+        ]
+        write_index_signals(tmp_path / "i.parquet", rows)
+
+        found = load_index_signals(tmp_path / "i.parquet", date(2024, 1, 1), date(2024, 12, 31))
+
+        assert [(s.name, s.day, s.minute, s.direction) for s in found] == [
+            ("NIFTY", date(2024, 3, 4), 560, 1),
+            ("BANKNIFTY", date(2024, 3, 5), 600, -1),
+        ]  # fmt: skip

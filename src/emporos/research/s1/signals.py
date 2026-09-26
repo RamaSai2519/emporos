@@ -10,7 +10,7 @@ from pathlib import Path
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
-__all__ = ["Signal", "load_stock_signals", "signals_by_day"]
+__all__ = ["Signal", "load_index_signals", "load_stock_signals", "signals_by_day"]
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,24 @@ def load_stock_signals(path: Path, first: date, last: date, k: float = 1.5) -> l
             r["instrument_id"], r["name"], r["day"], int(r["crossed_minute"]), int(r["direction"])
         )
         for r in rows
+    ]
+    return sorted(signals, key=lambda s: (s.day, s.minute, s.name, s.direction))
+
+
+def load_index_signals(path: Path, first: date, last: date, k: float = 1.5) -> list[Signal]:
+    """The E2 entries: every NIFTY and BANKNIFTY crossing at level `k` in [first, last], from the
+    index-crossings file (`build-index-crossings`), in time order. The signal's name is the
+    underlying the option book prices."""
+    table = pq.read_table(path)
+    keep = pc.and_(
+        pc.equal(table["k"], k),
+        pc.and_(pc.greater_equal(table["day"], first), pc.less_equal(table["day"], last)),
+    )
+    signals = [
+        Signal(
+            r["instrument_id"], r["name"], r["day"], int(r["crossed_minute"]), int(r["direction"])
+        )
+        for r in table.filter(keep).to_pylist()
     ]
     return sorted(signals, key=lambda s: (s.day, s.minute, s.name, s.direction))
 

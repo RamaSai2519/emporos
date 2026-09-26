@@ -25,6 +25,11 @@ from emporos.research.atlas.crossing_ledger import CrossingLedgerBuilder
 from emporos.research.atlas.crossings import CrossingBlock, CrossingRules
 from emporos.research.atlas.events import MoveEvent
 from emporos.research.atlas.files import write_crossings, write_moves
+from emporos.research.atlas.index_signals import (
+    IndexSignalBuilder,
+    index_signal_lines,
+    write_index_signals,
+)
 from emporos.research.atlas.ledger import LedgerRules, MoveLedgerBuilder
 from emporos.research.atlas.panel import InstrumentPanel, PanelBuilder
 from emporos.research.atlas.report import crossing_lines, move_lines, names_csv
@@ -34,6 +39,7 @@ from emporos.research.d1_universe import DEFAULT_MANIFEST
 from emporos.research.market_context.sectors import SectorMapLoader
 
 NIFTY_ID = "NSE:99926000"
+BANKNIFTY_ID = "NSE:99926009"
 WARM_UP_FROM = date(2017, 1, 2)  # 120 sessions of betas and 60 of sigma before the first event
 SPAN_LAST = date(2024, 12, 31)  # the atlas year is the last day used: 2025 and after are never read
 ATLAS_YEAR = date(2024, 1, 1)
@@ -50,6 +56,9 @@ _FIRST = typer.Option(
 )
 _LAST = typer.Option(
     datetime(2024, 12, 31), "--last", formats=["%Y-%m-%d"], help="Last day (at most 2024-12-31)."
+)
+_LAST_INDEX = typer.Option(
+    datetime(2026, 3, 18), "--last", formats=["%Y-%m-%d"], help="Last day of the index signals."
 )
 _OUT = typer.Option(DEFAULT_OUT, help="Where the reports go (small, committed).")
 _LEDGERS = typer.Option(DEFAULT_LEDGERS, help="Where the Parquet ledgers go (large, not in git).")
@@ -124,6 +133,36 @@ def research_build_move_ledger(
         message = error.message if isinstance(error, EmporosError) else str(error)
         typer.secho(f"build-move-ledger failed: {message}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
+
+
+def research_build_index_crossings(
+    first: datetime = _FIRST,
+    last: datetime = _LAST_INDEX,
+    out: Path = _OUT,
+    ledgers: Path = _LEDGERS,
+    cache: Path = _CACHE,
+) -> None:
+    """NIFTY and BANKNIFTY crossings as SIGNALS ONLY (the S1 E2 entries): who, day, direction, k,
+    at-open and the bar. Counts per month and the onset timing are reported; no forward figure is
+    written anywhere."""
+    try:
+        source = _source(cache, last.date())
+        indices = {"NIFTY": NIFTY_ID, "BANKNIFTY": BANKNIFTY_ID}
+        sessions = _sessions(source.series(NIFTY_ID), WARM_UP_FROM, last.date())
+        builder = PanelBuilder(sessions)
+        panels = {i: builder.build(source.series(i)) for i in indices.values()}
+        rules = CrossingRules(first_day=first.date())
+        found = IndexSignalBuilder(sessions, rules).build(indices, panels)
+        written = write_index_signals(ledgers / "index-crossings.parquet", found)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "index-crossings-report.txt").write_text(
+            "\n".join(index_signal_lines(found)) + "\n", encoding="utf-8"
+        )
+    except (EmporosError, ValueError, OSError, KeyError) as error:
+        message = error.message if isinstance(error, EmporosError) else str(error)
+        typer.secho(f"build-index-crossings failed: {message}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"{written:,} index crossings: {ledgers / 'index-crossings.parquet'}")
 
 
 def _sessions(nifty: BarSeries, first: date, last: date) -> tuple[date, ...]:
