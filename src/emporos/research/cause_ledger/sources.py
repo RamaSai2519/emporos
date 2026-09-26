@@ -33,7 +33,7 @@ from emporos.research.cause_ledger.pages import PageSpec
 
 __all__ = [
     "CALENDAR_FIRST", "CALENDAR_LAST", "CalendarBuilder", "EventSource", "FedSource",
-    "GstSource", "IndexChangeSource", "ManualSource",
+    "AlfredSource", "GstSource", "IndexChangeSource", "ManualSource",
 ]  # fmt: skip
 
 CALENDAR_FIRST = date(2017, 11, 1)
@@ -130,6 +130,51 @@ class ManualSource:
             raise ValueError(f"{row['kind']} {row['date']}: a timed row needs `at`")
         local = time(int(hours), int(minutes))
         return IstRelease(local) if zone == "IST" else ZonedRelease(local, ZoneInfo(zone))
+
+
+class AlfredSource:
+    """US CPI and payroll release days from the St. Louis Fed's ALFRED release-date lists (a plain
+    text file of one `YYYY-MM-DD` per release; the BLS's own schedule pages refuse bots). BLS
+    releases both at 08:30 New York time, so 18:00 IST in US summer time and 19:00 IST otherwise."""
+
+    RELEASES = (
+        ("us_cpi", "US CPI", 10, "alfred/cpi-release-dates.txt"),
+        ("us_payrolls", "US payrolls (employment situation)", 50, "alfred/employment-dates.txt"),
+    )  # fmt: skip
+    URL = "https://alfred.stlouisfed.org/release/downloaddates?rid={rid}&ff=txt"
+    RELEASE_TIME = time(8, 30)
+
+    def __init__(self, raw_root: Path, checked_on: date) -> None:
+        self._root, self._checked = raw_root, checked_on
+
+    @classmethod
+    def pages(cls) -> list[PageSpec]:
+        return [
+            PageSpec("alfred", name, cls.URL.format(rid=rid)) for _, _, rid, name in cls.RELEASES
+        ]
+
+    def events(self) -> Sequence[CalendarEvent]:
+        rule = ZonedRelease(self.RELEASE_TIME)
+        out: list[CalendarEvent] = []
+        for kind, name, rid, path_name in self.RELEASES:
+            path = self._root / path_name
+            if not path.exists():
+                continue
+            for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}", line.strip()):
+                    day = date.fromisoformat(line.strip())
+                    out.append(
+                        CalendarEvent(
+                            kind,
+                            name,
+                            day,
+                            rule.available_at(day),
+                            self.URL.format(rid=rid),
+                            self._checked,
+                            note="release day per ALFRED; 08:30 New York time",
+                        )  # fmt: skip
+                    )
+        return out
 
 
 class GstSource:

@@ -15,6 +15,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2017-11-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2017-11-03'
+  available_at: '2017-11-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2017-11-10
   kind: gst_council
   name: GST Council meeting 23
@@ -31,6 +39,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN
+- id: us_cpi:2017-11-15
+  kind: us_cpi
+  name: US CPI
+  date: '2017-11-15'
+  available_at: '2017-11-15T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2017-12-06
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -40,6 +56,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.00'
   note: '2017 to Feb 2019: policy at 14:30 IST'
+- id: us_payrolls:2017-12-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2017-12-08'
+  available_at: '2017-12-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2017-12-13
   kind: fomc
   name: FOMC statement
@@ -47,6 +71,14 @@ events:
   available_at: '2017-12-14T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2017-12-13
+  kind: us_cpi
+  name: US CPI
+  date: '2017-12-13'
+  available_at: '2017-12-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2017-12-16
   kind: gst_council
   name: GST Council meeting 24
@@ -63,6 +95,14 @@ events:
   source: https://www.tribuneindia.com/news/archive/nation/himachal-elections-on-nov-9-result-on-dec-18-481632
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_payrolls:2018-01-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-01-05'
+  available_at: '2018-01-05T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2018-01-08
   kind: index_notice
   name: NIFTY index change notice
@@ -71,6 +111,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +HATSUN,RELCAPITAL,TIFIN -CESC,FORTIS,STAR; time of day not on the notice, counted from 23:59 IST
+- id: us_cpi:2018-01-12
+  kind: us_cpi
+  name: US CPI
+  date: '2018-01-12'
+  available_at: '2018-01-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2018-01-18
   kind: gst_council
   name: GST Council meeting 25
@@ -94,6 +142,14 @@ events:
   source: https://en.wikipedia.org/wiki/2018_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2018-19; speech from 11:00 IST
+- id: us_payrolls:2018-02-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-02-02'
+  available_at: '2018-02-02T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_effective:2018-02-05
   kind: index_effective
   name: NIFTY index change effective
@@ -111,6 +167,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.00'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2018-02-14
+  kind: us_cpi
+  name: US CPI
+  date: '2018-02-14'
+  available_at: '2018-02-14T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2018-02-21
   kind: index_notice
   name: NIFTY index change notice
@@ -120,6 +184,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABCAPITAL,GICRE,GRASIM,L&TFH,SBILIFE -GLAXO,GLENMARK,GSKCONS,TATAPOWER,TORNTPHARM; NIFTY MIDCAP 150 +AVANTIFEED,DBL,FCONSUMER,GLAXO,GLENMARK,GODREJAGRO,GSKCONS,HONAUT,IBREALEST,IBVENTURES,ICICIGI,IIFL,STRTECH,TATAPOWER,TORNTPHARM
     -ADANIENT,DALMIABHA,DBCORP,GPPL,IOB,IPCALAB,JYOTHYLAB,L&TFH,LALPATHLAB,NH,RCOM,SYNDIBANK,VIJAYABANK,VTL,WELSPUNIND; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2018-03-09
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-03-09'
+  available_at: '2018-03-09T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2018-03-10
   kind: gst_council
   name: GST Council meeting 26
@@ -128,6 +200,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_cpi:2018-03-13
+  kind: us_cpi
+  name: US CPI
+  date: '2018-03-13'
+  available_at: '2018-03-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2018-03-21
   kind: fomc
   name: FOMC statement
@@ -153,6 +233,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.00'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2018-04-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-04-06'
+  available_at: '2018-04-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2018-04-11
+  kind: us_cpi
+  name: US CPI
+  date: '2018-04-11'
+  available_at: '2018-04-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2018-05-02
   kind: fomc
   name: FOMC statement
@@ -168,6 +264,22 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2018-05-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-05-04'
+  available_at: '2018-05-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2018-05-10
+  kind: us_cpi
+  name: US CPI
+  date: '2018-05-10'
+  available_at: '2018-05-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2018-05-15
   kind: election_result
   name: Karnataka assembly results
@@ -184,6 +296,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2018-06-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-06-01'
+  available_at: '2018-06-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2018-06-06
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -193,6 +313,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.25'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2018-06-12
+  kind: us_cpi
+  name: US CPI
+  date: '2018-06-12'
+  available_at: '2018-06-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2018-06-13
   kind: fomc
   name: FOMC statement
@@ -208,6 +336,22 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM
+- id: us_payrolls:2018-07-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-07-06'
+  available_at: '2018-07-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2018-07-12
+  kind: us_cpi
+  name: US CPI
+  date: '2018-07-12'
+  available_at: '2018-07-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2018-07-21
   kind: gst_council
   name: GST Council meeting 28
@@ -232,6 +376,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2018-08-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-08-03'
+  available_at: '2018-08-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2018-08-04
   kind: gst_council
   name: GST Council meeting 29
@@ -240,6 +392,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_cpi:2018-08-10
+  kind: us_cpi
+  name: US CPI
+  date: '2018-08-10'
+  available_at: '2018-08-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2018-08-28
   kind: index_notice
   name: NIFTY index change notice
@@ -249,6 +409,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BANDHANBNK,BIOCON,HDFCLIFE,ICICIGI,NIACL -CUMMINSIND,EMAMILTD,PFC,PNB,RECLTD; NIFTY MIDCAP 150 +ASTRAL,CUMMINSIND,EMAMILTD,ESCORTS,GRAPHITE,HAL,HEG,ISEC,PFC,PNB,RECLTD,RNAM,SUNDARMFIN
     -AKZOINDIA,BIOCON,GUJFLUORO,IBREALEST,ICICIGI,IDFC,IRB,KAJARIACER,KARURVYSYA,SCHAEFFLER,SUZLON,TTKPRESTIG,WOCKPHARMA; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2018-09-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-09-07'
+  available_at: '2018-09-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2018-09-13
+  kind: us_cpi
+  name: US CPI
+  date: '2018-09-13'
+  available_at: '2018-09-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2018-09-26
   kind: fomc
   name: FOMC statement
@@ -282,6 +458,30 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2018-10-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-10-05'
+  available_at: '2018-10-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2018-10-11
+  kind: us_cpi
+  name: US CPI
+  date: '2018-10-11'
+  available_at: '2018-10-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2018-11-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-11-02'
+  available_at: '2018-11-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2018-11-08
   kind: fomc
   name: FOMC statement
@@ -289,6 +489,14 @@ events:
   available_at: '2018-11-09T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2018-11-14
+  kind: us_cpi
+  name: US CPI
+  date: '2018-11-14'
+  available_at: '2018-11-14T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2018-12-05
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -298,6 +506,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2018-12-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2018-12-07'
+  available_at: '2018-12-07T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2018-12-11
   kind: election_result
   name: Rajasthan, Madhya Pradesh, Chhattisgarh, Telangana, Mizoram assembly results
@@ -306,6 +522,14 @@ events:
   source: https://www.indiatvnews.com/elections/news-assembly-elections-2018-rajasthan-madhya-pradesh-chhattisgarh-telangana-mizoram-dates-of-voting-counting-of-votes-results-december-11-469165
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2018-12-12
+  kind: us_cpi
+  name: US CPI
+  date: '2018-12-12'
+  available_at: '2018-12-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2018-12-14
   kind: index_notice
   name: NIFTY index change notice
@@ -337,6 +561,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs14122018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AARTIIND,BBTC,VARROC -BHARATFIN,CENTURYTEX,IIFL
+- id: us_payrolls:2019-01-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-01-04'
+  available_at: '2019-01-04T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2019-01-10
   kind: gst_council
   name: GST Council meeting 32
@@ -345,6 +577,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_cpi:2019-01-11
+  kind: us_cpi
+  name: US CPI
+  date: '2019-01-11'
+  available_at: '2019-01-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2019-01-30
   kind: fomc
   name: FOMC statement
@@ -360,6 +600,14 @@ events:
   source: https://en.wikipedia.org/wiki/2019_Interim-Union_budget_of_India
   checked_on: '2026-09-26'
   note: Interim budget 2019-20; speech from 11:00 IST
+- id: us_payrolls:2019-02-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-02-01'
+  available_at: '2019-02-01T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2019-02-07
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -369,6 +617,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.25'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2019-02-11
+  kind: us_cpi
+  name: US CPI
+  date: '2019-02-11'
+  available_at: '2019-02-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-02-13
+  kind: us_cpi
+  name: US CPI
+  date: '2019-02-13'
+  available_at: '2019-02-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2019-02-24
   kind: gst_council
   name: GST Council meeting 33
@@ -386,6 +650,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHLDNG,DIVISLAB,HDFCAMC,PAGEIND,UBL -ABCAPITAL,BEL,LICHSGFIN,OIL,SUNTV; NIFTY MIDCAP 150 +ABCAPITAL,ATUL,BEL,ERIS,GUJFLUORO,IPCALAB,LICHSGFIN,OIL,RELAXO,SUNTV -AARTIIND,AVANTIFEED,BAJAJHLDNG,DIVISLAB,GET&D,PAGEIND,PCJEWELLER,TV18BRDCST,UBL,VAKRANGEE;
     time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2019-03-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-03-08'
+  available_at: '2019-03-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-03-12
+  kind: us_cpi
+  name: US CPI
+  date: '2019-03-12'
+  available_at: '2019-03-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2019-03-19
   kind: gst_council
   name: GST Council meeting 34
@@ -418,6 +698,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.00'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2019-04-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-04-05'
+  available_at: '2019-04-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-04-10
+  kind: us_cpi
+  name: US CPI
+  date: '2019-04-10'
+  available_at: '2019-04-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2019-05-01
   kind: fomc
   name: FOMC statement
@@ -425,6 +721,22 @@ events:
   available_at: '2019-05-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2019-05-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-05-03'
+  available_at: '2019-05-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-05-10
+  kind: us_cpi
+  name: US CPI
+  date: '2019-05-10'
+  available_at: '2019-05-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2019-05-23
   kind: election_result
   name: Lok Sabha general election results
@@ -442,6 +754,22 @@ events:
   checked_on: '2026-09-26'
   value: '5.75'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2019-06-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-06-07'
+  available_at: '2019-06-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-06-12
+  kind: us_cpi
+  name: US CPI
+  date: '2019-06-12'
+  available_at: '2019-06-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2019-06-13
   kind: index_notice
   name: NIFTY index change notice
@@ -481,6 +809,22 @@ events:
   source: https://businesstoday.in/union-budget-2019/news/govt-to-present-budget-2019-20-in-lok-sabha-on-july-5/story/358040.html
   checked_on: '2026-09-26'
   note: Budget 2019-20; speech from 11:00 IST
+- id: us_payrolls:2019-07-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-07-05'
+  available_at: '2019-07-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-07-11
+  kind: us_cpi
+  name: US CPI
+  date: '2019-07-11'
+  available_at: '2019-07-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2019-07-27
   kind: gst_council
   name: GST Council meeting 36
@@ -496,6 +840,14 @@ events:
   available_at: '2019-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2019-08-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-08-02'
+  available_at: '2019-08-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2019-08-07
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -505,6 +857,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.40'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases)'
+- id: us_cpi:2019-08-13
+  kind: us_cpi
+  name: US CPI
+  date: '2019-08-13'
+  available_at: '2019-08-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2019-08-28
   kind: index_notice
   name: NIFTY index change notice
@@ -514,6 +874,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BERGEPAINT,NESTLEIND,PFC,PNB -ABB,BHEL,MRF,SAIL; NIFTY MIDCAP 150 +AAVAS,ABBOTINDIA,ADANIGAS,ALBK,BAYERCROP,BHEL,CESC,CORPBANK,FORTIS,IOB,MRF,ORIENTBANK,SAIL,UCOBANK,VINATIORGA -BERGEPAINT,DBL,DHFL,DISHTV,FINCABLES,GRUH,GSKCONS,JMFINANCIL,KIOCL,PFC,PNB,RELCAPITAL,RELINFRA,RPOWER,SPARC;
     time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2019-09-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-09-06'
+  available_at: '2019-09-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-09-12
+  kind: us_cpi
+  name: US CPI
+  date: '2019-09-12'
+  available_at: '2019-09-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2019-09-17
   kind: index_notice
   name: NIFTY index change notice
@@ -554,6 +930,22 @@ events:
   checked_on: '2026-09-26'
   value: '5.15'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2019-10-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-10-04'
+  available_at: '2019-10-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-10-10
+  kind: us_cpi
+  name: US CPI
+  date: '2019-10-10'
+  available_at: '2019-10-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2019-10-24
   kind: election_result
   name: Maharashtra and Haryana assembly results
@@ -569,6 +961,22 @@ events:
   available_at: '2019-10-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2019-11-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-11-01'
+  available_at: '2019-11-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2019-11-13
+  kind: us_cpi
+  name: US CPI
+  date: '2019-11-13'
+  available_at: '2019-11-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2019-12-05
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -578,6 +986,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.15'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2019-12-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2019-12-06'
+  available_at: '2019-12-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2019-12-11
   kind: fomc
   name: FOMC statement
@@ -585,6 +1001,14 @@ events:
   available_at: '2019-12-12T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2019-12-11
+  kind: us_cpi
+  name: US CPI
+  date: '2019-12-11'
+  available_at: '2019-12-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2019-12-16
   kind: index_notice
   name: NIFTY index change notice
@@ -609,6 +1033,22 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs16122019.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AARTIIND,LALPATHLAB,POLYCAB,SCHAEFFLER -ALBK,CORPBANK,ORIENTBANK,TATACHEM
+- id: us_payrolls:2020-01-10
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-01-10'
+  available_at: '2020-01-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-01-14
+  kind: us_cpi
+  name: US CPI
+  date: '2020-01-14'
+  available_at: '2020-01-14T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-01-29
   kind: fomc
   name: FOMC statement
@@ -633,6 +1073,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.15'
   note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2020-02-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-02-07'
+  available_at: '2020-02-07T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2020-02-11
   kind: election_result
   name: Delhi assembly results
@@ -641,6 +1089,22 @@ events:
   source: https://www.ceodelhi.gov.in/DelhiAssemblyElection2020.aspx
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2020-02-11
+  kind: us_cpi
+  name: US CPI
+  date: '2020-02-11'
+  available_at: '2020-02-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-02-13
+  kind: us_cpi
+  name: US CPI
+  date: '2020-02-13'
+  available_at: '2020-02-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-03-03
   kind: fomc
   name: FOMC statement (emergency, rate cut)
@@ -649,6 +1113,22 @@ events:
   source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200303a.htm
   checked_on: '2026-09-26'
   note: unscheduled; "For release at 10:00 a.m. EST"
+- id: us_payrolls:2020-03-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-03-06'
+  available_at: '2020-03-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-03-11
+  kind: us_cpi
+  name: US CPI
+  date: '2020-03-11'
+  available_at: '2020-03-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2020-03-14
   kind: gst_council
   name: GST Council meeting 39
@@ -690,6 +1170,22 @@ events:
   checked_on: '2026-09-26'
   value: '4.40'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2020-04-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-04-03'
+  available_at: '2020-04-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-04-10
+  kind: us_cpi
+  name: US CPI
+  date: '2020-04-10'
+  available_at: '2020-04-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-04-29
   kind: fomc
   name: FOMC statement
@@ -697,6 +1193,30 @@ events:
   available_at: '2020-04-29T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2020-05-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-05-08'
+  available_at: '2020-05-08T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2020-05-11
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-05-11'
+  available_at: '2020-05-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-05-12
+  kind: us_cpi
+  name: US CPI
+  date: '2020-05-12'
+  available_at: '2020-05-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2020-05-22
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -706,6 +1226,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2020-06-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-06-05'
+  available_at: '2020-06-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-06-10
   kind: fomc
   name: FOMC statement
@@ -722,6 +1250,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABBOTINDIA,IGL,MUTHOOTFIN,NAUKRI,TORNTPHARM -ASHOKLEY,IBULHSGFIN,IDEA,L&TFH,NIACL; NIFTY MIDCAP 150 +ABB,AKZOINDIA,ASHOKLEY,CREDITACC,IBULHSGFIN,IDEA,IIFLWAM,IRCTC,JKCEMENT,L&TFH,MINDAIND,NIACL,NIITTECH,SUMICHEM,TATACOMM
     -ABBOTINDIA,ENGINERSIN,FCONSUMER,GRAPHITE,HEG,IGL,INDIANB,KRBL,MAHINDCIE,MUTHOOTFIN,NAUKRI,NBCC,STRTECH,TORNTPHARM,VARROC; time of day not on the notice, counted from 23:59 IST
+- id: us_cpi:2020-06-10
+  kind: us_cpi
+  name: US CPI
+  date: '2020-06-10'
+  available_at: '2020-06-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2020-06-12
   kind: gst_council
   name: GST Council meeting 40
@@ -747,6 +1283,22 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +SBICARD -VEDL; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2020-07-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-07-02'
+  available_at: '2020-07-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-07-14
+  kind: us_cpi
+  name: US CPI
+  date: '2020-07-14'
+  available_at: '2020-07-14T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-07-29
   kind: fomc
   name: FOMC statement
@@ -771,6 +1323,22 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2020-08-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-08-07'
+  available_at: '2020-08-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-08-12
+  kind: us_cpi
+  name: US CPI
+  date: '2020-08-12'
+  available_at: '2020-08-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2020-08-20
   kind: index_notice
   name: NIFTY index change notice
@@ -788,6 +1356,22 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2020-09-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-09-04'
+  available_at: '2020-09-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-09-11
+  kind: us_cpi
+  name: US CPI
+  date: '2020-09-11'
+  available_at: '2020-09-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-09-16
   kind: fomc
   name: FOMC statement
@@ -804,6 +1388,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIGREEN,ALKEM,LTI,TATACONSUM -NHPC,PAGEIND,SRTRANSFIN,ZEEL; NIFTY MIDCAP 150 +ADANIENT,ASTRAZEN,ITI,JMFINANCIL,METROPOLIS,NAVINFLUOR,NHPC,PAGEIND,SFL,SRTRANSFIN,TATACHEM,TIINDIA,YESBANK,ZEEL,ZYDUSWELL
     -ADANIGREEN,ADANIPOWER,ALKEM,BLUEDART,CENTRALBK,EIHOTEL,HEXAWARE,IDBI,IOB,JUBILANT,LTI,PNBHOUSING,QUESS,TATACONSUM,UCOBANK
+- id: us_payrolls:2020-10-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-10-02'
+  available_at: '2020-10-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2020-10-09
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -821,6 +1413,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_cpi:2020-10-13
+  kind: us_cpi
+  name: US CPI
+  date: '2020-10-13'
+  available_at: '2020-10-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-11-05
   kind: fomc
   name: FOMC statement
@@ -828,6 +1428,14 @@ events:
   available_at: '2020-11-06T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2020-11-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-11-06'
+  available_at: '2020-11-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2020-11-10
   kind: election_result
   name: Bihar assembly results
@@ -836,6 +1444,14 @@ events:
   source: https://www.business-standard.com/article/elections/bihar-election-result-2020-live-updates-rjd-tejashwi-yadav-wins-nitish-kumar-bihar-cm-bjp-modi-paswan-highlights-bihar-counting-120110901687_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2020-11-12
+  kind: us_cpi
+  name: US CPI
+  date: '2020-11-12'
+  available_at: '2020-11-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2020-12-04
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -845,6 +1461,22 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2020-12-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2020-12-04'
+  available_at: '2020-12-04T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2020-12-10
+  kind: us_cpi
+  name: US CPI
+  date: '2020-12-10'
+  available_at: '2020-12-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2020-12-16
   kind: fomc
   name: FOMC statement
@@ -852,6 +1484,22 @@ events:
   available_at: '2020-12-17T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2021-01-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-01-08'
+  available_at: '2021-01-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-01-13
+  kind: us_cpi
+  name: US CPI
+  date: '2021-01-13'
+  available_at: '2021-01-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2021-01-27
   kind: fomc
   name: FOMC statement
@@ -876,6 +1524,30 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2021-02-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-02-05'
+  available_at: '2021-02-05T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-02-08
+  kind: us_cpi
+  name: US CPI
+  date: '2021-02-08'
+  available_at: '2021-02-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-02-10
+  kind: us_cpi
+  name: US CPI
+  date: '2021-02-10'
+  available_at: '2021-02-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2021-02-23
   kind: index_notice
   name: NIFTY index change notice
@@ -885,6 +1557,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIENT,APOLLOHOSP,JUBLFOOD,MRF,VEDL,YESBANK -BANKBARODA,CONCOR,GICRE,HINDZINC,OFSS,PFC; NIFTY MIDCAP 150 +BANKBARODA,CONCOR,DEEPAKNTR,DIXON,GICRE,HINDZINC,IDBI,INDIAMART,LAURUSLABS,MAXHEALTH,OFSS,PERSISTENT,PFC,PGHL,SUVENPHAR,TATAELXSI
     -ADANIENT,APOLLOHOSP,EDELWEISS,ERIS,FRETAIL,HUDCO,JUBLFOOD,MRF,MRPL,NATIONALUM,NLCINDIA,SFL,SHRIRAMCIT,SYMPHONY,WABCOINDIA,YESBANK; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2021-03-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-03-05'
+  available_at: '2021-03-05T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-03-10
+  kind: us_cpi
+  name: US CPI
+  date: '2021-03-10'
+  available_at: '2021-03-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2021-03-17
   kind: fomc
   name: FOMC statement
@@ -901,6 +1589,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIENT,APOLLOHOSP,JUBLFOOD,MRF,VEDL,YESBANK -BANKBARODA,CONCOR,GICRE,HINDZINC,OFSS,PFC; NIFTY MIDCAP 150 +BANKBARODA,CONCOR,DEEPAKNTR,DIXON,GICRE,HINDZINC,IDBI,INDIAMART,LAURUSLABS,MAXHEALTH,OFSS,PERSISTENT,PFC,PGHL,SUVENPHAR,TATAELXSI
     -ADANIENT,APOLLOHOSP,EDELWEISS,ERIS,FRETAIL,HUDCO,JUBLFOOD,MRF,MRPL,NATIONALUM,NLCINDIA,SFL,SHRIRAMCIT,SYMPHONY,WABCOINDIA,YESBANK
+- id: us_payrolls:2021-04-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-04-02'
+  available_at: '2021-04-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2021-04-07
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -910,6 +1606,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2021-04-13
+  kind: us_cpi
+  name: US CPI
+  date: '2021-04-13'
+  available_at: '2021-04-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2021-04-28
   kind: fomc
   name: FOMC statement
@@ -925,6 +1629,22 @@ events:
   source: https://www.business-standard.com/article/elections/election-results-2021-live-updates-west-bengal-tamil-nadu-kerala-puducherry-assam-vote-counting-highlights-ldf-dmk-mamata-banerjee-narendra-modi-bjp-tmc-congress-121050200049_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_payrolls:2021-05-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-05-07'
+  available_at: '2021-05-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-05-12
+  kind: us_cpi
+  name: US CPI
+  date: '2021-05-12'
+  available_at: '2021-05-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2021-05-28
   kind: gst_council
   name: GST Council meeting 43
@@ -942,6 +1662,22 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2021-06-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-06-04'
+  available_at: '2021-06-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-06-10
+  kind: us_cpi
+  name: US CPI
+  date: '2021-06-10'
+  available_at: '2021-06-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2021-06-12
   kind: gst_council
   name: GST Council meeting 44
@@ -973,6 +1709,22 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs15062021.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +GLAND -MOTHERSUMI
+- id: us_payrolls:2021-07-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-07-02'
+  available_at: '2021-07-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-07-13
+  kind: us_cpi
+  name: US CPI
+  date: '2021-07-13'
+  available_at: '2021-07-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2021-07-28
   kind: fomc
   name: FOMC statement
@@ -989,6 +1741,38 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2021-08-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-08-06'
+  available_at: '2021-08-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-08-11
+  kind: us_cpi
+  name: US CPI
+  date: '2021-08-11'
+  available_at: '2021-08-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2021-09-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-09-03'
+  available_at: '2021-09-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-09-14
+  kind: us_cpi
+  name: US CPI
+  date: '2021-09-14'
+  available_at: '2021-09-14T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2021-09-15
   kind: index_notice
   name: NIFTY index change notice
@@ -1030,6 +1814,22 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2021-10-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-10-08'
+  available_at: '2021-10-08T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-10-13
+  kind: us_cpi
+  name: US CPI
+  date: '2021-10-13'
+  available_at: '2021-10-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2021-10-22
   kind: index_notice
   name: NIFTY index change notice
@@ -1053,6 +1853,30 @@ events:
   available_at: '2021-11-03T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2021-11-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-11-05'
+  available_at: '2021-11-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2021-11-10
+  kind: us_cpi
+  name: US CPI
+  date: '2021-11-10'
+  available_at: '2021-11-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2021-12-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2021-12-03'
+  available_at: '2021-12-03T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2021-12-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1062,6 +1886,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2021-12-10
+  kind: us_cpi
+  name: US CPI
+  date: '2021-12-10'
+  available_at: '2021-12-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2021-12-15
   kind: fomc
   name: FOMC statement
@@ -1077,6 +1909,22 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2022-01-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-01-07'
+  available_at: '2022-01-07T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-01-12
+  kind: us_cpi
+  name: US CPI
+  date: '2022-01-12'
+  available_at: '2022-01-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-01-26
   kind: fomc
   name: FOMC statement
@@ -1092,6 +1940,22 @@ events:
   source: https://en.wikipedia.org/wiki/Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2022-23; speech from 11:00 IST
+- id: us_payrolls:2022-02-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-02-04'
+  available_at: '2022-02-04T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-02-08
+  kind: us_cpi
+  name: US CPI
+  date: '2022-02-08'
+  available_at: '2022-02-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2022-02-10
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1101,6 +1965,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2022-02-10
+  kind: us_cpi
+  name: US CPI
+  date: '2022-02-10'
+  available_at: '2022-02-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2022-02-24
   kind: index_notice
   name: NIFTY index change notice
@@ -1110,6 +1982,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +MINDTREE,NYKAA,PAYTM,SRF,ZOMATO -AUROPHARMA,HINDPETRO,IGL,JINDALSTEL,YESBANK; NIFTY MIDCAP 150 +AUROPHARMA,CGPOWER,CLEAN,FLUOROCHEM,GRINDWELL,HAPPSTMNDS,HINDPETRO,IDBI,IEX,IGL,JINDALSTEL,NUVOCO,POLICYBZR,STARHEALTH,TRIDENT,TTML,YESBANK
     -AMARAJABAT,CASTROLIND,CHOLAHLDNG,CUB,DHANI,GILLETTE,HINDCOPPER,ITI,MGL,MINDTREE,MOTILALOFS,RBLBANK,SRF,SUVENPHAR,TTKPRESTIG,VAIBHAVGBL,ZYDUSWELL; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2022-03-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-03-04'
+  available_at: '2022-03-04T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2022-03-10
   kind: election_result
   name: Uttar Pradesh, Punjab, Uttarakhand, Goa, Manipur assembly results
@@ -1118,6 +1998,14 @@ events:
   source: https://amp.scroll.in/latest/1019100/uttar-pradesh-election-results-counting-starts-ec-sends-special-officers-to-varanasi-and-meerut
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2022-03-10
+  kind: us_cpi
+  name: US CPI
+  date: '2022-03-10'
+  available_at: '2022-03-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-03-16
   kind: fomc
   name: FOMC statement
@@ -1134,6 +2022,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +MINDTREE,NYKAA,PAYTM,SRF,ZOMATO -AUROPHARMA,HINDPETRO,IGL,JINDALSTEL,YESBANK; NIFTY MIDCAP 150 +AUROPHARMA,CGPOWER,CLEAN,FLUOROCHEM,GRINDWELL,HAPPSTMNDS,HINDPETRO,IDBI,IEX,IGL,JINDALSTEL,NUVOCO,POLICYBZR,STARHEALTH,TRIDENT,TTML,YESBANK
     -AMARAJABAT,CASTROLIND,CHOLAHLDNG,CUB,DHANI,GILLETTE,HINDCOPPER,ITI,MGL,MINDTREE,MOTILALOFS,RBLBANK,SRF,SUVENPHAR,TTKPRESTIG,VAIBHAVGBL,ZYDUSWELL
+- id: us_payrolls:2022-04-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-04-01'
+  available_at: '2022-04-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2022-04-05
   kind: index_notice
   name: NIFTY index change notice
@@ -1151,6 +2047,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2022-04-12
+  kind: us_cpi
+  name: US CPI
+  date: '2022-04-12'
+  available_at: '2022-04-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-05-04
   kind: fomc
   name: FOMC statement
@@ -1175,6 +2079,30 @@ events:
   checked_on: '2026-09-26'
   value: '4.40'
   note: off-cycle; announced in the afternoon (time recalled, not re-read); unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)
+- id: us_payrolls:2022-05-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-05-06'
+  available_at: '2022-05-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-05-11
+  kind: us_cpi
+  name: US CPI
+  date: '2022-05-11'
+  available_at: '2022-05-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2022-06-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-06-03'
+  available_at: '2022-06-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2022-06-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1184,6 +2112,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.90'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2022-06-10
+  kind: us_cpi
+  name: US CPI
+  date: '2022-06-10'
+  available_at: '2022-06-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-06-15
   kind: fomc
   name: FOMC statement
@@ -1199,6 +2135,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2022-07-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-07-08'
+  available_at: '2022-07-08T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2022-07-11
   kind: index_notice
   name: NIFTY index change notice
@@ -1207,6 +2151,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +LICI,TATAPOWER -NMDC,PEL; NIFTY MIDCAP 150 +DELHIVERY -TATAPOWER; time of day not on the notice, counted from 23:59 IST
+- id: us_cpi:2022-07-13
+  kind: us_cpi
+  name: US CPI
+  date: '2022-07-13'
+  available_at: '2022-07-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-07-27
   kind: fomc
   name: FOMC statement
@@ -1223,6 +2175,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.40'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2022-08-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-08-05'
+  available_at: '2022-08-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_effective:2022-08-08
   kind: index_effective
   name: NIFTY index change effective
@@ -1231,6 +2191,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +LICI,TATAPOWER -NMDC,PEL; NIFTY MIDCAP 150 +DELHIVERY -TATAPOWER
+- id: us_cpi:2022-08-10
+  kind: us_cpi
+  name: US CPI
+  date: '2022-08-10'
+  available_at: '2022-08-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2022-09-01
   kind: index_notice
   name: NIFTY index change notice
@@ -1240,6 +2208,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ATGL,BEL,HAL,IRCTC,MOTHERSON,MPHASIS -JUBLFOOD,LUPIN,MINDTREE,PNB,SAIL,ZYDUSLIFE; NIFTY MIDCAP 150 +AWL,DEVYANI,JUBLFOOD,KPRMILL,LUPIN,MANYAVAR,MSUMI,PATANJALI,PNB,POONAWALLA,SAIL,ZYDUSLIFE
     -APOLLOTYRE,ATGL,BEL,EXIDEIND,GLENMARK,HAL,IDBI,IRCTC,MANAPPURAM,METROPOLIS,MPHASIS,NUVOCO; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2022-09-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-09-02'
+  available_at: '2022-09-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-09-13
+  kind: us_cpi
+  name: US CPI
+  date: '2022-09-13'
+  available_at: '2022-09-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-09-21
   kind: fomc
   name: FOMC statement
@@ -1265,6 +2249,22 @@ events:
   checked_on: '2026-09-26'
   value: '5.90'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2022-10-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-10-07'
+  available_at: '2022-10-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-10-13
+  kind: us_cpi
+  name: US CPI
+  date: '2022-10-13'
+  available_at: '2022-10-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-11-02
   kind: fomc
   name: FOMC statement
@@ -1272,6 +2272,30 @@ events:
   available_at: '2022-11-02T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2022-11-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-11-04'
+  available_at: '2022-11-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2022-11-10
+  kind: us_cpi
+  name: US CPI
+  date: '2022-11-10'
+  available_at: '2022-11-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2022-12-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2022-12-02'
+  available_at: '2022-12-02T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2022-12-07
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1289,6 +2313,14 @@ events:
   source: https://en.wikipedia.org/wiki/2022_Gujarat_Legislative_Assembly_election
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2022-12-13
+  kind: us_cpi
+  name: US CPI
+  date: '2022-12-13'
+  available_at: '2022-12-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2022-12-14
   kind: fomc
   name: FOMC statement
@@ -1304,6 +2336,22 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2023-01-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-01-06'
+  available_at: '2023-01-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-01-12
+  kind: us_cpi
+  name: US CPI
+  date: '2023-01-12'
+  available_at: '2023-01-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: budget:2023-02-01
   kind: budget
   name: Union Budget speech
@@ -1319,6 +2367,14 @@ events:
   available_at: '2023-02-02T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2023-02-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-02-03'
+  available_at: '2023-02-03T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2023-02-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1328,6 +2384,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2023-02-10
+  kind: us_cpi
+  name: US CPI
+  date: '2023-02-10'
+  available_at: '2023-02-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-02-14
+  kind: us_cpi
+  name: US CPI
+  date: '2023-02-14'
+  available_at: '2023-02-14T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2023-02-17
   kind: index_notice
   name: NIFTY index change notice
@@ -1345,6 +2417,22 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2023-03-10
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-03-10'
+  available_at: '2023-03-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-03-14
+  kind: us_cpi
+  name: US CPI
+  date: '2023-03-14'
+  available_at: '2023-03-14T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-03-22
   kind: fomc
   name: FOMC statement
@@ -1370,6 +2458,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2023-04-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-04-07'
+  available_at: '2023-04-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-04-12
+  kind: us_cpi
+  name: US CPI
+  date: '2023-04-12'
+  available_at: '2023-04-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-05-03
   kind: fomc
   name: FOMC statement
@@ -1377,6 +2481,22 @@ events:
   available_at: '2023-05-03T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2023-05-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-05-05'
+  available_at: '2023-05-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-05-10
+  kind: us_cpi
+  name: US CPI
+  date: '2023-05-10'
+  available_at: '2023-05-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2023-05-13
   kind: election_result
   name: Karnataka assembly results
@@ -1385,6 +2505,14 @@ events:
   source: https://www.deccanherald.com/elections/karnataka/karnataka-assembly-elections-2023-parties-gear-up-for-results-counting-to-start-at-8am-on-may-13-1218251.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_payrolls:2023-06-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-06-02'
+  available_at: '2023-06-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2023-06-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1394,6 +2522,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2023-06-13
+  kind: us_cpi
+  name: US CPI
+  date: '2023-06-13'
+  available_at: '2023-06-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-06-14
   kind: fomc
   name: FOMC statement
@@ -1409,6 +2545,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +JINDALSTEL -HDFC; NIFTY MIDCAP 150 +MANKIND -JINDALSTEL; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2023-07-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-07-07'
+  available_at: '2023-07-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: gst_council:2023-07-11
   kind: gst_council
   name: GST Council meeting 50
@@ -1417,6 +2561,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_cpi:2023-07-12
+  kind: us_cpi
+  name: US CPI
+  date: '2023-07-12'
+  available_at: '2023-07-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_effective:2023-07-13
   kind: index_effective
   name: NIFTY index change effective
@@ -1440,6 +2592,14 @@ events:
   source: https://gstcouncil.gov.in/gst-council-meetings
   checked_on: '2026-09-26'
   note: press conference time not on the page; counted from 23:59 IST
+- id: us_payrolls:2023-08-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-08-04'
+  available_at: '2023-08-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2023-08-10
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1449,6 +2609,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2023-08-10
+  kind: us_cpi
+  name: US CPI
+  date: '2023-08-10'
+  available_at: '2023-08-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2023-08-17
   kind: index_notice
   name: NIFTY index change notice
@@ -1458,6 +2626,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +PNB,SHRIRAMFIN,TRENT,TVSMOTOR,ZYDUSLIFE -ACC,HDFCAMC,INDUSTOWER,NYKAA,PAGEIND; NIFTY MIDCAP 150 +ACC,BDL,CARBORUNIV,FACT,HDFCAMC,INDUSTOWER,JSL,KPITTECH,MAHABANK,MAZDOCK,NYKAA,PAGEIND,RVNL
     -AAVAS,AFFLE,ALKYLAMINE,CLEAN,FINEORG,HAPPSTMNDS,NAM-INDIA,PNB,SHRIRAMFIN,TRENT,TTML,TVSMOTOR,ZYDUSLIFE; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2023-09-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-09-01'
+  available_at: '2023-09-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-09-13
+  kind: us_cpi
+  name: US CPI
+  date: '2023-09-13'
+  available_at: '2023-09-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-09-20
   kind: fomc
   name: FOMC statement
@@ -1483,6 +2667,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2023-10-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-10-06'
+  available_at: '2023-10-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-10-12
+  kind: us_cpi
+  name: US CPI
+  date: '2023-10-12'
+  available_at: '2023-10-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-11-01
   kind: fomc
   name: FOMC statement
@@ -1490,6 +2690,22 @@ events:
   available_at: '2023-11-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2023-11-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-11-03'
+  available_at: '2023-11-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-11-14
+  kind: us_cpi
+  name: US CPI
+  date: '2023-11-14'
+  available_at: '2023-11-14T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2023-12-03
   kind: election_result
   name: Madhya Pradesh, Rajasthan, Chhattisgarh, Telangana assembly results
@@ -1507,6 +2723,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2023-12-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2023-12-08'
+  available_at: '2023-12-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2023-12-12
+  kind: us_cpi
+  name: US CPI
+  date: '2023-12-12'
+  available_at: '2023-12-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2023-12-13
   kind: fomc
   name: FOMC statement
@@ -1514,6 +2746,30 @@ events:
   available_at: '2023-12-14T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2024-01-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-01-05'
+  available_at: '2024-01-05T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2024-01-10
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-01-10'
+  available_at: '2024-01-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-01-11
+  kind: us_cpi
+  name: US CPI
+  date: '2024-01-11'
+  available_at: '2024-01-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-01-31
   kind: fomc
   name: FOMC statement
@@ -1529,6 +2785,14 @@ events:
   source: https://prsindia.org/budgets/parliament/interim-union-budget-2024-25-analysis
   checked_on: '2026-09-26'
   note: Interim budget 2024-25; speech from 11:00 IST
+- id: us_payrolls:2024-02-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-02-02'
+  available_at: '2024-02-02T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2024-02-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1538,6 +2802,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2024-02-09
+  kind: us_cpi
+  name: US CPI
+  date: '2024-02-09'
+  available_at: '2024-02-09T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-02-13
+  kind: us_cpi
+  name: US CPI
+  date: '2024-02-13'
+  available_at: '2024-02-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2024-02-28
   kind: index_notice
   name: NIFTY index change notice
@@ -1547,6 +2827,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIPOWER,IRFC,JIOFIN,PFC,RECLTD -AWL,MUTHOOTFIN,PGHH,PIIND,UPL; NIFTY MIDCAP 150 +AWL,IDBI,IREDA,JSWINFRA,KALYANKJIL,KEI,LLOYDSME,MUTHOOTFIN,PGHH,PIIND,SJVN,SUZLON,TATATECH,UPL -AARTIIND,ADANIPOWER,BLUEDART,CROMPTON,IRFC,NAVINFLUOR,PFC,PFIZER,RAJESHEXPO,RECLTD,RELAXO,TRIDENT,VINATIORGA,WHIRLPOOL;
     time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2024-03-08
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-03-08'
+  available_at: '2024-03-08T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-03-12
+  kind: us_cpi
+  name: US CPI
+  date: '2024-03-12'
+  available_at: '2024-03-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-03-20
   kind: fomc
   name: FOMC statement
@@ -1571,6 +2867,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2024-04-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-04-05'
+  available_at: '2024-04-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-04-10
+  kind: us_cpi
+  name: US CPI
+  date: '2024-04-10'
+  available_at: '2024-04-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-05-01
   kind: fomc
   name: FOMC statement
@@ -1578,6 +2890,22 @@ events:
   available_at: '2024-05-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2024-05-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-05-03'
+  available_at: '2024-05-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-05-15
+  kind: us_cpi
+  name: US CPI
+  date: '2024-05-15'
+  available_at: '2024-05-15T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2024-06-04
   kind: election_result
   name: Lok Sabha general election results
@@ -1595,6 +2923,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2024-06-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-06-07'
+  available_at: '2024-06-07T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-06-12
   kind: fomc
   name: FOMC statement
@@ -1602,6 +2938,30 @@ events:
   available_at: '2024-06-12T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2024-06-12
+  kind: us_cpi
+  name: US CPI
+  date: '2024-06-12'
+  available_at: '2024-06-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2024-07-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-07-05'
+  available_at: '2024-07-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-07-11
+  kind: us_cpi
+  name: US CPI
+  date: '2024-07-11'
+  available_at: '2024-07-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: budget:2024-07-23
   kind: budget
   name: Union Budget speech
@@ -1617,6 +2977,14 @@ events:
   available_at: '2024-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2024-08-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-08-02'
+  available_at: '2024-08-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2024-08-08
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1626,6 +2994,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2024-08-14
+  kind: us_cpi
+  name: US CPI
+  date: '2024-08-14'
+  available_at: '2024-08-14T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2024-08-21
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-08-21'
+  available_at: '2024-08-21T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2024-08-23
   kind: index_notice
   name: NIFTY index change notice
@@ -1636,6 +3020,22 @@ events:
   note: NIFTY 100 +BHEL,JSWENERGY,LODHA,NHPC,UNIONBANK -BERGEPAINT,COLPAL,MARICO,SBICARD,SRF; NIFTY MIDCAP 150 +BERGEPAINT,BHARTIHEXA,CENTRALBK,COCHINSHIP,COLPAL,EXIDEIND,HUDCO,IOB,IRB,IREDA,MARICO,MEDANTA,MRPL,NAM-INDIA,NLCINDIA,POWERINDIA,SBICARD,SRF,TATAINVEST
     -ATUL,BATAINDIA,BHEL,DEVYANI,IDEA,ISEC,JSWENERGY,KAJARIACER,KANSAINER,LALPATHLAB,LAURUSLABS,LODHA,MANYAVAR,NHPC,PEL,RAMCOCEM,SUMICHEM,UNIONBANK,ZEEL; time of day not on the notice, counted from 23:59
     IST
+- id: us_payrolls:2024-09-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-09-06'
+  available_at: '2024-09-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-09-11
+  kind: us_cpi
+  name: US CPI
+  date: '2024-09-11'
+  available_at: '2024-09-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-09-18
   kind: fomc
   name: FOMC statement
@@ -1652,6 +3052,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BHEL,JSWENERGY,LODHA,NHPC,UNIONBANK -BERGEPAINT,COLPAL,MARICO,SBICARD,SRF; NIFTY MIDCAP 150 +BERGEPAINT,BHARTIHEXA,CENTRALBK,COCHINSHIP,COLPAL,EXIDEIND,HUDCO,IOB,IRB,IREDA,MARICO,MEDANTA,MRPL,NAM-INDIA,NLCINDIA,POWERINDIA,SBICARD,SRF,TATAINVEST
     -ATUL,BATAINDIA,BHEL,DEVYANI,IDEA,ISEC,JSWENERGY,KAJARIACER,KANSAINER,LALPATHLAB,LAURUSLABS,LODHA,MANYAVAR,NHPC,PEL,RAMCOCEM,SUMICHEM,UNIONBANK,ZEEL
+- id: us_payrolls:2024-10-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-10-04'
+  available_at: '2024-10-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2024-10-08
   kind: election_result
   name: Haryana and Jammu and Kashmir assembly results
@@ -1669,6 +3077,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2024-10-10
+  kind: us_cpi
+  name: US CPI
+  date: '2024-10-10'
+  available_at: '2024-10-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2024-11-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-11-01'
+  available_at: '2024-11-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-11-07
   kind: fomc
   name: FOMC statement
@@ -1676,6 +3100,14 @@ events:
   available_at: '2024-11-08T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2024-11-13
+  kind: us_cpi
+  name: US CPI
+  date: '2024-11-13'
+  available_at: '2024-11-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2024-11-23
   kind: election_result
   name: Maharashtra and Jharkhand assembly results
@@ -1693,6 +3125,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2024-12-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2024-12-06'
+  available_at: '2024-12-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2024-12-11
+  kind: us_cpi
+  name: US CPI
+  date: '2024-12-11'
+  available_at: '2024-12-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2024-12-18
   kind: fomc
   name: FOMC statement
@@ -1700,6 +3148,22 @@ events:
   available_at: '2024-12-19T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2025-01-10
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-01-10'
+  available_at: '2025-01-10T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-01-15
+  kind: us_cpi
+  name: US CPI
+  date: '2025-01-15'
+  available_at: '2025-01-15T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-01-29
   kind: fomc
   name: FOMC statement
@@ -1724,6 +3188,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.25'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2025-02-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-02-07'
+  available_at: '2025-02-07T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: election_result:2025-02-08
   kind: election_result
   name: Delhi assembly results
@@ -1732,6 +3204,14 @@ events:
   source: https://www.indiatvnews.com/delhi/delhi-assembly-elections-results-2025-date-poll-outcome-for-capital-to-be-declared-on-february-8-check-details-2025-02-07-975131
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_cpi:2025-02-12
+  kind: us_cpi
+  name: US CPI
+  date: '2025-02-12'
+  available_at: '2025-02-12T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2025-02-21
   kind: index_notice
   name: NIFTY index change notice
@@ -1741,6 +3221,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
     -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2025-03-07
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-03-07'
+  available_at: '2025-03-07T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-03-12
+  kind: us_cpi
+  name: US CPI
+  date: '2025-03-12'
+  available_at: '2025-03-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-03-19
   kind: fomc
   name: FOMC statement
@@ -1757,6 +3253,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
     -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA
+- id: us_payrolls:2025-04-04
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-04-04'
+  available_at: '2025-04-04T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2025-04-09
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1766,6 +3270,22 @@ events:
   checked_on: '2026-09-26'
   value: '6.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2025-04-10
+  kind: us_cpi
+  name: US CPI
+  date: '2025-04-10'
+  available_at: '2025-04-10T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2025-05-02
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-05-02'
+  available_at: '2025-05-02T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-05-07
   kind: fomc
   name: FOMC statement
@@ -1773,6 +3293,14 @@ events:
   available_at: '2025-05-07T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_cpi:2025-05-13
+  kind: us_cpi
+  name: US CPI
+  date: '2025-05-13'
+  available_at: '2025-05-13T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2025-06-06
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1782,6 +3310,22 @@ events:
   checked_on: '2026-09-26'
   value: '5.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2025-06-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-06-06'
+  available_at: '2025-06-06T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-06-11
+  kind: us_cpi
+  name: US CPI
+  date: '2025-06-11'
+  available_at: '2025-06-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-06-18
   kind: fomc
   name: FOMC statement
@@ -1789,6 +3333,22 @@ events:
   available_at: '2025-06-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2025-07-03
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-07-03'
+  available_at: '2025-07-03T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-07-15
+  kind: us_cpi
+  name: US CPI
+  date: '2025-07-15'
+  available_at: '2025-07-15T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-07-30
   kind: fomc
   name: FOMC statement
@@ -1796,6 +3356,14 @@ events:
   available_at: '2025-07-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2025-08-01
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-08-01'
+  available_at: '2025-08-01T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2025-08-06
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1805,6 +3373,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2025-08-12
+  kind: us_cpi
+  name: US CPI
+  date: '2025-08-12'
+  available_at: '2025-08-12T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-08-22
   kind: fomc
   name: FOMC statement
@@ -1821,6 +3397,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ENRIN,HINDZINC,MAXHEALTH,MAZDOCK,SOLARINDS -DABUR,HEROMOTOCO,ICICIPRULI,INDUSINDBK,SWIGGY; NIFTY MIDCAP 150 +DABUR,FACT,GODFRYPHLP,HEROMOTOCO,HEXT,ICICIPRULI,IDBI,INDUSINDBK,IOB,ITCHOTELS,PGHH,SWIGGY,UCOBANK
     -ABFRL,BANDHANBNK,EMAMILTD,GLAND,HINDZINC,MAXHEALTH,MAZDOCK,MRPL,MSUMI,OLAELEC,SOLARINDS,STARHEALTH,SUNTV; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2025-09-05
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-09-05'
+  available_at: '2025-09-05T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-09-11
+  kind: us_cpi
+  name: US CPI
+  date: '2025-09-11'
+  available_at: '2025-09-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-09-17
   kind: fomc
   name: FOMC statement
@@ -1846,6 +3438,14 @@ events:
   checked_on: '2026-09-26'
   value: '5.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_cpi:2025-10-24
+  kind: us_cpi
+  name: US CPI
+  date: '2025-10-24'
+  available_at: '2025-10-24T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2025-10-29
   kind: fomc
   name: FOMC statement
@@ -1861,6 +3461,14 @@ events:
   source: https://www.newsonair.gov.in/nda-poised-for-landslide-in-bihar-as-results-emerge-for-all-243-seats
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: us_payrolls:2025-11-20
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-11-20'
+  available_at: '2025-11-20T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: rbi_mpc:2025-12-05
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -1877,6 +3485,38 @@ events:
   available_at: '2025-12-11T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: us_payrolls:2025-12-16
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2025-12-16'
+  available_at: '2025-12-16T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2025-12-18
+  kind: us_cpi
+  name: US CPI
+  date: '2025-12-18'
+  available_at: '2025-12-18T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_payrolls:2026-01-09
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2026-01-09'
+  available_at: '2026-01-09T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2026-01-13
+  kind: us_cpi
+  name: US CPI
+  date: '2026-01-13'
+  available_at: '2026-01-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2026-01-28
   kind: fomc
   name: FOMC statement
@@ -1901,6 +3541,22 @@ events:
   checked_on: '2026-09-26'
   value: '5.25'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: us_payrolls:2026-02-11
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2026-02-11'
+  available_at: '2026-02-11T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2026-02-13
+  kind: us_cpi
+  name: US CPI
+  date: '2026-02-13'
+  available_at: '2026-02-13T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: index_notice:2026-02-23
   kind: index_notice
   name: NIFTY index change notice
@@ -1910,6 +3566,22 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +CUMMINSIND,HDFCAMC,MUTHOOTFIN,TATACAP,TMCV,UNIONBANK -BAJAJHFL,HAVELLS,ICICIGI,JSWENERGY,LICI,NAUKRI; NIFTY MIDCAP 150 +AIIL,ANTHEM,BAJAJHFL,GROWW,HAVELLS,HDBFS,ICICIAMC,ICICIGI,JSWENERGY,LAURUSLABS,LENSKART,LGEINDIA,LICI,MCX,NAUKRI,RADICO
     -CUMMINSIND,DEEPAKNTR,FACT,GUJGASLTD,HDFCAMC,IDBI,IGL,IOB,IRB,MUTHOOTFIN,PGHH,SONACOMS,SYNGENE,TATATECH,UCOBANK,UNIONBANK; time of day not on the notice, counted from 23:59 IST
+- id: us_payrolls:2026-03-06
+  kind: us_payrolls
+  name: US payrolls (employment situation)
+  date: '2026-03-06'
+  available_at: '2026-03-06T19:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
+- id: us_cpi:2026-03-11
+  kind: us_cpi
+  name: US CPI
+  date: '2026-03-11'
+  available_at: '2026-03-11T18:00:00+05:30'
+  source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
+  checked_on: '2026-09-26'
+  note: release day per ALFRED; 08:30 New York time
 - id: fomc:2026-03-18
   kind: fomc
   name: FOMC statement

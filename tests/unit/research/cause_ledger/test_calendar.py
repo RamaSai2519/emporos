@@ -167,3 +167,20 @@ def test_index_notices_count_from_the_end_of_their_day_and_effective_days_are_kn
     assert events["index_effective"].available_at == ist(2022, 9, 30, 0, 0)
     assert "NIFTY 100 +A -B" in events["index_notice"].note
     assert events["index_notice"].source.endswith("ind_prs01092022.pdf")
+
+
+def test_us_cpi_and_payrolls_release_at_0830_new_york_from_alfred_dates(tmp_path: Path) -> None:
+    from emporos.research.cause_ledger.sources import AlfredSource
+
+    (tmp_path / "alfred").mkdir()
+    (tmp_path / "alfred" / "cpi-release-dates.txt").write_text(
+        "Release: Consumer Price Index\n2024-01-11\n2024-07-11\nnot a date\n"
+    )
+    (tmp_path / "alfred" / "employment-dates.txt").write_text("2024-03-08\n")
+
+    events = {(e.kind, e.event_date): e for e in AlfredSource(tmp_path, CHECKED).events()}
+
+    assert events[("us_cpi", date(2024, 1, 11))].available_at == ist(2024, 1, 11, 19, 0)  # EST
+    assert events[("us_cpi", date(2024, 7, 11))].available_at == ist(2024, 7, 11, 18, 0)  # EDT
+    assert events[("us_payrolls", date(2024, 3, 8))].available_at == ist(2024, 3, 8, 19, 0)
+    assert len(events) == 3 and all("alfred.stlouisfed.org" in e.source for e in events.values())
