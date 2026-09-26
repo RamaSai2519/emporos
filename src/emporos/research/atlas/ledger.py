@@ -4,7 +4,7 @@ Nothing here looks at a price after the day it describes except the forward drif
 FOR; nothing after `last` at all (the caller never loads it). Class rules (plan §2):
 
 * stock move: a session with |residual| >= 2.5 sigma, or a 15-minute block (09:15-09:30, ...) with
-  |residual| >= 3 sigma of that block's own trailing scale (one jump a session at most: the largest);
+  |residual| >= 3 sigma of that block's own trailing scale (at most one a session, the largest);
 * sector move: a sector index session with |residual against NIFTY| >= 2 sigma;
 * market move: a NIFTY session with |return| >= 1.2%, or an open gap >= 0.8%;
 * placebo: as many quiet name-sessions (|residual| < 0.5 sigma) as there are stock moves, drawn
