@@ -10,7 +10,7 @@ from pathlib import Path
 from emporos.research.s1.metrics import Bars
 from emporos.research.s1.runner import ArmOutcome
 
-__all__ = ["S1Ledger", "arm_table"]
+__all__ = ["S1Ledger", "TRIAL_LOG", "arm_table"]
 
 HYPOTHESIS = "s1-size-target-trail"
 DEFAULT_LEDGER = Path("docs/research/profit/screens.jsonl")
@@ -19,7 +19,7 @@ DEFAULT_LEDGER = Path("docs/research/profit/screens.jsonl")
 def arm_table(outcomes: Sequence[ArmOutcome], bars: Bars) -> list[str]:
     lines = [
         "arm                                trades  net bench  net adverse   win  dailyT  maxDD"
-        "   mo+  kill   ctrl p  bars failed"
+        "   mo+  killed on   ctrl p  skipped  bars failed"
     ]
     for o in outcomes:
         m = o.metrics
@@ -28,9 +28,17 @@ def arm_table(outcomes: Sequence[ArmOutcome], bars: Bars) -> list[str]:
         lines.append(
             f"{o.arm.name:<34} {m.trades:>6} {m.net_benchmark:>10,.0f} {m.net_adverse:>12,.0f} "
             f"{m.win_rate:>5.0%} {m.daily_t:>7.2f} {m.max_drawdown:>6,.0f} "
-            f"{m.months_positive:>5.0%} {'KILLED' if m.killed_on else '-':>5} {p:>8}  {len(why)}"
+            f"{m.months_positive:>5.0%} {str(m.killed_on) if m.killed_on else '-':>10} {p:>8} "
+            f"{sum(o.skipped.values()):>8}  {len(why)}"
         )
     return lines
+
+
+TRIAL_LOG = (
+    "Trial log: a first counting run with the loss limits on showed most arms hitting the Rs 25,000"
+    " kill by Jan-Feb 2024. It was seen by Agent 2 before the declared run and was not sent to the"
+    " head. No declared parameter, grid value or bar was changed after it."
+)
 
 
 class S1Ledger:

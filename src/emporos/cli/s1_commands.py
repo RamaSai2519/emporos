@@ -32,7 +32,7 @@ from emporos.research.s1.control import RandomEntries
 from emporos.research.s1.costs import CostCurve
 from emporos.research.s1.engine import BookEngine, BookLimits
 from emporos.research.s1.metrics import Bars
-from emporos.research.s1.report import S1Ledger, arm_table
+from emporos.research.s1.report import TRIAL_LOG, S1Ledger, arm_table
 from emporos.research.s1.runner import ArmRunner, month_table, run_all
 from emporos.research.s1.signals import Signal, load_stock_signals, signals_by_day
 from emporos.research.screen_costs import ScreenCostModel
@@ -153,8 +153,13 @@ def research_run_s1_cash(
     added = sum(S1Ledger(ledger).append(o, window, bars, SystemClock().now()) for o in outcomes)
     lines = [f"S1 cash book on {window} (Dev, descriptive), {runs} control runs per arm", ""]
     lines += arm_table(outcomes, bars)
-    lines += ["", f"{sum(1 for o in outcomes if not o.metrics.failures(bars, o.control_p))} of "
-              f"{len(outcomes)} arms pass every bar; {added} looks added to {ledger}"]  # fmt: skip
+    passed = sum(1 for o in outcomes if not o.metrics.failures(bars, o.control_p))
+    lines += [
+        "",
+        f"{passed} of {len(outcomes)} arms pass every bar; {added} looks added to {ledger}",
+        f"Counted looks: {len(outcomes)} spent by the cash book of the 54 declared.",
+        TRIAL_LOG,
+    ]
     reports.mkdir(parents=True, exist_ok=True)
     (reports / "cash-dev-2024.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     typer.echo("\n".join(lines))
