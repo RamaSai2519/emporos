@@ -19,7 +19,9 @@ from emporos.core.clock import IST
 from emporos.domain.candles import Candle
 from emporos.research.atlas.arrays import Floats, Ints
 
-__all__ = ["BarStore", "CandleBarStore", "DayBars", "MemoryBarStore", "atr_before"]
+__all__ = [
+    "BarStore", "CandleBarStore", "DayBars", "MemoryBarStore", "atr_before", "mean_true_range",
+]  # fmt: skip
 
 ATR_BARS = 14
 BAR_MINUTES = 5
@@ -68,6 +70,19 @@ class MemoryBarStore:
         return self._bars[(instrument_id, earlier[-1])] if earlier else None
 
 
+def mean_true_range(
+    highs: Sequence[float], lows: Sequence[float], closes: Sequence[float]
+) -> float:
+    """The mean true range of the last 14 bars (0.0 with fewer than 2 bars to go on)."""
+    if len(closes) < 2:
+        return 0.0
+    m = min(ATR_BARS, len(closes) - 1)  # true ranges need a previous close
+    h, low = np.array(highs[-m:]), np.array(lows[-m:])
+    previous = np.array(closes[-m - 1 : -1])
+    tr = np.maximum(h - low, np.maximum(np.abs(h - previous), np.abs(low - previous)))
+    return float(tr.mean())
+
+
 def atr_before(store: BarStore, instrument_id: str, day: date, upto: int) -> float:
     """The mean true range of the last 14 bars that ended by minute `upto` (0.0 with fewer than 2
     bars to go on)."""
@@ -84,13 +99,7 @@ def atr_before(store: BarStore, instrument_id: str, day: date, upto: int) -> flo
             highs = list(before.high) + highs
             lows = list(before.low) + lows
             closes = list(before.close) + closes
-    if len(closes) < 2:
-        return 0.0
-    m = min(ATR_BARS, len(closes) - 1)  # true ranges need a previous close
-    h, low = np.array(highs[-m:]), np.array(lows[-m:])
-    previous = np.array(closes[-m - 1 : -1])
-    tr = np.maximum(h - low, np.maximum(np.abs(h - previous), np.abs(low - previous)))
-    return float(tr.mean())
+    return mean_true_range(highs, lows, closes)
 
 
 class CandleBarStore:

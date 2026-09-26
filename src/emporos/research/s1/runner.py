@@ -16,7 +16,7 @@ from datetime import date
 from emporos.eventtrader.replay.records import Scenario
 from emporos.research.s1.arms import Arm
 from emporos.research.s1.control import RandomEntries
-from emporos.research.s1.engine import BookEngine, RunResult
+from emporos.research.s1.engine import ArmEngine, RunResult
 from emporos.research.s1.metrics import ArmMetrics, control_p, measure
 from emporos.research.s1.signals import Signal
 
@@ -44,7 +44,7 @@ def entries_per_month(result: RunResult) -> dict[str, int]:
 class ArmRunner:
     def __init__(
         self,
-        engine: BookEngine,
+        engine: ArmEngine,
         sessions: Sequence[date],
         signals: Mapping[date, Sequence[Signal]],
         control: RandomEntries | None = None,

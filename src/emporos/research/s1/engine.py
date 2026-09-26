@@ -10,10 +10,12 @@ arm is KILLED on that date) are measured on ADVERSE-cost P&L, the harsher scenar
 from __future__ import annotations
 
 import math
+from abc import ABC, abstractmethod
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
+from typing import Protocol
 
 from emporos.eventtrader.replay.records import Scenario
 from emporos.research.s1.arms import Arm
@@ -23,7 +25,7 @@ from emporos.research.s1.exit_policies import Bar, Exit, ExitReason, Position, T
 from emporos.research.s1.fills import Miss, try_entry
 from emporos.research.s1.signals import Signal
 
-__all__ = ["BookEngine", "BookLimits", "RunResult", "Trade"]
+__all__ = ["ArmEngine", "BookEngine", "BookLimits", "RunResult", "SignalLoop", "Trade", "walk_exit"]
 
 SQUARE_OFF = 15 * 60 + 15
 CAPITAL_SIZE = 80_000.0
@@ -32,6 +34,7 @@ CAPITAL_SIZE = 80_000.0
 @dataclass(frozen=True)
 class BookLimits:
     cash_risk: float = 2_000.0  # the stop caps the loss here
+    option_risk: float = 5_000.0  # the stop caps the loss on the premium paid here
     daily_loss: float = 5_000.0
     total_loss: float = 25_000.0
     size: float = CAPITAL_SIZE  # 80% of the Rs 1,00,000 capital, before leverage
@@ -54,6 +57,7 @@ class Trade:
     gross: float
     cost_benchmark: float
     cost_adverse: float
+    expiry_kind: str = ""  # options only: "weekly" or "monthly"
 
     def net(self, scenario: Scenario) -> float:
         return self.gross - (
@@ -72,15 +76,23 @@ class RunResult:
         return sum(t.net(scenario) for t in self.trades)
 
 
-class BookEngine:
-    def __init__(
-        self,
-        store: BarStore,
-        curves: Mapping[int, CostCurve],  # direction (+1 long, -1 short) -> its cost curve
-        limits: BookLimits | None = None,
-    ) -> None:
-        self._store, self._curves = store, dict(curves)
+class ArmEngine(Protocol):
+    """What the arm runner needs: play one arm over days of signals."""
+
+    def run(
+        self, arm: Arm, days: Sequence[date], signals: Mapping[date, Sequence[Signal]]
+    ) -> RunResult: ...
+
+
+class SignalLoop(ABC):
+    """Signals in time order, one position at a time, the daily and total loss limits; how ONE
+    trade is sized, filled and walked is the subclass's (`_trade`)."""
+
+    def __init__(self, limits: BookLimits | None = None) -> None:
         self._limits = limits or BookLimits()
+
+    @abstractmethod
+    def _trade(self, arm: Arm, signal: Signal, skipped: Counter[str]) -> Trade | None: ...
 
     def run(
         self, arm: Arm, days: Sequence[date], signals: Mapping[date, Sequence[Signal]]
@@ -112,6 +124,17 @@ class BookEngine:
                         result.killed_on = day
         return result
 
+
+class BookEngine(SignalLoop):
+    def __init__(
+        self,
+        store: BarStore,
+        curves: Mapping[int, CostCurve],  # direction (+1 long, -1 short) -> its cost curve
+        limits: BookLimits | None = None,
+    ) -> None:
+        super().__init__(limits)
+        self._store, self._curves = store, dict(curves)
+
     # --- one trade ---------------------------------------------------------------------------
     def _trade(self, arm: Arm, signal: Signal, skipped: Counter[str]) -> Trade | None:
         bars = self._store.day(signal.instrument_id, signal.day)
@@ -138,7 +161,7 @@ class BookEngine:
         if isinstance(fill, Miss):
             skipped[fill.value] += 1
             return None
-        exit_ = _walk(
+        exit_ = walk_exit(
             TargetThenTrail(target, arm.stop_rule(), arm.trail_rule()), position, bars, fill.index
         )
         if exit_ is None:
@@ -154,7 +177,7 @@ class BookEngine:
         )  # fmt: skip
 
 
-def _walk(
+def walk_exit(
     policy: TargetThenTrail, position: Position, day: DayBars, fill_index: int
 ) -> Exit | None:
     """The bars AFTER the entry bar, to the 15:15 square-off."""
