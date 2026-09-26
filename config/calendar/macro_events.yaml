@@ -15,6 +15,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2017-11-10
+  kind: gst_council
+  name: GST Council meeting 23
+  date: '2017-11-10'
+  available_at: '2017-11-10T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2017-11-13
   kind: index_effective
   name: NIFTY index change effective
@@ -39,6 +47,14 @@ events:
   available_at: '2017-12-14T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm
   checked_on: '2026-09-26'
+- id: gst_council:2017-12-16
+  kind: gst_council
+  name: GST Council meeting 24
+  date: '2017-12-16'
+  available_at: '2017-12-16T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: election_result:2017-12-18
   kind: election_result
   name: Gujarat and Himachal Pradesh assembly results
@@ -55,6 +71,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +HATSUN,RELCAPITAL,TIFIN -CESC,FORTIS,STAR; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2018-01-18
+  kind: gst_council
+  name: GST Council meeting 25
+  date: '2018-01-18'
+  available_at: '2018-01-18T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2018-01-31
   kind: fomc
   name: FOMC statement
@@ -96,6 +120,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABCAPITAL,GICRE,GRASIM,L&TFH,SBILIFE -GLAXO,GLENMARK,GSKCONS,TATAPOWER,TORNTPHARM; NIFTY MIDCAP 150 +AVANTIFEED,DBL,FCONSUMER,GLAXO,GLENMARK,GODREJAGRO,GSKCONS,HONAUT,IBREALEST,IBVENTURES,ICICIGI,IIFL,STRTECH,TATAPOWER,TORNTPHARM
     -ADANIENT,DALMIABHA,DBCORP,GPPL,IOB,IPCALAB,JYOTHYLAB,L&TFH,LALPATHLAB,NH,RCOM,SYNDIBANK,VIJAYABANK,VTL,WELSPUNIND; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2018-03-10
+  kind: gst_council
+  name: GST Council meeting 26
+  date: '2018-03-10'
+  available_at: '2018-03-10T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2018-03-21
   kind: fomc
   name: FOMC statement
@@ -128,6 +160,14 @@ events:
   available_at: '2018-05-02T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: gst_council:2018-05-04
+  kind: gst_council
+  name: GST Council meeting 27
+  date: '2018-05-04'
+  available_at: '2018-05-04T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: election_result:2018-05-15
   kind: election_result
   name: Karnataka assembly results
@@ -168,6 +208,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM
+- id: gst_council:2018-07-21
+  kind: gst_council
+  name: GST Council meeting 28
+  date: '2018-07-21'
+  available_at: '2018-07-21T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2018-08-01
   kind: fomc
   name: FOMC statement
@@ -184,6 +232,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: gst_council:2018-08-04
+  kind: gst_council
+  name: GST Council meeting 29
+  date: '2018-08-04'
+  available_at: '2018-08-04T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_notice:2018-08-28
   kind: index_notice
   name: NIFTY index change notice
@@ -200,6 +256,14 @@ events:
   available_at: '2018-09-26T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: gst_council:2018-09-28
+  kind: gst_council
+  name: GST Council meeting 30
+  date: '2018-09-28'
+  available_at: '2018-09-28T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2018-09-28
   kind: index_effective
   name: NIFTY index change effective
@@ -257,6 +321,14 @@ events:
   available_at: '2018-12-20T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: gst_council:2018-12-22
+  kind: gst_council
+  name: GST Council meeting 31
+  date: '2018-12-22'
+  available_at: '2018-12-22T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2018-12-28
   kind: index_effective
   name: NIFTY index change effective
@@ -265,6 +337,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs14122018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AARTIIND,BBTC,VARROC -BHARATFIN,CENTURYTEX,IIFL
+- id: gst_council:2019-01-10
+  kind: gst_council
+  name: GST Council meeting 32
+  date: '2019-01-10'
+  available_at: '2019-01-10T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2019-01-30
   kind: fomc
   name: FOMC statement
@@ -289,6 +369,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.25'
   note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: gst_council:2019-02-24
+  kind: gst_council
+  name: GST Council meeting 33
+  date: '2019-02-24'
+  available_at: '2019-02-24T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_notice:2019-02-25
   kind: index_notice
   name: NIFTY index change notice
@@ -298,6 +386,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHLDNG,DIVISLAB,HDFCAMC,PAGEIND,UBL -ABCAPITAL,BEL,LICHSGFIN,OIL,SUNTV; NIFTY MIDCAP 150 +ABCAPITAL,ATUL,BEL,ERIS,GUJFLUORO,IPCALAB,LICHSGFIN,OIL,RELAXO,SUNTV -AARTIIND,AVANTIFEED,BAJAJHLDNG,DIVISLAB,GET&D,PAGEIND,PCJEWELLER,TV18BRDCST,UBL,VAKRANGEE;
     time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2019-03-19
+  kind: gst_council
+  name: GST Council meeting 34
+  date: '2019-03-19'
+  available_at: '2019-03-19T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2019-03-20
   kind: fomc
   name: FOMC statement
@@ -361,6 +457,14 @@ events:
   available_at: '2019-06-19T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: gst_council:2019-06-21
+  kind: gst_council
+  name: GST Council meeting 35
+  date: '2019-06-21'
+  available_at: '2019-06-21T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2019-06-28
   kind: index_effective
   name: NIFTY index change effective
@@ -377,6 +481,14 @@ events:
   source: https://businesstoday.in/union-budget-2019/news/govt-to-present-budget-2019-20-in-lok-sabha-on-july-5/story/358040.html
   checked_on: '2026-09-26'
   note: Budget 2019-20; speech from 11:00 IST
+- id: gst_council:2019-07-27
+  kind: gst_council
+  name: GST Council meeting 36
+  date: '2019-07-27'
+  available_at: '2019-07-27T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2019-07-31
   kind: fomc
   name: FOMC statement
@@ -417,6 +529,14 @@ events:
   available_at: '2019-09-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: gst_council:2019-09-20
+  kind: gst_council
+  name: GST Council meeting 37
+  date: '2019-09-20'
+  available_at: '2019-09-20T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2019-09-27
   kind: index_effective
   name: NIFTY index change effective
@@ -473,6 +593,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs16122019.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AARTIIND,LALPATHLAB,POLYCAB,SCHAEFFLER -ALBK,CORPBANK,ORIENTBANK,TATACHEM; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2019-12-18
+  kind: gst_council
+  name: GST Council meeting 38
+  date: '2019-12-18'
+  available_at: '2019-12-18T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2019-12-27
   kind: index_effective
   name: NIFTY index change effective
@@ -521,6 +649,14 @@ events:
   source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200303a.htm
   checked_on: '2026-09-26'
   note: unscheduled; "For release at 10:00 a.m. EST"
+- id: gst_council:2020-03-14
+  kind: gst_council
+  name: GST Council meeting 39
+  date: '2020-03-14'
+  available_at: '2020-03-14T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2020-03-15
   kind: fomc
   name: FOMC statement (emergency, rate cut to zero)
@@ -586,6 +722,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABBOTINDIA,IGL,MUTHOOTFIN,NAUKRI,TORNTPHARM -ASHOKLEY,IBULHSGFIN,IDEA,L&TFH,NIACL; NIFTY MIDCAP 150 +ABB,AKZOINDIA,ASHOKLEY,CREDITACC,IBULHSGFIN,IDEA,IIFLWAM,IRCTC,JKCEMENT,L&TFH,MINDAIND,NIACL,NIITTECH,SUMICHEM,TATACOMM
     -ABBOTINDIA,ENGINERSIN,FCONSUMER,GRAPHITE,HEG,IGL,INDIANB,KRBL,MAHINDCIE,MUTHOOTFIN,NAUKRI,NBCC,STRTECH,TORNTPHARM,VARROC; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2020-06-12
+  kind: gst_council
+  name: GST Council meeting 40
+  date: '2020-06-12'
+  available_at: '2020-06-12T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2020-06-26
   kind: index_effective
   name: NIFTY index change effective
@@ -636,6 +780,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIGREEN,ALKEM,LTI,TATACONSUM -NHPC,PAGEIND,SRTRANSFIN,ZEEL; NIFTY MIDCAP 150 +ADANIENT,ASTRAZEN,ITI,JMFINANCIL,METROPOLIS,NAVINFLUOR,NHPC,PAGEIND,SFL,SRTRANSFIN,TATACHEM,TIINDIA,YESBANK,ZEEL,ZYDUSWELL
     -ADANIGREEN,ADANIPOWER,ALKEM,BLUEDART,CENTRALBK,EIHOTEL,HEXAWARE,IDBI,IOB,JUBILANT,LTI,PNBHOUSING,QUESS,TATACONSUM,UCOBANK; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2020-08-27
+  kind: gst_council
+  name: GST Council meeting 41
+  date: '2020-08-27'
+  available_at: '2020-08-27T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2020-09-16
   kind: fomc
   name: FOMC statement
@@ -661,6 +813,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: gst_council:2020-10-12
+  kind: gst_council
+  name: GST Council meeting 42
+  date: '2020-10-12'
+  available_at: '2020-10-12T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2020-11-05
   kind: fomc
   name: FOMC statement
@@ -765,6 +925,14 @@ events:
   source: https://www.business-standard.com/article/elections/election-results-2021-live-updates-west-bengal-tamil-nadu-kerala-puducherry-assam-vote-counting-highlights-ldf-dmk-mamata-banerjee-narendra-modi-bjp-tmc-congress-121050200049_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: gst_council:2021-05-28
+  kind: gst_council
+  name: GST Council meeting 43
+  date: '2021-05-28'
+  available_at: '2021-05-28T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: rbi_mpc:2021-06-04
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -774,6 +942,14 @@ events:
   checked_on: '2026-09-26'
   value: '4.00'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: gst_council:2021-06-12
+  kind: gst_council
+  name: GST Council meeting 44
+  date: '2021-06-12'
+  available_at: '2021-06-12T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_notice:2021-06-15
   kind: index_notice
   name: NIFTY index change notice
@@ -822,6 +998,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +ABBOTINDIA,AFFLE,ALKEM,ALKYLAMINE,APLAPOLLO,BLUEDART,HINDCOPPER,INDIANB,IRFC,KAJARIACER,LINDEINDIA,LODHA,MRF,NATIONALUM,PETRONET,UBL,VAIBHAVGBL,WABCOINDIA -AKZOINDIA,ASTRAZEN,BANKBARODA,BBTC,CESC,CHOLAFIN,CREDITACC,GODREJAGRO,IBULHSGFIN,IDBI,IIFLWAM,JINDALSTEL,JMFINANCIL,PGHL,PIIND,SAIL,SJVN,VGUARD;
     time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2021-09-17
+  kind: gst_council
+  name: GST Council meeting 45
+  date: '2021-09-17'
+  available_at: '2021-09-17T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2021-09-22
   kind: fomc
   name: FOMC statement
@@ -885,6 +1069,14 @@ events:
   available_at: '2021-12-16T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: gst_council:2021-12-31
+  kind: gst_council
+  name: GST Council meeting 46
+  date: '2021-12-31'
+  available_at: '2021-12-31T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2022-01-26
   kind: fomc
   name: FOMC statement
@@ -999,6 +1191,14 @@ events:
   available_at: '2022-06-15T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: gst_council:2022-06-29
+  kind: gst_council
+  name: GST Council meeting 47
+  date: '2022-06-29'
+  available_at: '2022-06-29T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_notice:2022-07-11
   kind: index_notice
   name: NIFTY index change notice
@@ -1096,6 +1296,14 @@ events:
   available_at: '2022-12-15T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: gst_council:2022-12-17
+  kind: gst_council
+  name: GST Council meeting 48
+  date: '2022-12-17'
+  available_at: '2022-12-17T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: budget:2023-02-01
   kind: budget
   name: Union Budget speech
@@ -1129,6 +1337,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABB,AWL,CANBK,PAGEIND,VBL -BANDHANBNK,BIOCON,GLAND,MPHASIS,PAYTM; NIFTY MIDCAP 150 +AARTIIND,ADANIPOWER,APOLLOTYRE,BANDHANBNK,BIOCON,FINEORG,GLAND,METROBRAND,MPHASIS,NMDC,PAYTM,PEL,TIMKEN
     -ABB,APLLTD,AWL,CANBK,GSPL,HATSUN,IEX,INDIAMART,NATCOPHARM,NATIONALUM,PAGEIND,SANOFI,VBL; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2023-02-18
+  kind: gst_council
+  name: GST Council meeting 49
+  date: '2023-02-18'
+  available_at: '2023-02-18T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: fomc:2023-03-22
   kind: fomc
   name: FOMC statement
@@ -1193,6 +1409,14 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +JINDALSTEL -HDFC; NIFTY MIDCAP 150 +MANKIND -JINDALSTEL; time of day not on the notice, counted from 23:59 IST
+- id: gst_council:2023-07-11
+  kind: gst_council
+  name: GST Council meeting 50
+  date: '2023-07-11'
+  available_at: '2023-07-11T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: index_effective:2023-07-13
   kind: index_effective
   name: NIFTY index change effective
@@ -1208,6 +1432,14 @@ events:
   available_at: '2023-07-26T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: gst_council:2023-08-02
+  kind: gst_council
+  name: GST Council meeting 51
+  date: '2023-08-02'
+  available_at: '2023-08-02T23:59:00+05:30'
+  source: https://gstcouncil.gov.in/gst-council-meetings
+  checked_on: '2026-09-26'
+  note: press conference time not on the page; counted from 23:59 IST
 - id: rbi_mpc:2023-08-10
   kind: rbi_mpc
   name: RBI MPC policy decision

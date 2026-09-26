@@ -27,6 +27,7 @@ from emporos.research.cause_ledger.sources import (
     CalendarBuilder,
     EventSource,
     FedSource,
+    GstSource,
     IndexChangeSource,
     ManualSource,
 )
@@ -46,7 +47,7 @@ _MANUAL = typer.Option(DEFAULT_MANUAL_FILE, help="Rows kept by hand, each with i
 
 
 def calendar_pages() -> list[PageSpec]:
-    return FedSource.pages()
+    return FedSource.pages() + GstSource.pages()
 
 
 async def _collect(raw: Path, ledger: Path, gap: float) -> list[str]:
@@ -84,6 +85,7 @@ def research_build_calendar(raw: Path = _RAW, out: Path = _OUT, manual: Path = _
         checked = SystemClock().now().date()
         sources: list[EventSource] = [
             FedSource(raw, checked),
+            GstSource(raw, checked),
             ManualSource(manual),
             IndexChangeSource(Path("config/universe/d1/index-changes.yaml"), checked),
         ]

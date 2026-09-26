@@ -28,11 +28,12 @@ from emporos.research.cause_ledger.fomc import (
     parse_current_page,
     parse_historical_page,
 )
+from emporos.research.cause_ledger.gst import parse_gst_meetings
 from emporos.research.cause_ledger.pages import PageSpec
 
 __all__ = [
     "CALENDAR_FIRST", "CALENDAR_LAST", "CalendarBuilder", "EventSource", "FedSource",
-    "IndexChangeSource", "ManualSource",
+    "GstSource", "IndexChangeSource", "ManualSource",
 ]  # fmt: skip
 
 CALENDAR_FIRST = date(2017, 11, 1)
@@ -129,6 +130,38 @@ class ManualSource:
             raise ValueError(f"{row['kind']} {row['date']}: a timed row needs `at`")
         local = time(int(hours), int(minutes))
         return IstRelease(local) if zone == "IST" else ZonedRelease(local, ZoneInfo(zone))
+
+
+class GstSource:
+    """GST Council meetings from the Council's page (`gst.py`), counted from 23:59 IST of the last
+    day of each meeting."""
+
+    URL = "https://gstcouncil.gov.in/gst-council-meetings"
+
+    def __init__(self, raw_root: Path, checked_on: date) -> None:
+        self._root, self._checked = raw_root, checked_on
+
+    @classmethod
+    def pages(cls) -> list[PageSpec]:
+        return [PageSpec("gst", "gst/gst-council-meetings.htm", cls.URL)]
+
+    def events(self) -> Sequence[CalendarEvent]:
+        path = self._root / self.pages()[0].name
+        if not path.exists():
+            return []
+        rule = IstRelease(time(23, 59))
+        return [
+            CalendarEvent(
+                "gst_council",
+                f"GST Council meeting {m.number}",
+                m.last_day,
+                rule.available_at(m.last_day),
+                self.URL,
+                self._checked,
+                note="press conference time not on the page; counted from 23:59 IST",
+            )  # fmt: skip
+            for m in parse_gst_meetings(path.read_text(encoding="utf-8", errors="replace"))
+        ]
 
 
 class IndexChangeSource:
