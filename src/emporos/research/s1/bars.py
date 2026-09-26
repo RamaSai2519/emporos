@@ -188,12 +188,14 @@ def save_sessions(path: Path, sessions: Mapping[date, DayBars]) -> None:
 
 def load_sessions(path: Path) -> dict[date, DayBars]:
     with np.load(path) as held:
-        edges = np.concatenate([[0], np.cumsum(held["lengths"])])
-        out: dict[date, DayBars] = {}
-        for i, ordinal in enumerate(held["days"]):
-            sl = slice(int(edges[i]), int(edges[i + 1]))
-            out[date.fromordinal(int(ordinal))] = DayBars(
-                held["closes_at"][sl], held["open"][sl], held["high"][sl], held["low"][sl],
-                held["close"][sl], held["volume"][sl],
-            )  # fmt: skip
-        return out
+        # Each `held[...]` read decompresses the whole array anew: read each once, slice views.
+        lengths, days = held["lengths"], held["days"]
+        arrays = {
+            name: held[name] for name in ("closes_at", "open", "high", "low", "close", "volume")
+        }
+    edges = np.concatenate([[0], np.cumsum(lengths)])
+    out: dict[date, DayBars] = {}
+    for i, ordinal in enumerate(days):
+        sl = slice(int(edges[i]), int(edges[i + 1]))
+        out[date.fromordinal(int(ordinal))] = DayBars(**{n: a[sl] for n, a in arrays.items()})
+    return out

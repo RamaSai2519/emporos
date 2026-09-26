@@ -1,0 +1,17 @@
+S1 cash book, stock crossings k=1.5, 2024-01-01..2024-12-31: counts only
+46,302 signals over 245 sessions
+(loss limits off for counting, so the counts do not depend on any P&L)
+
+month     signals   entries taken by the arms: min  median  max
+2024-01     4,037                          43      98  155
+2024-02     4,076                          39     113  180
+2024-03     3,461                          33      90  150
+2024-04     3,708                          39      87  168
+2024-05     4,032                          41     101  179
+2024-06     3,582                          42      96  169
+2024-07     4,056                          39      89  165
+2024-08     3,832                          38     125  187
+2024-09     3,958                          34      85  151
+2024-10     4,226                          51     120  211
+2024-11     3,439                          44      87  156
+2024-12     3,895                          40     101  175

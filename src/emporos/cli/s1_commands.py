@@ -7,6 +7,7 @@ runs the 36 arms with their 200-run random-entry controls and writes the report 
 
 from __future__ import annotations
 
+import math
 from concurrent.futures import ProcessPoolExecutor
 from datetime import date, datetime
 from pathlib import Path
@@ -29,7 +30,7 @@ from emporos.research.s1.arms import cash_arms
 from emporos.research.s1.bars import CandleBarStore
 from emporos.research.s1.control import RandomEntries
 from emporos.research.s1.costs import CostCurve
-from emporos.research.s1.engine import BookEngine
+from emporos.research.s1.engine import BookEngine, BookLimits
 from emporos.research.s1.metrics import Bars
 from emporos.research.s1.report import S1Ledger, arm_table
 from emporos.research.s1.runner import ArmRunner, month_table, run_all
@@ -80,7 +81,12 @@ def _curves() -> dict[int, CostCurve]:
 
 
 def _prepare(
-    first: date, last: date, crossings: Path, cache: Path, workers: int
+    first: date,
+    last: date,
+    crossings: Path,
+    cache: Path,
+    workers: int,
+    limits: BookLimits | None = None,
 ) -> tuple[BookEngine, list[date], dict[date, list[Signal]]]:
     if last > DEV_LAST:
         raise ValueError("Dev is 2024: later days belong to the back-test years and Test")
@@ -91,7 +97,7 @@ def _prepare(
         list(pool.map(_warm_one, [(i, last, cache) for i in ids]))
     store = _store(last, cache)
     sessions = [d for d in store.sessions(NIFTY_ID) if first <= d <= last]
-    return BookEngine(store, _curves()), sessions, signals_by_day(signals)
+    return BookEngine(store, _curves(), limits), sessions, signals_by_day(signals)
 
 
 def research_s1_entry_counts(
@@ -104,7 +110,11 @@ def research_s1_entry_counts(
 ) -> None:
     """Signals and entries taken per month for the cash book. COUNTS ONLY: nothing about P&L."""
     try:
-        engine, sessions, signals = _prepare(first.date(), last.date(), crossings, cache, workers)
+        # No loss limits here: a kill would stop entries and so leak the P&L into a count.
+        limits = BookLimits(daily_loss=math.inf, total_loss=math.inf)
+        engine, sessions, signals = _prepare(
+            first.date(), last.date(), crossings, cache, workers, limits
+        )
         outcomes = run_all(ArmRunner(engine, sessions, signals), cash_arms(), workers)
     except (EmporosError, ValueError, OSError, KeyError) as error:
         typer.secho(f"s1-entry-counts failed: {error}", fg=typer.colors.RED)
@@ -112,6 +122,7 @@ def research_s1_entry_counts(
     lines = [
         f"S1 cash book, stock crossings k=1.5, {first.date()}..{last.date()}: counts only",
         f"{sum(len(v) for v in signals.values()):,} signals over {len(sessions)} sessions",
+        "(loss limits off for counting, so the counts do not depend on any P&L)",
         "", *month_table(outcomes, signals),
     ]  # fmt: skip
     reports.mkdir(parents=True, exist_ok=True)
