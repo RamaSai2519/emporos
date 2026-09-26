@@ -1,0 +1,100 @@
+# Declared BEFORE any run (PROFIT_PLAN.md §2.1; operator direction of 2026-09-26; EM-219), by the
+# head session. Not yet run: no entry, exit or P&L of this cell has been computed.
+#
+# What is tested. The operator's execution method: a LARGE position (80% of capital, with or without
+# 5x intraday leverage) taken WITH a move already under way, exited at a SMALL target (the round-trip
+# cost plus 0.5% or 1.0%), and, once the target is reached, not booked at once but held under a
+# trailing stop. The head's view, stated before the run: size and target shape the payoff; they do
+# not create an edge. The method can only pay if its entries point the right way more often than
+# chance. So this cell includes a RANDOM-ENTRY control with the identical exits, and the method is
+# judged against it, not only against zero.
+#
+# STAGE 1 (this declaration): entries that exist now, both numeric (crossing ledger, driver-atlas
+# plan §0a):
+#   E1 `stock_crossings`: every intraday crossing of a D1 name (the first 5-minute bar per
+#      name-session per direction on which the residual to market, sector and group passes 1.5 x its
+#      15-minute-scaled sigma), traded in the move's direction in CASH (intraday, MIS).
+#   E2 `index_crossings`: every intraday crossing of NIFTY or BANKNIFTY (the index's own 5-minute
+#      return path passing 1.5 x its 15-minute-scaled sigma), traded by BUYING the ATM option of the
+#      nearest weekly expiry with >= 1 full session left (CE for an up move, PE for a down move).
+# STAGE 2 (declared later with its own file, after this runs, with the SAME exit grid and no change
+# from what stage 1 shows): the driver-atlas with-the-move entries (Call C "continue") and the Track L
+# LLM signals.
+#
+# Rules (fixed now):
+# * One position at a time per book (cash book, options book, separate). No daily trade count.
+#   Signals while a position is open are skipped and counted. No entry after 14:45; square off 15:15.
+# * Entry: a marketable limit 5 bps through the crossing bar's close, filled on the NEXT 5-minute bar
+#   only, strictly through, at most 10% of that bar's volume (the shared intraday fill rule).
+# * Size (cash): notional = min(80,000 x leverage, 2,000 / stop distance), leverage in {1, 5}.
+#   Size (options): premium paid = min(80,000, 5,000 / stop fraction of premium), whole lots, lot
+#   sizes as of the day. The operator's loss limits are enforced BY THE STOP.
+# * Target T = the round-trip cost of that position at BENCHMARK costs (in % of notional or premium)
+#   plus p, p in {0.5%, 1.0%}.
+# * Stop (arm `stop`): `one_to_one` = T below/above entry; `half` = T / 2; `atr` = 1.0 x ATR(14) of
+#   5-minute bars at entry (for options, the ATR of the modelled premium).
+# * After the target is touched (arm `trail`), the stop moves and trails:
+#   `lock_fixed`: stop to entry + T, then trails the best price by a fixed gap (0.3% for stocks, 5% of
+#   premium for options); `half_peak`: stop = entry + max(cost, 50% of the best open gain);
+#   `atr`: stop trails the best price by 1.0 x ATR(14), never below entry + cost.
+# * Bar rules (conservative): a bar that touches both the stop and the target (or the trailing stop)
+#   is taken as the STOP. The best price for trailing updates on a bar's high/low, and the new stop
+#   applies from the NEXT bar. Gaps through a stop fill at the bar's open.
+# * Risk engine (PROFIT_PLAN §12.4): daily loss Rs 5,000, no new entries that day; total loss Rs 25,000
+#   from the window's start = kill (the arm is then reported as KILLED on that date, and it fails).
+# * Options prices (MODELLED, labelled as such in every report): Black-76 on the index spot of each
+#   5-minute bar, the previous session's futures basis, the ATM contract's implied volatility from the
+#   previous session's settle price held constant through the day, and time to expiry in minutes.
+#   Costs: the Track B options schedule (benchmark: 1 tick + 0.5% of premium per side; adverse: 1.5 x
+#   fees + 2 ticks + 1.5% of premium per side). When recorded option quotes exist (the EC2
+#   recorder, from 2026-09-28), the model's error against them is measured and reported; a model
+#   error larger than the benchmark slippage voids the options arms' verdict.
+# * Cash costs: the program's intraday schedule at benchmark and adverse, at the actual notional.
+#
+# Arms: cash E1 = stop (3) x leverage (2) x target p (2) x trail (3) = 36; options E2 = stop (3) x
+# target p (2) x trail (3) = 18 (leverage does not apply). 54 counted looks.
+#
+# Windows: DEV = 2024-01-01..2024-12-31 (all 54 arms). The 3 best arms (highest net Sharpe at
+# ADVERSE costs among those passing every bar below, at most 2 from one book) are then run ONCE on
+# the back-test years 2017-11-13..2023-12-31 (BANKNIFTY weekly options exist from 2016, NIFTY weekly
+# from 2019-02; E2 before 2019-02 is BANKNIFTY only). Survivors go to Test 2025-01-01..2026-03-18,
+# once. The vault stays sealed.
+#
+# RANDOM-ENTRY CONTROL (per arm, the gate that matters): the same book, exits, sizing, costs and
+# risk engine, with the same number of entries per day at uniformly random 5-minute bars between
+# 09:20 and 14:45 and a fair-coin direction, 200 seeded runs (seed 20260926). The arm must beat it:
+# p = (1 + runs with net >= the arm's) / 201 < 0.05.
+#
+# Known limits: 5-minute bars cannot show the order of prices inside a bar, so the stop-first rule
+# makes small targets look WORSE than they may be (the conservative direction); options are
+# modelled, not quoted, until the recorded quotes exist; D1 is today's index members (survivorship
+# matters little for intraday holds); leverage-5 arms carry the broker's MIS margin as an assumption.
+# Prior, stated now: about 2% that any arm passes Dev, the back-test years and Test.
+family: strategy
+slug: s1-size-target-trail
+hypothesis: >-
+  Taking a large position with a move already under way (a stock or index crossing its intraday
+  level), exiting at a small target of costs plus 0.5-1.0% with a stop, and trailing once the target
+  is reached, earns a net profit after adverse costs that beats the same exits on random entries.
+economic_rationale: >-
+  A move that is crossing its level often continues for a short while as slower participants react
+  and stops and breakouts trigger; a small target captures that short continuation before it
+  fades, and the trail keeps the rare large continuation. The counter-claim is that short-horizon
+  continuation after a crossing is already competed away by faster traders, in which case the
+  method equals the random-entry control minus its costs.
+falsification: >-
+  On Dev, an arm fails unless: net P&L > 0 at ADVERSE costs; t of the daily net P&L >= 3.0; >= 100
+  trades; max drawdown < Rs 15,000; the Rs 25,000 kill is never hit; >= 60% of months with trades
+  net positive; and it beats its random-entry control at p < 0.05. The same bars apply on the back-test
+  years and on Test. If no arm passes Dev, the method is closed on stage-1 entries and stage 2 tests
+  it only on entries that have passed their own atlas or Track L bars.
+parameter_grid:
+  book: ["cash_stock_crossings", "options_index_crossings"]
+  stop: ["one_to_one", "half", "atr"]
+  leverage: ["1", "5"]
+  target_p: ["0.005", "0.010"]
+  trail: ["lock_fixed", "half_peak", "atr"]
+feature_versions:
+  crossing_ledger: 1
+  modelled_index_options_black76: 1
+declared_at: 2026-09-26T10:30:00+05:30
