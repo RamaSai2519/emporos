@@ -68,8 +68,11 @@ class TestFixedTargetAndStop:
         assert stopped is not None and stopped.price == pytest.approx(101.0)
 
     def test_nothing_touched_squares_off_at_the_last_bar_by_1515(self) -> None:
-        rows = [bar(15 * 60 + 5, 100, 100.3, 99.8, 100.1), bar(15 * 60 + 15, 100.1, 100.4, 99.9, 100.2),
-                bar(15 * 60 + 20, 100.2, 105, 90, 95)]  # fmt: skip
+        rows = [
+            bar(15 * 60 + 5, 100, 100.3, 99.8, 100.1),
+            bar(15 * 60 + 15, 100.1, 100.4, 99.9, 100.2),
+            bar(15 * 60 + 20, 100.2, 105, 90, 95),
+        ]
         out = run_exit(self.policy, LONG, rows)
 
         assert out is not None
@@ -108,7 +111,8 @@ class TestStops:
 
 class TestTrails:
     def test_the_target_does_not_close_the_trade_the_trail_takes_over(self) -> None:
-        # bar 1 touches the 1% target (best 101.5); its stop applies from bar 2, which falls through it
+        # bar 1 touches the 1% target (best 101.5); its stop applies from bar 2, which falls
+        # through it
         policy = trail(OneToOneStop(), LockFixedTrail(0.003))
         out = run_exit(policy, LONG, bars((100, 101.5, 99.9, 101.4), (101.4, 101.6, 100.5, 100.9)))
 
