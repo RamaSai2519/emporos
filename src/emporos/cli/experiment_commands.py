@@ -71,6 +71,7 @@ from emporos.cli.posture_commands import research_collect_global_cues, research_
 from emporos.cli.ranked_screen_commands import research_screen_ranked
 from emporos.cli.results_commands import research_collect_results
 from emporos.cli.rotation_commands import research_screen_rotation
+from emporos.cli.s1_commands import research_run_s1_cash, research_s1_entry_counts
 from emporos.cli.screen_commands import research_screen
 from emporos.cli.stress_commands import research_stress_book
 from emporos.cli.swing_commands import research_screen_swing
@@ -102,6 +103,8 @@ experiments_app = typer.Typer(
 research_app.add_typer(experiments_app, name="experiments")
 research_app.add_typer(vault_app, name="vault")
 research_app.command("build-move-ledger")(research_build_move_ledger)
+research_app.command("s1-entry-counts")(research_s1_entry_counts)
+research_app.command("run-s1-cash")(research_run_s1_cash)
 research_app.command("screen")(research_screen)
 research_app.command("screen-ranked")(research_screen_ranked)
 research_app.command("collect-results")(research_collect_results)

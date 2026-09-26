@@ -1,9 +1,9 @@
 """5-minute OHLCV bars by session, as plain float arrays, for the S1 simulator (EM-219).
 
-`DayBars` is one instrument's one session. `BarStore` is the seam: production reads the vault-guarded,
-split-adjusted archive (composed in `emporos.cli`) through `CandleBarStore` and a per-name cache;
-tests hand in a dictionary. The ATR at an entry looks back over the session's bars so far and, if
-there are fewer than 14, the previous session's tail."""
+`DayBars` is one instrument's one session. `BarStore` is the seam: production reads the
+vault-guarded, split-adjusted archive (composed in `emporos.cli`) through `CandleBarStore` and a
+per-name cache; tests hand in a dictionary. The ATR at an entry looks back over the session's bars
+so far and, if there are fewer than 14, the previous session's tail."""
 
 from __future__ import annotations
 
@@ -86,8 +86,9 @@ def atr_before(store: BarStore, instrument_id: str, day: date, upto: int) -> flo
             closes = list(before.close) + closes
     if len(closes) < 2:
         return 0.0
-    h, low, c = np.array(highs[-ATR_BARS:]), np.array(lows[-ATR_BARS:]), np.array(closes)
-    previous = c[-len(h) - 1 : -1]
+    m = min(ATR_BARS, len(closes) - 1)  # true ranges need a previous close
+    h, low = np.array(highs[-m:]), np.array(lows[-m:])
+    previous = np.array(closes[-m - 1 : -1])
     tr = np.maximum(h - low, np.maximum(np.abs(h - previous), np.abs(low - previous)))
     return float(tr.mean())
 
@@ -95,16 +96,44 @@ def atr_before(store: BarStore, instrument_id: str, day: date, upto: int) -> flo
 class CandleBarStore:
     """Sessions built from candles, loaded a name at a time and kept."""
 
-    def __init__(self, loader: CandleRange, first: date, last: date) -> None:
+    def __init__(
+        self,
+        loader: CandleRange,
+        first: date,
+        last: date,
+        cache: Path | None = None,
+        tag: str = "",
+    ) -> None:
         self._loader, self._first, self._last = loader, first, last
+        self._cache, self._tag = cache, tag
         self._held: dict[str, dict[date, DayBars]] = {}
+
+    def warm(self, instrument_id: str) -> None:
+        """Load a name (from the cache if it is there) and keep it."""
+        self._name(instrument_id)
+
+    def sessions(self, instrument_id: str) -> list[date]:
+        return sorted(self._name(instrument_id))
 
     def _name(self, instrument_id: str) -> dict[date, DayBars]:
         if instrument_id not in self._held:
-            self._held[instrument_id] = sessions_from(
-                self._loader.load(instrument_id, self._first, self._last)
-            )
+            self._held[instrument_id] = self._read(instrument_id)
         return self._held[instrument_id]
+
+    def _read(self, instrument_id: str) -> dict[date, DayBars]:
+        cache = self._cache
+        path = None
+        if cache is not None:
+            path = cache / f"{instrument_id.replace(':', '_')}-{self._tag}.npz"
+            if path.exists():
+                return load_sessions(path)
+        sessions = sessions_from(self._loader.load(instrument_id, self._first, self._last))
+        if cache is not None and path is not None:
+            cache.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(".tmp.npz")
+            save_sessions(temporary, sessions)
+            temporary.replace(path)
+        return sessions
 
     def day(self, instrument_id: str, day: date) -> DayBars | None:
         return self._name(instrument_id).get(day)
