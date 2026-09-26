@@ -18,7 +18,7 @@ from emporos.cli.corporate_actions_commands import DEFAULT_TOKENS, research_symb
 from emporos.cli.intraday_bars import VaultedIntradayBars
 from emporos.core.config import Settings
 from emporos.core.errors import EmporosError
-from emporos.core.research_dir import research_dir
+from emporos.core.paths import research_dir
 from emporos.eventtrader.replay.vaulted_market import AdjustedBarLoader
 from emporos.research.adjustments import DEFAULT_LEDGER, AdjustmentLedger, PriceAdjuster
 from emporos.research.atlas.crossing_ledger import CrossingLedgerBuilder
