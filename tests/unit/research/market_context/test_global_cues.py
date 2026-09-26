@@ -108,7 +108,10 @@ class TestCollector:
             collector = CueCollector(get, tmp_path / "raw", ledger, FixedClock(), FRED)
             assert await collector.run(CUES[:2], FIRST, LAST, lambda _: None) == []
             await collector.run(CUES[:2], FIRST, LAST, lambda _: None)
-        assert len(asked) == 2  # the second run held both
+            assert len(asked) == 2  # the second run held both
+            (tmp_path / "raw" / "fred" / "SP500.csv").unlink()  # a wiped cache
+            await collector.run(CUES[:2], FIRST, LAST, lambda _: None)
+        assert len(asked) == 3  # only the missing reply was asked for again
         assert "id=SP500&cosd=2024-01-01&coed=2026-03-18" in asked[0]
         assert (tmp_path / "raw" / "fred" / "SP500.csv").read_text(encoding="utf-8") == CSV
         first = ledger.records()[0]

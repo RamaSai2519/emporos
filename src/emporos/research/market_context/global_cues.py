@@ -276,7 +276,8 @@ class CueCollector:
             if spec.prefix not in self._feed.ids:
                 continue  # a cue this source does not carry (FRED has no Asian index)
             series_id = self._feed.ids[spec.prefix]
-            if (self._feed.name, series_id, first, last) in done:
+            held = self._feed.file(self._root, spec.prefix).exists()
+            if (self._feed.name, series_id, first, last) in done and held:
                 progress(f"{series_id}: already held")
                 continue
             url = self._feed.url(series_id, first, last)
