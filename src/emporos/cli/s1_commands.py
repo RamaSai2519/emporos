@@ -43,8 +43,8 @@ DEFAULT_REPORTS = Path("docs/research/profit/reports/s1")
 DEFAULT_CROSSINGS = research_dir() / "atlas" / "crossing-ledger.parquet"
 DEFAULT_BARS = research_dir() / "s1-bars"
 
-_FIRST = typer.Option(DEV_FIRST, "--first", formats=["%Y-%m-%d"], help="First day.")
-_LAST = typer.Option(DEV_LAST, "--last", formats=["%Y-%m-%d"], help="Last day.")
+_FIRST = typer.Option(datetime(2024, 1, 1), "--first", formats=["%Y-%m-%d"], help="First day.")
+_LAST = typer.Option(datetime(2024, 12, 31), "--last", formats=["%Y-%m-%d"], help="Last day.")
 _CROSSINGS = typer.Option(DEFAULT_CROSSINGS, help="The crossing ledger (Track R).")
 _BARS = typer.Option(DEFAULT_BARS, help="Per-name 5-minute OHLCV cache.")
 _REPORTS = typer.Option(DEFAULT_REPORTS, help="Where the report goes.")

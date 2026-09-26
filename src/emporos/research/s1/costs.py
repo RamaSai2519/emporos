@@ -42,7 +42,7 @@ class CostCurve:
     def _probe(exact: ExactCosts, side: Side, notional: int, scenario: Scenario) -> float:
         quantity = max(1, int(Decimal(notional) / PROBE_PRICE))
         leg = TradeLeg(
-            "PROBE", Instrument.CASH_INTRADAY, Product.INTRADAY, side, quantity, _WHEN,
+            "NSE:1", Instrument.CASH_INTRADAY, Product.INTRADAY, side, quantity, _WHEN,
             PROBE_PRICE, _WHEN, PROBE_PRICE,
         )  # fmt: skip
         return float(exact.cost(leg, scenario)) / float(quantity * PROBE_PRICE)
