@@ -23,6 +23,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN
+- id: rbi_mpc:2017-12-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2017-12-06'
+  available_at: '2017-12-06T14:30:00+05:30'
+  source: https://www.rbi.org.in/commonman/Upload/English/PressRelease/PDFs/PR1542EN06122017.PDF
+  checked_on: '2026-09-26'
+  value: '6.00'
+  note: '2017 to Feb 2019: policy at 14:30 IST'
 - id: fomc:2017-12-13
   kind: fomc
   name: FOMC statement
@@ -69,6 +78,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +HATSUN,RELCAPITAL,TIFIN -CESC,FORTIS,STAR
+- id: rbi_mpc:2018-02-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-02-07'
+  available_at: '2018-02-07T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.00'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2018-02-21
   kind: index_notice
   name: NIFTY index change notice
@@ -94,6 +112,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABCAPITAL,GICRE,GRASIM,L&TFH,SBILIFE -GLAXO,GLENMARK,GSKCONS,TATAPOWER,TORNTPHARM; NIFTY MIDCAP 150 +AVANTIFEED,DBL,FCONSUMER,GLAXO,GLENMARK,GODREJAGRO,GSKCONS,HONAUT,IBREALEST,IBVENTURES,ICICIGI,IIFL,STRTECH,TATAPOWER,TORNTPHARM
     -ADANIENT,DALMIABHA,DBCORP,GPPL,IOB,IPCALAB,JYOTHYLAB,L&TFH,LALPATHLAB,NH,RCOM,SYNDIBANK,VIJAYABANK,VTL,WELSPUNIND
+- id: rbi_mpc:2018-04-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-04-05'
+  available_at: '2018-04-05T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.00'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2018-05-02
   kind: fomc
   name: FOMC statement
@@ -117,6 +144,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM; time of day not on the notice, counted from 23:59 IST
+- id: rbi_mpc:2018-06-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-06-06'
+  available_at: '2018-06-06T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.25'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2018-06-13
   kind: fomc
   name: FOMC statement
@@ -139,6 +175,15 @@ events:
   available_at: '2018-08-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2018-08-01
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-08-01'
+  available_at: '2018-08-01T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2018-08-28
   kind: index_notice
   name: NIFTY index change notice
@@ -164,6 +209,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BANDHANBNK,BIOCON,HDFCLIFE,ICICIGI,NIACL -CUMMINSIND,EMAMILTD,PFC,PNB,RECLTD; NIFTY MIDCAP 150 +ASTRAL,CUMMINSIND,EMAMILTD,ESCORTS,GRAPHITE,HAL,HEG,ISEC,PFC,PNB,RECLTD,RNAM,SUNDARMFIN
     -AKZOINDIA,BIOCON,GUJFLUORO,IBREALEST,ICICIGI,IDFC,IRB,KAJARIACER,KARURVYSYA,SCHAEFFLER,SUZLON,TTKPRESTIG,WOCKPHARMA
+- id: rbi_mpc:2018-10-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-10-05'
+  available_at: '2018-10-05T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2018-11-08
   kind: fomc
   name: FOMC statement
@@ -171,6 +225,15 @@ events:
   available_at: '2018-11-09T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2018-12-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2018-12-05'
+  available_at: '2018-12-05T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: election_result:2018-12-11
   kind: election_result
   name: Rajasthan, Madhya Pradesh, Chhattisgarh, Telangana, Mizoram assembly results
@@ -217,6 +280,15 @@ events:
   source: https://en.wikipedia.org/wiki/2019_Interim-Union_budget_of_India
   checked_on: '2026-09-26'
   note: Interim budget 2019-20; speech from 11:00 IST
+- id: rbi_mpc:2019-02-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-02-07'
+  available_at: '2019-02-07T14:30:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.25'
+  note: '2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2019-02-25
   kind: index_notice
   name: NIFTY index change notice
@@ -241,6 +313,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs25022019.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHLDNG,DIVISLAB,HDFCAMC,PAGEIND,UBL -ABCAPITAL,BEL,LICHSGFIN,OIL,SUNTV; NIFTY MIDCAP 150 +ABCAPITAL,ATUL,BEL,ERIS,GUJFLUORO,IPCALAB,LICHSGFIN,OIL,RELAXO,SUNTV -AARTIIND,AVANTIFEED,BAJAJHLDNG,DIVISLAB,GET&D,PAGEIND,PCJEWELLER,TV18BRDCST,UBL,VAKRANGEE
+- id: rbi_mpc:2019-04-04
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-04-04'
+  available_at: '2019-04-04T11:45:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.00'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2019-05-01
   kind: fomc
   name: FOMC statement
@@ -256,6 +337,15 @@ events:
   source: https://en.wikipedia.org/wiki/2019_Indian_general_election
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2019-06-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-06-06'
+  available_at: '2019-06-06T11:45:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.75'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2019-06-13
   kind: index_notice
   name: NIFTY index change notice
@@ -294,6 +384,15 @@ events:
   available_at: '2019-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2019-08-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-08-07'
+  available_at: '2019-08-07T11:45:00+05:30'
+  source: https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=47818
+  checked_on: '2026-09-26'
+  value: '5.40'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases)'
 - id: index_notice:2019-08-28
   kind: index_notice
   name: NIFTY index change notice
@@ -326,6 +425,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs17092019.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +TTKPRESTIG -THOMASCOOK
+- id: rbi_mpc:2019-10-04
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-10-04'
+  available_at: '2019-10-04T11:45:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.15'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: election_result:2019-10-24
   kind: election_result
   name: Maharashtra and Haryana assembly results
@@ -341,6 +449,15 @@ events:
   available_at: '2019-10-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2019-12-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2019-12-05'
+  available_at: '2019-12-05T11:45:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.15'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2019-12-11
   kind: fomc
   name: FOMC statement
@@ -379,6 +496,15 @@ events:
   source: https://en.wikipedia.org/wiki/2020_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2020-21; a Saturday, markets open; speech from 11:00 IST
+- id: rbi_mpc:2020-02-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-02-06'
+  available_at: '2020-02-06T11:45:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.15'
+  note: 'Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: election_result:2020-02-11
   kind: election_result
   name: Delhi assembly results
@@ -419,6 +545,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANITRANS -YESBANK; NIFTY MIDCAP 150 +ADANIGREEN -ADANITRANS
+- id: rbi_mpc:2020-03-27
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-03-27'
+  available_at: '2020-03-27T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.40'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2020-04-29
   kind: fomc
   name: FOMC statement
@@ -426,6 +561,15 @@ events:
   available_at: '2020-04-29T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2020-05-22
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-05-22'
+  available_at: '2020-05-22T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2020-06-10
   kind: fomc
   name: FOMC statement
@@ -474,6 +618,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +SBICARD -VEDL
+- id: rbi_mpc:2020-08-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-08-06'
+  available_at: '2020-08-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2020-08-20
   kind: index_notice
   name: NIFTY index change notice
@@ -499,6 +652,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIGREEN,ALKEM,LTI,TATACONSUM -NHPC,PAGEIND,SRTRANSFIN,ZEEL; NIFTY MIDCAP 150 +ADANIENT,ASTRAZEN,ITI,JMFINANCIL,METROPOLIS,NAVINFLUOR,NHPC,PAGEIND,SFL,SRTRANSFIN,TATACHEM,TIINDIA,YESBANK,ZEEL,ZYDUSWELL
     -ADANIGREEN,ADANIPOWER,ALKEM,BLUEDART,CENTRALBK,EIHOTEL,HEXAWARE,IDBI,IOB,JUBILANT,LTI,PNBHOUSING,QUESS,TATACONSUM,UCOBANK
+- id: rbi_mpc:2020-10-09
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-10-09'
+  available_at: '2020-10-09T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2020-11-05
   kind: fomc
   name: FOMC statement
@@ -514,6 +676,15 @@ events:
   source: https://www.business-standard.com/article/elections/bihar-election-result-2020-live-updates-rjd-tejashwi-yadav-wins-nitish-kumar-bihar-cm-bjp-modi-paswan-highlights-bihar-counting-120110901687_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2020-12-04
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2020-12-04'
+  available_at: '2020-12-04T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2020-12-16
   kind: fomc
   name: FOMC statement
@@ -536,6 +707,15 @@ events:
   source: https://en.wikipedia.org/wiki/2021_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2021-22; speech from 11:00 IST
+- id: rbi_mpc:2021-02-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-02-05'
+  available_at: '2021-02-05T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2021-02-23
   kind: index_notice
   name: NIFTY index change notice
@@ -561,6 +741,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIENT,APOLLOHOSP,JUBLFOOD,MRF,VEDL,YESBANK -BANKBARODA,CONCOR,GICRE,HINDZINC,OFSS,PFC; NIFTY MIDCAP 150 +BANKBARODA,CONCOR,DEEPAKNTR,DIXON,GICRE,HINDZINC,IDBI,INDIAMART,LAURUSLABS,MAXHEALTH,OFSS,PERSISTENT,PFC,PGHL,SUVENPHAR,TATAELXSI
     -ADANIENT,APOLLOHOSP,EDELWEISS,ERIS,FRETAIL,HUDCO,JUBLFOOD,MRF,MRPL,NATIONALUM,NLCINDIA,SFL,SHRIRAMCIT,SYMPHONY,WABCOINDIA,YESBANK
+- id: rbi_mpc:2021-04-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-04-07'
+  available_at: '2021-04-07T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2021-04-28
   kind: fomc
   name: FOMC statement
@@ -576,6 +765,15 @@ events:
   source: https://www.business-standard.com/article/elections/election-results-2021-live-updates-west-bengal-tamil-nadu-kerala-puducherry-assam-vote-counting-highlights-ldf-dmk-mamata-banerjee-narendra-modi-bjp-tmc-congress-121050200049_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2021-06-04
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-06-04'
+  available_at: '2021-06-04T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2021-06-15
   kind: index_notice
   name: NIFTY index change notice
@@ -606,6 +804,15 @@ events:
   available_at: '2021-07-28T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2021-08-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-08-06'
+  available_at: '2021-08-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2021-09-15
   kind: index_notice
   name: NIFTY index change notice
@@ -630,6 +837,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs15092021.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +ABBOTINDIA,AFFLE,ALKEM,ALKYLAMINE,APLAPOLLO,BLUEDART,HINDCOPPER,INDIANB,IRFC,KAJARIACER,LINDEINDIA,LODHA,MRF,NATIONALUM,PETRONET,UBL,VAIBHAVGBL,WABCOINDIA -AKZOINDIA,ASTRAZEN,BANKBARODA,BBTC,CESC,CHOLAFIN,CREDITACC,GODREJAGRO,IBULHSGFIN,IDBI,IIFLWAM,JINDALSTEL,JMFINANCIL,PGHL,PIIND,SAIL,SJVN,VGUARD
+- id: rbi_mpc:2021-10-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-10-08'
+  available_at: '2021-10-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2021-10-22
   kind: index_notice
   name: NIFTY index change notice
@@ -653,6 +869,15 @@ events:
   available_at: '2021-11-03T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2021-12-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2021-12-08'
+  available_at: '2021-12-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2021-12-15
   kind: fomc
   name: FOMC statement
@@ -675,6 +900,15 @@ events:
   source: https://en.wikipedia.org/wiki/Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2022-23; speech from 11:00 IST
+- id: rbi_mpc:2022-02-10
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-02-10'
+  available_at: '2022-02-10T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2022-02-24
   kind: index_notice
   name: NIFTY index change notice
@@ -716,6 +950,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs05042022.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +GMRINFRA -AARTIIND; time of day not on the notice, counted from 23:59 IST
+- id: rbi_mpc:2022-04-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-04-08'
+  available_at: '2022-04-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2022-05-04
   kind: fomc
   name: FOMC statement
@@ -731,6 +974,24 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs05042022.pdf
   checked_on: '2026-09-26'
   note: NIFTY MIDCAP 150 +GMRINFRA -AARTIIND
+- id: rbi_mpc:2022-05-04
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-05-04'
+  available_at: '2022-05-04T16:40:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.40'
+  note: off-cycle; announced in the afternoon (time recalled, not re-read); unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)
+- id: rbi_mpc:2022-06-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-06-08'
+  available_at: '2022-06-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '4.90'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2022-06-15
   kind: fomc
   name: FOMC statement
@@ -753,6 +1014,15 @@ events:
   available_at: '2022-07-27T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2022-08-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-08-05'
+  available_at: '2022-08-05T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.40'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_effective:2022-08-08
   kind: index_effective
   name: NIFTY index change effective
@@ -786,6 +1056,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ATGL,BEL,HAL,IRCTC,MOTHERSON,MPHASIS -JUBLFOOD,LUPIN,MINDTREE,PNB,SAIL,ZYDUSLIFE; NIFTY MIDCAP 150 +AWL,DEVYANI,JUBLFOOD,KPRMILL,LUPIN,MANYAVAR,MSUMI,PATANJALI,PNB,POONAWALLA,SAIL,ZYDUSLIFE
     -APOLLOTYRE,ATGL,BEL,EXIDEIND,GLENMARK,HAL,IDBI,IRCTC,MANAPPURAM,METROPOLIS,MPHASIS,NUVOCO
+- id: rbi_mpc:2022-09-30
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-09-30'
+  available_at: '2022-09-30T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.90'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2022-11-02
   kind: fomc
   name: FOMC statement
@@ -793,6 +1072,15 @@ events:
   available_at: '2022-11-02T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2022-12-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2022-12-07'
+  available_at: '2022-12-07T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.25'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: election_result:2022-12-08
   kind: election_result
   name: Gujarat and Himachal Pradesh assembly results
@@ -823,6 +1111,15 @@ events:
   available_at: '2023-02-02T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2023-02-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-02-08'
+  available_at: '2023-02-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2023-02-17
   kind: index_notice
   name: NIFTY index change notice
@@ -848,6 +1145,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ABB,AWL,CANBK,PAGEIND,VBL -BANDHANBNK,BIOCON,GLAND,MPHASIS,PAYTM; NIFTY MIDCAP 150 +AARTIIND,ADANIPOWER,APOLLOTYRE,BANDHANBNK,BIOCON,FINEORG,GLAND,METROBRAND,MPHASIS,NMDC,PAYTM,PEL,TIMKEN
     -ABB,APLLTD,AWL,CANBK,GSPL,HATSUN,IEX,INDIAMART,NATCOPHARM,NATIONALUM,PAGEIND,SANOFI,VBL
+- id: rbi_mpc:2023-04-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-04-06'
+  available_at: '2023-04-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2023-05-03
   kind: fomc
   name: FOMC statement
@@ -863,6 +1169,15 @@ events:
   source: https://www.deccanherald.com/elections/karnataka/karnataka-assembly-elections-2023-parties-gear-up-for-results-counting-to-start-at-8am-on-may-13-1218251.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2023-06-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-06-08'
+  available_at: '2023-06-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2023-06-14
   kind: fomc
   name: FOMC statement
@@ -893,6 +1208,15 @@ events:
   available_at: '2023-07-26T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2023-08-10
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-08-10'
+  available_at: '2023-08-10T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2023-08-17
   kind: index_notice
   name: NIFTY index change notice
@@ -918,6 +1242,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +PNB,SHRIRAMFIN,TRENT,TVSMOTOR,ZYDUSLIFE -ACC,HDFCAMC,INDUSTOWER,NYKAA,PAGEIND; NIFTY MIDCAP 150 +ACC,BDL,CARBORUNIV,FACT,HDFCAMC,INDUSTOWER,JSL,KPITTECH,MAHABANK,MAZDOCK,NYKAA,PAGEIND,RVNL
     -AAVAS,AFFLE,ALKYLAMINE,CLEAN,FINEORG,HAPPSTMNDS,NAM-INDIA,PNB,SHRIRAMFIN,TRENT,TTML,TVSMOTOR,ZYDUSLIFE
+- id: rbi_mpc:2023-10-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-10-06'
+  available_at: '2023-10-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2023-11-01
   kind: fomc
   name: FOMC statement
@@ -933,6 +1266,15 @@ events:
   source: https://www.tribuneindia.com/news/india/five-states-go-to-polls-from-nov-7-to-30-results-on-dec-3-551868
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2023-12-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2023-12-08'
+  available_at: '2023-12-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2023-12-13
   kind: fomc
   name: FOMC statement
@@ -955,6 +1297,15 @@ events:
   source: https://prsindia.org/budgets/parliament/interim-union-budget-2024-25-analysis
   checked_on: '2026-09-26'
   note: Interim budget 2024-25; speech from 11:00 IST
+- id: rbi_mpc:2024-02-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-02-08'
+  available_at: '2024-02-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2024-02-28
   kind: index_notice
   name: NIFTY index change notice
@@ -979,6 +1330,15 @@ events:
   source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf
   checked_on: '2026-09-26'
   note: NIFTY 100 +ADANIPOWER,IRFC,JIOFIN,PFC,RECLTD -AWL,MUTHOOTFIN,PGHH,PIIND,UPL; NIFTY MIDCAP 150 +AWL,IDBI,IREDA,JSWINFRA,KALYANKJIL,KEI,LLOYDSME,MUTHOOTFIN,PGHH,PIIND,SJVN,SUZLON,TATATECH,UPL -AARTIIND,ADANIPOWER,BLUEDART,CROMPTON,IRFC,NAVINFLUOR,PFC,PFIZER,RAJESHEXPO,RECLTD,RELAXO,TRIDENT,VINATIORGA,WHIRLPOOL
+- id: rbi_mpc:2024-04-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-04-05'
+  available_at: '2024-04-05T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2024-05-01
   kind: fomc
   name: FOMC statement
@@ -994,6 +1354,15 @@ events:
   source: https://www.newsonair.gov.in/counting-of-votes-for-all-seven-phases-of-lok-sabha-elections-to-begin-from-8-am-tomorrow
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2024-06-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-06-07'
+  available_at: '2024-06-07T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2024-06-12
   kind: fomc
   name: FOMC statement
@@ -1016,6 +1385,15 @@ events:
   available_at: '2024-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2024-08-08
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-08-08'
+  available_at: '2024-08-08T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2024-08-23
   kind: index_notice
   name: NIFTY index change notice
@@ -1050,6 +1428,15 @@ events:
   source: https://newsonair.gov.in/counting-of-votes-underway-for-jk-and-haryana-assembly-elections
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2024-10-09
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-10-09'
+  available_at: '2024-10-09T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2024-11-07
   kind: fomc
   name: FOMC statement
@@ -1065,6 +1452,15 @@ events:
   source: https://www.newsonair.gov.in/counting-of-votes-for-assembly-elections-in-maharashtra-jharkhand-along-with-by-polls-in-46-assembly-seats-2-parliamentary-constituencies-underway
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2024-12-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2024-12-06'
+  available_at: '2024-12-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2024-12-18
   kind: fomc
   name: FOMC statement
@@ -1087,6 +1483,15 @@ events:
   source: https://en.wikipedia.org/wiki/2025_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2025-26; speech from 11:00 IST
+- id: rbi_mpc:2025-02-07
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-02-07'
+  available_at: '2025-02-07T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.25'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: election_result:2025-02-08
   kind: election_result
   name: Delhi assembly results
@@ -1120,6 +1525,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
     -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA
+- id: rbi_mpc:2025-04-09
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-04-09'
+  available_at: '2025-04-09T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '6.00'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2025-05-07
   kind: fomc
   name: FOMC statement
@@ -1127,6 +1541,15 @@ events:
   available_at: '2025-05-07T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2025-06-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-06-06'
+  available_at: '2025-06-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2025-06-18
   kind: fomc
   name: FOMC statement
@@ -1141,6 +1564,15 @@ events:
   available_at: '2025-07-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: rbi_mpc:2025-08-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-08-06'
+  available_at: '2025-08-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2025-08-22
   kind: fomc
   name: FOMC statement
@@ -1173,6 +1605,15 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +ENRIN,HINDZINC,MAXHEALTH,MAZDOCK,SOLARINDS -DABUR,HEROMOTOCO,ICICIPRULI,INDUSINDBK,SWIGGY; NIFTY MIDCAP 150 +DABUR,FACT,GODFRYPHLP,HEROMOTOCO,HEXT,ICICIPRULI,IDBI,INDUSINDBK,IOB,ITCHOTELS,PGHH,SWIGGY,UCOBANK
     -ABFRL,BANDHANBNK,EMAMILTD,GLAND,HINDZINC,MAXHEALTH,MAZDOCK,MRPL,MSUMI,OLAELEC,SOLARINDS,STARHEALTH,SUNTV
+- id: rbi_mpc:2025-10-01
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-10-01'
+  available_at: '2025-10-01T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.50'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2025-10-29
   kind: fomc
   name: FOMC statement
@@ -1188,6 +1629,15 @@ events:
   source: https://www.newsonair.gov.in/nda-poised-for-landslide-in-bihar-as-results-emerge-for-all-243-seats
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: rbi_mpc:2025-12-05
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2025-12-05'
+  available_at: '2025-12-05T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.25'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: fomc:2025-12-10
   kind: fomc
   name: FOMC statement
@@ -1210,6 +1660,15 @@ events:
   source: https://www.visionias.in/blog/syllabus-pyqs/union-budget-2026-date-structure-process-highlights-download-pdf
   checked_on: '2026-09-26'
   note: Budget 2026-27; a Sunday, markets opened for it; speech from 11:00 IST
+- id: rbi_mpc:2026-02-06
+  kind: rbi_mpc
+  name: RBI MPC policy decision
+  date: '2026-02-06'
+  available_at: '2026-02-06T10:00:00+05:30'
+  source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+  checked_on: '2026-09-26'
+  value: '5.25'
+  note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
 - id: index_notice:2026-02-23
   kind: index_notice
   name: NIFTY index change notice

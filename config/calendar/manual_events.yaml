@@ -241,3 +241,462 @@ events:
     source: https://www.newsonair.gov.in/nda-poised-for-landslide-in-bihar-as-results-emerge-for-all-243-seats
     checked_on: 2026-09-26
     note: "counting starts 08:00 IST; trends by about 09:00; the full result later that day"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2017-12-06
+    at: "14:30"
+    zone: IST
+    value: "6.00"
+    source: https://www.rbi.org.in/commonman/Upload/English/PressRelease/PDFs/PR1542EN06122017.PDF
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-02-07
+    at: "14:30"
+    zone: IST
+    value: "6.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-04-05
+    at: "14:30"
+    zone: IST
+    value: "6.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-06-06
+    at: "14:30"
+    zone: IST
+    value: "6.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-08-01
+    at: "14:30"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-10-05
+    at: "14:30"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2018-12-05
+    at: "14:30"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-02-07
+    at: "14:30"
+    zone: IST
+    value: "6.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "2017 to Feb 2019: policy at 14:30 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-04-04
+    at: "11:45"
+    zone: IST
+    value: "6.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-06-06
+    at: "11:45"
+    zone: IST
+    value: "5.75"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-08-07
+    at: "11:45"
+    zone: IST
+    value: "5.40"
+    source: https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=47818
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-10-04
+    at: "11:45"
+    zone: IST
+    value: "5.15"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2019-12-05
+    at: "11:45"
+    zone: IST
+    value: "5.15"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-02-06
+    at: "11:45"
+    zone: IST
+    value: "5.15"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "Apr 2019 to Feb 2020: resolution placed on the website at 11:45 IST (RBI press releases); date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-03-27
+    at: "10:00"
+    zone: IST
+    value: "4.40"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-05-22
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-08-06
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-10-09
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2020-12-04
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-02-05
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-04-07
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-06-04
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-08-06
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-10-08
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2021-12-08
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-02-10
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-04-08
+    at: "10:00"
+    zone: IST
+    value: "4.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-05-04
+    at: "16:40"
+    zone: IST
+    value: "4.40"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "off-cycle; announced in the afternoon (time recalled, not re-read); unscheduled meeting; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-06-08
+    at: "10:00"
+    zone: IST
+    value: "4.90"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-08-05
+    at: "10:00"
+    zone: IST
+    value: "5.40"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-09-30
+    at: "10:00"
+    zone: IST
+    value: "5.90"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2022-12-07
+    at: "10:00"
+    zone: IST
+    value: "6.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-02-08
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-04-06
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-06-08
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-08-10
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-10-06
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2023-12-08
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-02-08
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-04-05
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-06-07
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-08-08
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-10-09
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2024-12-06
+    at: "10:00"
+    zone: IST
+    value: "6.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-02-07
+    at: "10:00"
+    zone: IST
+    value: "6.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-04-09
+    at: "10:00"
+    zone: IST
+    value: "6.00"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-06-06
+    at: "10:00"
+    zone: IST
+    value: "5.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-08-06
+    at: "10:00"
+    zone: IST
+    value: "5.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-10-01
+    at: "10:00"
+    zone: IST
+    value: "5.50"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2025-12-05
+    at: "10:00"
+    zone: IST
+    value: "5.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
+  - kind: rbi_mpc
+    name: "RBI MPC policy decision"
+    date: 2026-02-06
+    at: "10:00"
+    zone: IST
+    value: "5.25"
+    source: https://www.rbi.org.in/scripts/Annualpolicy.aspx
+    checked_on: 2026-09-26
+    note: "from Mar 2020: Governor's statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)"
