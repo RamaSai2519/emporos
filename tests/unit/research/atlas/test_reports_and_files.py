@@ -83,6 +83,8 @@ class TestReports:
         assert "stock (k=1.5): n=30" in text and "50.0% already there at the open" in text
         assert "resid to 1515" in text and "raw   to 5d" in text
         assert "by year: 2024" in text
+        assert "Crossings per month and kind:" in text and "2024-01  " in text
+        assert "stock@1.5" in text
 
 
 class TestFiles:

@@ -119,6 +119,7 @@ def crossing_lines(block: CrossingBlock) -> list[str]:
         " (the no-cause baseline), in the crossing's direction, from the entry reference after the"
         " crossing bar, in percent",
         "",
+        *_crossing_months(cols, days, kinds),
     ]
     for kind, k in kinds:
         rows = [
@@ -128,6 +129,24 @@ def crossing_lines(block: CrossingBlock) -> list[str]:
         ]
         lines += _kind(block, rows, days, kind, k)
     return lines
+
+
+def _crossing_months(
+    cols: dict[str, list[object]], days: list[date], kinds: list[tuple[str, float]]
+) -> list[str]:
+    counts: Counter[tuple[str, tuple[str, float]]] = Counter()
+    for day, kind, k in zip(days, cols["kind"], cols["k"], strict=True):
+        counts[(f"{day.year}-{day.month:02d}", (str(kind), float(k)))] += 1  # type: ignore[arg-type]
+    labels = [f"{kind}@{k}" if k else kind for kind, k in kinds]
+    width = max(len(label) for label in labels) + 2
+    lines = [
+        "Crossings per month and kind:",
+        "  month   " + "".join(f"{x:>{width}}" for x in labels),
+    ]
+    for month in sorted({m for m, _ in counts}):
+        cells = "".join(f"{counts[(month, key)]:>{width},}" for key in kinds)
+        lines.append(f"  {month}  {cells}")
+    return [*lines, ""]
 
 
 def _kind(
