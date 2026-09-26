@@ -32,14 +32,15 @@ from typing import Protocol
 
 import httpx
 
-from emporos.core.clock import Clock
+from emporos.core.clock import IST, Clock
 from emporos.core.paths import research_dir
 from emporos.research.filings.collector import CollectionHalted
 from emporos.research.filings.polite import NotFound, PoliteGet, SourceRefused
 from emporos.research.filings.raw_store import FetchLedger, FetchRecord
 
 __all__ = [
-    "CUES", "DEFAULT_CUES_LEDGER", "DEFAULT_CUES_RAW_DIR", "FEEDS", "FRED", "YAHOO", "CueCollector",
+    "ASIA_CUES", "CUES", "DEFAULT_CUES_LEDGER", "DEFAULT_CUES_RAW_DIR", "FEEDS", "FRED", "YAHOO",
+    "CueCollector",
     "CueFeed", "CueSeries", "CueSpec", "CueTransform", "GlobalCues", "LevelAndBasisPoints",
     "PercentChange", "parse_fred_csv", "parse_yahoo_chart",
 ]  # fmt: skip
@@ -72,6 +73,9 @@ class LevelAndBasisPoints:
 class CueSpec:
     prefix: str  # the key prefix: sp500, nasdaq, usdinr, brent, us10y
     transform: CueTransform
+    # An Asian index closes DURING the Indian session: an observation dated `d` is known from
+    # `close_ist` on `d` itself. None = a US-session value, known from 01:30-02:30 IST on `d + 1`.
+    close_ist: time | None = None
 
 
 CUES = (
@@ -80,6 +84,14 @@ CUES = (
     CueSpec("usdinr", PercentChange()),
     CueSpec("brent", PercentChange()),
     CueSpec("us10y", LevelAndBasisPoints()),
+)
+
+# Asia closes (Yahoo only): Nikkei 15:00 JST = 11:30 IST, KOSPI 15:30 KST = 12:00 IST, Hang Seng
+# 16:00 HKT = 13:30 IST. Not in `CUES`: the morning posture keys stay the five above.
+ASIA_CUES = (
+    CueSpec("nikkei", PercentChange(), time(11, 30)),
+    CueSpec("kospi", PercentChange(), time(12, 0)),
+    CueSpec("hangseng", PercentChange(), time(13, 30)),
 )
 
 
@@ -108,10 +120,14 @@ class CueSeries:
         self._observations = sorted(observations)
 
     def last_two_before(
-        self, day: date
+        self, day: date, known_on_day: Callable[[date], bool] | None = None
     ) -> tuple[tuple[date, float], tuple[date, float] | None] | None:
-        """The latest observation dated strictly before `day` and the one before it, or None."""
-        known = [o for o in self._observations if o[0] < day]
+        """The latest observation dated strictly before `day` (and, if `known_on_day` says so, the
+        one dated `day` itself) and the one before it, or None."""
+        known = [
+            o for o in self._observations
+            if o[0] < day or (o[0] == day and known_on_day is not None and known_on_day(day))
+        ]  # fmt: skip
         if not known:
             return None
         return known[-1], (known[-2] if len(known) > 1 else None)
@@ -179,7 +195,8 @@ FRED = CueFeed(
 )  # fmt: skip
 YAHOO = CueFeed(
     "yahoo",
-    {"sp500": "^GSPC", "nasdaq": "^IXIC", "usdinr": "INR=X", "brent": "BZ=F", "us10y": "^TNX"},
+    {"sp500": "^GSPC", "nasdaq": "^IXIC", "usdinr": "INR=X", "brent": "BZ=F", "us10y": "^TNX",
+     "nikkei": "^N225", "kospi": "^KS11", "hangseng": "^HSI"},
     _yahoo_url,
     parse_yahoo_chart,
     "json",
@@ -195,10 +212,22 @@ class GlobalCues:
         self._specs = tuple(specs)
 
     def lines(self, day: date) -> dict[str, float]:
+        """What is known at 09:00 IST on `day`."""
+        return self.lines_at(datetime.combine(day, time(9, 0), tzinfo=IST))
+
+    def lines_at(self, moment: datetime) -> dict[str, float]:
+        """What is known at `moment`: a US value from its close (01:30-02:30 IST next day), an Asian
+        value from its own close on its own day."""
+        day = moment.astimezone(IST).date()
         out: dict[str, float] = {}
         for spec in self._specs:
             found = self._series.get(spec.prefix)
-            pair = found.last_two_before(day) if found is not None else None
+            closed = spec.close_ist
+
+            def known(d: date, closed: time | None = closed) -> bool:
+                return closed is not None and datetime.combine(d, closed, tzinfo=IST) <= moment
+
+            pair = found.last_two_before(day, known) if found is not None else None
             if pair is None or pair[1] is None:
                 continue
             (seen, latest), (_, previous) = pair[0], pair[1]
@@ -215,6 +244,8 @@ class GlobalCues:
         series with no observations)."""
         series: dict[str, CueSeries] = {}
         for spec in specs:
+            if spec.prefix not in feed.ids:
+                continue  # FRED has no Asian index
             path = feed.file(root, spec.prefix)
             text = path.read_text(encoding="utf-8") if path.exists() else ""
             series[spec.prefix] = CueSeries(feed.parse(text, first, last))
@@ -242,6 +273,8 @@ class CueCollector:
         failed: list[str] = []
         streak = 0
         for spec in specs:
+            if spec.prefix not in self._feed.ids:
+                continue  # a cue this source does not carry (FRED has no Asian index)
             series_id = self._feed.ids[spec.prefix]
             if (self._feed.name, series_id, first, last) in done:
                 progress(f"{series_id}: already held")

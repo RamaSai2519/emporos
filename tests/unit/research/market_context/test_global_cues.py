@@ -205,3 +205,45 @@ class TestYahoo:
                 await collector.run(CUES, FIRST, LAST, lambda _: None)
         assert (tmp_path / "raw" / "yahoo" / "_GSPC.json").read_text(encoding="utf-8") == good
         assert [(r.source, r.symbol, r.count) for r in ledger.records()] == [("yahoo", "^GSPC", 2)]
+
+
+class TestAsia:
+    """An Asian close is known from its own close on its own day (IST), not the next morning."""
+
+    def cues(self) -> GlobalCues:
+        from emporos.research.market_context.global_cues import ASIA_CUES
+
+        obs = [(date(2024, 1, 2), 100.0), (date(2024, 1, 3), 102.0), (date(2024, 1, 4), 101.0)]
+        return GlobalCues({s.prefix: CueSeries(obs) for s in ASIA_CUES}, ASIA_CUES)
+
+    def at(self, hour: int, minute: int) -> datetime:
+        from emporos.core.clock import IST
+
+        return datetime(2024, 1, 4, hour, minute, tzinfo=IST)
+
+    def test_at_the_open_only_yesterdays_close_is_known(self) -> None:
+        lines = self.cues().lines_at(self.at(9, 15))
+
+        assert lines["nikkei_prev_close_pct"] == pytest.approx((102 / 100 - 1) * 100)
+
+    def test_each_index_becomes_known_at_its_own_close_in_ist(self) -> None:
+        cues = self.cues()
+
+        before, after = cues.lines_at(self.at(11, 29)), cues.lines_at(self.at(11, 30))
+        assert before["nikkei_prev_close_pct"] == pytest.approx(2.0)  # 03 vs 02
+        assert after["nikkei_prev_close_pct"] == pytest.approx((101 / 102 - 1) * 100)  # 04 vs 03
+        assert cues.lines_at(self.at(11, 59))["kospi_prev_close_pct"] == pytest.approx(2.0)
+        assert cues.lines_at(self.at(12, 0))["kospi_prev_close_pct"] < 0
+        assert cues.lines_at(self.at(13, 29))["hangseng_prev_close_pct"] == pytest.approx(2.0)
+        assert cues.lines_at(self.at(13, 30))["hangseng_prev_close_pct"] < 0
+
+    def test_the_morning_posture_keys_do_not_include_asia(self) -> None:
+        assert not any(
+            k.startswith(("nikkei", "kospi", "hangseng")) for k in GlobalCues({}).lines(FIRST)
+        )
+        assert all(s.close_ist is None for s in CUES)
+
+    def test_fred_has_no_asian_series_and_is_simply_not_asked(self) -> None:
+        from emporos.research.market_context.global_cues import ASIA_CUES
+
+        assert {s.prefix for s in ASIA_CUES}.isdisjoint(FRED.ids) and "nikkei" in YAHOO.ids

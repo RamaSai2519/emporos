@@ -29,6 +29,7 @@ from emporos.research.market_context.bars import BarLoader, BarSeriesCache
 from emporos.research.market_context.breadth import Breadth, SessionCloseTable
 from emporos.research.market_context.builder import AsOfContextBuilder, SectorMap
 from emporos.research.market_context.global_cues import (
+    ASIA_CUES,
     CUES,
     DEFAULT_CUES_LEDGER,
     DEFAULT_CUES_RAW_DIR,
@@ -80,7 +81,7 @@ async def _collect(
         collector = CueCollector(
             PoliteGet(client, sleeper, gap), raw, FetchLedger(ledger), SystemClock(), feed
         )
-        return await collector.run(CUES, first, last, typer.echo)
+        return await collector.run(CUES + ASIA_CUES, first, last, typer.echo)
 
 
 def research_collect_global_cues(
