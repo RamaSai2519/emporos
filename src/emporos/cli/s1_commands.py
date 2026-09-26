@@ -139,17 +139,21 @@ def research_run_s1_cash(
     ledger: Path = _LEDGER,
     workers: int = _WORKERS,
     runs: int = _RUNS,
+    smoke: bool = typer.Option(False, help="Timing only: the first arm, no ledger, no report."),
 ) -> None:
     """The 36 cash arms on Dev, each against its random-entry control; one counted look each."""
     try:
         engine, sessions, signals = _prepare(first.date(), last.date(), crossings, cache, workers)
         runner = ArmRunner(engine, sessions, signals, RandomEntries(), runs)
-        outcomes = run_all(runner, cash_arms(), workers)
+        outcomes = run_all(runner, cash_arms()[:1] if smoke else cash_arms(), workers)
     except (EmporosError, ValueError, OSError, KeyError) as error:
         typer.secho(f"run-s1-cash failed: {error}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from error
     bars = Bars()
     window = f"dev-{first.date()}..{last.date()}"
+    if smoke:
+        typer.echo(f"smoke: {len(outcomes)} arm, {runs} control runs; nothing recorded")
+        return
     added = sum(S1Ledger(ledger).append(o, window, bars, SystemClock().now()) for o in outcomes)
     lines = [f"S1 cash book on {window} (Dev, descriptive), {runs} control runs per arm", ""]
     lines += arm_table(outcomes, bars)
