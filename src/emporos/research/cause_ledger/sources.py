@@ -6,10 +6,12 @@ makes it (`ZonedRelease`, `IstRelease`, `KnownAhead`) is named where the source 
 
 from __future__ import annotations
 
+import re
+from collections import defaultdict
 from collections.abc import Sequence
 from datetime import date, time
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -30,7 +32,7 @@ from emporos.research.cause_ledger.pages import PageSpec
 
 __all__ = [
     "CALENDAR_FIRST", "CALENDAR_LAST", "CalendarBuilder", "EventSource", "FedSource",
-    "ManualSource",
+    "IndexChangeSource", "ManualSource",
 ]  # fmt: skip
 
 CALENDAR_FIRST = date(2017, 11, 1)
@@ -127,6 +129,58 @@ class ManualSource:
             raise ValueError(f"{row['kind']} {row['date']}: a timed row needs `at`")
         local = time(int(hours), int(minutes))
         return IstRelease(local) if zone == "IST" else ZonedRelease(local, ZoneInfo(zone))
+
+
+class IndexChangeSource:
+    """NIFTY 100 / Midcap 150 constituent changes from `config/universe/d1/index-changes.yaml`: one
+    `index_notice` event on the day the notice was published (the date is in its file name,
+    `ind_prs<ddmmyyyy>`; the time of day is not on the notice, so it counts from 23:59 IST, i.e.
+    for the next session) and one `index_effective` event on the effective day (known ahead)."""
+
+    NOTICE = re.compile(r"ind_prs(\d{2})(\d{2})(\d{4})")
+
+    def __init__(self, path: Path, checked_on: date) -> None:
+        self._path, self._checked = path, checked_on
+
+    def events(self) -> Sequence[CalendarEvent]:
+        changes = yaml.safe_load(self._path.read_text(encoding="utf-8"))["changes"]
+        by_notice: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for change in changes:
+            by_notice[str(change["source"]).split()[0]].append(change)
+        out: list[CalendarEvent] = []
+        for url, group in by_notice.items():
+            found = self.NOTICE.search(url)
+            if found is None:
+                raise ValueError(f"{url}: no notice date in the file name")
+            day = date(int(found.group(3)), int(found.group(2)), int(found.group(1)))
+            detail = "; ".join(
+                f"{c['index']} +{','.join(c['added'])} -{','.join(c['removed'])}" for c in group
+            )
+            out.append(
+                CalendarEvent(
+                    "index_notice",
+                    "NIFTY index change notice",
+                    day,
+                    IstRelease(time(23, 59)).available_at(day),
+                    url,
+                    self._checked,
+                    note=detail + "; time of day not on the notice, counted from 23:59 IST",
+                )  # fmt: skip
+            )
+            for effective in sorted({str(c["effective"]) for c in group}):
+                when = date.fromisoformat(effective)
+                out.append(
+                    CalendarEvent(
+                        "index_effective",
+                        "NIFTY index change effective",
+                        when,
+                        KnownAhead().available_at(when),
+                        url,
+                        self._checked,
+                        note=detail,
+                    )  # fmt: skip
+                )
+        return out
 
 
 def _day(value: object) -> date:

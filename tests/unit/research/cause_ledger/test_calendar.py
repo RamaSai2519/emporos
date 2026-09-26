@@ -141,3 +141,26 @@ def test_a_manual_row_missing_a_field_is_an_error(tmp_path: Path) -> None:
 
 def test_the_committed_manual_rows_load() -> None:
     assert ManualSource(Path("config/calendar/manual_events.yaml")).events()
+
+
+def test_index_notices_count_from_the_end_of_their_day_and_effective_days_are_known_ahead(
+    tmp_path: Path,
+) -> None:
+    from emporos.research.cause_ledger.sources import IndexChangeSource
+
+    path = tmp_path / "changes.yaml"
+    path.write_text(
+        "changes:\n"
+        "- {index: NIFTY 100, effective: '2022-09-30', added: [A], removed: [B],"
+        " source: 'https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25'}\n"
+        "- {index: NIFTY MIDCAP 150, effective: '2022-09-30', added: [B], removed: [C],"
+        " source: 'https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf fetched 2026-09-25'}\n"
+    )
+
+    events = {e.kind: e for e in IndexChangeSource(path, CHECKED).events()}
+
+    assert events["index_notice"].event_date == date(2022, 9, 1)
+    assert events["index_notice"].available_at == ist(2022, 9, 1, 23, 59)
+    assert events["index_effective"].available_at == ist(2022, 9, 30, 0, 0)
+    assert "NIFTY 100 +A -B" in events["index_notice"].note
+    assert events["index_notice"].source.endswith("ind_prs01092022.pdf")

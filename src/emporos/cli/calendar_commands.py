@@ -27,6 +27,7 @@ from emporos.research.cause_ledger.sources import (
     CalendarBuilder,
     EventSource,
     FedSource,
+    IndexChangeSource,
     ManualSource,
 )
 from emporos.research.filings.collector import CollectionHalted
@@ -80,9 +81,11 @@ def research_collect_calendar(
 def research_build_calendar(raw: Path = _RAW, out: Path = _OUT, manual: Path = _MANUAL) -> None:
     """Write the calendar YAML (2017-11-01..2026-03-18) from the fetched pages and manual rows."""
     try:
+        checked = SystemClock().now().date()
         sources: list[EventSource] = [
-            FedSource(raw, SystemClock().now().date()),
+            FedSource(raw, checked),
             ManualSource(manual),
+            IndexChangeSource(Path("config/universe/d1/index-changes.yaml"), checked),
         ]
         events = CalendarBuilder(sources).build()
         count = YamlCalendar(out).write(

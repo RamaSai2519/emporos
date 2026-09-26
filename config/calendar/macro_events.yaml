@@ -6,14 +6,30 @@ events:
   date: '2017-11-01'
   available_at: '2017-11-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2017-11-03
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2017-11-03'
+  available_at: '2017-11-03T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2017-11-13
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2017-11-13'
+  available_at: '2017-11-13T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs03112017.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AUBANK -SUNDARMFIN
 - id: fomc:2017-12-13
   kind: fomc
   name: FOMC statement
   date: '2017-12-13'
   available_at: '2017-12-14T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2017.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2017-12-18
   kind: election_result
   name: Gujarat and Himachal Pradesh assembly results
@@ -22,13 +38,21 @@ events:
   source: https://www.tribuneindia.com/news/archive/nation/himachal-elections-on-nov-9-result-on-dec-18-481632
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2018-01-08
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2018-01-08'
+  available_at: '2018-01-08T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +HATSUN,RELCAPITAL,TIFIN -CESC,FORTIS,STAR; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2018-01-31
   kind: fomc
   name: FOMC statement
   date: '2018-01-31'
   available_at: '2018-02-01T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2018-02-01
   kind: budget
   name: Union Budget speech
@@ -37,20 +61,46 @@ events:
   source: https://en.wikipedia.org/wiki/2018_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2018-19; speech from 11:00 IST
+- id: index_effective:2018-02-05
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2018-02-05'
+  available_at: '2018-02-05T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs08012018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +HATSUN,RELCAPITAL,TIFIN -CESC,FORTIS,STAR
+- id: index_notice:2018-02-21
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2018-02-21'
+  available_at: '2018-02-21T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABCAPITAL,GICRE,GRASIM,L&TFH,SBILIFE -GLAXO,GLENMARK,GSKCONS,TATAPOWER,TORNTPHARM; NIFTY MIDCAP 150 +AVANTIFEED,DBL,FCONSUMER,GLAXO,GLENMARK,GODREJAGRO,GSKCONS,HONAUT,IBREALEST,IBVENTURES,ICICIGI,IIFL,STRTECH,TATAPOWER,TORNTPHARM
+    -ADANIENT,DALMIABHA,DBCORP,GPPL,IOB,IPCALAB,JYOTHYLAB,L&TFH,LALPATHLAB,NH,RCOM,SYNDIBANK,VIJAYABANK,VTL,WELSPUNIND; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2018-03-21
   kind: fomc
   name: FOMC statement
   date: '2018-03-21'
   available_at: '2018-03-21T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2018-04-02
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2018-04-02'
+  available_at: '2018-04-02T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABCAPITAL,GICRE,GRASIM,L&TFH,SBILIFE -GLAXO,GLENMARK,GSKCONS,TATAPOWER,TORNTPHARM; NIFTY MIDCAP 150 +AVANTIFEED,DBL,FCONSUMER,GLAXO,GLENMARK,GODREJAGRO,GSKCONS,HONAUT,IBREALEST,IBVENTURES,ICICIGI,IIFL,STRTECH,TATAPOWER,TORNTPHARM
+    -ADANIENT,DALMIABHA,DBCORP,GPPL,IOB,IPCALAB,JYOTHYLAB,L&TFH,LALPATHLAB,NH,RCOM,SYNDIBANK,VIJAYABANK,VTL,WELSPUNIND
 - id: fomc:2018-05-02
   kind: fomc
   name: FOMC statement
   date: '2018-05-02'
   available_at: '2018-05-02T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2018-05-15
   kind: election_result
   name: Karnataka assembly results
@@ -59,34 +109,68 @@ events:
   source: https://en.wikipedia.org/wiki/2018_Karnataka_Legislative_Assembly_election
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2018-05-24
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2018-05-24'
+  available_at: '2018-05-24T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2018-06-13
   kind: fomc
   name: FOMC statement
   date: '2018-06-13'
   available_at: '2018-06-13T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2018-06-29
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2018-06-29'
+  available_at: '2018-06-29T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs24052018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +FRETAIL,KIOCL -ARVIND,TATACOMM
 - id: fomc:2018-08-01
   kind: fomc
   name: FOMC statement
   date: '2018-08-01'
   available_at: '2018-08-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2018-08-28
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2018-08-28'
+  available_at: '2018-08-28T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BANDHANBNK,BIOCON,HDFCLIFE,ICICIGI,NIACL -CUMMINSIND,EMAMILTD,PFC,PNB,RECLTD; NIFTY MIDCAP 150 +ASTRAL,CUMMINSIND,EMAMILTD,ESCORTS,GRAPHITE,HAL,HEG,ISEC,PFC,PNB,RECLTD,RNAM,SUNDARMFIN
+    -AKZOINDIA,BIOCON,GUJFLUORO,IBREALEST,ICICIGI,IDFC,IRB,KAJARIACER,KARURVYSYA,SCHAEFFLER,SUZLON,TTKPRESTIG,WOCKPHARMA; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2018-09-26
   kind: fomc
   name: FOMC statement
   date: '2018-09-26'
   available_at: '2018-09-26T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2018-09-28
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2018-09-28'
+  available_at: '2018-09-28T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BANDHANBNK,BIOCON,HDFCLIFE,ICICIGI,NIACL -CUMMINSIND,EMAMILTD,PFC,PNB,RECLTD; NIFTY MIDCAP 150 +ASTRAL,CUMMINSIND,EMAMILTD,ESCORTS,GRAPHITE,HAL,HEG,ISEC,PFC,PNB,RECLTD,RNAM,SUNDARMFIN
+    -AKZOINDIA,BIOCON,GUJFLUORO,IBREALEST,ICICIGI,IDFC,IRB,KAJARIACER,KARURVYSYA,SCHAEFFLER,SUZLON,TTKPRESTIG,WOCKPHARMA
 - id: fomc:2018-11-08
   kind: fomc
   name: FOMC statement
   date: '2018-11-08'
   available_at: '2018-11-09T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2018-12-11
   kind: election_result
   name: Rajasthan, Madhya Pradesh, Chhattisgarh, Telangana, Mizoram assembly results
@@ -95,20 +179,36 @@ events:
   source: https://www.indiatvnews.com/elections/news-assembly-elections-2018-rajasthan-madhya-pradesh-chhattisgarh-telangana-mizoram-dates-of-voting-counting-of-votes-results-december-11-469165
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2018-12-14
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2018-12-14'
+  available_at: '2018-12-14T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs14122018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AARTIIND,BBTC,VARROC -BHARATFIN,CENTURYTEX,IIFL; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2018-12-19
   kind: fomc
   name: FOMC statement
   date: '2018-12-19'
   available_at: '2018-12-20T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2018.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2018-12-28
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2018-12-28'
+  available_at: '2018-12-28T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs14122018.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AARTIIND,BBTC,VARROC -BHARATFIN,CENTURYTEX,IIFL
 - id: fomc:2019-01-30
   kind: fomc
   name: FOMC statement
   date: '2019-01-30'
   available_at: '2019-01-31T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2019-02-01
   kind: budget
   name: Union Budget speech
@@ -117,20 +217,37 @@ events:
   source: https://en.wikipedia.org/wiki/2019_Interim-Union_budget_of_India
   checked_on: '2026-09-26'
   note: Interim budget 2019-20; speech from 11:00 IST
+- id: index_notice:2019-02-25
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2019-02-25'
+  available_at: '2019-02-25T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs25022019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BAJAJHLDNG,DIVISLAB,HDFCAMC,PAGEIND,UBL -ABCAPITAL,BEL,LICHSGFIN,OIL,SUNTV; NIFTY MIDCAP 150 +ABCAPITAL,ATUL,BEL,ERIS,GUJFLUORO,IPCALAB,LICHSGFIN,OIL,RELAXO,SUNTV -AARTIIND,AVANTIFEED,BAJAJHLDNG,DIVISLAB,GET&D,PAGEIND,PCJEWELLER,TV18BRDCST,UBL,VAKRANGEE;
+    time of day not on the notice, counted from 23:59 IST
 - id: fomc:2019-03-20
   kind: fomc
   name: FOMC statement
   date: '2019-03-20'
   available_at: '2019-03-20T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2019-03-29
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2019-03-29'
+  available_at: '2019-03-29T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs25022019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BAJAJHLDNG,DIVISLAB,HDFCAMC,PAGEIND,UBL -ABCAPITAL,BEL,LICHSGFIN,OIL,SUNTV; NIFTY MIDCAP 150 +ABCAPITAL,ATUL,BEL,ERIS,GUJFLUORO,IPCALAB,LICHSGFIN,OIL,RELAXO,SUNTV -AARTIIND,AVANTIFEED,BAJAJHLDNG,DIVISLAB,GET&D,PAGEIND,PCJEWELLER,TV18BRDCST,UBL,VAKRANGEE
 - id: fomc:2019-05-01
   kind: fomc
   name: FOMC statement
   date: '2019-05-01'
   available_at: '2019-05-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2019-05-23
   kind: election_result
   name: Lok Sabha general election results
@@ -139,13 +256,29 @@ events:
   source: https://en.wikipedia.org/wiki/2019_Indian_general_election
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2019-06-13
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2019-06-13'
+  available_at: '2019-06-13T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs13062019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +DALBHARAT -GUJFLUORO; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2019-06-19
   kind: fomc
   name: FOMC statement
   date: '2019-06-19'
   available_at: '2019-06-19T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2019-06-28
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2019-06-28'
+  available_at: '2019-06-28T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs13062019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +DALBHARAT -GUJFLUORO
 - id: budget:2019-07-05
   kind: budget
   name: Union Budget speech
@@ -160,14 +293,39 @@ events:
   date: '2019-07-31'
   available_at: '2019-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2019-08-28
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2019-08-28'
+  available_at: '2019-08-28T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs28082019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BERGEPAINT,NESTLEIND,PFC,PNB -ABB,BHEL,MRF,SAIL; NIFTY MIDCAP 150 +AAVAS,ABBOTINDIA,ADANIGAS,ALBK,BAYERCROP,BHEL,CESC,CORPBANK,FORTIS,IOB,MRF,ORIENTBANK,SAIL,UCOBANK,VINATIORGA -BERGEPAINT,DBL,DHFL,DISHTV,FINCABLES,GRUH,GSKCONS,JMFINANCIL,KIOCL,PFC,PNB,RELCAPITAL,RELINFRA,RPOWER,SPARC;
+    time of day not on the notice, counted from 23:59 IST
+- id: index_notice:2019-09-17
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2019-09-17'
+  available_at: '2019-09-17T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17092019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +TTKPRESTIG -THOMASCOOK; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2019-09-18
   kind: fomc
   name: FOMC statement
   date: '2019-09-18'
   available_at: '2019-09-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2019-09-27
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2019-09-27'
+  available_at: '2019-09-27T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17092019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +TTKPRESTIG -THOMASCOOK
 - id: election_result:2019-10-24
   kind: election_result
   name: Maharashtra and Haryana assembly results
@@ -182,21 +340,37 @@ events:
   date: '2019-10-30'
   available_at: '2019-10-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2019-12-11
   kind: fomc
   name: FOMC statement
   date: '2019-12-11'
   available_at: '2019-12-12T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2019.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2019-12-16
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2019-12-16'
+  available_at: '2019-12-16T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs16122019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AARTIIND,LALPATHLAB,POLYCAB,SCHAEFFLER -ALBK,CORPBANK,ORIENTBANK,TATACHEM; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2019-12-27
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2019-12-27'
+  available_at: '2019-12-27T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs16122019.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +AARTIIND,LALPATHLAB,POLYCAB,SCHAEFFLER -ALBK,CORPBANK,ORIENTBANK,TATACHEM
 - id: fomc:2020-01-29
   kind: fomc
   name: FOMC statement
   date: '2020-01-29'
   available_at: '2020-01-30T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2020-02-01
   kind: budget
   name: Union Budget speech
@@ -229,41 +403,109 @@ events:
   source: https://www.federalreserve.gov/newsevents/pressreleases/monetary20200315a.htm
   checked_on: '2026-09-26'
   note: unscheduled, a Sunday; "For release at 5:00 p.m. EDT", so Monday 02:30 IST
+- id: index_notice:2020-03-16
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2020-03-16'
+  available_at: '2020-03-16T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANITRANS -YESBANK; NIFTY MIDCAP 150 +ADANIGREEN -ADANITRANS; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2020-03-19
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2020-03-19'
+  available_at: '2020-03-19T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs16032020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANITRANS -YESBANK; NIFTY MIDCAP 150 +ADANIGREEN -ADANITRANS
 - id: fomc:2020-04-29
   kind: fomc
   name: FOMC statement
   date: '2020-04-29'
   available_at: '2020-04-29T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2020-06-10
   kind: fomc
   name: FOMC statement
   date: '2020-06-10'
   available_at: '2020-06-10T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2020-06-10
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2020-06-10'
+  available_at: '2020-06-10T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs10062020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABBOTINDIA,IGL,MUTHOOTFIN,NAUKRI,TORNTPHARM -ASHOKLEY,IBULHSGFIN,IDEA,L&TFH,NIACL; NIFTY MIDCAP 150 +ABB,AKZOINDIA,ASHOKLEY,CREDITACC,IBULHSGFIN,IDEA,IIFLWAM,IRCTC,JKCEMENT,L&TFH,MINDAIND,NIACL,NIITTECH,SUMICHEM,TATACOMM
+    -ABBOTINDIA,ENGINERSIN,FCONSUMER,GRAPHITE,HEG,IGL,INDIANB,KRBL,MAHINDCIE,MUTHOOTFIN,NAUKRI,NBCC,STRTECH,TORNTPHARM,VARROC; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2020-06-26
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2020-06-26'
+  available_at: '2020-06-26T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs10062020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABBOTINDIA,IGL,MUTHOOTFIN,NAUKRI,TORNTPHARM -ASHOKLEY,IBULHSGFIN,IDEA,L&TFH,NIACL; NIFTY MIDCAP 150 +ABB,AKZOINDIA,ASHOKLEY,CREDITACC,IBULHSGFIN,IDEA,IIFLWAM,IRCTC,JKCEMENT,L&TFH,MINDAIND,NIACL,NIITTECH,SUMICHEM,TATACOMM
+    -ABBOTINDIA,ENGINERSIN,FCONSUMER,GRAPHITE,HEG,IGL,INDIANB,KRBL,MAHINDCIE,MUTHOOTFIN,NAUKRI,NBCC,STRTECH,TORNTPHARM,VARROC
+- id: index_notice:2020-07-02
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2020-07-02'
+  available_at: '2020-07-02T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +SBICARD -VEDL; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2020-07-29
   kind: fomc
   name: FOMC statement
   date: '2020-07-29'
   available_at: '2020-07-29T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2020-07-31
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2020-07-31'
+  available_at: '2020-07-31T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs02072020_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +SBICARD -VEDL
+- id: index_notice:2020-08-20
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2020-08-20'
+  available_at: '2020-08-20T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs20082020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIGREEN,ALKEM,LTI,TATACONSUM -NHPC,PAGEIND,SRTRANSFIN,ZEEL; NIFTY MIDCAP 150 +ADANIENT,ASTRAZEN,ITI,JMFINANCIL,METROPOLIS,NAVINFLUOR,NHPC,PAGEIND,SFL,SRTRANSFIN,TATACHEM,TIINDIA,YESBANK,ZEEL,ZYDUSWELL
+    -ADANIGREEN,ADANIPOWER,ALKEM,BLUEDART,CENTRALBK,EIHOTEL,HEXAWARE,IDBI,IOB,JUBILANT,LTI,PNBHOUSING,QUESS,TATACONSUM,UCOBANK; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2020-09-16
   kind: fomc
   name: FOMC statement
   date: '2020-09-16'
   available_at: '2020-09-16T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2020-09-25
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2020-09-25'
+  available_at: '2020-09-25T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs20082020.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIGREEN,ALKEM,LTI,TATACONSUM -NHPC,PAGEIND,SRTRANSFIN,ZEEL; NIFTY MIDCAP 150 +ADANIENT,ASTRAZEN,ITI,JMFINANCIL,METROPOLIS,NAVINFLUOR,NHPC,PAGEIND,SFL,SRTRANSFIN,TATACHEM,TIINDIA,YESBANK,ZEEL,ZYDUSWELL
+    -ADANIGREEN,ADANIPOWER,ALKEM,BLUEDART,CENTRALBK,EIHOTEL,HEXAWARE,IDBI,IOB,JUBILANT,LTI,PNBHOUSING,QUESS,TATACONSUM,UCOBANK
 - id: fomc:2020-11-05
   kind: fomc
   name: FOMC statement
   date: '2020-11-05'
   available_at: '2020-11-06T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2020-11-10
   kind: election_result
   name: Bihar assembly results
@@ -278,14 +520,14 @@ events:
   date: '2020-12-16'
   available_at: '2020-12-17T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomchistorical2020.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2021-01-27
   kind: fomc
   name: FOMC statement
   date: '2021-01-27'
   available_at: '2021-01-28T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2021-02-01
   kind: budget
   name: Union Budget speech
@@ -294,20 +536,38 @@ events:
   source: https://en.wikipedia.org/wiki/2021_Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2021-22; speech from 11:00 IST
+- id: index_notice:2021-02-23
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2021-02-23'
+  available_at: '2021-02-23T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIENT,APOLLOHOSP,JUBLFOOD,MRF,VEDL,YESBANK -BANKBARODA,CONCOR,GICRE,HINDZINC,OFSS,PFC; NIFTY MIDCAP 150 +BANKBARODA,CONCOR,DEEPAKNTR,DIXON,GICRE,HINDZINC,IDBI,INDIAMART,LAURUSLABS,MAXHEALTH,OFSS,PERSISTENT,PFC,PGHL,SUVENPHAR,TATAELXSI
+    -ADANIENT,APOLLOHOSP,EDELWEISS,ERIS,FRETAIL,HUDCO,JUBLFOOD,MRF,MRPL,NATIONALUM,NLCINDIA,SFL,SHRIRAMCIT,SYMPHONY,WABCOINDIA,YESBANK; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2021-03-17
   kind: fomc
   name: FOMC statement
   date: '2021-03-17'
   available_at: '2021-03-17T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2021-03-31
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2021-03-31'
+  available_at: '2021-03-31T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIENT,APOLLOHOSP,JUBLFOOD,MRF,VEDL,YESBANK -BANKBARODA,CONCOR,GICRE,HINDZINC,OFSS,PFC; NIFTY MIDCAP 150 +BANKBARODA,CONCOR,DEEPAKNTR,DIXON,GICRE,HINDZINC,IDBI,INDIAMART,LAURUSLABS,MAXHEALTH,OFSS,PERSISTENT,PFC,PGHL,SUVENPHAR,TATAELXSI
+    -ADANIENT,APOLLOHOSP,EDELWEISS,ERIS,FRETAIL,HUDCO,JUBLFOOD,MRF,MRPL,NATIONALUM,NLCINDIA,SFL,SHRIRAMCIT,SYMPHONY,WABCOINDIA,YESBANK
 - id: fomc:2021-04-28
   kind: fomc
   name: FOMC statement
   date: '2021-04-28'
   available_at: '2021-04-28T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2021-05-02
   kind: election_result
   name: West Bengal, Tamil Nadu, Kerala, Assam, Puducherry assembly results
@@ -316,48 +576,97 @@ events:
   source: https://www.business-standard.com/article/elections/election-results-2021-live-updates-west-bengal-tamil-nadu-kerala-puducherry-assam-vote-counting-highlights-ldf-dmk-mamata-banerjee-narendra-modi-bjp-tmc-congress-121050200049_1.html
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2021-06-15
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2021-06-15'
+  available_at: '2021-06-15T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs15062021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +GLAND -MOTHERSUMI; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2021-06-16
   kind: fomc
   name: FOMC statement
   date: '2021-06-16'
   available_at: '2021-06-16T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2021-06-30
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2021-06-30'
+  available_at: '2021-06-30T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs15062021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +GLAND -MOTHERSUMI
 - id: fomc:2021-07-28
   kind: fomc
   name: FOMC statement
   date: '2021-07-28'
   available_at: '2021-07-28T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2021-09-15
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2021-09-15'
+  available_at: '2021-09-15T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs15092021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +ABBOTINDIA,AFFLE,ALKEM,ALKYLAMINE,APLAPOLLO,BLUEDART,HINDCOPPER,INDIANB,IRFC,KAJARIACER,LINDEINDIA,LODHA,MRF,NATIONALUM,PETRONET,UBL,VAIBHAVGBL,WABCOINDIA -AKZOINDIA,ASTRAZEN,BANKBARODA,BBTC,CESC,CHOLAFIN,CREDITACC,GODREJAGRO,IBULHSGFIN,IDBI,IIFLWAM,JINDALSTEL,JMFINANCIL,PGHL,PIIND,SAIL,SJVN,VGUARD;
+    time of day not on the notice, counted from 23:59 IST
 - id: fomc:2021-09-22
   kind: fomc
   name: FOMC statement
   date: '2021-09-22'
   available_at: '2021-09-22T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2021-09-30
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2021-09-30'
+  available_at: '2021-09-30T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs15092021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +ABBOTINDIA,AFFLE,ALKEM,ALKYLAMINE,APLAPOLLO,BLUEDART,HINDCOPPER,INDIANB,IRFC,KAJARIACER,LINDEINDIA,LODHA,MRF,NATIONALUM,PETRONET,UBL,VAIBHAVGBL,WABCOINDIA -AKZOINDIA,ASTRAZEN,BANKBARODA,BBTC,CESC,CHOLAFIN,CREDITACC,GODREJAGRO,IBULHSGFIN,IDBI,IIFLWAM,JINDALSTEL,JMFINANCIL,PGHL,PIIND,SAIL,SJVN,VGUARD
+- id: index_notice:2021-10-22
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2021-10-22'
+  available_at: '2021-10-22T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs22102021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +SONACOMS -GMRINFRA; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2021-10-29
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2021-10-29'
+  available_at: '2021-10-29T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs22102021.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +SONACOMS -GMRINFRA
 - id: fomc:2021-11-03
   kind: fomc
   name: FOMC statement
   date: '2021-11-03'
   available_at: '2021-11-03T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2021-12-15
   kind: fomc
   name: FOMC statement
   date: '2021-12-15'
   available_at: '2021-12-16T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2022-01-26
   kind: fomc
   name: FOMC statement
   date: '2022-01-26'
   available_at: '2022-01-27T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2022-02-01
   kind: budget
   name: Union Budget speech
@@ -366,6 +675,15 @@ events:
   source: https://en.wikipedia.org/wiki/Union_budget_of_India
   checked_on: '2026-09-26'
   note: Budget 2022-23; speech from 11:00 IST
+- id: index_notice:2022-02-24
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2022-02-24'
+  available_at: '2022-02-24T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs24022022_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +MINDTREE,NYKAA,PAYTM,SRF,ZOMATO -AUROPHARMA,HINDPETRO,IGL,JINDALSTEL,YESBANK; NIFTY MIDCAP 150 +AUROPHARMA,CGPOWER,CLEAN,FLUOROCHEM,GRINDWELL,HAPPSTMNDS,HINDPETRO,IDBI,IEX,IGL,JINDALSTEL,NUVOCO,POLICYBZR,STARHEALTH,TRIDENT,TTML,YESBANK
+    -AMARAJABAT,CASTROLIND,CHOLAHLDNG,CUB,DHANI,GILLETTE,HINDCOPPER,ITI,MGL,MINDTREE,MOTILALOFS,RBLBANK,SRF,SUVENPHAR,TTKPRESTIG,VAIBHAVGBL,ZYDUSWELL; time of day not on the notice, counted from 23:59 IST
 - id: election_result:2022-03-10
   kind: election_result
   name: Uttar Pradesh, Punjab, Uttarakhand, Goa, Manipur assembly results
@@ -380,42 +698,101 @@ events:
   date: '2022-03-16'
   available_at: '2022-03-16T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2022-03-31
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2022-03-31'
+  available_at: '2022-03-31T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs24022022_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +MINDTREE,NYKAA,PAYTM,SRF,ZOMATO -AUROPHARMA,HINDPETRO,IGL,JINDALSTEL,YESBANK; NIFTY MIDCAP 150 +AUROPHARMA,CGPOWER,CLEAN,FLUOROCHEM,GRINDWELL,HAPPSTMNDS,HINDPETRO,IDBI,IEX,IGL,JINDALSTEL,NUVOCO,POLICYBZR,STARHEALTH,TRIDENT,TTML,YESBANK
+    -AMARAJABAT,CASTROLIND,CHOLAHLDNG,CUB,DHANI,GILLETTE,HINDCOPPER,ITI,MGL,MINDTREE,MOTILALOFS,RBLBANK,SRF,SUVENPHAR,TTKPRESTIG,VAIBHAVGBL,ZYDUSWELL
+- id: index_notice:2022-04-05
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2022-04-05'
+  available_at: '2022-04-05T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs05042022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +GMRINFRA -AARTIIND; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2022-05-04
   kind: fomc
   name: FOMC statement
   date: '2022-05-04'
   available_at: '2022-05-04T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2022-05-04
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2022-05-04'
+  available_at: '2022-05-04T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs05042022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY MIDCAP 150 +GMRINFRA -AARTIIND
 - id: fomc:2022-06-15
   kind: fomc
   name: FOMC statement
   date: '2022-06-15'
   available_at: '2022-06-15T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2022-07-11
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2022-07-11'
+  available_at: '2022-07-11T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +LICI,TATAPOWER -NMDC,PEL; NIFTY MIDCAP 150 +DELHIVERY -TATAPOWER; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2022-07-27
   kind: fomc
   name: FOMC statement
   date: '2022-07-27'
   available_at: '2022-07-27T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2022-08-08
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2022-08-08'
+  available_at: '2022-08-08T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs11072022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +LICI,TATAPOWER -NMDC,PEL; NIFTY MIDCAP 150 +DELHIVERY -TATAPOWER
+- id: index_notice:2022-09-01
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2022-09-01'
+  available_at: '2022-09-01T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ATGL,BEL,HAL,IRCTC,MOTHERSON,MPHASIS -JUBLFOOD,LUPIN,MINDTREE,PNB,SAIL,ZYDUSLIFE; NIFTY MIDCAP 150 +AWL,DEVYANI,JUBLFOOD,KPRMILL,LUPIN,MANYAVAR,MSUMI,PATANJALI,PNB,POONAWALLA,SAIL,ZYDUSLIFE
+    -APOLLOTYRE,ATGL,BEL,EXIDEIND,GLENMARK,HAL,IDBI,IRCTC,MANAPPURAM,METROPOLIS,MPHASIS,NUVOCO; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2022-09-21
   kind: fomc
   name: FOMC statement
   date: '2022-09-21'
   available_at: '2022-09-21T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2022-09-30
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2022-09-30'
+  available_at: '2022-09-30T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs01092022.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ATGL,BEL,HAL,IRCTC,MOTHERSON,MPHASIS -JUBLFOOD,LUPIN,MINDTREE,PNB,SAIL,ZYDUSLIFE; NIFTY MIDCAP 150 +AWL,DEVYANI,JUBLFOOD,KPRMILL,LUPIN,MANYAVAR,MSUMI,PATANJALI,PNB,POONAWALLA,SAIL,ZYDUSLIFE
+    -APOLLOTYRE,ATGL,BEL,EXIDEIND,GLENMARK,HAL,IDBI,IRCTC,MANAPPURAM,METROPOLIS,MPHASIS,NUVOCO
 - id: fomc:2022-11-02
   kind: fomc
   name: FOMC statement
   date: '2022-11-02'
   available_at: '2022-11-02T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2022-12-08
   kind: election_result
   name: Gujarat and Himachal Pradesh assembly results
@@ -430,7 +807,7 @@ events:
   date: '2022-12-14'
   available_at: '2022-12-15T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2023-02-01
   kind: budget
   name: Union Budget speech
@@ -445,21 +822,39 @@ events:
   date: '2023-02-01'
   available_at: '2023-02-02T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2023-02-17
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2023-02-17'
+  available_at: '2023-02-17T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17022023_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABB,AWL,CANBK,PAGEIND,VBL -BANDHANBNK,BIOCON,GLAND,MPHASIS,PAYTM; NIFTY MIDCAP 150 +AARTIIND,ADANIPOWER,APOLLOTYRE,BANDHANBNK,BIOCON,FINEORG,GLAND,METROBRAND,MPHASIS,NMDC,PAYTM,PEL,TIMKEN
+    -ABB,APLLTD,AWL,CANBK,GSPL,HATSUN,IEX,INDIAMART,NATCOPHARM,NATIONALUM,PAGEIND,SANOFI,VBL; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2023-03-22
   kind: fomc
   name: FOMC statement
   date: '2023-03-22'
   available_at: '2023-03-22T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2023-03-31
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2023-03-31'
+  available_at: '2023-03-31T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17022023_1.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ABB,AWL,CANBK,PAGEIND,VBL -BANDHANBNK,BIOCON,GLAND,MPHASIS,PAYTM; NIFTY MIDCAP 150 +AARTIIND,ADANIPOWER,APOLLOTYRE,BANDHANBNK,BIOCON,FINEORG,GLAND,METROBRAND,MPHASIS,NMDC,PAYTM,PEL,TIMKEN
+    -ABB,APLLTD,AWL,CANBK,GSPL,HATSUN,IEX,INDIAMART,NATCOPHARM,NATIONALUM,PAGEIND,SANOFI,VBL
 - id: fomc:2023-05-03
   kind: fomc
   name: FOMC statement
   date: '2023-05-03'
   available_at: '2023-05-03T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2023-05-13
   kind: election_result
   name: Karnataka assembly results
@@ -474,28 +869,62 @@ events:
   date: '2023-06-14'
   available_at: '2023-06-14T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2023-07-04
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2023-07-04'
+  available_at: '2023-07-04T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +JINDALSTEL -HDFC; NIFTY MIDCAP 150 +MANKIND -JINDALSTEL; time of day not on the notice, counted from 23:59 IST
+- id: index_effective:2023-07-13
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2023-07-13'
+  available_at: '2023-07-13T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs04072023.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +JINDALSTEL -HDFC; NIFTY MIDCAP 150 +MANKIND -JINDALSTEL
 - id: fomc:2023-07-26
   kind: fomc
   name: FOMC statement
   date: '2023-07-26'
   available_at: '2023-07-26T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2023-08-17
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2023-08-17'
+  available_at: '2023-08-17T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17082023.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +PNB,SHRIRAMFIN,TRENT,TVSMOTOR,ZYDUSLIFE -ACC,HDFCAMC,INDUSTOWER,NYKAA,PAGEIND; NIFTY MIDCAP 150 +ACC,BDL,CARBORUNIV,FACT,HDFCAMC,INDUSTOWER,JSL,KPITTECH,MAHABANK,MAZDOCK,NYKAA,PAGEIND,RVNL
+    -AAVAS,AFFLE,ALKYLAMINE,CLEAN,FINEORG,HAPPSTMNDS,NAM-INDIA,PNB,SHRIRAMFIN,TRENT,TTML,TVSMOTOR,ZYDUSLIFE; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2023-09-20
   kind: fomc
   name: FOMC statement
   date: '2023-09-20'
   available_at: '2023-09-20T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2023-09-29
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2023-09-29'
+  available_at: '2023-09-29T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs17082023.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +PNB,SHRIRAMFIN,TRENT,TVSMOTOR,ZYDUSLIFE -ACC,HDFCAMC,INDUSTOWER,NYKAA,PAGEIND; NIFTY MIDCAP 150 +ACC,BDL,CARBORUNIV,FACT,HDFCAMC,INDUSTOWER,JSL,KPITTECH,MAHABANK,MAZDOCK,NYKAA,PAGEIND,RVNL
+    -AAVAS,AFFLE,ALKYLAMINE,CLEAN,FINEORG,HAPPSTMNDS,NAM-INDIA,PNB,SHRIRAMFIN,TRENT,TTML,TVSMOTOR,ZYDUSLIFE
 - id: fomc:2023-11-01
   kind: fomc
   name: FOMC statement
   date: '2023-11-01'
   available_at: '2023-11-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2023-12-03
   kind: election_result
   name: Madhya Pradesh, Rajasthan, Chhattisgarh, Telangana assembly results
@@ -510,14 +939,14 @@ events:
   date: '2023-12-13'
   available_at: '2023-12-14T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2024-01-31
   kind: fomc
   name: FOMC statement
   date: '2024-01-31'
   available_at: '2024-02-01T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2024-02-01
   kind: budget
   name: Union Budget speech
@@ -526,20 +955,37 @@ events:
   source: https://prsindia.org/budgets/parliament/interim-union-budget-2024-25-analysis
   checked_on: '2026-09-26'
   note: Interim budget 2024-25; speech from 11:00 IST
+- id: index_notice:2024-02-28
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2024-02-28'
+  available_at: '2024-02-28T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIPOWER,IRFC,JIOFIN,PFC,RECLTD -AWL,MUTHOOTFIN,PGHH,PIIND,UPL; NIFTY MIDCAP 150 +AWL,IDBI,IREDA,JSWINFRA,KALYANKJIL,KEI,LLOYDSME,MUTHOOTFIN,PGHH,PIIND,SJVN,SUZLON,TATATECH,UPL -AARTIIND,ADANIPOWER,BLUEDART,CROMPTON,IRFC,NAVINFLUOR,PFC,PFIZER,RAJESHEXPO,RECLTD,RELAXO,TRIDENT,VINATIORGA,WHIRLPOOL;
+    time of day not on the notice, counted from 23:59 IST
 - id: fomc:2024-03-20
   kind: fomc
   name: FOMC statement
   date: '2024-03-20'
   available_at: '2024-03-20T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2024-03-28
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2024-03-28'
+  available_at: '2024-03-28T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs28022024.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ADANIPOWER,IRFC,JIOFIN,PFC,RECLTD -AWL,MUTHOOTFIN,PGHH,PIIND,UPL; NIFTY MIDCAP 150 +AWL,IDBI,IREDA,JSWINFRA,KALYANKJIL,KEI,LLOYDSME,MUTHOOTFIN,PGHH,PIIND,SJVN,SUZLON,TATATECH,UPL -AARTIIND,ADANIPOWER,BLUEDART,CROMPTON,IRFC,NAVINFLUOR,PFC,PFIZER,RAJESHEXPO,RECLTD,RELAXO,TRIDENT,VINATIORGA,WHIRLPOOL
 - id: fomc:2024-05-01
   kind: fomc
   name: FOMC statement
   date: '2024-05-01'
   available_at: '2024-05-01T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2024-06-04
   kind: election_result
   name: Lok Sabha general election results
@@ -554,7 +1000,7 @@ events:
   date: '2024-06-12'
   available_at: '2024-06-12T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2024-07-23
   kind: budget
   name: Union Budget speech
@@ -569,14 +1015,33 @@ events:
   date: '2024-07-31'
   available_at: '2024-07-31T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2024-08-23
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2024-08-23'
+  available_at: '2024-08-23T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs23082024.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BHEL,JSWENERGY,LODHA,NHPC,UNIONBANK -BERGEPAINT,COLPAL,MARICO,SBICARD,SRF; NIFTY MIDCAP 150 +BERGEPAINT,BHARTIHEXA,CENTRALBK,COCHINSHIP,COLPAL,EXIDEIND,HUDCO,IOB,IRB,IREDA,MARICO,MEDANTA,MRPL,NAM-INDIA,NLCINDIA,POWERINDIA,SBICARD,SRF,TATAINVEST
+    -ATUL,BATAINDIA,BHEL,DEVYANI,IDEA,ISEC,JSWENERGY,KAJARIACER,KANSAINER,LALPATHLAB,LAURUSLABS,LODHA,MANYAVAR,NHPC,PEL,RAMCOCEM,SUMICHEM,UNIONBANK,ZEEL; time of day not on the notice, counted from 23:59
+    IST
 - id: fomc:2024-09-18
   kind: fomc
   name: FOMC statement
   date: '2024-09-18'
   available_at: '2024-09-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2024-09-30
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2024-09-30'
+  available_at: '2024-09-30T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs23082024.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BHEL,JSWENERGY,LODHA,NHPC,UNIONBANK -BERGEPAINT,COLPAL,MARICO,SBICARD,SRF; NIFTY MIDCAP 150 +BERGEPAINT,BHARTIHEXA,CENTRALBK,COCHINSHIP,COLPAL,EXIDEIND,HUDCO,IOB,IRB,IREDA,MARICO,MEDANTA,MRPL,NAM-INDIA,NLCINDIA,POWERINDIA,SBICARD,SRF,TATAINVEST
+    -ATUL,BATAINDIA,BHEL,DEVYANI,IDEA,ISEC,JSWENERGY,KAJARIACER,KANSAINER,LALPATHLAB,LAURUSLABS,LODHA,MANYAVAR,NHPC,PEL,RAMCOCEM,SUMICHEM,UNIONBANK,ZEEL
 - id: election_result:2024-10-08
   kind: election_result
   name: Haryana and Jammu and Kashmir assembly results
@@ -591,7 +1056,7 @@ events:
   date: '2024-11-07'
   available_at: '2024-11-08T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2024-11-23
   kind: election_result
   name: Maharashtra and Jharkhand assembly results
@@ -606,14 +1071,14 @@ events:
   date: '2024-12-18'
   available_at: '2024-12-19T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2025-01-29
   kind: fomc
   name: FOMC statement
   date: '2025-01-29'
   available_at: '2025-01-30T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2025-02-01
   kind: budget
   name: Union Budget speech
@@ -630,55 +1095,91 @@ events:
   source: https://www.indiatvnews.com/delhi/delhi-assembly-elections-results-2025-date-poll-outcome-for-capital-to-be-declared-on-february-8-check-details-2025-02-07-975131
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: index_notice:2025-02-21
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2025-02-21'
+  available_at: '2025-02-21T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022025.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
+    -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2025-03-19
   kind: fomc
   name: FOMC statement
   date: '2025-03-19'
   available_at: '2025-03-19T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2025-03-28
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2025-03-28'
+  available_at: '2025-03-28T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs21022025.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
+    -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA
 - id: fomc:2025-05-07
   kind: fomc
   name: FOMC statement
   date: '2025-05-07'
   available_at: '2025-05-07T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2025-06-18
   kind: fomc
   name: FOMC statement
   date: '2025-06-18'
   available_at: '2025-06-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2025-07-30
   kind: fomc
   name: FOMC statement
   date: '2025-07-30'
   available_at: '2025-07-30T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2025-08-22
   kind: fomc
   name: FOMC statement
   date: '2025-08-22'
   available_at: '2025-08-22T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_notice:2025-08-22
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2025-08-22'
+  available_at: '2025-08-22T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs22082025.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ENRIN,HINDZINC,MAXHEALTH,MAZDOCK,SOLARINDS -DABUR,HEROMOTOCO,ICICIPRULI,INDUSINDBK,SWIGGY; NIFTY MIDCAP 150 +DABUR,FACT,GODFRYPHLP,HEROMOTOCO,HEXT,ICICIPRULI,IDBI,INDUSINDBK,IOB,ITCHOTELS,PGHH,SWIGGY,UCOBANK
+    -ABFRL,BANDHANBNK,EMAMILTD,GLAND,HINDZINC,MAXHEALTH,MAZDOCK,MRPL,MSUMI,OLAELEC,SOLARINDS,STARHEALTH,SUNTV; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2025-09-17
   kind: fomc
   name: FOMC statement
   date: '2025-09-17'
   available_at: '2025-09-17T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
+- id: index_effective:2025-09-30
+  kind: index_effective
+  name: NIFTY index change effective
+  date: '2025-09-30'
+  available_at: '2025-09-30T00:00:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs22082025.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +ENRIN,HINDZINC,MAXHEALTH,MAZDOCK,SOLARINDS -DABUR,HEROMOTOCO,ICICIPRULI,INDUSINDBK,SWIGGY; NIFTY MIDCAP 150 +DABUR,FACT,GODFRYPHLP,HEROMOTOCO,HEXT,ICICIPRULI,IDBI,INDUSINDBK,IOB,ITCHOTELS,PGHH,SWIGGY,UCOBANK
+    -ABFRL,BANDHANBNK,EMAMILTD,GLAND,HINDZINC,MAXHEALTH,MAZDOCK,MRPL,MSUMI,OLAELEC,SOLARINDS,STARHEALTH,SUNTV
 - id: fomc:2025-10-29
   kind: fomc
   name: FOMC statement
   date: '2025-10-29'
   available_at: '2025-10-29T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: election_result:2025-11-14
   kind: election_result
   name: Bihar assembly results
@@ -693,14 +1194,14 @@ events:
   date: '2025-12-10'
   available_at: '2025-12-11T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: fomc:2026-01-28
   kind: fomc
   name: FOMC statement
   date: '2026-01-28'
   available_at: '2026-01-29T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
 - id: budget:2026-02-01
   kind: budget
   name: Union Budget speech
@@ -709,10 +1210,19 @@ events:
   source: https://www.visionias.in/blog/syllabus-pyqs/union-budget-2026-date-structure-process-highlights-download-pdf
   checked_on: '2026-09-26'
   note: Budget 2026-27; a Sunday, markets opened for it; speech from 11:00 IST
+- id: index_notice:2026-02-23
+  kind: index_notice
+  name: NIFTY index change notice
+  date: '2026-02-23'
+  available_at: '2026-02-23T23:59:00+05:30'
+  source: https://www.niftyindices.com/Press_Release/ind_prs23022026.pdf
+  checked_on: '2026-09-26'
+  note: NIFTY 100 +CUMMINSIND,HDFCAMC,MUTHOOTFIN,TATACAP,TMCV,UNIONBANK -BAJAJHFL,HAVELLS,ICICIGI,JSWENERGY,LICI,NAUKRI; NIFTY MIDCAP 150 +AIIL,ANTHEM,BAJAJHFL,GROWW,HAVELLS,HDBFS,ICICIAMC,ICICIGI,JSWENERGY,LAURUSLABS,LENSKART,LGEINDIA,LICI,MCX,NAUKRI,RADICO
+    -CUMMINSIND,DEEPAKNTR,FACT,GUJGASLTD,HDFCAMC,IDBI,IGL,IOB,IRB,MUTHOOTFIN,PGHH,SONACOMS,SYNGENE,TATATECH,UCOBANK,UNIONBANK; time of day not on the notice, counted from 23:59 IST
 - id: fomc:2026-03-18
   kind: fomc
   name: FOMC statement
   date: '2026-03-18'
   available_at: '2026-03-18T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
-  checked_on: '2026-09-25'
+  checked_on: '2026-09-26'
