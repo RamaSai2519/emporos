@@ -15,7 +15,7 @@ class EventClass(StrEnum):
     STOCK_DAILY = "stock_daily"  # |residual| >= 2.5 sigma over the day
     STOCK_JUMP = "stock_jump"  # a 15-minute residual >= 3 sigma
     SECTOR = "sector"  # a sector index's residual against NIFTY
-    MARKET = "market"  # NIFTY itself
+    MARKET = "index"  # NIFTY itself: the whole-market class
     PLACEBO = "placebo"  # a quiet name-session, drawn with the seed
 
 

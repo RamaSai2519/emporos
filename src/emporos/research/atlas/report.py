@@ -118,6 +118,10 @@ def crossing_lines(block: CrossingBlock) -> list[str]:
         f"Crossing Ledger: {len(block):,} crossings. Every figure is over ALL crossings of its kind"
         " (the no-cause baseline), in the crossing's direction, from the entry reference after the"
         " crossing bar, in percent",
+        "NOTE: seen before any hypothesis: 2017-2023 unconditioned crossing drift. These signed"
+        " figures were requested as the no-cause baseline; the back-test years stay honest for"
+        " with-the-move hypotheses only, and no further signed statistic is drawn on 2017-2023"
+        " unless a declared hypothesis runs there.",
         "",
         *_crossing_months(cols, days, kinds),
     ]

@@ -22,7 +22,7 @@ class CrossingLedgerBuilder:
     def build(self, fits: Fits) -> CrossingBlock:
         block = CrossingBlock()
         block.extend(
-            self._scanner.intraday(_who(fits.market), fits.market.own, fits.market.deco, "market")
+            self._scanner.intraday(_who(fits.market), fits.market.own, fits.market.deco, "index")
         )
         for sector in fits.sectors:
             block.extend(self._scanner.intraday(_who(sector), sector.own, sector.deco, "sector"))

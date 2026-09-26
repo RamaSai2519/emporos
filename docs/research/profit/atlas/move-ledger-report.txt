@@ -4,13 +4,13 @@ Events by class:
   stock_daily     7,205
   stock_jump     68,489
   sector            938
-  market            382
+  index             382
   placebo        75,694
   (stock_jump with z >= 4: 19,822)
   (stock_jump with z >= 5: 10,648)
 
 Events per month and class:
-  month      stock_daily   stock_jump       sector       market      placebo
+  month      stock_daily   stock_jump       sector        index      placebo
   2017-11             65          783           12            2          825
   2017-12             41          590            8            2          797
   2018-01            101          964           18            0          763
@@ -122,7 +122,7 @@ Onset (the bar at which a quarter of the day's residual was in, or the open):
   sector       n=    938  overnight  6.5%  intraday 93.5%  jump  0.0%  none  0.0%
       intraday onsets by half hour: 09:15  76%  09:45  12%  10:15   5%  10:45   3%  11:15   1%  11:45   2%  12:15   1%  12:45   1%  13:15   0%  13:45   0%  14:15   0%  14:45   0%
       median minutes onset to peak 310
-  market       n=    382  overnight 44.2%  intraday 55.5%  jump  0.0%  none  0.3%
+  index        n=    382  overnight 44.2%  intraday 55.5%  jump  0.0%  none  0.3%
       intraday onsets by half hour: 09:15  63%  09:45   8%  10:15   5%  10:45   4%  11:15   3%  11:45   3%  12:15   1%  12:45   1%  13:15   3%  13:45   2%  14:15   3%  14:45   3%
       median minutes onset to peak 315
   placebo      n= 75,694  overnight 33.3%  intraday 65.4%  jump  0.0%  none  1.3%

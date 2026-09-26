@@ -1,4 +1,4 @@
-name,stock_daily,stock_jump,sector,market,placebo
+name,stock_daily,stock_jump,sector,index,placebo
 ABB,55,583,0,0,560
 ABBOTINDIA,51,491,0,0,510
 ABCAPITAL,47,534,0,0,539

@@ -85,6 +85,7 @@ class TestReports:
         assert "by year: 2024" in text
         assert "Crossings per month and kind:" in text and "2024-01  " in text
         assert "stock@1.5" in text
+        assert "seen before any hypothesis" in text
 
 
 class TestFiles:

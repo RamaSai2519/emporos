@@ -1,7 +1,8 @@
 Crossing Ledger: 646,346 crossings. Every figure is over ALL crossings of its kind (the no-cause baseline), in the crossing's direction, from the entry reference after the crossing bar, in percent
+NOTE: seen before any hypothesis: 2017-2023 unconditioned crossing drift. These signed figures were requested as the no-cause baseline; the back-test years stay honest for with-the-move hypotheses only, and no further signed statistic is drawn on 2017-2023 unless a declared hypothesis runs there.
 
 Crossings per month and kind:
-  month      market@1.5   market@2.0   sector@1.5   sector@2.0    stock@1.5    stock@2.0  swing_stock
+  month       index@1.5    index@2.0   sector@1.5   sector@2.0    stock@1.5    stock@2.0  swing_stock
   2017-11             31           28          261          235        3,309        2,923          120
   2017-12             28           25          241          214        3,050        2,692           83
   2018-01             30           24          254          240        3,458        3,113          192
@@ -89,7 +90,7 @@ Crossings per month and kind:
   2024-11             25           20          211          196        3,439        3,128          163
   2024-12             27           24          251          223        3,895        3,450           96
 
-market (k=1.5): n=2,297, 50.9% already there at the open, mean slip before the entry reference +0.002%
+index (k=1.5): n=2,297, 50.9% already there at the open, mean slip before the entry reference +0.002%
     resid to 15m   n=  2,278 mean -0.015% hit 48.1% t -3.35
     raw   to 15m   n=  2,277 mean -0.015% hit 48.0% t -3.36
     resid to 60m   n=  2,187 mean -0.027% hit 48.0% t -3.44
@@ -104,7 +105,7 @@ market (k=1.5): n=2,297, 50.9% already there at the open, mean slip before the e
     raw   to 5d    n=  2,291 mean +0.061% hit 50.8% t +1.59
     residual to 15:15 by year: 2017: -0.048%  2018: +0.007%  2019: +0.010%  2020: -0.044%  2021: +0.003%  2022: -0.015%  2023: -0.008%  2024: -0.007%
 
-market (k=2.0): n=2,111, 46.9% already there at the open, mean slip before the entry reference +0.001%
+index (k=2.0): n=2,111, 46.9% already there at the open, mean slip before the entry reference +0.001%
     resid to 15m   n=  2,086 mean -0.009% hit 49.8% t -1.99
     raw   to 15m   n=  2,085 mean -0.009% hit 49.8% t -1.99
     resid to 60m   n=  1,986 mean -0.019% hit 48.8% t -2.20
