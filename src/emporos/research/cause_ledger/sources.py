@@ -11,7 +11,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from datetime import date, time
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, ClassVar, Protocol
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -29,11 +29,13 @@ from emporos.research.cause_ledger.fomc import (
     parse_historical_page,
 )
 from emporos.research.cause_ledger.gst import parse_gst_meetings
+from emporos.research.cause_ledger.mospi import parse_advance_release_calendar
 from emporos.research.cause_ledger.pages import PageSpec
+from emporos.research.filings.pdf_text import PdfTextExtractor, PdftotextExtractor
 
 __all__ = [
     "CALENDAR_FIRST", "CALENDAR_LAST", "CalendarBuilder", "EventSource", "FedSource",
-    "AlfredSource", "GstSource", "IndexChangeSource", "ManualSource",
+    "AlfredSource", "GstSource", "IndexChangeSource", "ManualSource", "MospiSource",
 ]  # fmt: skip
 
 CALENDAR_FIRST = date(2017, 11, 1)
@@ -174,6 +176,50 @@ class AlfredSource:
                             note="release day per ALFRED; 08:30 New York time",
                         )  # fmt: skip
                     )
+        return out
+
+
+class MospiSource:
+    """India CPI and GDP release days from MoSPI's Advance Release Calendar (`mospi.py`), read from
+    the PDF's text (`pdftotext`). MoSPI embargoes both until 16:00 IST. Only calendars that are text
+    (the 2025-26 one is a scan, and 2026-27 starts after the span) are used; the rows are the
+    PLANNED dates of an advance calendar."""
+
+    CALENDARS = (
+        ("mospi/arc-2024-25.pdf", 2024, "https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf"),
+    )  # fmt: skip
+    NAMES: ClassVar[dict[str, str]] = {"india_cpi": "India CPI", "india_gdp": "India GDP estimates"}
+
+    def __init__(
+        self, raw_root: Path, checked_on: date, extractor: PdfTextExtractor | None = None
+    ) -> None:
+        self._root, self._checked = raw_root, checked_on
+        self._extractor = extractor or PdftotextExtractor()
+
+    @classmethod
+    def pages(cls) -> list[PageSpec]:
+        return [PageSpec("mospi", name, url) for name, _, url in cls.CALENDARS]
+
+    def events(self) -> Sequence[CalendarEvent]:
+        rule = IstRelease(time(16, 0))
+        out: list[CalendarEvent] = []
+        for name, year, url in self.CALENDARS:
+            path = self._root / name
+            if not path.exists():
+                continue
+            text = self._extractor.extract(path.read_bytes()).text
+            for release in parse_advance_release_calendar(text, year):
+                out.append(
+                    CalendarEvent(
+                        release.kind,
+                        self.NAMES[release.kind],
+                        release.day,
+                        rule.available_at(release.day),
+                        url,
+                        self._checked,
+                        note="planned date in the advance release calendar; embargoed to 16:00 IST",
+                    )  # fmt: skip
+                )
         return out
 
 

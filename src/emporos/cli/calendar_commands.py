@@ -31,6 +31,7 @@ from emporos.research.cause_ledger.sources import (
     GstSource,
     IndexChangeSource,
     ManualSource,
+    MospiSource,
 )
 from emporos.research.filings.collector import CollectionHalted
 from emporos.research.filings.polite import PoliteGet, SourceRefused
@@ -48,7 +49,7 @@ _MANUAL = typer.Option(DEFAULT_MANUAL_FILE, help="Rows kept by hand, each with i
 
 
 def calendar_pages() -> list[PageSpec]:
-    return FedSource.pages() + GstSource.pages() + AlfredSource.pages()
+    return FedSource.pages() + GstSource.pages() + AlfredSource.pages() + MospiSource.pages()
 
 
 async def _collect(raw: Path, ledger: Path, gap: float) -> list[str]:
@@ -88,6 +89,7 @@ def research_build_calendar(raw: Path = _RAW, out: Path = _OUT, manual: Path = _
             FedSource(raw, checked),
             GstSource(raw, checked),
             AlfredSource(raw, checked),
+            MospiSource(raw, checked),
             ManualSource(manual),
             IndexChangeSource(Path("config/universe/d1/index-changes.yaml"), checked),
         ]

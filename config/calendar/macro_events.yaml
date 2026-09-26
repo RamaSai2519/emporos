@@ -2883,6 +2883,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-04-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-04-12'
+  available_at: '2024-04-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: fomc:2024-05-01
   kind: fomc
   name: FOMC statement
@@ -2898,6 +2906,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-05-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-05-12'
+  available_at: '2024-05-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2024-05-15
   kind: us_cpi
   name: US CPI
@@ -2906,6 +2922,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_gdp:2024-05-31
+  kind: india_gdp
+  name: India GDP estimates
+  date: '2024-05-31'
+  available_at: '2024-05-31T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: election_result:2024-06-04
   kind: election_result
   name: Lok Sabha general election results
@@ -2938,6 +2962,14 @@ events:
   available_at: '2024-06-12T23:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: india_cpi:2024-06-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-06-12'
+  available_at: '2024-06-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2024-06-12
   kind: us_cpi
   name: US CPI
@@ -2962,6 +2994,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-07-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-07-12'
+  available_at: '2024-07-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: budget:2024-07-23
   kind: budget
   name: Union Budget speech
@@ -2994,6 +3034,14 @@ events:
   checked_on: '2026-09-26'
   value: '6.50'
   note: 'from Mar 2020: Governor''s statement and resolution at 10:00 IST; date and rate not re-read from a per-meeting page (RBI monetary policy landing page cited)'
+- id: india_cpi:2024-08-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-08-12'
+  available_at: '2024-08-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2024-08-14
   kind: us_cpi
   name: US CPI
@@ -3020,6 +3068,14 @@ events:
   note: NIFTY 100 +BHEL,JSWENERGY,LODHA,NHPC,UNIONBANK -BERGEPAINT,COLPAL,MARICO,SBICARD,SRF; NIFTY MIDCAP 150 +BERGEPAINT,BHARTIHEXA,CENTRALBK,COCHINSHIP,COLPAL,EXIDEIND,HUDCO,IOB,IRB,IREDA,MARICO,MEDANTA,MRPL,NAM-INDIA,NLCINDIA,POWERINDIA,SBICARD,SRF,TATAINVEST
     -ATUL,BATAINDIA,BHEL,DEVYANI,IDEA,ISEC,JSWENERGY,KAJARIACER,KANSAINER,LALPATHLAB,LAURUSLABS,LODHA,MANYAVAR,NHPC,PEL,RAMCOCEM,SUMICHEM,UNIONBANK,ZEEL; time of day not on the notice, counted from 23:59
     IST
+- id: india_gdp:2024-08-30
+  kind: india_gdp
+  name: India GDP estimates
+  date: '2024-08-30'
+  available_at: '2024-08-30T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_payrolls:2024-09-06
   kind: us_payrolls
   name: US payrolls (employment situation)
@@ -3036,6 +3092,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-09-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-09-12'
+  available_at: '2024-09-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: fomc:2024-09-18
   kind: fomc
   name: FOMC statement
@@ -3085,6 +3149,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-10-14
+  kind: india_cpi
+  name: India CPI
+  date: '2024-10-14'
+  available_at: '2024-10-14T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_payrolls:2024-11-01
   kind: us_payrolls
   name: US payrolls (employment situation)
@@ -3100,6 +3172,14 @@ events:
   available_at: '2024-11-08T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: india_cpi:2024-11-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-11-12'
+  available_at: '2024-11-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2024-11-13
   kind: us_cpi
   name: US CPI
@@ -3116,6 +3196,14 @@ events:
   source: https://www.newsonair.gov.in/counting-of-votes-for-assembly-elections-in-maharashtra-jharkhand-along-with-by-polls-in-46-assembly-seats-2-parliamentary-constituencies-underway
   checked_on: '2026-09-26'
   note: counting starts 08:00 IST; trends by about 09:00; the full result later that day
+- id: india_gdp:2024-11-29
+  kind: india_gdp
+  name: India GDP estimates
+  date: '2024-11-29'
+  available_at: '2024-11-29T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: rbi_mpc:2024-12-06
   kind: rbi_mpc
   name: RBI MPC policy decision
@@ -3141,6 +3229,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=10&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2024-12-12
+  kind: india_cpi
+  name: India CPI
+  date: '2024-12-12'
+  available_at: '2024-12-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: fomc:2024-12-18
   kind: fomc
   name: FOMC statement
@@ -3148,6 +3244,14 @@ events:
   available_at: '2024-12-19T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: india_gdp:2025-01-07
+  kind: india_gdp
+  name: India GDP estimates
+  date: '2025-01-07'
+  available_at: '2025-01-07T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_payrolls:2025-01-10
   kind: us_payrolls
   name: US payrolls (employment situation)
@@ -3156,6 +3260,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2025-01-13
+  kind: india_cpi
+  name: India CPI
+  date: '2025-01-13'
+  available_at: '2025-01-13T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2025-01-15
   kind: us_cpi
   name: US CPI
@@ -3171,6 +3283,14 @@ events:
   available_at: '2025-01-30T00:30:00+05:30'
   source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
   checked_on: '2026-09-26'
+- id: india_cpi:2025-01-31
+  kind: india_cpi
+  name: India CPI
+  date: '2025-01-31'
+  available_at: '2025-01-31T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: budget:2025-02-01
   kind: budget
   name: Union Budget speech
@@ -3221,6 +3341,14 @@ events:
   checked_on: '2026-09-26'
   note: NIFTY 100 +BAJAJHFL,CGPOWER,HYUNDAI,INDHOTEL,SWIGGY -ATGL,BHEL,IRCTC,NHPC,UNIONBANK; NIFTY MIDCAP 150 +360ONE,APARINDS,ATGL,BHEL,BLUESTARCO,GLENMARK,GVT&D,IRCTC,MOTILALOFS,NATIONALUM,NHPC,NTPCGREEN,OLAELEC,PREMIERENE,UNIONBANK,VMM,WAAREEENER
     -BAYERCROP,CARBORUNIV,CGPOWER,DELHIVERY,FACT,GRINDWELL,IDBI,INDHOTEL,IOB,METROBRAND,PGHH,POONAWALLA,SKFINDIA,SUNDRMFAST,TATACHEM,TIMKEN,ZFCVINDIA; time of day not on the notice, counted from 23:59 IST
+- id: india_gdp:2025-02-28
+  kind: india_gdp
+  name: India GDP estimates
+  date: '2025-02-28'
+  available_at: '2025-02-28T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_payrolls:2025-03-07
   kind: us_payrolls
   name: US payrolls (employment situation)
@@ -3229,6 +3357,14 @@ events:
   source: https://alfred.stlouisfed.org/release/downloaddates?rid=50&ff=txt
   checked_on: '2026-09-26'
   note: release day per ALFRED; 08:30 New York time
+- id: india_cpi:2025-03-12
+  kind: india_cpi
+  name: India CPI
+  date: '2025-03-12'
+  available_at: '2025-03-12T16:00:00+05:30'
+  source: https://mospi.gov.in/sites/default/files/Advance_Release_Calendar.pdf
+  checked_on: '2026-09-26'
+  note: planned date in the advance release calendar; embargoed to 16:00 IST
 - id: us_cpi:2025-03-12
   kind: us_cpi
   name: US CPI

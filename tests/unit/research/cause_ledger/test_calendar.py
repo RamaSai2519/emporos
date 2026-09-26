@@ -184,3 +184,41 @@ def test_us_cpi_and_payrolls_release_at_0830_new_york_from_alfred_dates(tmp_path
     assert events[("us_cpi", date(2024, 7, 11))].available_at == ist(2024, 7, 11, 18, 0)  # EDT
     assert events[("us_payrolls", date(2024, 3, 8))].available_at == ist(2024, 3, 8, 19, 0)
     assert len(events) == 3 and all("alfred.stlouisfed.org" in e.source for e in events.values())
+
+
+MOSPI_TEXT = """
+ 1       April      12th April     All India Consumer Price Index (CPI)#
+         2024                      All India Index of Industrial Production (IIP)*
+ 2       May        12th May       All India Consumer Price Index (CPI)#
+                    31th May       - Provisional Estimates of GDP (2023-24)
+                                   - Q4 Estimates of GDP
+ 10      January    12th Jan       All India Consumer Price Index (CPI)#
+"""
+
+
+def test_mospi_cpi_and_gdp_days_are_read_from_the_advance_calendar_text() -> None:
+    from emporos.research.cause_ledger.mospi import parse_advance_release_calendar
+
+    found = [(r.kind, r.day) for r in parse_advance_release_calendar(MOSPI_TEXT, 2024)]
+
+    assert found == [
+        ("india_cpi", date(2024, 4, 12)), ("india_cpi", date(2024, 5, 12)),
+        ("india_gdp", date(2024, 5, 31)), ("india_cpi", date(2025, 1, 12)),
+    ]  # fmt: skip
+
+
+def test_mospi_events_count_from_1600_ist(tmp_path: Path) -> None:
+    from emporos.research.cause_ledger.sources import MospiSource
+    from emporos.research.filings.pdf_text import ExtractedText
+
+    class Fake:
+        def extract(self, pdf: bytes) -> ExtractedText:
+            return ExtractedText(MOSPI_TEXT, False, "h", len(pdf))
+
+    (tmp_path / "mospi").mkdir()
+    (tmp_path / "mospi" / "arc-2024-25.pdf").write_bytes(b"%PDF")
+
+    events = MospiSource(tmp_path, CHECKED, Fake()).events()
+
+    assert len(events) == 4 and events[0].available_at == ist(2024, 4, 12, 16, 0)
+    assert all(e.source.startswith("https://mospi.gov.in") for e in events)
